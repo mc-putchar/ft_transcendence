@@ -26,7 +26,9 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+CSRF_TRUSTED_ORIGINS = ['https://pong.ktano-studio.com']
+
+ALLOWED_HOSTS = ['pong.ktano-studio.com']
 
 
 # Application definition
