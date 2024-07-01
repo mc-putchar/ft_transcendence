@@ -12,6 +12,6 @@ stop:
 	$(DC) stop
 
 migrate:
-#	$(DC) run web python manage.py makemigrations APPNAME
+	$(DC) run web python manage.py makemigrations pong
 	$(DC) run web python manage.py migrate
 
