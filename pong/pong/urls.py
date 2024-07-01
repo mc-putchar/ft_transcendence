@@ -21,6 +21,5 @@ from . import views
 urlpatterns = [
     path('redirect', views.redirect, name='redirect'),
     path('', views.index, name='index'),
-    #path('', views.index, name='index'),
     path('admin/', admin.site.urls),
 ]
