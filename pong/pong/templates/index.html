@@ -1,21 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>OAuth2 POC</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transcendence</title>
 </head>
 <body>
- <h1>OAuth2</h1>
- <h2> Registration verification </h2>
- <h3>Intra API tests</h3> 
+  <h1>OAuth2</h1>
+  <h2>Registration Verification</h2>
+  <h3>Intra API Tests</h3> 
 
-  <form id="authForm" action="https://api.intra.42.fr/oauth/authorize" method="GET"> 
-     <input type="hidden" name="client_id" value="u-s4t2ud-a846f7a5b37f36564c465dfb6396c116cdb015b2e20e376b6ca7c81f86f117ad"> 
-     <input type="hidden" name="redirect_uri" value="https://pong.ktano-studio.com/redirect"> 
-     <input type="hidden" name="response_type" value="code">
-     <input type="hidden" name="scope" value="public">
-     <input type="hidden" name="state" id="stateInput"> 
-     <button type="submit">Authorize</button> 
+  <form id="authForm" action="/login" method="GET"> 
+     <button type="submit">Log In</button> 
    </form> 
-	<img src="https://42berlin.de/wp-content/uploads/2023/07/Warstwa_1.svg" style="width: 30%; height: auto;">
+
+  <img src="https://42berlin.de/wp-content/uploads/2023/07/Warstwa_1.svg" alt="42 Berlin Logo">
 </body>
 </html>
+
