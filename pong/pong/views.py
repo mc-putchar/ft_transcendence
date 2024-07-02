@@ -19,7 +19,8 @@ def chat(request):
     return render(request, 'chat/lobby.html')
 
 def room(request, room_name):
-    return render(request, "chat/room.html", {"room_name": room_name})
+    username = request.session.get('username')
+    return render(request, "chat/room.html", {"room_name": room_name, "username": username})
 
 def login(request):
     state = secrets.token_urlsafe(32)
