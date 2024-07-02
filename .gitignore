@@ -1,5 +1,6 @@
 postgres_data/
 migrations
+staticfiles
 .venv
 __pycache__
 .env

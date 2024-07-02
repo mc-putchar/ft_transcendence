@@ -11,7 +11,14 @@ start:
 stop:
 	$(DC) stop
 
+re:
+	$(DC) --build --force-recreate
+
 migrate:
 	$(DC) run web python manage.py makemigrations pong
 	$(DC) run web python manage.py migrate
+
+collect:
+	$(DC) run web python manage.py collectstatic --noinput
+
 

@@ -20,8 +20,10 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('redirect', views.redirect, name='redirect'),
+    path('redirect', views.redirect_view, name='redirect_view'),
     path('users/', views.users, name='users'),
     path('users/profile/<int:id>', views.profile, name='profile'),
     path('admin/', admin.site.urls),
+    path('login', views.login, name='login'),
+    path('lobby', views.lobby, name='lobby'),
 ]
