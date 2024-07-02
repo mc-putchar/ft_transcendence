@@ -4,6 +4,9 @@ WORKDIR /code
 
 COPY requirements.txt /code/
 
+# MKDIR /code/static
+RUN mkdir /code/static
+
 #RUN pip install -r requirements.txt
 
 RUN pip install --upgrade pip wheel && \
