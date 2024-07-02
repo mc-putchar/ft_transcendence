@@ -15,6 +15,9 @@ def index(request):
     template = loader.get_template('index.html')
     return HttpResponse(template.render({}, request))
 
+def lobby(request):
+    return render(request, 'chat/lobby.html')
+
 def login(request):
     state = secrets.token_urlsafe(32)
     request.session['oauth_state'] = state  # Save the state in session for CSRF protection

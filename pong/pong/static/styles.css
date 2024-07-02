@@ -4,7 +4,7 @@
 body {
   font-family: Arial, sans-serif;
   background-color: #f0f4f8; /* Light background color */
-  color: #333; /* Dark text color */
+  color: #222; /* Dark text color */
   text-align: center;
   margin: 0;
   padding: 20px;
@@ -32,8 +32,8 @@ button {
   color: #fff; /* White text */
   border: none;
   border-radius: 8px; /* Rounded corners */
-  padding: 15px 30px; /* Padding */
-  font-size: 1.2em; /* Larger text */
+  padding: 5px 12px; /* Padding */
+  font-size: 0.6em; /* Larger text */
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */

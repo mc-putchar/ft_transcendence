@@ -36,7 +36,10 @@ DEBUG = True
 CSRF_TRUSTED_ORIGINS = ['https://pong.ktano-studio.com']
 ALLOWED_HOSTS = ['pong.ktano-studio.com']
 
+
 # Application definition
+
+ASGI_APPLICATION = 'pong.routing.application'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -46,7 +49,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'channels',
     'pong',
+
 ]
 
 MIDDLEWARE = [
@@ -79,6 +84,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pong.wsgi.application'
 
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -140,11 +151,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
+STATIC_URL = "static/"
 
-STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

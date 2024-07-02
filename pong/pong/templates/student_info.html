@@ -2,15 +2,21 @@
 <html>
 <head>
     <title>Student Information</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+
 </head>
 <body>
-    <h1>Online Students</h1>
-    
+    <h1>Student Verified</h1>
+ 
+    <h1>Student</h1>
+
+    <button onclick="window.location.href='/lobby'">Go to Lobby</button>
+ 
         {% if user_data %}
             <li>ID: {{ user_data.id }} Email: {{ user_data.email }}</li>
             <li>Login: {{ user_data.login }}</li>
             <li>Display Name: {{ user_data.displayname }}</li>
-            <p> Campus : {{ user_data.campus.name }}</p>
             <img src="{{ user_data.image.versions.small }}" alt="Profile Image">
             
         {% else %}
@@ -19,4 +25,3 @@
     
 </body>
 </html>
-
