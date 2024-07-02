@@ -39,9 +39,11 @@ ALLOWED_HOSTS = ['pong.ktano-studio.com']
 
 # Application definition
 
-ASGI_APPLICATION = 'pong.routing.application'
+# ASGI_APPLICATION = 'pong.routing.application'
+ASGI_APPLICATION = "pong.asgi.application"
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

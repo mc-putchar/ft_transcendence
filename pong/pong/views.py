@@ -15,8 +15,11 @@ def index(request):
     template = loader.get_template('index.html')
     return HttpResponse(template.render({}, request))
 
-def lobby(request):
+def chat(request):
     return render(request, 'chat/lobby.html')
+
+def room(request, room_name):
+    return render(request, "chat/room.html", {"room_name": room_name})
 
 def login(request):
     state = secrets.token_urlsafe(32)
