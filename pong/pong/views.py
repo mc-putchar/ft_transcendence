@@ -7,8 +7,9 @@ from django.template import loader
 import logging
 
 logger = logging.getLogger('django')
-
 redirect_uri = settings.REDIRECT_URI
+
+from .models import User
 
 def index(request):
     template = loader.get_template('index.html')
@@ -72,3 +73,19 @@ def get_user_data(access_token):
     else:
         logger.error(f"Failed to retrieve user data: {response.status_code} - {response.text}")
         return None
+
+def users(request):
+    users = User.objects.all().values()
+    template = loader.get_template('users.html')
+    context = {
+        'users': users,
+    }
+    return HttpResponse(template.render(context, request))
+
+def profile(request, id):
+    user = User.objects.get(id=id)
+    template = loader.get_template('profile.html')
+    context = {
+        'user': users,
+    }
+    return HttpResponse(template.render(context, request))
