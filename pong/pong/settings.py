@@ -13,6 +13,13 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
+from decouple import config
+
+# Example of loading environment variables
+CLIENT_ID = config('CLIENT_ID', default='')
+CLIENT_SECRET = config('CLIENT_SECRET', default='')
+REDIRECT_URI = config('REDIRECT_URI')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,9 +34,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 DEBUG = True
 
 CSRF_TRUSTED_ORIGINS = ['https://pong.ktano-studio.com']
-
 ALLOWED_HOSTS = ['pong.ktano-studio.com']
-
 
 # Application definition
 
@@ -108,6 +113,20 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    }
+}
 
 
 # Internationalization

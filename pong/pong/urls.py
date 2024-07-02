@@ -19,8 +19,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('redirect', views.redirect, name='redirect'),
     path('', views.index, name='index'),
-    #path('', views.index, name='index'),
+    path('redirect', views.redirect_view, name='redirect_view'),
     path('admin/', admin.site.urls),
+    path('login', views.login, name='login'),
 ]
