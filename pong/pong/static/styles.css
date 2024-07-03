@@ -1,8 +1,14 @@
 /* styles.css */
 
+@import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
+
+* {
+	font-family: 'Orbitron', sans-serif;
+	tab-size: 4 !important;
+}
+
 /* General body styling */
 body {
-  font-family: Arial, sans-serif;
   background-color: #f0f4f8; /* Light background color */
   color: #222; /* Dark text color */
   text-align: center;

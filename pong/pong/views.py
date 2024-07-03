@@ -92,3 +92,7 @@ def profile(request, id):
         'user': users,
     }
     return HttpResponse(template.render(context, request))
+
+def pong(request):
+    template = loader.get_template('pong-game.html')
+    return HttpResponse(template.render({}, request))
