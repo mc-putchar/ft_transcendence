@@ -29,7 +29,14 @@ services:
         - "4222:8000"
       depends_on:
         - db
+        - redis
       restart: "always"
+
+  redis:
+    image: redis:5
+    ports:
+      - "6379:6379"
+    restart: "always"
 
 volumes:
   postgres_data:
