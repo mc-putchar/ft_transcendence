@@ -12,8 +12,7 @@ body {
 
 /* Header styling */
 h1 {
-    color : red;
-  /* color: #007bff; /1* Primary color *1/ */
+  color: #007bff; /* Primary color */
   margin-bottom: 10px;
 }
 

@@ -11,7 +11,9 @@ from .auth import exchange_code_for_token, get_user_data
 logger = logging.getLogger('django')
 redirect_uri = settings.REDIRECT_URI
 
-from .models import User
+def game(request):
+    template = loader.get_template('game.html')
+    return HttpResponse(template.render({}, request))
 
 def index(request):
     template = loader.get_template('index.html')
@@ -52,7 +54,6 @@ def redirect_view(request):         # Renamed to avoid conflict with `redirect` 
         user_data = get_user_data(access_token)
         if user_data:
             request.session['user_data'] = user_data
-            # TODO - redirect instead of render to end up in a different url and not the redirected one
             return render(request, template, {'user_data': user_data})
         else:
             return HttpResponse('No user data returned', status=404)
@@ -68,7 +69,7 @@ def users(request):
     return HttpResponse(template.render(context, request))
 
 def profile(request, id):
-    user = User.objects.get(id=id)
+    user = AbstractUser.objects.get(id=id)
     template = loader.get_template('profile.html')
     context = {
         'user': users,
