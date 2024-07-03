@@ -25,6 +25,7 @@ urlpatterns = [
     path('users/profile/<int:id>', views.profile, name='profile'),
     path('admin/', admin.site.urls),
     path('login', views.login, name='login'),
-    path('lobby', views.lobby, name='lobby'),
+    path('chat', views.chat, name='chat'),
+    path("<str:room_name>/", views.room, name="room"),
     path('pong', views.pong, name='pong'),
 ]

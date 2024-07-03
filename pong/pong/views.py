@@ -15,15 +15,18 @@ def index(request):
     template = loader.get_template('index.html')
     return HttpResponse(template.render({}, request))
 
-def lobby(request):
+def chat(request):
     return render(request, 'chat/lobby.html')
+
+def room(request, room_name):
+    username = request.session.get('username')
+    return render(request, "chat/room.html", {"room_name": room_name, "username": username})
 
 def login(request):
     state = secrets.token_urlsafe(32)
     request.session['oauth_state'] = state  # Save the state in session for CSRF protection
     client_id = settings.CLIENT_ID
     auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=public"
-
     auth_url_with_state = f"{auth_url}&state={state}"
     return redirect(auth_url_with_state)
 
