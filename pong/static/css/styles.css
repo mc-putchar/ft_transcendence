@@ -12,7 +12,8 @@ body {
 
 /* Header styling */
 h1 {
-  color: #007bff; /* Primary color */
+    color : red;
+  /* color: #007bff; /1* Primary color *1/ */
   margin-bottom: 10px;
 }
 
@@ -48,7 +49,7 @@ button:hover {
 /* Button focus effect */
 button:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(38, 143, 255, 0.5); /* Focus outline */
+  box-shadow: 0 0 0 3px rgba(255, 143, 255, 0.5); /* Focus outline */
 }
 
 /* Image styling */
