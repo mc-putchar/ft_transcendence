@@ -27,7 +27,6 @@ def login(request):
     request.session['oauth_state'] = state  # Save the state in session for CSRF protection
     client_id = settings.CLIENT_ID
     auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=public"
-
     auth_url_with_state = f"{auth_url}&state={state}"
     return redirect(auth_url_with_state)
 
