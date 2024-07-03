@@ -52,6 +52,7 @@ def redirect_view(request):         # Renamed to avoid conflict with `redirect` 
         user_data = get_user_data(access_token)
         if user_data:
             request.session['user_data'] = user_data
+            # TODO - redirect instead of render to end up in a different url and not the redirected one
             return render(request, template, {'user_data': user_data})
         else:
             return HttpResponse('No user data returned', status=404)
