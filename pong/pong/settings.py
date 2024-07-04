@@ -36,6 +36,9 @@ DEBUG = True
 CSRF_TRUSTED_ORIGINS = ['https://pong.ktano-studio.com']
 ALLOWED_HOSTS = ['pong.ktano-studio.com']
 
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
 
 # Application definition
 
@@ -92,12 +95,6 @@ CHANNEL_LAYERS = {
         "CONFIG": {
             "hosts": [("redis", 6379)],
         },
-    },
-}
-
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
 
@@ -171,3 +168,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # or your preferred session backend

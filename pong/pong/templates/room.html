@@ -1,0 +1,42 @@
+{% block chatview %}
+    <textarea id="chat-log" cols="42" rows="14"></textarea><br>
+    <input id="chat-message-input" type="text" size="42"><br>
+    <input id="chat-message-submit" type="button" value="Send">
+    <script>
+        const chatSocket = new WebSocket(
+            'wss://'
+            + window.location.host + '/ws/enter'
+        );
+        
+        chatSocket.onopen = function(e) {
+            chatSocket.send(JSON.stringify({
+                'message': " {{ login }} has joined the games"
+            }));
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#chat-log').value += (data.message + '\n');
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({
+                'message': `{{ login }}: ${message}`
+            }));
+            messageInputDom.value = '';
+        };
+    </script>
+{% endblock %}
