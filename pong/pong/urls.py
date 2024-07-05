@@ -14,5 +14,4 @@ urlpatterns = [
     path('login', views.login, name='login'),
     path('enter', views.enter, name='enter'),
     path('game', views.game, name='game'),
-    # path("<str:room_name>/", views.room, name="room"),
 ]
