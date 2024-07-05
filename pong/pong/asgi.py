@@ -10,7 +10,6 @@ import pong.routing
 # Initialize Django ASGI application early to ensure the AppRegistry
 # is populated before importing code that may import ORM models.
 django_asgi_app = get_asgi_application()
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pong.settings")
 
 application = ProtocolTypeRouter(

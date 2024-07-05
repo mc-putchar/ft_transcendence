@@ -1,23 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {% load static %}
-  <link rel="stylesheet" href="{% static 'styles.css' %}">
 
-  <title>Transcendence</title>
-</head>
-<body>
-  <h1>OAuth2</h1>
-  <h2>Registration Verification</h2>
-  <h3>Intra API Tests</h3> 
+{% extends "base.html" %}
 
-  <form id="authForm" action="/login" method="GET"> 
-     <button type="submit">Log In</button> 
-   </form> 
+{% block content %}
 
-  <img src="https://42berlin.de/wp-content/uploads/2023/07/Warstwa_1.svg" alt="42 Berlin Logo">
-</body>
-</html>
+<h1 class="mb-4" >Step 1</h1>
+<h2 class="h2">Registration Verification</h2>
+<h3 class="h3 mb-4">Ft_Trasncendence</h3>
 
+<div>
+<form id="authForm" action="/login" method="GET"> 
+   <button type="submit">42 Login</button> 
+ </form>
+
+<div>
+<form id="registerLogin" action="/loginExternal" method="GET">
+   <button type="submit">Register/Login </button>
+</form>
+</div>
+
+<img src="https://42berlin.de/wp-content/uploads/2023/07/Warstwa_1.svg" alt="42 Berlin Logo">
+
+{% endblock %}
