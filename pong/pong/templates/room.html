@@ -1,7 +1,9 @@
 {% block chatview %}
-    <textarea id="chat-log" cols="42" rows="14"></textarea><br>
-    <input id="chat-message-input" type="text" size="42"><br>
-    <input id="chat-message-submit" type="button" value="Send">
+    <div class="container-fluid">
+        <textarea id="chat-log" cols="42" rows="14" "></textarea><br>
+        <input id="chat-message-input" type="text" size="42"><br>
+        <input id="chat-message-submit" type="button" value="Send">
+    </div>
     <script>
         const chatSocket = new WebSocket(
             'wss://'
@@ -10,7 +12,7 @@
         
         chatSocket.onopen = function(e) {
             chatSocket.send(JSON.stringify({
-                'message': " {{ login }} has joined the games"
+                'message': "{{ login }} has joined the games"
             }));
         };
 

@@ -9,7 +9,6 @@ urlpatterns = [
     path("", TemplateView.as_view(template_name="index.html"), name="index"), 
     path('loginExternal', views.loginExternal, name='loginExternal'),
     path('main', views.main),
-
     path('redirect', views.redirect_view, name='redirect_view'),
     path('users/', views.users, name='users'),
     path('users/profile/<int:id>', views.profile, name='profile'),

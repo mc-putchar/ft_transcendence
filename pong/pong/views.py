@@ -29,7 +29,21 @@ def login(request):
     return redirect(auth_url_with_state)
 
 def loginExternal(request):
-    return render(request, 'registration/login.html')
+    username = request.user
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                auth_login(request, user)
+                return redirect('enter')
+            else:
+                return HttpResponse('Invalid login', status=401)
+
+
+    return render(request, 'registration/login.html',{'display_name': username, 'login': username})
 
 def main(request):
     return render(request,"main.html")
