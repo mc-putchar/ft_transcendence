@@ -95,21 +95,35 @@ def redirect_view(request):
     template = 'student_info.html'
     code = request.GET.get('code')
     state = request.GET.get('state')
-    saved_state = request.session.pop('oauth_state', None)
+    saved_state = request.session['oauth_state']
+    # Debug logs
+    logger.debug(f'Received code: {code}')
+    logger.debug(f'Received state: {state}')
+    logger.debug(f'Saved state from session: {saved_state}')
+
+    # Check for missing parameters
+    if not code or not state:
+        logger.error('Missing code or state parameter.')
+        return HttpResponse('Missing code or state parameter.', status=400)
 
     if state != saved_state:
+        logger.error(
+            f'State mismatch. Expected: {saved_state}, Received: {state}')
         return HttpResponse('State mismatch. Possible CSRF attack.', status=400)
 
     access_token = exchange_code_for_token(code, redirect_uri)
 
-    if access_token:
-        request.session['access_token'] = access_token
-        user_data = get_user_data(access_token)
-        if user_data:
-            request.session['user_data'] = user_data
-            html_content = render_to_string(template, {'user_data': user_data})
-            return HttpResponse(html_content)
-        else:
-            return HttpResponse('No user data returned', status=404)
-    else:
-        return HttpResponse('Failed to exchange code for token', status=400)
+    if not access_token:
+        logger.error('Failed to exchange code for access token.')
+        return HttpResponse('Failed to exchange code for access token.', status=400)
+
+    request.session['access_token'] = access_token
+    user_data = get_user_data(access_token)
+
+    if not user_data:
+        logger.error('Failed to retrieve user data.')
+        return HttpResponse('No user data returned.', status=404)
+
+    request.session['user_data'] = user_data
+    html_content = render_to_string(template, {'user_data': user_data})
+    return HttpResponse(html_content)

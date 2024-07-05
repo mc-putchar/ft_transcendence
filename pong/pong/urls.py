@@ -2,6 +2,11 @@ from django.contrib import admin
 from . import views
 from django.urls import path, include
 from django.views.generic.base import TemplateView
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib.staticfiles.views import serve
+from django.views.decorators.cache import cache_control
+
 
 urlpatterns = [
     path('get-template/', views.get_template_content, name='get_template'),
@@ -15,3 +20,8 @@ urlpatterns = [
     path('enter', views.enter, name='enter'),
     # path('game', views.game, name='game'),
 ]
+
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL,
+                          view=cache_control(no_cache=True, must_revalidate=True)(serve))

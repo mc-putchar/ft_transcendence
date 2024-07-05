@@ -19,6 +19,6 @@ migrate:
 	$(DC) run web python manage.py migrate
 
 collect:
-	$(DC) run web python manage.py collectstatic --noinput
+	$(DC) run web python manage.py collectstatic --noinput --clear
 
 
