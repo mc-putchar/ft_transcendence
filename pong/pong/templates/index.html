@@ -1,20 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="text-center">
-    <h1 class="mb-4">Step 1</h1>
-    <h2 class="h2">Registration Verification</h2>
-    <h3 class="h3 mb-4">Ft_Trasncendence</h3>
+<h1 class="mb-4">Step 1</h1>
+<h2 class="h2">Registration Verification</h2>
+<h3 class="h3 mb-4">Ft_Transcendence</h3>
 
-    <form id="authForm" action="/login" method="GET" class="mb-3">
-        <button type="submit" class="btn btn-primary">42 Login</button>
+<div>
+    <form id="authForm" action="/login" method="GET">
+        <button type="submit">42 Login</button>
     </form>
-
-    <form id="registerLogin" action="/loginExternal" method="GET" class="mb-3">
-        <button type="submit" class="btn btn-secondary">Register/Login</button>
-    </form>
-
-    <img src="https://42berlin.de/wp-content/uploads/2023/07/Warstwa_1.svg" alt="42 Berlin Logo" class="img-fluid">
 </div>
+
+<div>
+    <form id="registerLogin" action="/loginExternal" method="GET">
+        <button type="submit">Register/Login</button>
+    </form>
+</div>
+
+<img src="https://42berlin.de/wp-content/uploads/2023/07/Warstwa_1.svg" alt="42 Berlin Logo">
+
+<a href="main.html" data-link>Main Page</a>
 {% endblock %}
 

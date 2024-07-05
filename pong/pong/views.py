@@ -1,11 +1,18 @@
 import secrets
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.template import loader
 import logging
-
 from .auth import exchange_code_for_token, get_user_data
+
+from django.template.loader import render_to_string
+
+
+def get_template_content(request, template_name):
+    html_content = render_to_string(template_name, request.GET.dict())
+    return JsonResponse({'html': html_content})
+
 
 logger = logging.getLogger('django')
 redirect_uri = settings.REDIRECT_URI
