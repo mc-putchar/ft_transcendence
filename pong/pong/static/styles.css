@@ -28,7 +28,6 @@ h3 {
 
 /* Form button styling */
 button {
-
   background-color: #007bff; /* Primary color */
   color: #fff; /* White text */
   border: none;
@@ -49,7 +48,7 @@ button:hover {
 /* Button focus effect */
 button:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 143, 255, 0.5); /* Focus outline */
+  box-shadow: 0 0 0 3px rgba(38, 143, 255, 0.5); /* Focus outline */
 }
 
 /* Image styling */

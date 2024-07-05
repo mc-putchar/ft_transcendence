@@ -5,6 +5,7 @@ from django.urls import path, include
 from django.views.generic.base import TemplateView
 
 urlpatterns = [
+
     # path('', views.index, name='index'),
     path("", TemplateView.as_view(template_name="index.html"), name="index"), 
     path('loginExternal', views.loginExternal, name='loginExternal'),
@@ -13,6 +14,7 @@ urlpatterns = [
     path('users/', views.users, name='users'),
     path('users/profile/<int:id>', views.profile, name='profile'),
     path('admin/', admin.site.urls),
+
     path("accounts/", include("django.contrib.auth.urls")), 
     path('login', views.login, name='login'),
     path('enter', views.enter, name='enter'),

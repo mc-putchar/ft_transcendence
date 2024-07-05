@@ -15,6 +15,7 @@ def game(request):
     template = loader.get_template('game.html')
     return HttpResponse(template.render({}, request))
 
+
 def index(request):
     template = loader.get_template('index.html')
     return HttpResponse(template.render({}, request))
