@@ -12,16 +12,24 @@
 
 <body class="d-flex flex-column min-vh-100">
     <div class="container flex-grow-1 d-flex flex-column justify-content-center">
-        {% block content %}
-        {% endblock %}
+        <div id="content">{% block content %}{% endblock %}</div>
     </div>
+
 
     {% include 'footer.html' %}
 
     {% block javascript %}
+    
+    <script>        var redirectEndpoint = "{{ redirect_endpoint }}";  // Pass the endpoint to JavaScript
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
         crossorigin="anonymous"></script>
+    
+        <script src="{% static 'js/app.js' %}"></script>
+
+    <script>console.log("STARTED IN BASE TEMPLATE");</script>
     {% endblock %}
 </body>
 </html>
+ 

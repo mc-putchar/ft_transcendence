@@ -1,41 +1,55 @@
+import binascii
+import os
 import secrets
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.shortcuts import render, redirect
-from django.template import loader
+from django.template.loader import render_to_string
 import logging
 from .auth import exchange_code_for_token, get_user_data
-
-from django.template.loader import render_to_string
-
-
-def get_template_content(request, template_name):
-    html_content = render_to_string(template_name, request.GET.dict())
-    return JsonResponse({'html': html_content})
-
 
 logger = logging.getLogger('django')
 redirect_uri = settings.REDIRECT_URI
 
 
+def generate_state():
+    return binascii.hexlify(os.urandom(16)).decode()
+
+
+def base_template(request):
+    return render(request, 'base.html')
+
+
+def get_template_content(request):
+    template_name = request.GET.get('template_name')
+    html_content = render_to_string(template_name, request.GET.dict())
+    return JsonResponse({'html': html_content})
+
+
 def game(request):
-    template = loader.get_template('game.html')
-    return HttpResponse(template.render({}, request))
+    html_content = render_to_string('game.html')
+    return JsonResponse({'html': html_content})
 
 
 def index(request):
-    template = loader.get_template('index.html')
-    return HttpResponse(template.render({}, request))
+    html_content = render_to_string('index.html')
+    return JsonResponse({'html': html_content})
 
 
-def login(request):
-    state = secrets.token_urlsafe(32)
+def login42(request):
+    state = generate_state()
     request.session['oauth_state'] = state
     client_id = settings.CLIENT_ID
     auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=public"
 
     auth_url_with_state = f"{auth_url}&state={state}"
     return redirect(auth_url_with_state)
+
+
+def authorize_view(request):
+    request.session['oauth_state'] = state  # Store state in session
+    authorization_url = f"https://oauth-provider.com/authorize?response_type=code&client_id=your-client-id&redirect_uri={redirect_uri}&state={state}"
+    return redirect(authorization_url)
 
 
 def loginExternal(request):
@@ -52,25 +66,31 @@ def loginExternal(request):
             else:
                 return HttpResponse('Invalid login', status=401)
 
-    return render(request, 'registration/login.html', {'display_name': username, 'login': username})
+    return JsonResponse({'html': render_to_string('registration/login.html', {'display_name': username, 'login': username})})
 
 
 def main(request):
-    return render(request, "main.html")
-
-
-def enter(request):
-    # TODO - add a non 42 user login
     user_data = request.session.get('user_data')
     if user_data:
         display_name = user_data['displayname']
-        return render(request, 'main.html', {'display_name': display_name,
-                                             'login': user_data['login']})
+        html_content = render_to_string(
+            'main.html', {'display_name': display_name, 'login': user_data['login']})
+        return JsonResponse({'html': html_content})
     else:
         return HttpResponse('Not authenticated', status=401)
 
 
-# Renamed to avoid conflict with `redirect` function from `django.shortcuts`
+def enter(request):
+    user_data = request.session.get('user_data')
+    if user_data:
+        display_name = user_data['displayname']
+        html_content = render_to_string(
+            'main.html', {'display_name': display_name, 'login': user_data['login']})
+        return HttpResponse(html_content)
+    else:
+        return HttpResponse('Not authenticated', status=401)
+
+
 def redirect_view(request):
     template = 'student_info.html'
     code = request.GET.get('code')
@@ -78,8 +98,7 @@ def redirect_view(request):
     saved_state = request.session.pop('oauth_state', None)
 
     if state != saved_state:
-        return HttpResponse('State mismatch. Possible CSRF attack.',
-                            status=400)
+        return HttpResponse('State mismatch. Possible CSRF attack.', status=400)
 
     access_token = exchange_code_for_token(code, redirect_uri)
 
@@ -88,26 +107,9 @@ def redirect_view(request):
         user_data = get_user_data(access_token)
         if user_data:
             request.session['user_data'] = user_data
-            return render(request, template, {'user_data': user_data})
+            html_content = render_to_string(template, {'user_data': user_data})
+            return HttpResponse(html_content)
         else:
             return HttpResponse('No user data returned', status=404)
     else:
-        return HttpResponse('Failed to exchange code for access token', status=400)
-
-
-def users(request):
-    users = User.objects.all().values()
-    template = loader.get_template('users.html')
-    context = {
-        'users': users,
-    }
-    return HttpResponse(template.render(context, request))
-
-
-def profile(request, id):
-    user = AbstractUser.objects.get(id=id)
-    template = loader.get_template('profile.html')
-    context = {
-        'user': users,
-    }
-    return HttpResponse(template.render(context, request))
+        return HttpResponse('Failed to exchange code for token', status=400)

@@ -38,8 +38,33 @@ ALLOWED_HOSTS = ['pong.ktano-studio.com']
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
+CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOWED_ORIGINS = [
+    "https://pong.ktano-studio.com",
+    "https://api.intra.42.fr"
+]
 
+# Specify allowed HTTP methods
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+]
+
+# Specify allowed headers
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 # Application definition
 
 # ASGI_APPLICATION = 'pong.routing.application'
@@ -63,6 +88,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -111,7 +137,6 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-
 
 
 # Password validation
@@ -169,6 +194,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # or your preferred session backend
+# or your preferred session backend
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 LOGIN_REDIRECT_URL = "/main"

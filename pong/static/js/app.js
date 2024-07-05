@@ -1,29 +1,14 @@
- // static/js/app.js
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("app.js loaded");
 
-document.addEventListener('DOMContentLoaded', () => {
-    const app = document.getElementById('app');
-
-    async function navigateTo(url) {
-        const response = await fetch(url);
-        const data = await response.json();
-        app.innerHTML = data.html;
-        initEventListeners(); // Reinitialize event listeners after rendering new content
-    }
-
-    function initEventListeners() {
-        document.querySelectorAll('[data-link]').forEach(link => {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                const path = event.target.getAttribute('href');
-                navigateTo(`/get-template?template_name=${path}`);
-            });
-        });
-    }
-
-    // Initial load
-    navigateTo('/get-template?template_name=index.html');
-
-    // Initialize event listeners for dynamic navigation
-    initEventListeners();
+    // Use the dynamic endpoint passed from the template
+    fetch(redirectEndpoint)
+        .then(response => response.text())
+        .then(html => {
+            console.log(html);
+            // Assuming there's a div with id 'content' to render the HTML
+            document.getElementById('content').innerHTML = html;
+        })
+        .catch(error => console.error("Error fetching and rendering data:", error));
 });
 
