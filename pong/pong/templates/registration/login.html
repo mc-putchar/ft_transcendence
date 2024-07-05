@@ -1,17 +1,18 @@
-
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
+
 {% block content %}
-
-<h2>Log In as external user</h2>
-
-<div>
-<form method="post" action='/accounts/login/'>
-  {% csrf_token %}
-  {{ form }}
-  <button type="submit">Log In</button>
-</form>
+<div class="container d-flex flex-column align-items-center justify-content-center min-vh-100">
+    <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
+        <h2 class="card-title text-center mb-4">Log In as External User</h2>
+        <form method="post" action='/accounts/login/'>
+            {% csrf_token %}
+            {{ form }}
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Log In</button>
+            </div>
+        </form>
+    </div>
 </div>
-
 {% endblock %}
 

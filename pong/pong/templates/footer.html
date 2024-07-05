@@ -1,1 +1,20 @@
-
+<!-- templates/footer.html -->
+<footer class="footer mt-auto py-3 bg-light">
+    <div class="container">
+        <span class="text-muted">
+            {% block logout %}
+                {% if user.is_authenticated %}
+                    Hi {{ user.username }}!
+                    <form action="{% url 'logout' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link">Log Out</button>
+                    </form>
+                {% else %}
+                    <p>You are not logged in</p>
+                    <!-- TODO MAKE A POST TO CHANGE VIEW NOT REDIRECT -->
+                    <a href="{% url 'login' %}">Log In</a>
+                {% endif %}
+            {% endblock %}
+        </span>
+    </div>
+</footer>
