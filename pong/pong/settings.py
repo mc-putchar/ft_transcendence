@@ -170,3 +170,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # or your preferred session backend
+
+LOGIN_REDIRECT_URL = "/main"

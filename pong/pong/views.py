@@ -28,6 +28,12 @@ def login(request):
     auth_url_with_state = f"{auth_url}&state={state}"
     return redirect(auth_url_with_state)
 
+def loginExternal(request):
+    return render(request, 'registration/login.html')
+
+def main(request):
+    return render(request,"main.html")
+
 def enter(request):
     # TODO - add a non 42 user login 
     user_data = request.session.get('user_data')
