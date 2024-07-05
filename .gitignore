@@ -4,3 +4,4 @@ staticfiles
 .venv
 __pycache__
 .env
+pong/testenv
