@@ -5,24 +5,37 @@
         <input id="chat-message-submit" type="button" value="Send">
     </div>
     <script>
-        const chatSocket = new WebSocket(
-            'wss://'
+        // depending on https or http on url , change the wss or ws
+        if (window.location.protocol === 'https:') {
+            var ws_scheme = "wss://";
+        } else {
+            var ws_scheme = "ws://";
+            console.log("cheap old http");
+            console.log(ws_scheme);
+        }
+
+        const chatSocket = new WebSocket(ws_scheme
             + window.location.host + '/ws/enter'
         );
-        
+
         chatSocket.onopen = function(e) {
-            chatSocket.send(JSON.stringify({
-                'message': "{{ login }} has joined the games"
-            }));
+            if (chatSocket.readyState === WebSocket.OPEN) 
+            {
+                chatSocket.send(JSON.stringify({
+                    'message': "{{ login }} has joined the games"
+                }));
+            }
+            console.log("connected", e);
         };
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             document.querySelector('#chat-log').value += (data.message + '\n');
+            console.log("data ", data);
         };
 
         chatSocket.onclose = function(e) {
-            console.error('Chat socket closed unexpectedly');
+            console.error('Chat socket closed unexpectedly', e);
         };
 
         document.querySelector('#chat-message-input').focus();
@@ -35,8 +48,11 @@
         document.querySelector('#chat-message-submit').onclick = function(e) {
             const messageInputDom = document.querySelector('#chat-message-input');
             const message = messageInputDom.value;
+            console.log("message");
+            console.log(message);
             chatSocket.send(JSON.stringify({
-                'message': `{{ login }}: ${message}`
+                // 'message': `{{ login }}: ${message}`
+                'message': message
             }));
             messageInputDom.value = '';
         };

@@ -59,7 +59,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const canvas = document.getElementById('gameCanvas');
     const context = canvas.getContext('2d');
     const gameSocket = new WebSocket(
-        'wss://' + window.location.host + '/ws/game/'
+        (window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
+        window.location.host + '/ws/game/'
     );
 
     gameSocket.onmessage = function(e) {

@@ -5,3 +5,4 @@ staticfiles
 __pycache__
 .env
 pong/testenv
+testenv

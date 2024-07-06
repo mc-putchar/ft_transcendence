@@ -23,7 +23,6 @@ REDIRECT_URI = config('REDIRECT_URI')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -33,8 +32,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-CSRF_TRUSTED_ORIGINS = ['https://pong.ktano-studio.com']
-ALLOWED_HOSTS = ['pong.ktano-studio.com']
+CSRF_TRUSTED_ORIGINS = ['https://pong.ktano-studio.com', 'https://api.intra.42.fr', 'http://localhost:8000']
+ALLOWED_HOSTS = ['pong.ktano-studio.com', 'api.intra.42.fr', 'localhost']
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -44,7 +43,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "https://pong.ktano-studio.com",
-    "https://api.intra.42.fr"
+    "https://api.intra.42.fr",
+    "http://localhost:8000",
 ]
 
 # Specify allowed HTTP methods

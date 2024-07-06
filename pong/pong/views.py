@@ -11,28 +11,15 @@ from .auth import exchange_code_for_token, get_user_data
 logger = logging.getLogger('django')
 redirect_uri = settings.REDIRECT_URI
 
-
 def generate_state():
-    return binascii.hexlify(os.urandom(16)).decode()
-
+    return secrets.token_hex(16)
 
 def base_template(request):
     return render(request, 'base.html')
 
-
 def get_template_content(request):
     template_name = request.GET.get('template_name')
     html_content = render_to_string(template_name, request.GET.dict())
-    return JsonResponse({'html': html_content})
-
-
-def game(request):
-    html_content = render_to_string('game.html')
-    return JsonResponse({'html': html_content})
-
-
-def index(request):
-    html_content = render_to_string('index.html')
     return JsonResponse({'html': html_content})
 
 
@@ -54,31 +41,37 @@ def authorize_view(request):
 
 def loginExternal(request):
     username = request.user
+    logger.debug(f'Username: {username}')
     if request.method == 'POST':
         form = LoginForm(request.POST)
+        logger.debug(f'Form data: {form}')
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 auth_login(request, user)
-                return redirect('enter')
+                # add the user to the session data
+                request.session['user_data'] = {
+                    'displayname': user.displayname,
+                    'login': user.username
+                }
+                logger.debug(f'User data: {request.session["user_data"]}')
+                render_to_string('main.html', {'display_name': user.displayname, 'login': user.username})
             else:
                 return HttpResponse('Invalid login', status=401)
 
-    return JsonResponse({'html': render_to_string('registration/login.html', {'display_name': username, 'login': username})})
-
+    # return JsonResponse({'html': render_to_string('registration/login.html', {'display_name': username, 'login': username})})
+    return render(request, 'registration/login.html', {'display_name': username, 'login': username})
 
 def main(request):
     user_data = request.session.get('user_data')
-    if user_data:
-        display_name = user_data['displayname']
-        html_content = render_to_string(
-            'main.html', {'display_name': display_name, 'login': user_data['login']})
-        return JsonResponse({'html': html_content})
-    else:
-        return HttpResponse('Not authenticated', status=401)
+    logger.debug(f'User data: {user_data}')
 
+    html_content = render_to_string('main.html', context={'user_data': user_data}) 
+    return HttpResponse(html_content)
+    # else:
+    #     return HttpResponse('Not authenticated')
 
 def enter(request):
     user_data = request.session.get('user_data')
@@ -90,6 +83,15 @@ def enter(request):
     else:
         return HttpResponse('Not authenticated', status=401)
 
+def game(request):
+    user_data = request.session.get('user_data')
+    if user_data:
+        display_name = user_data['displayname']
+        html_content = render_to_string(
+            'game.html', {'display_name': display_name, 'login': user_data['login']})
+        return HttpResponse(html_content)
+    else:
+        return HttpResponse('Not authenticated', status=401)
 
 def redirect_view(request):
     template = 'student_info.html'

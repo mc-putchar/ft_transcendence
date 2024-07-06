@@ -6,7 +6,6 @@ class User(models.Model):
     fullname = models.CharField(max_length=255)
     score = models.IntegerField(null=True)
 
-
 class Game(models.Model):
     player1 = models.ForeignKey(User, related_name='player1', on_delete=models.CASCADE)
     player2 = models.ForeignKey(User, related_name='player2', on_delete=models.CASCADE, null=True, blank=True)
@@ -17,3 +16,5 @@ class Game(models.Model):
     ball_velocity_y = models.FloatField(default=0.01)
     paddle1_y = models.FloatField(default=0.5)
     paddle2_y = models.FloatField(default=0.5)
+
+
