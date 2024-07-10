@@ -1,0 +1,23 @@
+  <form id="registerForm" method="post" action="/register_new/" class="text-center">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" class="form-control" name="username" id="username" maxlength="30" required placeholder="Enter your username">
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input type="email" class="form-control" name="email" id="email" maxlength="30" required placeholder="Enter your email">
+    </div>
+    <div class="mb-3">
+      <label for="password1" class="form-label">Password</label>
+      <input type="password" class="form-control" name="password1" id="password1" maxlength="30" required placeholder="Enter your password">
+    </div>
+    <div class="mb-3">
+      <label for="password2" class="form-label">Confirm Password</label>
+      <input type="password" class="form-control" name="password2" id="password2" maxlength="30" required placeholder="Confirm your password">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register</button>
+  </form>
+

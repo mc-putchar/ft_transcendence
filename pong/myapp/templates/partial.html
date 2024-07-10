@@ -1,0 +1,29 @@
+{% if username %}
+  <p>Logged in as {{ username }} <p>
+    <form id="logoutForm" method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Logout</button>
+</form>
+
+{% else %}
+<div class="container mt-5">
+  <form id="loginForm" method="post" action="{% url 'login' %}" class="mt-5">
+    {% csrf_token %}
+    <!-- {{ form.as_p }} -->
+    
+  <div class="mb-3">
+    <label for="username" class="form-label">Username</label>
+    <input type="text" class="form-control" name="username" id="username">
+  </div>
+  <div class="mb-3">
+    <label for="password" class="form-label">Password</label>
+    <input type="password" class="form-control" name="password" id="password" required>
+  </div>
+
+    <input type="hidden" name="next" value="{{ next }}">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <button type="submit" class="btn btn-primary">Login Form</button>
+</form>
+</div>
+{% endif %}

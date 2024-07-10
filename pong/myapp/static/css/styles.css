@@ -1,0 +1,159 @@
+/* Define the fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Define the fade-out animation */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Apply the animation to .fade-enter */
+.fade-enter {
+  opacity: 0;
+  animation: fadeIn 0.7s forwards;
+}
+
+/* Apply the animation to .fade-exit */
+.fade-exit {
+  opacity: 1;
+  animation: fadeOut 0.3s forwards;
+}
+
+html, body {
+    padding: 0;
+    margin: 0;
+}
+
+button.btn {
+    margin-top: 2rem;
+    width: 100%; /* Make buttons full width within the form */
+}
+
+/* Make the app take the full width and till the bottom of the page */
+.app {
+    margin-top: 12vh;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+
+}
+
+a, p, h1, h2, h3, h4, h5, h6, button, label, input, select, textarea ,img{
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f4f8; /* Light background color */
+    color: #222; /* Dark text color */
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Header styling */
+h1 {
+    color: #007bff; /* Primary color */
+    margin-bottom: 10px;
+}
+
+h2 {
+    color: #0056b3; /* Slightly darker primary color */
+    margin-bottom: 15px;
+}
+
+h3 {
+    color: #333; /* Dark text color */
+    margin-bottom: 20px;
+}
+
+/* Form button styling */
+button {
+    background-color: #007bff; /* Primary color */
+    color: #fff; /* White text */
+    border: none;
+    border-radius: 8px; /* Rounded corners */
+    padding: 10px 20px; /* Padding */
+    font-size: 1em; /* Larger text */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+/* Button hover effect */
+button:hover {
+    background-color: #0056b3; /* Darker shade of primary color */
+    transform: translateY(-2px); /* Slightly lift the button */
+}
+
+/* Button focus effect */
+button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 143, 255, 0.5); /* Focus outline */
+}
+
+/* Image styling */
+img {
+    width: 30%;
+    height: auto;
+    margin-top: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    button {
+        padding: 12px 25px;
+        font-size: 1em;
+    }
+    img {
+        width: 50%;
+    }
+}
+
+@media (max-width: 480px) {
+    button {
+        padding: 10px 20px;
+        font-size: 0.9em;
+    }
+
+    img {
+        width: 60%;
+    }
+}
+
+/* Footer styling */
+.footer {
+    /* stay always at the bottom of the screen */
+    position: absolute;
+    text-align: center;
+    bottom: 0;
+    width: 100%;
+}
+
+.mp3-hover:hover
+{
+	-webkit-transition: all 200ms ease-in;
+	-webkit-transform: scale(1.1);
+	-ms-transition: all 200ms ease-in;
+	-ms-transform: scale(1.1);   
+	-moz-transition: all 200ms ease-in;
+	-moz-transform: scale(1.1);
+	transition: all 200ms ease-in;
+	transform: scale(1.1);
+}
+
+img.mp3-hover:hover{
+	box-shadow: 0px 0px 100px #94a7ba;
+	z-index: 2;
+}
+
+.mp3-audio{
+}
+

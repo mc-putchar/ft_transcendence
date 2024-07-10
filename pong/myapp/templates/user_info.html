@@ -1,0 +1,25 @@
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card p-2 shadow-sm">
+            <div class="card-body text-center">
+                <h2 class="h4 mb-4">Logged in</h1>
+                <!-- <button onclick="window.location.href='/enter'" class="btn btn-primary btn-lg mb-3">Enter</button> -->
+                {% if user_data %}
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item">User: {{ user_data.login }}</li>
+                        <li class="list-group-item">Email: {{ user_data.email }}</li>
+                        <li class="list-group-item">
+                            <img src="{{ user_data.image.versions.medium }}" alt="Profile Image" class="img-thumbnail">
+                        </li>
+                    </ul>
+                {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        No user data available
+                    </div>
+                {% endif %}
+
+                <img src="https://42berlin.de/wp-content/uploads/2023/07/Warstwa_1.svg" alt="42 Berlin Logo" class="img-fluid mt-4">
+            </div>
+        </div>
+    </div>
+</div>

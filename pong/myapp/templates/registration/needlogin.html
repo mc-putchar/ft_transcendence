@@ -1,0 +1,27 @@
+{% load static %}
+{% block content %}
+     <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card p-6 text-center">
+                <p class="alert alert-warning no-select ">Sorry, you need to login to see this page.</p>
+                <div class="row">
+                    <div class="col-md-6 mb-3 text-center no-select">
+                        <p>Login as regular user</p>
+                        <a href="/login" class="btn btn-primary btn-block" data-link>Login</a>
+                    </div>
+
+                    <div class="col-md-6 mb-3 text-center no-select">
+                        <p>Do you have a 42 account?</p>
+                        <a href="/auth42" class="btn btn-success btn-block">42 Login</a>
+                    </div>
+
+                    <div class="col-md-6 mb-3 text-center no-select">
+                       <p> Don't have an acoount ? </p>
+                       <a href="/register" class="btn btn-primary" data-link> Register</a>
+                   </div>
+                </div>
+    <div class="row mt-3">
+        <img src="{% static 'assets/42logo.svg' %}" alt="Logo" style="height: 40px;">
+    </div>
+{% endblock %}
+
