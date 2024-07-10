@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'pong',
     'django.contrib.staticfiles',
 ]
 
@@ -47,7 +48,7 @@ ROOT_URLCONF = 'spango.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'myapp/templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'pong/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -69,10 +70,15 @@ WSGI_APPLICATION = 'spango.wsgi.application'
 # Use database-backed sessions
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': 'db',
+        'PORT': '5432',
     }
 }
 
@@ -116,7 +122,7 @@ LOGIN_REDIRECT_URL = '/home_data'
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'myapp/static',
+    BASE_DIR / 'pong/static',
 ]
 
 # logout redirect

@@ -14,6 +14,7 @@ RUN pip install --upgrade pip wheel && \
 
 
 #RUN python manage.py collectstatic --noinput
+
 ENV CLIENT_ID CLIENT_SECRET REDIRECT_URI
 
 COPY . /code/
