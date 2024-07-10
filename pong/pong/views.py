@@ -74,7 +74,6 @@ def online(request):
     html = render_to_string('online_game.html', request=request, context={"username": username})
 
     data = {"title": "Online", "content": html}
-    
     return JsonResponse(data, safe=False)
 
 
@@ -86,7 +85,6 @@ def logout(request):
         "title": "Logout",
         "content": template,
     }
-
     return JsonResponse(data)
 
 
@@ -102,46 +100,53 @@ def login(request):
                 data = {"title": "Login", "content": "Login successful"}
                 return JsonResponse(data)
             else:
-                data = {"title": "Login",
-                        "content": "Invalid username or password"}
+                data = {"title": "Login", "content": "Invalid username or password"}
                 return JsonResponse(data, status=400)
         else:
             data = {"title": "Login", "content": "Form validation failed"}
             return JsonResponse(data, status=400)
     else:
         form = LoginForm()
-        html_form = render_to_string(
-            'partial.html', {'form': form}, request=request)
+        html_form = render_to_string('partial.html', {'form': form}, request=request)
         data = {"title": "Login", "content": html_form}
         return JsonResponse(data)
 
-
-@csrf_exempt
 def register(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirm_password')
+    try:
+        if request.method == 'POST':
+            form = RegisterForm(request.POST)
+            if form.is_valid():
+                username = form.cleaned_data.get('username')
+                email = form.cleaned_data.get('email')
+                password = form.cleaned_data.get('password')
 
-        if password != confirm_password:
-            return JsonResponse({"title": "Register", "content": "Passwords do not match"}, status=400)
+                if User.objects.filter(username=username).exists():
+                    return JsonResponse({"title": "Register", "content": "Username already taken"}, status=400)
 
-        if User.objects.filter(username=username).exists():
-            return JsonResponse({"title": "Register", "content": "Username already taken"}, status=400)
+                if User.objects.filter(email=email).exists():
+                    return JsonResponse({"title": "Register", "content": "Email already registered"}, status=400)
 
-        if User.objects.filter(email=email).exists():
-            return JsonResponse({"title": "Register", "content": "Email already registered"}, status=400)
+                user = User.objects.create_user(username=username, email=email, password=password)
+                user.save()
+                logger.info(f"User created: {username}")
 
-        User.objects.create_user(
-            username=username, email=email, password=password)
-        return JsonResponse({"title": "Register", "content": "Registration successful"})
-
-    else:
-        form_html = render_to_string(
-            'registration/register.html', {}, request=request)
-        return JsonResponse({"title": "Register", "content": form_html})
-
+                user = authenticate(username=username, password=password)
+                if user is not None:
+                    django_login(request, user)
+                    logger.info("User authenticated and logged in")
+                    return JsonResponse({"title": "Register", "content": "Registration successful"})
+                else:
+                    logger.error("Authentication failed after registration")
+                    return JsonResponse({"title": "Register", "content": "Authentication failed"}, status=400)
+            else:
+                errors = form.errors.as_json()
+                return JsonResponse({"title": "Register", "content": errors}, status=400)
+        else:
+            form_html = render_to_string('registration/register.html', {}, request=request)
+            return JsonResponse({"title": "Register", "content": form_html})
+    except Exception as e:
+        logger.error(f"An error occurred during registration: {str(e)}")
+        return JsonResponse({"title": "Register", "content": "An error occurred during registration"}, status=500)
 
 def generate_state():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=16))

@@ -19,5 +19,5 @@ urlpatterns = [
     path('redirect', views.redirect_view, name='redirect_view'),
 
     # re path to catch all other urls
-    re_path(r'^.*$', views.index, name='index'),
+    # re_path(r'^.*$', views.index, name='index'),
 ]

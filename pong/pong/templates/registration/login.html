@@ -1,17 +1,18 @@
-  <form id="loginForm" method="post" action="/accounts/login/" class="form-group mb-2">
-    {% csrf_token %}
-    <input type="hidden" name="csrfmiddlewaretoken" value="FyABBNG75yWiW22I4h7MoBsRXvJxPghrjzySB3tqXGBaY1aOn1vAxEFpvJEsx872">
+<form id="loginForm" method="post" action="/accounts/login/" class="form-group mb-2">
+  {% csrf_token %}
+  <input type="hidden" name="csrfmiddlewaretoken"
+    value="FyABBNG75yWiW22I4h7MoBsRXvJxPghrjzySB3tqXGBaY1aOn1vAxEFpvJEsx872">
 
-    <div class="align-items-center">
-      <label for="username" class="form-label col-sm-2 col-form-label no-select">Username</label>
-      <input type="text" class="form-control col-sm-4" name="username" id="username" maxlength="30" required>
-    </div>
+  <div class="align-items-center">
+    <label for="username" class="form-label col-sm-2 col-form-label no-select">Username</label>
+    <input type="text" class="form-control col-sm-4" name="username" id="username" maxlength="30" required>
+  </div>
 
-    <div class="align-items-center">
-      <label for="password" class="form-label col-sm-2 col-form-label no-select">Password</label>
-      <input type="password" class="form-control col-sm-4" name="password" id="password" required maxlength="30">
-    </div>
+  <div class="align-items-center">
+    <label for="password" class="form-label col-sm-2 col-form-label no-select">Password</label>
+    <input type="password" class="form-control col-sm-4" name="password" id="password" required maxlength="30">
+  </div>
 
-    <input type="hidden" name="next" value="">
-    <button type="submit" class="btn btn-primary">Login Form</button>
-  </form>
+  <input type="hidden" name="next" value="">
+  <button type="submit" class="btn btn-primary">Login Form</button>
+</form>

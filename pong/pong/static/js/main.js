@@ -14,23 +14,6 @@ const routes = {
     "/register": { title: "Register", endpoint: "/register" },
 };
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-const csrftoken = getCookie('csrftoken');
-
 function renderOnlineGame(data) {
     return `<div>${data.content}</div>`;
 }
@@ -111,6 +94,23 @@ function router() {
     }
 }
 
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
 function handleLoginForm() {
     document.getElementById("loginForm").addEventListener("submit", function (e) {
         e.preventDefault();
@@ -120,17 +120,10 @@ function handleLoginForm() {
             body: formData,
             headers: {
                 'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => {
-            if (!response.ok) {
-                if (response.status === 403) {
-                    throw new Error('Forbidden: CSRF token missing or incorrect.');
-                }
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
             if (data.content === "Login successful") {
@@ -140,7 +133,7 @@ function handleLoginForm() {
         })
         .catch(error => {
             console.error("Login error:", error);
-            document.getElementById("app").innerHTML = `<p>${error.message}</p>`;
+            document.getElementById("app").innerHTML = `<p>Login failed: ${error.message}</p>`;
         });
     });
 }
@@ -155,26 +148,18 @@ function handleLogoutForm() {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => {
-            if (!response.ok) {
-                if (response.status === 403) {
-                    throw new Error('Forbidden: CSRF token missing or incorrect.');
-                }
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
             if (data.content === "Logout successful") {
                 setTimeout(() => {
-                    window.location.href = data.redirect_url;
+                    window.location.href = "/";
                 }, 1000);
             }
         })
         .catch(error => {
             console.error("Logout error:", error);
-            document.getElementById("app").innerHTML = `<p>${error.message}</p>`;
+            document.getElementById("app").innerHTML = `<p>Logout failed: ${error.message}</p>`;
         });
     });
 }
@@ -188,24 +173,25 @@ function handleRegisterForm() {
             body: formData,
             headers: {
                 'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error("Network response was not ok");
             }
             return response.json();
         })
         .then(data => {
             document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
             if (data.content === "Registration successful") {
-                history.pushState("", "", "/login");
+                history.pushState("", "", "/");
                 router();
             }
         })
         .catch(error => {
             console.error("Registration error:", error);
-            document.getElementById("app").innerHTML = `<p>${error.message}</p>`;
+            document.getElementById("app").innerHTML = `<p>Registration failed: ${error.message}</p>`;
         });
     });
 }
