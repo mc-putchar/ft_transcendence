@@ -13,8 +13,7 @@ CLIENT_ID = env('CLIENT_ID')
 CLIENT_SECRET = env('CLIENT_SECRET')
 
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^p0nw$@bioch_#9jc%a9m9g4yr(06@yb+b%3v7f1f8dt&m!#xp'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

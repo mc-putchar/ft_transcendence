@@ -2,8 +2,18 @@ import { startOscillator, stopOscillator, playAudioTrack } from "./audio.js";
 import { renderHome } from "./views/home.js";
 import { renderLocalGame } from "./views/local.js";
 
+// Transition durations in milliseconds
 const fadeOutDuration = 200;
 const fadeInDuration = 600;
+
+const viewFunctions = {
+    "/": renderHome,
+    "/local": renderLocalGame,
+    "/login": renderLogin,
+    "/online": renderOnlineGame,
+    "/logout": renderLogout,
+    "/register": renderRegister,
+};
 
 const routes = {
     "/": { endpoint: "/home_data" },
@@ -19,10 +29,8 @@ function renderOnlineGame(data) {
 }
 
 function renderLogin(data) {
-    return `
-        <h2>${data.title}</h2>
-        ${data.content}
-    `;
+    return `<h2>${data.title}</h2> 
+            ${data.content} `;
 }
 
 function renderLogout(data) {
@@ -32,15 +40,6 @@ function renderLogout(data) {
 function renderRegister(data) {
     return `<div>${data.content}</div>`;
 }
-
-const viewFunctions = {
-    "/": renderHome,
-    "/local": renderLocalGame,
-    "/login": renderLogin,
-    "/online": renderOnlineGame,
-    "/logout": renderLogout,
-    "/register": renderRegister,
-};
 
 function router() {
     let view = routes[location.pathname];
@@ -216,4 +215,3 @@ window.addEventListener("popstate", router);
 document.addEventListener("DOMContentLoaded", () => {
     router();
 });
-
