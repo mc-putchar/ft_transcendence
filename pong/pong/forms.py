@@ -3,11 +3,9 @@ from django import forms
 from django.contrib.auth.models import User
 # serializable form that can be converted to json
 
-
 class LoginForm(forms.Form):
     username = forms.CharField(label='Username', max_length=100)
     password = forms.CharField(label='Password', max_length=100)
-    
 
 class RegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)

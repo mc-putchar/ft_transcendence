@@ -27,6 +27,11 @@ const routes = {
     "/chat": { title: "Chat", endpoint: "/chat" },
 };
 
+// list of routes that use websockets
+const wsRoutes = [
+    "/chat",
+];
+
 function renderChat(data) {
     return `${data.content}`;
 }
@@ -46,6 +51,17 @@ function renderLogout(data) {
 
 function renderRegister(data) {
     return `<div>${data.content}</div>`;
+}
+
+// check if the location is different from wsRoutes in any location change
+function checkWS() {
+    if (!wsRoutes.includes(location.pathname)) {
+        if (window.chatSocket) {
+            window.chatSocket.close();
+            console.log("Chat socket closed : ", window.chatSocket);
+            delete window.chatSocket;
+        }
+    }
 }
 
 function router() {
@@ -80,7 +96,8 @@ function router() {
                 appElement.classList.add('fade-enter');
 
                 setTimeout(() => appElement.classList.remove('fade-enter'), fadeInDuration);
-
+                
+                checkWS();
                 if (location.pathname === "/login") {
                     handleLoginForm();
                     document.getElementById("username").focus();
@@ -151,8 +168,8 @@ function handleLoginForm() {
 }
 
 function handleChat() {
+
     initWS();
-    console.log("ws init done");
 }
 
 function handleLogoutForm() {
@@ -216,7 +233,6 @@ function handleRegisterForm() {
 document.getElementById("app").addEventListener("click", (event) => {
     if (event.target.id === "StartLocalGameButton") {
         startOscillator();
-
         // TODO any click will contract the navbar from the expanded state
         // playAudioTrack();
     }

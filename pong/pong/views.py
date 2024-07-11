@@ -9,6 +9,8 @@ from .auth42 import exchange_code_for_token, get_user_data
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
+from chat.models import Lobby
+
 
 import secrets
 import logging
@@ -85,6 +87,10 @@ def logout(request):
         "title": "Logout",
         "content": template,
     }
+
+    lobby = Lobby.objects.get(id=1)
+    lobby.remove_user(request.user.username)
+    
     return JsonResponse(data)
 
 
@@ -100,6 +106,8 @@ def login(request):
             if user is not None:
                 django_login(request, user)
                 data = {"title": "Login", "content": "Login successful"}
+                lobby = Lobby.objects.get(id=1)
+                lobby.add_user(user.username)
                 return JsonResponse(data)
             else:
                 data = {"title": "Login", "content": "Invalid username or password"}
