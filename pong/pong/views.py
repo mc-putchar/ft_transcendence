@@ -2,17 +2,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login as django_login
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
-from .forms import LoginForm, RegisterForm
+from .forms import LoginForm
 from django.template.loader import render_to_string
 from django.contrib.auth import logout as django_logout  # Import logout
 from .auth42 import exchange_code_for_token, get_user_data
 from django.conf import settings
 from django.contrib.auth import authenticate
-from django.views.decorators.csrf import csrf_exempt
 from chat.models import Lobby
 
-
-import secrets
 import logging
 import random
 import string
@@ -27,7 +24,6 @@ def index(request):
         'user': request.user,
         'username': user_data.get('login', request.user.username)
     }
-
     return render(request, 'index.html', context)
 
 
@@ -52,9 +48,7 @@ def home_data(request):
 
 
 def local_game(request):
-    # data = {"title": "Local", "content": "Play in the same computer"}
     data = {"title": 'local', 'content': render_to_string("local_game.html")}
-
     return JsonResponse(data)
 
 
@@ -64,16 +58,15 @@ def contact_data(request):
 
 
 def online(request):
-
     if not request.user.is_authenticated:
-        # render please login view template
         html = render_to_string('registration/needlogin.html', request=request)
         data = {"title": "Online", "content": html}
         return JsonResponse(data, safe=False)
 
     username = request.user.username
 
-    html = render_to_string('online_game.html', request=request, context={"username": username})
+    html = render_to_string('online_game.html', request=request, context={
+                            "username": username})
 
     data = {"title": "Online", "content": html}
     return JsonResponse(data, safe=False)
@@ -90,46 +83,51 @@ def logout(request):
 
     lobby = Lobby.objects.get(id=1)
     lobby.remove_user(request.user.username)
-    
+
     return JsonResponse(data)
 
 
 def login(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
-        
+
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(username=username, password=password)
-          
+
             if user is not None:
                 django_login(request, user)
                 data = {"title": "Login", "content": "Login successful"}
-                lobby = Lobby.objects.get(id=1)
+                lobby, created = Lobby.objects.get_or_create(
+                    id=1, defaults={'num_players': 0, 'userlist': ''})
                 lobby.add_user(user.username)
                 return JsonResponse(data)
             else:
-                data = {"title": "Login", "content": "Invalid username or password"}
+                data = {"title": "Login",
+                        "content": "Invalid username or password"}
                 return JsonResponse(data, status=400)
-        
+
         else:
             data = {"title": "Login", "content": "Form validation failed"}
             return JsonResponse(data, status=400)
-    
+
     else:
         form = LoginForm()
-        html_form = render_to_string('partial.html', {'form': form}, request=request)
+        html_form = render_to_string(
+            'partial.html', {'form': form}, request=request)
         data = {"title": "Login", "content": html_form}
         return JsonResponse(data)
+
 
 def register(request):
     if request.method == 'POST':
         email = request.POST['email']
         username = request.POST['username']
-        password= request.POST['password1']
+        password = request.POST['password1']
 
-        user = User.objects.create_user(username = username , password = password , email = email)
+        user = User.objects.create_user(
+            username=username, password=password, email=email)
         user.save()
 
         if user is not None:
@@ -137,11 +135,14 @@ def register(request):
 
         return JsonResponse({"title": "Register", "content": "Registration successful"})
     else:
-        form_html = render_to_string('registration/register.html', {}, request=request)
+        form_html = render_to_string(
+            'registration/register.html', {}, request=request)
         return JsonResponse({"title": "Register", "content": form_html})
+
 
 def generate_state():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+
 
 def auth42(request):
     state = generate_state()
@@ -150,6 +151,7 @@ def auth42(request):
     redirect_uri = settings.REDIRECT_URI
     auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=public&state={state}"
     return redirect(auth_url)
+
 
 def redirect_view(request):
     code = request.GET.get('code')
@@ -169,7 +171,6 @@ def redirect_view(request):
         user_data = get_user_data(access_token)
         if user_data:
             request.session['user_data'] = user_data
-
             # Get or create the Django user
             # assuming 'login' is the username field from 42 API
             username = user_data.get('login')
