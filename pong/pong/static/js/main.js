@@ -1,6 +1,7 @@
 import { startOscillator, stopOscillator, playAudioTrack } from "./audio.js";
 import { renderHome } from "./views/home.js";
 import { renderLocalGame } from "./views/local.js";
+import { initWS } from "./chat.js";
 
 // Transition durations in milliseconds
 const fadeOutDuration = 200;
@@ -13,6 +14,7 @@ const viewFunctions = {
     "/online": renderOnlineGame,
     "/logout": renderLogout,
     "/register": renderRegister,
+    "/chat": renderChat,
 };
 
 const routes = {
@@ -22,7 +24,13 @@ const routes = {
     "/online": { title: "Online", endpoint: "/online" },
     "/logout": { title: "Logout", endpoint: "/logout" },
     "/register": { title: "Register", endpoint: "/register" },
+    "/chat": { title: "Chat", endpoint: "/chat" },
 };
+
+function renderChat(data) {
+    return `${data.content}`;
+}
+
 
 function renderOnlineGame(data) {
     return `<div>${data.content}</div>`;
@@ -81,6 +89,8 @@ function router() {
                 } else if (location.pathname === "/register") {
                     handleRegisterForm();
                     document.getElementById("username").focus();
+                } else if (location.pathname === "/chat") {
+                    handleChat();
                 }
             }, fadeOutDuration);
         })
@@ -138,6 +148,11 @@ function handleLoginForm() {
             document.getElementById("app").innerHTML = `<p>Login failed: ${error.message}</p>`;
         });
     });
+}
+
+function handleChat() {
+    initWS();
+    console.log("ws init done");
 }
 
 function handleLogoutForm() {
@@ -201,6 +216,8 @@ function handleRegisterForm() {
 document.getElementById("app").addEventListener("click", (event) => {
     if (event.target.id === "StartLocalGameButton") {
         startOscillator();
+
+        // TODO any click will contract the navbar from the expanded state
         // playAudioTrack();
     }
 });

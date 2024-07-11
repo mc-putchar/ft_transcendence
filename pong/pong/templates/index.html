@@ -49,39 +49,33 @@
                         
                         {% endif %}
                         </li>
+                        <li class="nav-item">
+                           <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#musicModal" style="border-radius: 20%; max-width:80px">
+                                  🎵</button>
+                                  <div class="modal fade" id="musicModal" tabindex="-1" aria-labelledby="musicModalLabel" aria-hidden="true">
+                                      <div class="modal-dialog">
+                                          <div class="modal-content">
+                                                  <h5 class="justify-content-center" id="musicModalLabel">Music Controls</h5>
+                                              <div class="modal-body">
+                                                  <audio controls>
+                                                      <source src="{% static 'assets/music.mp3' %}" type="audio/mpeg">
+                                                      Your browser does not support the audio element.
+                                                  </audio>
+                                              </div>
+                                          </div>
+                          
+                                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                      </div>
+                        </li>
                     </ul>
+                </div>
             </div>
-        </div>
     </nav>
 
     <!-- Main Content  to be loaded dynamically -->
         <main id="app" class="container"></main>
     <!--                                        -->
-
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-        <div class="d-flex justify-content-center">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#musicModal" style="border-radius: 20%; max-width:80px">
-        🎵</button>
-        <div class="modal fade" id="musicModal" tabindex="-1" aria-labelledby="musicModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                        <h5 class="justify-content-center" id="musicModalLabel">Music Controls</h5>
-                    <div class="modal-body">
-                        <audio controls>
-                            <source src="{% static 'assets/music.mp3' %}" type="audio/mpeg">
-                            Your browser does not support the audio element.
-                        </audio>
-                            </div>
-                        </div>
-
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-            </div>
-        </div>
-
+      
     <!-- Our APP js -->
     <script type="module" src="{% static 'js/main.js' %}"></script>
 

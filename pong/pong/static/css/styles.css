@@ -152,3 +152,28 @@ img.mp3-hover:hover{
 .mp3-audio{
 }
 
+.music-button {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    border-radius: 20%;
+    max-width: 180px;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+#chat-log {
+    flex: 1;
+    margin-bottom: 15px;
+    overflow-y: auto;
+}
+#chat-message-input {
+    width: 100%;
+}
+#room-name {
+    margin-top: 15px;
+}
+
