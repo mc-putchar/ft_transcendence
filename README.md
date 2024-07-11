@@ -35,26 +35,26 @@
   - [x] The project must use vanilla JavaScript for the frontend.
 
 ### _Points:_
-```
-1   - Django			                1
+```python
+1   - Django			        1
 0.5 - Bootstrap
 0.5 - Postgres	                        1
 1   - Advance 3d Techniques             1
 1   - Multiple players                  1
 1   - remote authentication 42 Oauth    1
 0.5 - Additional browser suppor
-0.5 - Support of all devices		    1
-1   - Standart User managment		    1
+0.5 - Support of all devices		1
+1   - Standart User managment		1
 1   - Blockchain                        1
 ```
-      required 7 , current total  = 8
-```
+      required 7 ,     current total  = 8
+```python
 Extra:
 
 1   - Remote Player Management		1
-1   - AI Opponent                   1
-1   - Additional Game               1
-1   - Live Chat				        1
+1   - AI Opponent			1
+1   - Additional Game			1
+1   - Live Chat				1
 1   - Designing the Backend as		1
 	  Microservices.
 
