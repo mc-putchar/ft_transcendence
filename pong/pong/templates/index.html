@@ -45,12 +45,10 @@
                                <button  class="btn btn-outline-dark" type="submit">Logout</button>
                             </form>
                         {% else %}
-                                <form id="loginForm" class="container" method="post" action="{% url 'login' %}">
-                               {% csrf_token %}
-                               {{ form.as_p }}
-                               <button  class="btn btn-outline-dark" type="submit">Log In</button>
-                            </form>
+                            <a href="/login" class="btn btn-outline-dark" data-link>Login</a>
+                        
                         {% endif %}
+                        </li>
                     </ul>
             </div>
         </div>

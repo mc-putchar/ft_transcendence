@@ -91,10 +91,12 @@ def logout(request):
 def login(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
+        
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(username=username, password=password)
+          
             if user is not None:
                 django_login(request, user)
                 data = {"title": "Login", "content": "Login successful"}
@@ -102,9 +104,11 @@ def login(request):
             else:
                 data = {"title": "Login", "content": "Invalid username or password"}
                 return JsonResponse(data, status=400)
+        
         else:
             data = {"title": "Login", "content": "Form validation failed"}
             return JsonResponse(data, status=400)
+    
     else:
         form = LoginForm()
         html_form = render_to_string('partial.html', {'form': form}, request=request)
@@ -123,52 +127,13 @@ def register(request):
         if user is not None:
             django_login(request, user)
 
-
         return JsonResponse({"title": "Register", "content": "Registration successful"})
     else:
         form_html = render_to_string('registration/register.html', {}, request=request)
         return JsonResponse({"title": "Register", "content": form_html})
 
-# def register(request):
-#     try:
-#         if request.method == 'POST':
-#             form = RegisterForm(request.POST)
-#             if form.is_valid():
-#                 username = form.cleaned_data.get('username')
-#                 email = form.cleaned_data.get('email')
-#                 password = form.cleaned_data.get('password')
-#
-#                 if User.objects.filter(username=username).exists():
-#                     return JsonResponse({"title": "Register", "content": "Username already taken"}, status=400)
-#
-#                 if User.objects.filter(email=email).exists():
-#                     return JsonResponse({"title": "Register", "content": "Email already registered"}, status=400)
-#
-#                 user = User.objects.create_user(username=username, email=email, password=password)
-#                 user.save()
-#                 logger.info(f"User created: {username}")
-#
-#                 user = authenticate(username=username, password=password)
-#                 if user is not None:
-#                     django_login(request, user)
-#                     logger.info("User authenticated and logged in")
-#                     return JsonResponse({"title": "Register", "content": "Registration successful"})
-#                 else:
-#                     logger.error("Authentication failed after registration")
-#                     return JsonResponse({"title": "Register", "content": "Authentication failed"}, status=400)
-#             else:
-#                 errors = form.errors.as_json()
-#                 return JsonResponse({"title": "Register", "content": errors}, status=400)
-#         else:
-#             form_html = render_to_string('registration/register.html', {}, request=request)
-#             return JsonResponse({"title": "Register", "content": form_html})
-#     except Exception as e:
-#         logger.error(f"An error occurred during registration: {str(e)}")
-#         return JsonResponse({"title": "Register", "content": "An error occurred during registration"}, status=500)
-
 def generate_state():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-
 
 def auth42(request):
     state = generate_state()
@@ -177,7 +142,6 @@ def auth42(request):
     redirect_uri = settings.REDIRECT_URI
     auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=public&state={state}"
     return redirect(auth_url)
-
 
 def redirect_view(request):
     code = request.GET.get('code')

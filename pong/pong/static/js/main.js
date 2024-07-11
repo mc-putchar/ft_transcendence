@@ -29,8 +29,7 @@ function renderOnlineGame(data) {
 }
 
 function renderLogin(data) {
-    return `<h2>${data.title}</h2> 
-            ${data.content} `;
+    return `<h2>${data.title}</h2>${data.content}`
 }
 
 function renderLogout(data) {
@@ -76,10 +75,12 @@ function router() {
 
                 if (location.pathname === "/login") {
                     handleLoginForm();
+                    document.getElementById("username").focus();
                 } else if (location.pathname === "/logout") {
                     handleLogoutForm();
                 } else if (location.pathname === "/register") {
                     handleRegisterForm();
+                    document.getElementById("username").focus();
                 }
             }, fadeOutDuration);
         })
