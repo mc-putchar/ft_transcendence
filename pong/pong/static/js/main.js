@@ -126,7 +126,9 @@ function handleLoginForm() {
         .then(data => {
             document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
             if (data.content === "Login successful") {
-                history.pushState("", "", "/online");
+                history.pushState("", "", "/");
+                // go to home page redirect
+                window.location.href = "/";
                 router();
             }
         })

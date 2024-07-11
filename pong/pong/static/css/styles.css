@@ -27,11 +27,6 @@ html, body {
     margin: 0;
 }
 
-button.btn {
-    margin-top: 2rem;
-    width: 100%; /* Make buttons full width within the form */
-}
-
 /* Make the app take the full width and till the bottom of the page */
 .app {
     margin-top: 12vh;

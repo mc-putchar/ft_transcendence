@@ -3,13 +3,13 @@
 ### Basics:
   - Everything must be launched with a single command line to run an autonomous
     container provided by Docker . Example : docker-compose up --build
-  
+
   * III.3 Game
     - *`tournament`*. This tournament will consist of multiple players who
       can take turns playing against each other. You have flexibility in how you implement
       the tournament, but it must clearly display who is playing against whom and the
       order of the players.
- 
+
     - *`registration system`* is required: at the start of a tournament, each player
       must input their alias name. The aliases will be reset when a new tournament
       begin
@@ -19,9 +19,9 @@
 
   * III.4 Security
     - Any password stored in your database, if applicable, must be **_hashed_**.
-    
+
     - Your website must be protected against **_SQL injections/XSS._**
-    
+
     - ***HTTPS***
 
   - [x] The project must be written in Django.
@@ -35,7 +35,7 @@
   - [x] The project must use vanilla JavaScript for the frontend.
 
 ### _Points:_
-```json
+```
 1   - Django			                1
 0.5 - Bootstrap
 0.5 - Postgres	                        1
@@ -48,7 +48,7 @@
 1   - Blockchain                        1
 ```
       required 7 , current total  = 8
-```json
+```
 Extra:
 
 1   - Remote Player Management		1

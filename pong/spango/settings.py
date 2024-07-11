@@ -116,7 +116,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # LOGOUT REDIRECT
 LOGOUT_REDIRECT_URL = '/'
-LOGIN_REDIRECT_URL = '/home_data'
+LOGIN_REDIRECT_URL = '/'
 
 
 STATIC_URL = '/static/'
