@@ -1,31 +1,29 @@
-/* Define the fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Define the fade-out animation */
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-/* Apply the animation to .fade-enter */
-.fade-enter {
-  opacity: 0;
-  animation: fadeIn 0.7s forwards;
-}
-
-/* Apply the animation to .fade-exit */
-.fade-exit {
-  opacity: 1;
-  animation: fadeOut 0.3s forwards;
-}
-
 html, body {
     padding: 0;
     margin: 0;
 }
+
+.userlist {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-label {
+    flex-direction: column;
+    padding: 10px;
+    margin: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.user-label:hover {
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+}
+
 
 /* Make the app take the full width and till the bottom of the page */
 .app {
@@ -33,6 +31,7 @@ html, body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-width: 100vw;
 
 }
 
@@ -152,28 +151,54 @@ img.mp3-hover:hover{
 .mp3-audio{
 }
 
-.music-button {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    border-radius: 20%;
-    max-width: 180px;
-}
-
+/* .music-button { */
+/*     position: fixed; */
+/*     bottom: 0; */
+/*     left: 0; */
+/*     border-radius: 20%; */
+/*     max-width: 180px; */
+/* } */
+/**/
 .chat-container {
     display: flex;
     flex-direction: column;
     height: 100%;
 }
+
 #chat-log {
     flex: 1;
     margin-bottom: 15px;
     overflow-y: auto;
 }
+
 #chat-message-input {
     width: 100%;
 }
+
 #room-name {
     margin-top: 15px;
 }
 
+/* Define the fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Define the fade-out animation */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Apply the animation to .fade-enter */
+.fade-enter {
+  opacity: 0;
+  animation: fadeIn 0.7s forwards;
+}
+
+/* Apply the animation to .fade-exit */
+.fade-exit {
+  opacity: 1;
+  animation: fadeOut 0.3s forwards;
+}

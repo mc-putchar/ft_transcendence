@@ -251,3 +251,4 @@ window.addEventListener("popstate", router);
 document.addEventListener("DOMContentLoaded", () => {
     router();
 });
+
