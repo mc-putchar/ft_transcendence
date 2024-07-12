@@ -1,26 +1,35 @@
 from django.db import models
+import json
 
 class Lobby(models.Model):
-    userlist = models.TextField()
-    num_players = models.IntegerField()
- 
-    # reset the userlist and num_players at start of the server
-    def __init__(self, *args, **kwargs):
-        super(Lobby, self).__init__(*args, **kwargs)
-        self.userlist = ""
-        self.num_players = 0
+    userlist = models.TextField(default="[]")
+    num_players = models.IntegerField(default=0)
 
     def __str__(self):
-        return self.userlist
+        return ", ".join(self.get_userlist())
+
+    def get_userlist(self):
+        try:
+            return json.loads(self.userlist)
+        except json.JSONDecodeError:
+            return []
+
+    def set_userlist(self, userlist):
+        self.userlist = json.dumps(userlist)
 
     def add_user(self, user):
-        if user not in self.userlist:
-            self.userlist += user + " "
-            self.num_players += 1
+        users = self.get_userlist()
+        if user not in users:
+            users.append(user)
+            self.set_userlist(users)
+            self.num_players = len(users)
             self.save()
 
     def remove_user(self, user):
-        self.userlist = self.userlist.replace(user + " ", "")
-        self.num_players -= 1
-        self.save()
+        users = self.get_userlist()
+        if user in users:
+            users.remove(user)
+            self.set_userlist(users)
+            self.num_players = len(users)
+            self.save()
 

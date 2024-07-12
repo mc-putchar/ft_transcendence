@@ -16,14 +16,8 @@
 		</div>
 		<!-- list of online users userlist -->
 		<div class="col-2">
-			{{ userlist }}
-			{% for user in userlist %}
 			<div class="row">
-				<div class="col-12">
-					<label id="chat-username"> {{ user.username }}</label>
-				</div>
-				{% endfor %}
-
+				<label id="chat-userlist"></label>
 			</div>
 			<div class="col-2">
 				<button id="chat-message-submit" class="btn btn-primary btn-block">Send</button>

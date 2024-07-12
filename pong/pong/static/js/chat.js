@@ -14,8 +14,13 @@ export function initWS() {
 
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
-        document.querySelector('#chat-log').value += (data.username +
-                                                     ": " + data.message + '\n');
+        if (data.message) {
+            document.querySelector('#chat-log').value += (data.username + ": " + data.message + '\n');
+        }
+        if (data.users_list) {
+            document.querySelector('#chat-userlist').innerHTML = data.users_list.join('<br>');
+        }
+        console.log(data.users_list);
     };
 
     chatSocket.onclose = function(e) {

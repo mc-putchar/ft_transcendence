@@ -4,21 +4,25 @@ from django.db import transaction
 from .models import Lobby
 from django.template.loader import render_to_string
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def index(request):
 
     lobby, created = Lobby.objects.get_or_create(
         id=1, defaults={'num_players': 0, 'userlist': ''})
 
-    # Use a transaction to safely update the lobby instance
-    with transaction.atomic():
-        lobby.num_players += 1
-        lobby.userlist += request.user.username + " "
-        lobby.save()
+    if created:
+        logger.debug("\nCREATED:\nLobby: %s", lobby)
+
+    # add this user to the lobby
+    lobby.add_user(request.user.username)
 
     context = {
         'user': request.user,
-        'userlist': lobby.userlist.strip().split()  # Converting userlist to a list
+        'userslist': lobby.userlist,
     }
 
     data = {

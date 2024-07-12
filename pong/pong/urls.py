@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from . import views
 from django.contrib.auth import views as auth_views
 
@@ -19,6 +19,4 @@ urlpatterns = [
     path('redirect', views.redirect_view, name='redirect_view'),
 
     path("chat/", include("chat.urls")),
-    # re path to catch all other urls
-    # re_path(r'^.*$', views.index, name='index'),
 ]
