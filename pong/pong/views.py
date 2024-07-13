@@ -2,13 +2,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login as django_login
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
-from .forms import LoginForm
+from .forms import LoginForm, UserUpdateForm, ProfileUpdateForm
 from django.template.loader import render_to_string
 from django.contrib.auth import logout as django_logout  # Import logout
 from .auth42 import exchange_code_for_token, get_user_data
 from django.conf import settings
 from django.contrib.auth import authenticate
 from chat.models import Lobby
+from .models import Profile
 
 import logging
 import random
@@ -37,13 +38,36 @@ def home_data(request):
     else:
         if request.user.is_authenticated:
             user_data = {
-                'login': request.user.username, 'email': str(request.user.username) + "@42.pong"}
+                'login': request.user.username,
+                'email': str(request.user.username) + "@42.pong",
+                'image': request.user.profile.image
+            }
             context = {'user_data': user_data}
             content = render_to_string('user_info.html', context=context)
             data = {'title': 'Home', 'content': content}
         else:
             data = {"title": "Home", "content": "Welcome to the Home Page"}
 
+    return JsonResponse(data)
+
+
+def profile(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    content = render_to_string('profile.html', context=context)
+    data = {'title': 'Profile', 'content': content}
     return JsonResponse(data)
 
 

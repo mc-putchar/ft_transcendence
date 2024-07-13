@@ -20,8 +20,7 @@
                             <li class="list-group-item">User: {{ user_data.login }}</li>
                             <li class="list-group-item">Email: {{ user_data.email }}</li>
                             <li class="list-group-item">
-                            <!-- TODO - load user defined avatar -->
-                            <img src="{% static 'assets/user.svg' %}" alt="Profile Image" class="img-thumbnail">
+                                <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail">
                             </li>
                         </ul>
                    </div>

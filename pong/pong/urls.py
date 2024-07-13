@@ -1,6 +1,7 @@
 from django.urls import path, include, re_path
 from . import views
 from django.contrib.auth import views as auth_views
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -17,6 +18,7 @@ urlpatterns = [
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('auth42', views.auth42, name='auth42'),
     path('redirect', views.redirect_view, name='redirect_view'),
+    path('profile', views.profile, name='profile-detail'),
 
     path("chat/", include("chat.urls")),
 ]
