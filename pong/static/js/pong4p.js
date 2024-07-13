@@ -1,4 +1,3 @@
-	
 window.startPong4PGame = startPong4PGame;
 
 function startPong4PGame() {
@@ -13,7 +12,8 @@ function startPong4PGame() {
 
 	const nav = document.getElementById("nav");
 	
-	parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - 20;
+	parent.height = screen.availHeight - (window.outerHeight - parent.height) - nav.offsetHeight - 10;
+	parent.width = screen.availWidth - (window.outerWidth - parent.width);
 
 	parent.appendChild(canvas);
 
@@ -48,7 +48,6 @@ function startPong4PGame() {
 	let position;
 	let paddle_pace;
 	let	last_touch = "none";
-	let	conceder = "none";
 	
 	// const single_player = false;
 	
@@ -63,23 +62,21 @@ function startPong4PGame() {
 		canvas.width = parent.width;
 		canvas.height = parent.height;
 
-
 		paddle_pace = Math.abs(canvas.width / 60);
 		canvas_old_width = canvas.width;
 		canvas_old_height = canvas.height;
-		if(window.innerWidth <= window.innerHeight) {
-			canvas.width=window.innerWidth - window.innerWidth / 20;
+		if(parent.width <= parent.height) {
+			canvas.width=parent.width - parent.width / 20;
 			canvas.height=canvas.width;
 			format = "width";
 		}
 		else {
-			canvas.width=window.innerHeight - window.innerHeight / 20;
+			canvas.width=parent.height - parent.height / 20;
 			canvas.height=canvas.width;
 			format = "height";
 		}
 		if(format == "height") {
-			console.log("here height");
-			position = (window.innerWidth - canvas.width) / 6;
+			position = (parent.width - canvas.width) / 6;
 			font_size = canvas.height / 60;
 		
 			[button_up, button_down].forEach(button => {
@@ -103,10 +100,8 @@ function startPong4PGame() {
 			button_down.style.top = "55%";
 			button_down.innerText = "DOWN / LEFT";
 		}
-		
 		if(format == "width") {
-			console.log("here width");
-			position = (window.innerHeight - canvas.height) / 6;
+			position = (parent.height - canvas.height) / 6;
 			font_size = canvas.height / 60;
 	
 			[button_up, button_down].forEach(button => {
@@ -136,19 +131,8 @@ function startPong4PGame() {
 	
 	// FUNCTION constructors
 	
-	let ball;
-	let paddle_left = new make_paddle("left");
-	let paddle_right = new make_paddle("right");
-	let paddle_top = new make_paddle("top");
-	let paddle_bottom = new make_paddle("bottom");
-	let paddles = {left: paddle_left, right: paddle_right, top: paddle_top, bottom:paddle_bottom};
-	let isGoal = false;
-	let	first = true;
-	let empty_score = {left: 0, right: 0, top: 0, bottom: 0}
-	let scores = new make_scores(empty_score);
-	let prev_scores = new make_scores(empty_score);
-	
-	function make_paddle(player) {
+	class make_paddle {
+		constructor (player) {
 		this.player = player,
 		this.width = canvas.width / 75;
 		this.height = canvas.height / 8;
@@ -182,10 +166,17 @@ function startPong4PGame() {
 		}
 		this.resize_paddle = function ()
 		{
+			console.log("PRE paddle:", this);
+			console.log("canv old height", canvas_old_height);
+			console.log("canv old width", canvas_old_width);
+			console.log("canv height", canvas.height);
+			console.log("canv width", canvas.width);
 			this.pos_x = this.pos_x * canvas.width / canvas_old_width;
 			this.pos_y = this.pos_y * canvas.height / canvas_old_height;
 			this.height = this.height * canvas.width / canvas_old_width;
 			this.width = this.width * canvas.height / canvas_old_height;
+			console.log("POST paddle:", this);
+			debugger;
 		}
 		this.draw_paddle = function ()
 		{
@@ -205,13 +196,10 @@ function startPong4PGame() {
 		}
 		this.init_position(player);
 		this.draw_paddle();
-	}
+	}}
 	
-	function resize_paddle(paddle) {
-		
-	}
-	
-	function make_ball (previous) {
+	class make_ball {
+		constructor (previous) {
 		this.min_y = (canvas.width / 4),
 		this.max_y = (canvas.width / 4) * 3
 		this.radius = canvas.width / 60
@@ -283,9 +271,10 @@ function startPong4PGame() {
 		}
 		if(previous == null)
 			this.setVelocity(this.direction);
-	}
+	}}
 	
-	function make_scores(cpy_goals)
+	class make_scores {
+		constructor (cpy_goals)
 	{
 		this.goals = {left: cpy_goals.left, right: cpy_goals.right, top: cpy_goals.top, bottom: cpy_goals.bottom};
 		this.colour = {left: player_left_colour, right: player_right_colour, top: player_top_colour, bottom: player_bottom_colour};
@@ -296,8 +285,7 @@ function startPong4PGame() {
 			right: canvas.width / 2 + canvas.width / 6, bottom: canvas.width / 2 + canvas.width / 16};
 		this.draw_scores = function()
 		{
-			for (key in this.goals)
-			{
+			for (let key in this.goals) {
 				ctx.fillStyle = this.colour[key];
 				ctx.font = `${canvas.width / 20}px Orbitron`;
 				ctx.fillText(this.goals[key], this.pos_x[key], this.pos_y, 100);
@@ -305,8 +293,7 @@ function startPong4PGame() {
 		}
 		this.draw_big_scores1 = function(prev_scores)
 		{
-			for (key in this.goals)
-			{
+			for (let key in this.goals) {
 				ctx.fillStyle = this.colour[key];
 				if(prev_scores.goals[key] == this.goals[key])
 				{
@@ -322,8 +309,7 @@ function startPong4PGame() {
 		}
 		this.draw_big_scores2 = function(prev_scores)
 		{
-			for (key in this.goals)
-			{
+			for (let key in this.goals) {
 				if(key == "none")
 					return ;
 				ctx.fillStyle = this.colour[key];
@@ -339,10 +325,9 @@ function startPong4PGame() {
 				}
 			}
 		}
-	}
+	}}
 	
-	function init_paddle_scores()
-	{
+	function init_paddle_scores (){
 		ball = new make_ball(ball);
 		paddle_left.resize_paddle();
 		paddle_right.resize_paddle();
@@ -353,8 +338,7 @@ function startPong4PGame() {
 		prev_scores = new make_scores(prev_scores.goals);
 	}
 	
-	function colliding_goal(ball)
-	{
+	function colliding_goal (){
 		if(ball.pos_x <= ball.radius || ball.pos_y <= ball.radius || ball.pos_x + ball.radius >= canvas.width || ball.pos_y + ball.radius >= canvas.height)
 		{
 			scores.goals[last_touch]++;
@@ -371,8 +355,7 @@ function startPong4PGame() {
 		return (false);
 	}
 	
-	function colliding_ball_paddle(ball, paddles)
-	{
+	function colliding_ball_paddle (ball, paddles) {
 		if((ball.pos_x <= ball.radius + paddles.left.width) // LEFT PADDLE
 			&& ball.pos_y >= paddles.left.pos_y - ball.radius && ball.pos_y <= paddles.left.pos_y + paddles.left.height + ball.radius) // left paddle
 		{
@@ -499,7 +482,7 @@ function startPong4PGame() {
 				right_direction = -1;
 		}
 	}
-	
+
 	function simple_AI (ball)
 	{
 		if(left_ai == true && ball.ball_velocity_x < 0) // ball is moving LEFT
@@ -531,7 +514,7 @@ function startPong4PGame() {
 				paddle_bottom.pos_x += paddle_pace;
 		}
 	}
-	
+
 	function move_paddle()
 	{
 		if(bottom_direction != 0)
@@ -572,24 +555,24 @@ function startPong4PGame() {
 		}
 	}
 	
-	// 42 COMPLIENT AI
-	
-	// complex_AI = function ()
-	// {
-	// 	let	last_move = {left: 0, top: 0, right: 0, bottom: 0};
-	// 	let	objective = {left: height / 2, top: width / 2, right: height / 2, bottom: width / 2};
-	
-	// }
+	let ball;
+	let paddle_left = new make_paddle("left");
+	let paddle_right = new make_paddle("right");
+	let paddle_top = new make_paddle("top");
+	let paddle_bottom = new make_paddle("bottom");
+	let paddles = {left: paddle_left, right: paddle_right, top: paddle_top, bottom:paddle_bottom};
+	let isGoal = false;
+	let	first = true;
+	let empty_score = {left: 0, right: 0, top: 0, bottom: 0}
+	let scores = new make_scores(empty_score);
+	let prev_scores = new make_scores(empty_score);
 
 		async function gameLoop()
 		{
-			
-			// init();
-			// init_paddle_scores();
-			
+			console.log("Loop Start");
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			
-			for (key in paddles)
+			for (let key in paddles)
 				paddles[key].draw_paddle();
 			if(isGoal == true || first == true)
 			{
@@ -608,12 +591,12 @@ function startPong4PGame() {
 					await realSleep(500);
 				}
 				ball = new make_ball(null);
-				for (key in paddles)
+				for (let key in paddles)
 					paddles[key].init_position(paddles[key].player);
 				first = false;
 				isGoal = false;
 				last_touch = "none";
-				for(key in scores.goals)
+				for(let key in scores.goals)
 					prev_scores.goals[key] = scores.goals[key];
 			}
 			simple_AI(ball);
@@ -621,6 +604,7 @@ function startPong4PGame() {
 			move_paddle();
 			ball.move_ball();
 			ball.draw_ball();
+			console.log("Loop Start");
 			if(colliding_ball_paddle(ball, paddles) == true)
 			{
 				ball.speed_up();
@@ -686,6 +670,7 @@ function startPong4PGame() {
 		}
 
 		window.addEventListener('resize', function() {
+			console.log("RESIZE CALLED");
 			init();
 			init_paddle_scores();
 		});
@@ -701,7 +686,6 @@ function startPong4PGame() {
 		});
 		
 		gameLoop();
-		//requestAnimationFrame(gameLoop);
 }
 
 export { startPong4PGame };

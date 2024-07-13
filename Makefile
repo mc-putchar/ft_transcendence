@@ -20,5 +20,3 @@ migrate:
 
 collect:
 	$(DC) run web python manage.py collectstatic --noinput --clear
-
-

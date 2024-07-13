@@ -12,7 +12,6 @@ RUN mkdir /code/static
 RUN pip install --upgrade pip wheel && \
     pip install --no-cache-dir -r requirements.txt
 
-
 #RUN python manage.py collectstatic --noinput
 
 ENV CLIENT_ID CLIENT_SECRET REDIRECT_URI
