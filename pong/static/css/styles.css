@@ -1,3 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
+
+/* Define the fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Define the fade-out animation */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Apply the animation to .fade-enter */
+.fade-enter {
+  opacity: 0;
+  animation: fadeIn 0.7s forwards;
+}
+
+/* Apply the animation to .fade-exit */
+.fade-exit {
+  opacity: 1;
+  animation: fadeOut 0.3s forwards;
+}
+
 html, body {
     padding: 0;
     margin: 0;

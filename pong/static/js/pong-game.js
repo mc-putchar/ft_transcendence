@@ -1,6 +1,6 @@
 
-const ARENA_LENGTH = 800;
-const ARENA_HEIGHT = 600;
+const ARENA_LENGTH = 600;
+const ARENA_HEIGHT = 400;
 const GOAL_LINE = 20;
 const NET_COLOR = "gray"
 const NET_WIDTH = 4;
@@ -259,5 +259,9 @@ class Game {
 	}
 };
 
-const pong = new Game();
-pong.draw();
+export function startPongGame() {
+	console.log("Pong Classic - Starting new game");
+	const pong = new Game();
+	pong.draw();
+}
+window.startPongGame = startPongGame;

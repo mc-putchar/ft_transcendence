@@ -22,10 +22,10 @@ export function initWS() {
             document.querySelector('#chat-userlist').innerHTML = '';
 
             for (let user of data.users_list) {
-                const user-label = document.createElement('p');
-                user-label.textContent = user;
-                user-label.className = 'user-label';
-                document.querySelector('#chat-userlist').appendChild(user-label);
+                const user_label = document.createElement('p');
+                user_label.textContent = user;
+                user_label.className = 'user_label';
+                document.querySelector('#chat-userlist').appendChild(user_label);
             }
         }
     };
