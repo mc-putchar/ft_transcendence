@@ -223,11 +223,11 @@ button:focus {
 }
 
 /* Image styling */
-img {
-    width: 30%;
-    height: auto;
-    margin-top: 20px;
-}
+/* img { */
+/*     width: 40%; */
+/*     height: auto; */
+/*     margin-top: 20px; */
+/* } */
 
 /* Responsive Design */
 @media (max-width: 768px) {
