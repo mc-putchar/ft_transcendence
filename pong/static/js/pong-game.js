@@ -96,11 +96,13 @@ class Ball {
 
 class Game {
 	constructor() {
-		this.canvas = document.getElementById("arena");
+		this.parent = document.getElementById("app");
+		this.canvas = document.createElement('canvas');
+		this.parent.appendChild(this.canvas);
+		this.canvas.width = this.parent.clientWidth;
+		this.canvas.height = this.parent.clientHeight;
 		this.context = this.canvas.getContext("2d");
 		this.arena = new Arena(ARENA_LENGTH, ARENA_HEIGHT);
-		this.canvas.width = ARENA_LENGTH;
-		this.canvas.height = ARENA_HEIGHT;
 		this.player1 = new Player("left");
 		this.player2 = new Player("right");
 		this.ball = new Ball();

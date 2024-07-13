@@ -1,3 +1,3 @@
-export defautls function renderOnlineGame() {
+export function renderOnlineGame() {
     return `<div> ${data.content} </div>`;
 }

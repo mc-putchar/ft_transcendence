@@ -168,7 +168,6 @@ function handleLoginForm() {
 }
 
 function handleChat() {
-
     initWS();
 }
 

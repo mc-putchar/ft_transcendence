@@ -137,16 +137,21 @@ class Player {
 
 class Game {
 	constructor() {
-		this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: arena });
+		this.parent = document.getElementById("app");
+		this.canvas = document.createElement('canvas');
+		this.parent.appendChild(this.canvas);
+		this.canvas.width = this.parent.clientWidth;
+		this.canvas.height = this.parent.clientHeight;
+		this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
 		this.renderer.setPixelRatio(window.devicePixelRatio);
-		this.renderer.setSize(window.innerWidth, window.innerHeight);
+		this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 
 		this.scene = new THREE.Scene();
 		const FOV = 75;
 		const near = 1;
 		const far = DRAW_DISTANCE;
 		this.camera = new THREE.PerspectiveCamera(
-			FOV, window.innerWidth / window.innerHeight, near, far
+			FOV, this.canvas.clientWidth / this.canvas.clientHeight, near, far
 		);
 		this.camera.position.set(CAM_START_X, CAM_START_Y, 0);
 		this.camera.lookAt(0, 0, 0);
@@ -180,7 +185,13 @@ class Game {
 
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
+
+		window.addEventListener("resize", ev => this.resize(ev))
 		this.showScore();
+	}
+	resize(ev) {
+		this.canvas.width = this.parent.clientWidth;
+		this.canvas.height = this.parent.clientHeight;
 	}
 	keydown(key) {
 		if (this.running === false) {
@@ -312,6 +323,6 @@ class Game {
 export function startPong3DGame() {
 	console.log("Pong 3D - Starting new game");
 	const pong = new Game();
-	pong.draw();
+	pong.loop();
 }
 window.startPong3DGame = startPong3DGame;
