@@ -236,22 +236,22 @@ function handleRegisterForm() {
 }
 
 document.getElementById("app").addEventListener("click", (event) => {
-    if (event.target.id === "StartLocalGameButton") {
-        // startOscillator();
+        startOscillator();
         // TODO any click will contract the navbar from the expanded state
         // playAudioTrack();
-    }
 });
 
-window.addEventListener("click", e => {
+
+
+window.addEventListener("popstate", router);
+
+document.addEventListener("click", e => {
     if (e.target.matches("[data-link]")) {
         e.preventDefault();
         history.pushState("", "", e.target.href);
         router();
     }
 });
-
-window.addEventListener("popstate", router);
 
 document.addEventListener("DOMContentLoaded", () => {
     router();

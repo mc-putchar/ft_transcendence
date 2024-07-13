@@ -46,7 +46,9 @@ def home_data(request):
             content = render_to_string('user_info.html', context=context)
             data = {'title': 'Home', 'content': content}
         else:
-            data = {"title": "Home", "content": "Welcome to the Home Page"}
+            html = render_to_string(
+                'registration/needlogin.html', request=request)
+            data = {"title": "Online", "content": html}
 
     return JsonResponse(data)
 

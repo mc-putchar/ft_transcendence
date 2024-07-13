@@ -34,12 +34,91 @@ html, body {
 }
 
 canvas {
-    margin-bottom: 10px;
+    margin-bottom: 30px;
     margin-top: auto;
     width: 90%;
     display: flex;
     align-content: center;
     background-color: black;
+}
+
+.userlist {
+    flex-direction: column;
+    border: 1px solid rgba(222,222,222,100);
+    border-radius: 2px;
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+.user-label {
+    border: 1px solid rgba(222,222,222,0.8);
+    border-radius: 2px;
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+.separator {
+    margin-top: 55px;
+}
+
+.user-label:hover {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    
+}
+
+/* Make the app take the full width and till the bottom of the page */
+.app {
+    margin-top: 12vh;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-width: 100vw;
+    height: 100%;
+}
+
+a, p, h1, h2, h3, h4, h5, h6, button, label, input, select, textarea ,img{
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
+
+/* Define the fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Define the fade-out animation */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Apply the animation to .fade-enter */
+.fade-enter {
+  opacity: 0;
+  animation: fadeIn 0.7s forwards;
+}
+
+/* Apply the animation to .fade-exit */
+.fade-exit {
+  opacity: 1;
+  animation: fadeOut 0.3s forwards;
+}
+
+html, body {
+    padding: 0;
+    margin: 0;
 }
 
 .userlist {
@@ -75,10 +154,10 @@ canvas {
     flex-direction: column;
     min-height: 100vh;
     min-width: 100vw;
-    height: 100%;
+
 }
 
-a, p, h1, h2, h3, h4, h5, h6, button, label, input, select, textarea ,img{
+a, p, h1, h2, h3, h4, h5, h6, button, label, li, title, input, select, textarea ,img {
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -102,6 +181,7 @@ h1 {
     margin-bottom: 10px;
 }
 
+
 h2 {
     color: #0056b3; /* Slightly darker primary color */
     margin-bottom: 15px;
@@ -118,7 +198,7 @@ button {
     color: #fff; /* White text */
     border: none;
     border-radius: 8px; /* Rounded corners */
-    padding: 10px 20px; /* Padding */
+    /* padding: 10px 20px; /* Padding */ */
     font-size: 1em; /* Larger text */
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.3s ease;
@@ -147,7 +227,7 @@ img {
 /* Responsive Design */
 @media (max-width: 768px) {
     button {
-        padding: 12px 25px;
+        padding-left: 42px;
         font-size: 1em;
     }
     img {
@@ -157,7 +237,7 @@ img {
 
 @media (max-width: 480px) {
     button {
-        padding: 10px 20px;
+        padding-left: 42px;
         font-size: 0.9em;
     }
 
