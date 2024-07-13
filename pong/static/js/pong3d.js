@@ -10,13 +10,13 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 const CANVAS_PADDING = 10;
 const BALL_SIZE = 6;
-const ARENA_LENGTH = 300;
+const ARENA_WIDTH = 300;
 const ARENA_HEIGHT = 200;
 const SCORE_HEIGHT = 42;
 const GOAL_LINE = 20;
 const NET_WIDTH = 4;
 const NET_HEIGHT = 30;
-const BALL_START_SPEED = 1;
+const BALL_START_SPEED = 2;
 const PADDLE_SPEED = 5;
 const PADDLE_LEN = 42;
 const PADDLE_WIDTH = 6;
@@ -43,8 +43,8 @@ class Arena {
 		this.lamp = new THREE.PointLightHelper(this.lightbulb);
 		this.ambient_light = new THREE.AmbientLight(0xffffff);
 
-		this.grid = new THREE.GridHelper(Math.max(ARENA_HEIGHT, ARENA_LENGTH), 40);
-		const plane_geo = new THREE.PlaneGeometry(ARENA_LENGTH, ARENA_HEIGHT);
+		this.grid = new THREE.GridHelper(Math.max(ARENA_HEIGHT, ARENA_WIDTH), 40);
+		const plane_geo = new THREE.PlaneGeometry(ARENA_WIDTH, ARENA_HEIGHT);
 		const floor_texture = new THREE.TextureLoader().load(FLOOR_TEX_IMG);
 		const plane_mat = new THREE.MeshBasicMaterial({ map: floor_texture });
 		this.plane = new THREE.Mesh(plane_geo, plane_mat);
@@ -52,7 +52,7 @@ class Arena {
 		this.plane.rotateZ(-Math.PI / 2);
 		const wall_texture = new THREE.TextureLoader().load(WALL_TEX_IMG);
 		const wall_material = new THREE.MeshBasicMaterial({ map: wall_texture });
-		const wall_geometry = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ARENA_LENGTH, 2, 2, 2);
+		const wall_geometry = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ARENA_WIDTH, 2, 2, 2);
 		this.topWall = new THREE.Mesh(wall_geometry, wall_material);
 		this.bottomWall = new THREE.Mesh(wall_geometry, wall_material);
 	}
@@ -143,7 +143,6 @@ class Game {
 		this.parent.appendChild(this.canvas);
 		this.canvas.width = this.parent.width;
 		this.canvas.height = this.parent.height;
-		console.log("Client height: ", this.parent.height);
 		this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
@@ -174,8 +173,8 @@ class Game {
 
 		this.playerOne = new Player(box_geometry, wire_material, avatar1_texture);
 		this.playerTwo = new Player(box_geometry, wire_material, avatar2_texture);
-		this.playerOne.place(this.scene, 0, -ARENA_LENGTH / 2);
-		this.playerTwo.place(this.scene, 0, ARENA_LENGTH / 2);
+		this.playerOne.place(this.scene, 0, -ARENA_WIDTH / 2);
+		this.playerTwo.place(this.scene, 0, ARENA_WIDTH / 2);
 
 		this.arena = new Arena();
 		this.arena.place(this.scene, -ARENA_HEIGHT / 2, ARENA_HEIGHT / 2);
@@ -188,13 +187,14 @@ class Game {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 
-		window.addEventListener("resize", ev => this.resize(ev))
+		window.addEventListener("resize", ev => this.resize(ev), true);
 		this.showScore();
 	}
 	resize(ev) {
 		this.canvas.width = this.parent.clientWidth;
 		this.canvas.height = this.parent.clientHeight;
-		this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+		this.renderer.setPixelRatio(window.devicePixelRatio);
+		this.renderer.setSize(this.parent.clientWidth, this.parent.clientHeight);
 	}
 	keydown(key) {
 		if (this.running === false) {
@@ -259,14 +259,14 @@ class Game {
 			this.ball.dir.setX(-1);
 		const [p1x, p1y] = this.playerOne.position;
 		const [p2x, p2y] = this.playerTwo.position;
-		if (ballY < -ARENA_LENGTH / 2 - GOAL_LINE) {
+		if (ballY < -ARENA_WIDTH / 2 - GOAL_LINE) {
 			this.last_scored = 2;
 			this.running = false;
 			this.ball.reset();
 			this.playerTwo.score++;
 			this.scene.remove(this.score);
 			this.showScore();
-		} else if (ballY > ARENA_LENGTH / 2 + GOAL_LINE) {
+		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
 			this.last_scored = 1;
 			this.running = false;
 			this.ball.reset();
@@ -274,12 +274,12 @@ class Game {
 			this.scene.remove(this.score);
 			this.showScore();
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
-			&& (ballY + BALL_SIZE < (ARENA_LENGTH / 2))
+			&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
 			&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN))) {
 			this.ball.dir.setZ(-1);
 			this.ball.speed += 0.1;
 		} else if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
-			&& (ballY + BALL_SIZE > -(ARENA_LENGTH / 2))
+			&& (ballY + BALL_SIZE > -(ARENA_WIDTH / 2))
 			&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN))) {
 			this.ball.dir.setZ(1);
 			this.ball.speed += 0.1;
@@ -328,11 +328,8 @@ export function startPong3DGame() {
 	const parent = document.getElementById('app');
 	const nav = document.getElementById('nav');
 
-	console.log(nav);
-	console.log("nav h: ", nav.offsetHeight);
 	parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
 	parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
-	console.log("Height: " + parent.height);
 	while (parent.firstChild) {
 		parent.removeChild(parent.lastChild);
 	}

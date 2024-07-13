@@ -36,9 +36,10 @@ html, body {
 canvas {
     margin-bottom: 30px;
     margin-top: auto;
-    width: 80%;
+    width: 90%;
     display: flex;
     align-content: center;
+    background-color: black;
 }
 
 .userlist {
