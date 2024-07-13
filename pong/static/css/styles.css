@@ -4,26 +4,30 @@ html, body {
 }
 
 .userlist {
-    display: flex;
     flex-direction: column;
+    border: 1px solid rgba(222,222,222,100);
+    border-radius: 2px;
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
 }
 
 .user-label {
-    flex-direction: column;
-    padding: 10px;
-    margin: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border: 1px solid rgba(222,222,222,0.8);
+    border-radius: 2px;
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
 }
 
 .user-label:hover {
-	box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    
 }
-
 
 /* Make the app take the full width and till the bottom of the page */
 .app {

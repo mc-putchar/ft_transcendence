@@ -232,7 +232,7 @@ function handleRegisterForm() {
 
 document.getElementById("app").addEventListener("click", (event) => {
     if (event.target.id === "StartLocalGameButton") {
-        startOscillator();
+        // startOscillator();
         // TODO any click will contract the navbar from the expanded state
         // playAudioTrack();
     }

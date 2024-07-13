@@ -1,6 +1,7 @@
 {% if user.is_authenticated %}
 <h1>You are already logged in as {{ user.username }}</h1>
 <a href="/logout" class="btn btn-primary">Logout</a>
+
 {% else %}
 
 <form id="loginForm" method="post" action="/accounts/login/" class="form-group mb-2">
@@ -22,7 +23,6 @@
   <button type="submit" class="btn btn-primary">Login Form</button>
 </form>
 
-{% endblock %}
-
-
 {% endif %}
+
+{% endblock %}

@@ -37,18 +37,33 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/online" data-link>Online</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if user.is_authenticated %}
-                            <form id="logoutForm" class="container" method="post" action="{% url 'logout' %}">
-                               {% csrf_token %}
-                               {{ form.as_p }}
-                               <button  class="btn btn-outline-dark" type="submit">Logout</button>
-                            </form>
+                            Account
                         {% else %}
-                            <a href="/login" class="btn btn-outline-dark" data-link>Login</a>
+                            Login
+                        {% endif %}
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        {% if user.is_authenticated %}
+                            <li>
+                                <form id="logoutForm" class="dropdown-item" method="post" action="{% url 'logout' %}">
+                                    {% csrf_token %}
+                                    {{ form.as_p }}
+                                    <button  class="btn btn-outline-dark" type="submit">Logout</button>
+                                </form>
+                                <li><p class="dropdown-item">Profile</p></li>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
                         
+                        {% else %}
+                            <li><a class="dropdown-item"  href="/login" class="btn btn-outline-dark" data-link>Login</a>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item"  href="/register" class="btn btn-outline-dark" data-link>Register</a>
                         {% endif %}
                         </li>
+                    </ul>
                         <li class="nav-item">
                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#musicModal" style="border-radius: 20%; max-width:80px">
                                   🎵</button>
