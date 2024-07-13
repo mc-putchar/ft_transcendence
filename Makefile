@@ -1,6 +1,6 @@
 
 DOCKER := docker
-DC := docker-compose
+DC := docker compose
 
 up:
 	$(DC) up --build

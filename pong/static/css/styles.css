@@ -24,6 +24,93 @@
   animation: fadeOut 0.3s forwards;
 }
 
+* {
+    font-family: "Orbitron", system-ui;
+}
+
+html, body {
+    padding: 0;
+    margin: 0;
+}
+
+canvas {
+    margin-bottom: 10px;
+    margin-top: auto;
+    width: 80%;
+    display: flex;
+    align-content: center;
+}
+
+.userlist {
+    flex-direction: column;
+    border: 1px solid rgba(222,222,222,100);
+    border-radius: 2px;
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+.user-label {
+    border: 1px solid rgba(222,222,222,0.8);
+    border-radius: 2px;
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+.user-label:hover {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    
+}
+
+/* Make the app take the full width and till the bottom of the page */
+.app {
+    margin-top: 12vh;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-width: 100vw;
+    height: 100%;
+}
+
+a, p, h1, h2, h3, h4, h5, h6, button, label, input, select, textarea ,img{
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
+
+/* Define the fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Define the fade-out animation */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Apply the animation to .fade-enter */
+.fade-enter {
+  opacity: 0;
+  animation: fadeIn 0.7s forwards;
+}
+
+/* Apply the animation to .fade-exit */
+.fade-exit {
+  opacity: 1;
+  animation: fadeOut 0.3s forwards;
+}
+
 html, body {
     padding: 0;
     margin: 0;
@@ -79,7 +166,8 @@ body {
     color: #222; /* Dark text color */
     text-align: center;
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    height: 100%;
 }
 
 /* Header styling */

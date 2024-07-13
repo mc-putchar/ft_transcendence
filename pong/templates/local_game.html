@@ -1,20 +1,18 @@
 {% load static %}
 
-<canvas id="arena"></canvas>
 <h3> Play on the same computer with others ( offline )</h3>
 
  <div class="row align-items-start">
+    <div class="col">
+        <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand ms-auto" style="height: 42px;">
+    </div>
 
-<div class="col">
-    <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand ms-auto" style="height: 42px;">
-</div>
-
-<div class="col">
-	    <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand ms-auto" style="height: 42px;">
-</div>
-<div>
-    <button id="StartLocalGameButton" type="button" class="btn btn-outline-primary" onclick="startPongGame()" >Pong Classic</button>
-    <button id="StartLocal3DGameButton" type="button" class="btn btn-outline-primary" onclick="startPong3DGame()" >Pong 3D</button>
-</div>
+    <div class="col">
+            <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand ms-auto" style="height: 42px;">
+    </div>
+    <div>
+        <button id="StartLocalGameButton" type="button" class="btn btn-outline-primary" onclick="startPongGame()" >Pong Classic</button>
+        <button id="StartLocal3DGameButton" type="button" class="btn btn-outline-primary" onclick="startPong3DGame()" >Pong 3D</button>
+    </div>
 </div>
     <!-- TODO TAKE BUTTON AND REDIRECT TO GAME , CHANGE ALSO main.js -->
