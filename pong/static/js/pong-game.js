@@ -1,4 +1,5 @@
 
+const CANVAS_PADDING = 10;
 const ARENA_LENGTH = 600;
 const ARENA_HEIGHT = 400;
 const GOAL_LINE = 20;
@@ -26,22 +27,22 @@ class Arena {
 };
 
 class Player {
-	constructor(side) {
+	constructor(side, arenaHeight, arenaWidth) {
 		this.side = side;
 		this.color = PADDLE_COLOR;
 		this.colorEffect = EFFECT_COLOR;
 		this.height = PADDLE_HEIGHT;
 		this.width = PADDLE_WIDTH;
 		this.score = 0;
-		this.x = (this.side == "left") ? GOAL_LINE : ARENA_LENGTH - GOAL_LINE;
-		this.y = (ARENA_HEIGHT / 2) - (this.height / 2);
+		this.x = (this.side == "left") ? GOAL_LINE : arenaWidth - GOAL_LINE;
+		this.y = (arenaHeight / 2) - (this.height / 2);
 		this.direction = 0;
 		this.speed = PADDLE_SPEED;
 	}
-	doMove() {
+	doMove(arenaHeight) {
 		if (this.direction) {
 			let move = this.direction * this.speed + this.y;
-			if (move >= 0 && move <= ARENA_HEIGHT - this.height)
+			if (move >= 0 && move <= arenaHeight - this.height)
 				this.y = move;
 		}
 	}
@@ -54,23 +55,23 @@ class Player {
 };
 
 class Ball {
-	constructor() {
+	constructor(arenaHeight, arenaWidth) {
 		this.color = BALL_COLOR;
 		this.height = 10;
 		this.width = 10;
-		this.x = ARENA_LENGTH / 2;
-		this.y = ARENA_HEIGHT / 2;
+		this.x = arenaWidth / 2;
+		this.y = arenaHeight / 2;
 		this.speed = 0;
 		this.vx = 0;
 		this.vy = 0;
 	}
-	doMove(p1x, p1y, p2x, p2y) {
+	doMove(p1x, p1y, p2x, p2y, arenaHeight) {
 		this.y += this.vy * this.speed;
 		if (this.y - (this.height / 2) < 0) {
 			this.y = this.height / 2;
 			this.vy *= -1;
-		} else if (this.y + (this.height / 2) > ARENA_HEIGHT) {
-			this.y = ARENA_HEIGHT - (this.height / 2);
+		} else if (this.y + (this.height / 2) > arenaHeight) {
+			this.y = arenaHeight - (this.height / 2);
 			this.vy *= -1;
 		} else if ((this.y + (this.height / 2) === p1y ||
 			this.y - (this.height / 2) === p1y + PADDLE_HEIGHT) &&
@@ -84,28 +85,28 @@ class Ball {
 				this.vy *= -1;
 		}
 	}
-	reset() {
+	reset(arenaHeight, arenaWidth) {
 		this.color = BALL_COLOR;
 		this.speed = 0;
 		this.vx = 0;
 		this.vy = 0;
-		this.x = ARENA_LENGTH / 2;
-		this.y = ARENA_HEIGHT / 2;
+		this.x = arenaWidth / 2;
+		this.y = arenaHeight / 2;
 	}
 };
 
 class Game {
-	constructor() {
-		this.parent = document.getElementById("app");
-		this.canvas = document.createElement('canvas');
+	constructor(parentElement) {
+		this.parent = parentElement;
+		this.canvas = document.createElement("canvas");
 		this.parent.appendChild(this.canvas);
-		this.canvas.width = this.parent.clientWidth;
-		this.canvas.height = this.parent.clientHeight;
+		this.canvas.width = this.parent.width;
+		this.canvas.height = this.parent.height;
 		this.context = this.canvas.getContext("2d");
-		this.arena = new Arena(ARENA_LENGTH, ARENA_HEIGHT);
-		this.player1 = new Player("left");
-		this.player2 = new Player("right");
-		this.ball = new Ball();
+		this.arena = new Arena(this.canvas.width, this.canvas.height);
+		this.player1 = new Player("left", this.canvas.height, this.canvas.width);
+		this.player2 = new Player("right", this.canvas.height, this.canvas.width);
+		this.ball = new Ball(this.canvas.height, this.canvas.width);
 		this.running = false;
 		this.last_scored = 0;
 		this.animRequestId = 0;
@@ -113,6 +114,11 @@ class Game {
 		this.fpsInterval = 1000 / TARGET_FPS;
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
+		window.addEventListener("resize", ev => this.resize(ev))
+	}
+	resize(ev) {
+		this.canvas.width = this.parent.width;
+		this.canvas.height = this.parent.height;
 	}
 	keydown(key) {
 		if (this.running === false) {
@@ -161,13 +167,14 @@ class Game {
 	}
 	update() {
 		if (!this.running)	return;
-		this.player1.doMove();
-		this.player2.doMove();
+		this.player1.doMove(this.canvas.height);
+		this.player2.doMove(this.canvas.height);
 		this.ball.doMove(
 			this.player1.x,
 			this.player1.y,
 			this.player2.x,
-			this.player2.y
+			this.player2.y,
+			this.canvas.height
 		);
 
 		this.ball.x += this.ball.vx * this.ball.speed;
@@ -176,13 +183,13 @@ class Game {
 			this.player1.score++;
 			this.last_scored = 1;
 			this.running = false;
-			this.ball.reset();
+			this.ball.reset(this.canvas.height, this.canvas.width);
 		} else if (this.ball.x < 0) {
 			// RESET
 			this.player2.score++;
 			this.last_scored = 2;
 			this.running = false;
-			this.ball.reset();
+			this.ball.reset(this.canvas.height, this.canvas.width);
 			window.cancelAnimationFrame(this.animRequestId);
 		} else if (this.ball.x + (this.ball.width / 2) >= this.player2.x - (this.player2.width / 2) &&
 			this.ball.y + (this.ball.height / 2) >= this.player2.y &&
@@ -203,7 +210,7 @@ class Game {
 		this.context.strokeStyle = NET_COLOR;
 		this.context.strokeRect(1, 1, this.canvas.width - 1, this.canvas.height - 1);
 		this.context.fillStyle = NET_COLOR;
-		for (let y = 25; y < this.canvas.height - 50; y += 100) {
+		for (let y = 25; y < this.canvas.height - 10; y += 100) {
 			this.context.fillRect(
 				(this.canvas.width / 2) - (NET_WIDTH / 2),
 				y,
@@ -263,7 +270,19 @@ class Game {
 
 export function startPongGame() {
 	console.log("Pong Classic - Starting new game");
-	const pong = new Game();
+	const parent = document.getElementById('app');
+	const nav = document.getElementById('nav');
+
+	console.log(nav);
+	console.log("nav h: ", nav.offsetHeight);
+	parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
+	parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
+	console.log("Height: " + parent.height);
+	while (parent.firstChild) {
+		parent.removeChild(parent.lastChild);
+	}
+
+	const pong = new Game(parent);
 	pong.draw();
 }
 window.startPongGame = startPongGame;
