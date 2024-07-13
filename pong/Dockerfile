@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.10
 
 WORKDIR /code
 
@@ -14,6 +14,7 @@ RUN pip install --upgrade pip wheel && \
 
 
 #RUN python manage.py collectstatic --noinput
+
 ENV CLIENT_ID CLIENT_SECRET REDIRECT_URI
 
 COPY . /code/
