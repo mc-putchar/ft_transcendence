@@ -1,0 +1,12 @@
+<h2>Protected Page</h2>
+
+<p>This page is protected. Only logged in users can see it.</p>
+
+<p>Logged in as {{ username }}
+<p>
+
+<form id="logoutForm" method="post" action="{% url 'logout' %}">
+   {% csrf_token %}
+   {{ form.as_p }}
+   <button type="submit">Logout</button>
+</form>

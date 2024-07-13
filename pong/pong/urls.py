@@ -1,23 +1,22 @@
-from django.contrib import admin
-from django.urls import path
+from django.urls import path, include, re_path
 from . import views
-from django.urls import path, include
-from django.views.generic.base import TemplateView
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    path('', views.index, name='index'),
+    path('home_data', views.home_data, name='home_data'),
+    path('local_game', views.local_game, name='local_game'),
+    path('contact_data', views.contact_data, name='contact_data'),
 
-    # path('', views.index, name='index'),
-    path("", TemplateView.as_view(template_name="index.html"), name="index"), 
-    path('loginExternal', views.loginExternal, name='loginExternal'),
-    path('main', views.main),
-    path('redirect', views.redirect_view, name='redirect_view'),
-    path('users/', views.users, name='users'),
-    path('users/profile/<int:id>', views.profile, name='profile'),
-    path('admin/', admin.site.urls),
-
-    path("accounts/", include("django.contrib.auth.urls")), 
+    path('logout', views.logout, name='logout'),  # Add this line
     path('login', views.login, name='login'),
-    path('enter', views.enter, name='enter'),
-    path('game', views.game, name='game'),
-    # path("<str:room_name>/", views.room, name="room"),
+    path('register', views.register, name='register'),
+
+    path('online', views.online, name='online'),
+    path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('auth42', views.auth42, name='auth42'),
+    path('redirect', views.redirect_view, name='redirect_view'),
+
+    path("chat/", include("chat.urls")),
 ]
