@@ -1,0 +1,28 @@
+* {
+	font-family: 'Orbitron', sans-serif;
+	tab-size: 4 !important;
+}
+
+body {
+	text-align: center;
+	background-color: rgb(10, 1, 1);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+	flex-direction: column;
+	position: fixed;
+	width: 100%;
+}
+
+#canvas {
+	background-color: rgb(2, 2, 27);
+	border-style: solid;
+	border-width: 2px;
+	border-color: azure;
+}
+
+.Buttons {
+	border-style: solid;
+	border-color:rgb(10, 10, 92);
+}
