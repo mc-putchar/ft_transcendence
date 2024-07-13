@@ -1,6 +1,7 @@
 {% load static %}
+<div class="row justify-content-center">
 
-<h3> Play on the same computer with others ( offline )</h3>
+<p3> Play on the same computer with others </p>
 
  <div class="row align-items-start">
     <div class="col">
@@ -8,11 +9,26 @@
     </div>
 
     <div class="col">
-            <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand ms-auto" style="height: 42px;">
+         <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand ms-auto" style="height: 42px; witdh: 100%">
     </div>
-    <div>
-        <button id="StartLocalGameButton" type="button" class="btn btn-outline-primary" onclick="startPongGame()" >Pong Classic</button>
-        <button id="StartLocal3DGameButton" type="button" class="btn btn-outline-primary" onclick="startPong3DGame()" >Pong 3D</button>
+    <div class="container">
+        <br>
     </div>
+      <div class="row justify-content-center separator">
+            <div class="col-md-4 col-8 text-center">
+                <button id="StartLocalGameButton" type="button" class="btn btn-outline-dark w-100" onclick="startPongGame()">Pong Classic</button>
+            </div>
+        </div>
+        <br>
+        <div class="row justify-content-center separator">
+            <div class="col-md-4 col-8 text-center">
+                <button id="StartLocal3DGameButton" type="button" class="btn btn-outline-dark w-100" onclick="startPong3DGame()">Pong 3D</button>
+            </div>
+        </div>
+        <div class="row justify-content-center separator">
+            <div class="col-md-4 col-8 text-center">
+                <button id="StartLocal4PGameButton" type="button" class="btn btn-outline-dark w-100" onclick="startPong4PGame()">Pong 4P</button>
+            </div>
+        </div>
 </div>
     <!-- TODO TAKE BUTTON AND REDIRECT TO GAME , CHANGE ALSO main.js -->

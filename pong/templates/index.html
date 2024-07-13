@@ -31,8 +31,7 @@
 <body>
 
     <!-- Navbar -->
-
-    <nav id="nav" class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav id="nav" class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/" data-link>Pong</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,12 +39,16 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/local" data-link>Local Game</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/online" data-link>Online</a>
-                    </li>
+                    <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="callsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Play
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="callsDropdown">
+                        <li><a class="dropdown-item" href="/local" data-link>Local Game</a></li>
+                        <li><a class="dropdown-item" href="/online" data-link>Online Game</a></li>
+                    </ul>
+                </li>
+
                     <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if user.is_authenticated %}
@@ -55,26 +58,27 @@
                         {% endif %}
                       </a>
                       <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li>
                         {% if user.is_authenticated %}
-                            <li>
+                                <li><a class="dropdown-item" href="/profile" data-link>Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <form id="logoutForm" class="dropdown-item" method="post" action="{% url 'logout' %}">
                                     {% csrf_token %}
                                     {{ form.as_p }}
                                     <button  class="btn btn-outline-dark" type="submit">Logout</button>
                                 </form>
-                                <li><p class="dropdown-item">Profile</p></li>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                         
                         {% else %}
-                            <li><a class="dropdown-item"  href="/login" class="btn btn-outline-dark" data-link>Login</a>
+                            <li><a class="dropdown-item"  href="/online" class="btn btn-outline-dark" data-link>Login</a>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item"  href="/register" class="btn btn-outline-dark" data-link>Register</a>
                         {% endif %}
                         </li>
                     </ul>
                         <li class="nav-item">
-                           <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#musicModal" style="border-radius: 20%; max-width:80px">
+                           <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#musicModal" style="border-radius: 20%; max-width:80px">
                                   🎵</button>
                                   <div class="modal fade" id="musicModal" tabindex="-1" aria-labelledby="musicModalLabel" aria-hidden="true">
                                       <div class="modal-dialog">
@@ -89,13 +93,13 @@
                                           </div>
                           
                                           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                      </div>
+                               </div>
                         </li>
                     </ul>
                 </div>
             </div>
     </nav>
-
+    <br>
     <!-- Main Content  to be loaded dynamically -->
     <main id="app" class="container"></main>
     <!--                                        -->
@@ -104,6 +108,8 @@
     <script type="module" src="{% static 'js/main.js' %}"></script>
     <script type="module" id="pong-classic" src="{% static 'js/pong-game.js' %}"></script>
     <script type="module" id="pong-3d" src="{% static 'js/pong3d.js' %}"></script>
+    <script type="module" id="pong-4p" src="{% static 'js/multi_pong4.js' %}"></script>
+    <script type="module" id="profile" src="{% static 'js/profile.js' %}"></script>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

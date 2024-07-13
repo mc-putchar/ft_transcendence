@@ -14,6 +14,7 @@ const viewFunctions = {
     "/online": renderOnlineGame,
     "/logout": renderLogout,
     "/register": renderRegister,
+    "/profile": renderProfile,
     "/chat": renderChat,
 };
 
@@ -24,6 +25,7 @@ const routes = {
     "/online": { title: "Online", endpoint: "/online" },
     "/logout": { title: "Logout", endpoint: "/logout" },
     "/register": { title: "Register", endpoint: "/register" },
+    "/profile": { title: "Profile", endpoint: "/profile" },
     "/chat": { title: "Chat", endpoint: "/chat" },
 };
 
@@ -50,6 +52,10 @@ function renderLogout(data) {
 }
 
 function renderRegister(data) {
+    return `<div>${data.content}</div>`;
+}
+
+function renderProfile(data) {
     return `<div>${data.content}</div>`;
 }
 
@@ -230,22 +236,22 @@ function handleRegisterForm() {
 }
 
 document.getElementById("app").addEventListener("click", (event) => {
-    if (event.target.id === "StartLocalGameButton") {
-        // startOscillator();
+        startOscillator();
         // TODO any click will contract the navbar from the expanded state
         // playAudioTrack();
-    }
 });
 
-window.addEventListener("click", e => {
+
+
+window.addEventListener("popstate", router);
+
+document.addEventListener("click", e => {
     if (e.target.matches("[data-link]")) {
         e.preventDefault();
         history.pushState("", "", e.target.href);
         router();
     }
 });
-
-window.addEventListener("popstate", router);
 
 document.addEventListener("DOMContentLoaded", () => {
     router();

@@ -18,7 +18,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['pong.ktano-studio.com', 'localhost', '127.0.0.1', '.42berlin.de', ]
+ALLOWED_HOSTS = ['pong.ktano-studio.com',
+                 'localhost', '127.0.0.1', '.42berlin.de', ]
 CSRF_TRUSTED_ORIGINS = ['https://pong.ktano-studio.com']
 # Application definition
 
@@ -139,3 +140,6 @@ STATICFILES_DIRS = [
 # logout redirect
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MEDIA = '/media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
