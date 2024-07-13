@@ -9,11 +9,12 @@ const NET_HEIGHT = 30;
 const SCORE_COLOR = "green";
 const SCORE_FONT = "42px Orbitron";
 const BALL_COLOR = "green";
-const BALL_START_SPEED = 3;
+const BALL_START_SPEED = 5;
+const BALL_SIZE = 20;
 const PADDLE_COLOR = "green";
 const EFFECT_COLOR = "greenyellow";
-const PADDLE_HEIGHT = 50;
-const PADDLE_WIDTH = 10;
+const PADDLE_HEIGHT = 80;
+const PADDLE_WIDTH = 20;
 const PADDLE_SPEED = 5;
 
 const TARGET_FPS = 120;
@@ -57,8 +58,8 @@ class Player {
 class Ball {
 	constructor(arenaHeight, arenaWidth) {
 		this.color = BALL_COLOR;
-		this.height = 10;
-		this.width = 10;
+		this.height = BALL_SIZE;
+		this.width = BALL_SIZE;
 		this.x = arenaWidth / 2;
 		this.y = arenaHeight / 2;
 		this.speed = 0;
@@ -162,8 +163,8 @@ class Game {
 		if (elapsed > this.fpsInterval) {
 			this.lastUpdate = now;
 			this.update();
-			this.draw();
 		}
+		this.draw();
 	}
 	update() {
 		if (!this.running)	return;
