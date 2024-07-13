@@ -237,15 +237,34 @@ document.getElementById("app").addEventListener("click", (event) => {
     }
 });
 
-window.addEventListener("click", e => {
+
+
+window.addEventListener("popstate", router);
+
+document.addEventListener("click", e => {
+    console.log("mouse click", e);
+    
+    var navbarCollapse = document.querySelector('.navbarNav');
+    var isNavbarOpen = navbarCollapse.classList.contains('show');
+    var clickedElement = event.target;
+    var isToggler = clickedElement.classList.contains('navbar-toggler');
+    var isInsideNavbar = clickedElement.closest('.navbaNav');
+    
+    console.log(navBarCollapse);
+    
+    if (isNavbarOpen && !isToggler && !isInsideNavbar) {
+        var navbarToggler = document.querySelector('.navbar-toggler');
+        navbarToggler.click();
+    }
+    
     if (e.target.matches("[data-link]")) {
         e.preventDefault();
         history.pushState("", "", e.target.href);
         router();
     }
-});
 
-window.addEventListener("popstate", router);
+  });
+
 
 document.addEventListener("DOMContentLoaded", () => {
     router();
