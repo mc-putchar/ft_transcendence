@@ -60,14 +60,13 @@
                       <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li>
                         {% if user.is_authenticated %}
-                                <li><p class="dropdown-item">Profile</p></li>
+                                <li><a class="dropdown-item" href="/profile" data-link>Profile</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <form id="logoutForm" class="dropdown-item" method="post" action="{% url 'logout' %}">
                                     {% csrf_token %}
                                     {{ form.as_p }}
                                     <button  class="btn btn-outline-dark" type="submit">Logout</button>
                                 </form>
-                                <li><a class="dropdown-item" href="/profile" data-link>Profile</a></li>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                         
