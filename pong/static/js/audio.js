@@ -1,6 +1,5 @@
 // audio.js
 
-
 // Audio INITIALIZATION
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -11,7 +10,6 @@ let gainNode = audioContext.createGain();
 
 const initialGain = 0.4;
 
-
 oscillator.type = 'triangle';
 oscillator.frequency.value = 220.0; 
 gainNode.gain.value = initialGain;
@@ -20,15 +18,15 @@ oscillator.connect(gainNode);
 gainNode.connect(audioContext.destination);
 
 // ------------------------------------------------------------------------
-
 // Start (resume) audio context if not started
 function startAudioContext() {
     if (audioContext.state !== "running") {
         audioContext.resume();
-        oscillator.start();
+        mod.start();
+        modmod.start();
+        osc.start();
     }
 }
-
 
 function startOscillator() {
     startAudioContext();
@@ -90,16 +88,16 @@ const delay = ctx.createDelay();
 const feedback = ctx.createGain();
 
 const mainGainNode = ctx.createGain();
-let attack = 0.08 , sustain = 1.2, release = 2.1;
+let attack = 0.08 , sustain = 2.2, release = 2.1;
 
-delay.delayTime.value = 		0.15
-feedback.gain.value = 		0.7;
-modmodGain.gain.value = 		150;
-vca.gain.value = 				0.3;
-osc.type = 					'sine';
-modmod.type = 				'sine';
-mod.type = 					'sine';
-mainGainNode.gain.value = 	0.5;
+delay.delayTime.value = 0.35
+feedback.gain.value = 	 0.5;
+modmodGain.gain.value = 350;
+vca.gain.value = 0.7;
+osc.type ='triangle';
+modmod.type ='sine';
+mod.type ='sine';
+mainGainNode.gain.value =0.9;
 
 delay.connect(feedback);
 feedback.connect(delay)
@@ -113,7 +111,7 @@ modGain.connect(osc.frequency);
 mainGainNode.connect(ctx.destination);
 
 function initTestTone() {
-    playTone(80,42,20);
+    playTone(333,0.1,2220);
 }
 
 function playTone(freq,modulation,mod_amt) {
@@ -121,12 +119,8 @@ function playTone(freq,modulation,mod_amt) {
     modGain.gain.value = mod_amt;
     osc.frequency.value = freq;
     
-    modmod.start();
-    osc.start();
-    mod.start();
     vca.gain.exponentialRampToValueAtTime(1, ctx.currentTime + attack);
    	vca.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + release + sustain);
-    osc.stop();
     console.log("played tone");
 }
 
