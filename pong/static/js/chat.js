@@ -22,7 +22,7 @@ export function initWS() {
             document.querySelector('#chat-userlist').innerHTML = '';
 
             for (let user of data.users_list) {
-                const user_label = document.createElement('p');
+                let user_label = document.createElement('p');
                 user_label.textContent = user;
                 user_label.className = 'user-label';
                 document.querySelector('#chat-userlist').appendChild(user_label);
