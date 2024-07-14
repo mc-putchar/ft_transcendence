@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,7 +20,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['pong.ktano-studio.com',
-                 'localhost', '127.0.0.1', '.42berlin.de', ]
+                 'localhost', '127.0.0.1', '.42berlin.de', '10.18.206.20']
 CSRF_TRUSTED_ORIGINS = ['https://pong.ktano-studio.com']
 # Application definition
 

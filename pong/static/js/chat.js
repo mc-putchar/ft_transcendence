@@ -1,3 +1,5 @@
+import { csrftoken } from "./main.js";
+
 export function initWS(roomName) {
   const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
 
@@ -13,8 +15,6 @@ export function initWS(roomName) {
   const username = document.querySelector("#chat-username").textContent;
 
   chatSocket.onopen = function (e) {
-    console.log("Chat socket connected");
-    console.log("room: " + roomName);
     document.querySelector("#room-name").textContent = roomName;
     document.querySelector("#chat-log").value = "";
   };
@@ -46,14 +46,22 @@ export function initWS(roomName) {
 
   document.querySelector("#chat-message-input").onkeyup = function (e) {
     if (e.keyCode === 13) {
-      // enter, return
       document.querySelector("#chat-message-submit").click();
     }
   };
 
   document.querySelector("#chat-message-submit").onclick = function (e) {
     const messageInputDom = document.querySelector("#chat-message-input");
+    const data = {
+      message: messageInputDom.value,
+      username: document.querySelector("#chat-username").textContent,
+    };
     const message = messageInputDom.value;
+
+    if (checkCommand(message)) {
+      handleCommand(message, username);
+      return;
+    }
     chatSocket.send(
       JSON.stringify({
         message: message,
@@ -71,6 +79,60 @@ export function initWS(roomName) {
     document.querySelector("#chat-message-input").value = "@" + user + " ";
     document.querySelector("#chat-message-input").focus();
   };
+}
+
+// get command /commands
+const commands = { "/pm": "Send a private message to a user" };
+
+function handleCommand(message, username) {
+  if (message.startsWith("/pm")) {
+    let user2 = message.split(" ")[1]?.trim();
+    let user1 = username.trim();
+
+    if (user2) {
+      let chatUsers = [user1, user2];
+      chatUsers.sort();
+      let chatId = btoa(chatUsers.join(""));
+      chatId = chatId.replace(/=/g, "");
+
+      fetch("/chat/" + chatId + "/", {
+        method: "POST",
+        body: JSON.stringify({
+          message: message,
+          username: username,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,
+        },
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to send private message");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          const app = document.getElementById("app");
+          app.innerHTML = data.content;
+          initWS(chatId);
+          console.log("Loaded data.content, from /chat/" + chatId + "/");
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    } else {
+      console.error("No recipient specified for /pm command.");
+    }
+  }
+}
+
+// check if a message is a command
+function checkCommand(message) {
+  let trim = message.trim();
+  let words = trim.split(" ");
+  const firstWord = words[0];
+  return firstWord in commands ? true : false;
 }
 
 // check if a message is tagging our user

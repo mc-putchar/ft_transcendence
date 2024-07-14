@@ -1,4 +1,5 @@
-import { startOscillator, stopOscillator, playAudioTrack } from "./audio.js";
+import { playAudioTrack, playTone } from "./audio.js";
+
 import { renderHome } from "./views/home.js";
 import { renderLocalGame } from "./views/local.js";
 import { initWS } from "./chat.js";
@@ -60,7 +61,7 @@ function renderRegister(data) {
 }
 
 function renderContent(data) {
-  return ` ${data.title} ${data.content}`;
+  return ` ${data.content}`;
 }
 
 function router() {
@@ -135,7 +136,7 @@ function router() {
         .then((data) => {
           document.title = data.title;
           document.getElementById("app").innerHTML = data.content;
-          handleChat(roomName);
+          //handleChat(roomName);
         });
     }
   }
@@ -156,7 +157,7 @@ function getCookie(name) {
   return cookieValue;
 }
 
-const csrftoken = getCookie("csrftoken");
+export const csrftoken = getCookie("csrftoken");
 
 function handleLoginForm() {
   document.getElementById("loginForm").addEventListener("submit", function (e) {
@@ -255,8 +256,10 @@ function handleRegisterForm() {
     });
 }
 
+// Example usage
+
 document.getElementById("app").addEventListener("click", (event) => {
-  startOscillator();
+  // playTone(222, 0.5, 122);
 });
 
 window.addEventListener("popstate", router);
