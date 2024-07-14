@@ -1,7 +1,7 @@
 export function initWS() {
-  const roomName = "lobby";
+  const roomName = document.getElementById("room-name").textContent;
   const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
-
+  console.log("ROON NAME", roomName);
   const chatSocket = new WebSocket(
     wsProtocol + window.location.host + "/ws/chat/" + roomName + "/",
   );
@@ -10,6 +10,7 @@ export function initWS() {
 
   chatSocket.onopen = function (e) {
     console.log("Chat socket connected");
+    console.log("WS PROTOCOL", chatSocket);
   };
 
   chatSocket.onmessage = function (e) {

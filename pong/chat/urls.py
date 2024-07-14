@@ -1,8 +1,8 @@
-from django.urls import path, include
+from django.urls import include, path
 
 from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path("lobby", views.index, name="lobby"),
+    path("<str:room_name>/", views.room, name="room"),
 ]
