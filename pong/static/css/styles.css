@@ -331,3 +331,24 @@ img.mp3-hover:hover{
   opacity: 1;
   animation: fadeOut 0.3s forwards;
 }
+
+
+.navbar-nav .dropdown-menu.show {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+}
+
+.navbar-nav .dropdown-menu {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.5s ease, visibility 0.5s ease, scale 0.5s ease;
+}
+
+.navbar-nav .dropdown:hover .dropdown-menu {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s ease, visibility 0.5s ease, scale 0.5s ease;
+}
+

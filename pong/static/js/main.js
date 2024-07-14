@@ -1,7 +1,11 @@
 import { playAudioTrack, playTone } from "./audio.js";
 
-import { renderHome } from "./views/home.js";
-import { renderLocalGame } from "./views/local.js";
+import {
+  handleLoginForm,
+  handleLogoutForm,
+  handleRegisterForm,
+} from "./views/forms.js";
+
 import { initWS } from "./chat.js";
 
 // Transition durations in milliseconds
@@ -9,13 +13,13 @@ const fadeOutDuration = 200;
 const fadeInDuration = 600;
 
 const viewFunctions = {
-  "/": renderHome,
-  "/local": renderLocalGame,
+  "/": renderContent,
+  "/local": renderContent,
   "/login": renderLogin,
-  "/online": renderOnlineGame,
+  "/online": renderContent,
   "/logout": renderLogout,
   "/register": renderRegister,
-  "/chat": renderChat,
+  "/chat": renderContent,
 };
 
 const routes = {
@@ -30,24 +34,6 @@ const routes = {
 
 const wsRoutes = ["/chat"];
 
-function hashUsername(username) {
-  let hash = 0;
-  for (let i = 0; i < username.length; i++) {
-    const char = username.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return hash.toString();
-}
-
-function renderChat(data) {
-  return `${data.content}`;
-}
-
-function renderOnlineGame(data) {
-  return `<div>${data.content}</div>`;
-}
-
 function renderLogin(data) {
   return `<h2>${data.title}</h2>${data.content}`;
 }
@@ -57,7 +43,7 @@ function renderLogout(data) {
 }
 
 function renderRegister(data) {
-  return `<div>${data.content}</div>`;
+  return `${data.content}`;
 }
 
 function renderContent(data) {
@@ -159,110 +145,19 @@ function getCookie(name) {
 
 export const csrftoken = getCookie("csrftoken");
 
-function handleLoginForm() {
-  document.getElementById("loginForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    fetch("/login", {
-      method: "POST",
-      body: formData,
-      headers: {
-        "X-CSRFToken": csrftoken,
-        "X-Requested-With": "XMLHttpRequest",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
-        if (data.content === "Login successful") {
-          history.pushState("", "", "/");
-          window.location.href = "/";
-          router();
-        }
-      })
-      .catch((error) => {
-        console.error("Login error:", error);
-        document.getElementById("app").innerHTML =
-          `<p>Login failed: ${error.message}</p>`;
-      });
-  });
-}
-
 function handleChat(roomName) {
   initWS(roomName);
 }
-
-function handleLogoutForm() {
-  document
-    .getElementById("logoutForm")
-    .addEventListener("submit", function (e) {
-      e.preventDefault();
-      fetch("/logout", {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrftoken,
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
-          if (data.content === "Logout successful") {
-            setTimeout(() => {
-              window.location.href = "/";
-            }, 1000);
-          }
-        })
-        .catch((error) => {
-          console.error("Logout error:", error);
-          document.getElementById("app").innerHTML =
-            `<p>Logout failed: ${error.message}</p>`;
-        });
-    });
-}
-
-function handleRegisterForm() {
-  document
-    .getElementById("registerForm")
-    .addEventListener("submit", function (e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      fetch("/register", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "X-CSRFToken": csrftoken,
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
-          if (data.content === "Registration successful") {
-            history.pushState("", "", "/");
-            router();
-          }
-        })
-        .catch((error) => {
-          console.error("Registration error:", error);
-          document.getElementById("app").innerHTML =
-            `<p>Registration failed: ${error.message}</p>`;
-        });
-    });
-}
-
-// Example usage
 
 document.getElementById("app").addEventListener("click", (event) => {
   // playTone(222, 0.5, 122);
 });
 
-window.addEventListener("popstate", router);
+// popstate event is fired when the active history entry changes
+window.addEventListener("popstate", router());
+
+// catch the refresh event and call router instead of reloading the page
+// this is necessary to maintain the SPA behavior
 
 document.addEventListener("click", (e) => {
   if (e.target.matches("[data-link]")) {
@@ -275,3 +170,5 @@ document.addEventListener("click", (e) => {
 document.addEventListener("DOMContentLoaded", () => {
   router();
 });
+
+export { router };
