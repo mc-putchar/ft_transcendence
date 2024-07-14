@@ -1,7 +1,11 @@
-export function initWS() {
-  const roomName = document.getElementById("room-name").textContent;
+export function initWS(roomName) {
   const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
-  console.log("ROON NAME", roomName);
+
+  if (window.chatSocket) {
+    window.chatSocket.close();
+    console.log("socket close for new one socket closed");
+  }
+
   const chatSocket = new WebSocket(
     wsProtocol + window.location.host + "/ws/chat/" + roomName + "/",
   );
@@ -10,13 +14,15 @@ export function initWS() {
 
   chatSocket.onopen = function (e) {
     console.log("Chat socket connected");
-    console.log("WS PROTOCOL", chatSocket);
+    console.log("room: " + roomName);
+    document.querySelector("#room-name").textContent = roomName;
+    document.querySelector("#chat-log").value = "";
   };
 
   chatSocket.onmessage = function (e) {
     const data = JSON.parse(e.data);
     if (data.message) {
-      notifyUser(data.message);
+      if (getMention(data.message)) notifyUser(data.message);
       document.querySelector("#chat-log").value +=
         data.username + ": " + data.message + "\n";
     }

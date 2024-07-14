@@ -15,7 +15,6 @@ const viewFunctions = {
   "/logout": renderLogout,
   "/register": renderRegister,
   "/chat": renderChat,
-  "/chat/private": renderChat,
 };
 
 const routes = {
@@ -25,12 +24,20 @@ const routes = {
   "/online": { title: "Online", endpoint: "/online" },
   "/logout": { title: "Logout", endpoint: "/logout" },
   "/register": { title: "Register", endpoint: "/register" },
-  "/chat": { title: "Chat", endpoint: "/chat" },
-  "/chat/private": { title: "Private", endpoint: "/chat/private" },
+  "/chat": { title: "Chat", endpoint: "/chat/lobby" },
 };
 
-// list of routes that use websockets
 const wsRoutes = ["/chat"];
+
+function hashUsername(username) {
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    const char = username.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash.toString();
+}
 
 function renderChat(data) {
   return `${data.content}`;
@@ -52,15 +59,8 @@ function renderRegister(data) {
   return `<div>${data.content}</div>`;
 }
 
-// check if the location is different from wsRoutes in any location change
-function checkWS() {
-  if (!wsRoutes.includes(location.pathname)) {
-    if (window.chatSocket) {
-      window.chatSocket.close();
-      console.log("Chat socket closed : ", window.chatSocket);
-      delete window.chatSocket;
-    }
-  }
+function renderContent(data) {
+  return ` ${data.title} ${data.content}`;
 }
 
 function router() {
@@ -100,8 +100,6 @@ function router() {
             () => appElement.classList.remove("fade-enter"),
             fadeInDuration,
           );
-
-          checkWS();
           if (location.pathname === "/login") {
             handleLoginForm();
             document.getElementById("username").focus();
@@ -110,10 +108,9 @@ function router() {
           } else if (location.pathname === "/register") {
             handleRegisterForm();
             document.getElementById("username").focus();
-          } else if (location.pathname === "/chat") {
-            handleChat();
-          } else if (location.pathname === "/chat/private") {
-            handleChat();
+          } else if (location.pathname.startsWith("/chat")) {
+            const roomName = location.pathname.split("/")[2] || "lobby";
+            handleChat(roomName);
           }
         }, fadeOutDuration);
       })
@@ -123,8 +120,24 @@ function router() {
           "<p>Error loading page content.</p>";
       });
   } else {
-    history.replaceState("", "", "/");
-    router();
+    if (location.pathname.startsWith("/chat")) {
+      const roomName = location.pathname.split("/")[2];
+      fetch("/chat/" + roomName + "/", {
+        method: "GET",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          document.title = data.title;
+          document.getElementById("app").innerHTML = data.content;
+          handleChat(roomName);
+        });
+    }
   }
 }
 
@@ -162,7 +175,6 @@ function handleLoginForm() {
         document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
         if (data.content === "Login successful") {
           history.pushState("", "", "/");
-          // go to home page redirect
           window.location.href = "/";
           router();
         }
@@ -175,8 +187,8 @@ function handleLoginForm() {
   });
 }
 
-function handleChat() {
-  initWS();
+function handleChat(roomName) {
+  initWS(roomName);
 }
 
 function handleLogoutForm() {
@@ -245,8 +257,6 @@ function handleRegisterForm() {
 
 document.getElementById("app").addEventListener("click", (event) => {
   startOscillator();
-  // TODO any click will contract the navbar from the expanded state
-  // playAudioTrack();
 });
 
 window.addEventListener("popstate", router);
