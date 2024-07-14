@@ -12,7 +12,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['all']
+        fields = ['user', 'alias', 'friendList', 'isOnline', 'image']
+        depth = 1
 
 class FriendSerializer(serializers.ModelSerializer):
     users = UserSerializer(many=True, read_only=True)

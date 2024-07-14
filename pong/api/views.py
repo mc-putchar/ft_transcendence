@@ -6,12 +6,22 @@ from django.contrib.auth.models import User
 from .models import Profile, Friend
 from .serializers import ProfileSerializer, UserSerializer, FriendSerializer
 
-class ProfileDetail(generics.RetrieveUpdateAPIView):
+class ProfileDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    lookup_field = 'user__username'
+
+    def get_queryset(self):
+        return Profile.objects.filter(user__is_active=True)
+
+class OnlineListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
 
-    def get_object(self):
-        return self.request.user.profile
+    def get_queryset(self):
+        return Profile.objects.filter(isOnline=True)
 
 class ProfileListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]

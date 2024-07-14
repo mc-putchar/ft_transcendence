@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import login as django_login
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from .forms import LoginForm, UserUpdateForm, ProfileUpdateForm
 from django.template.loader import render_to_string
@@ -55,6 +55,17 @@ def home_data(request):
     return JsonResponse(data)
 
 
+def show_profile(request, username):
+    user = get_object_or_404(Profile, user__username=username)
+    if user.isOnline:
+        status = 'Online'
+    else:
+        status = 'Offline'
+    context = { 'user': user, 'status': status }
+    content = render_to_string('profile.html', context=context)
+    data = {'title': 'Profile', 'content': content}
+    return JsonResponse(data)
+
 def update_profile(request):
     if request.method == 'POST':
         u_form = UserUpdateForm(request.POST, instance=request.user)
@@ -70,7 +81,7 @@ def update_profile(request):
         'u_form': u_form,
         'p_form': p_form
     }
-    content = render_to_string('profile.html', context=context)
+    content = render_to_string('update_profile.html', context=context)
     data = {'title': 'Profile', 'content': content}
     return JsonResponse(data)
 

@@ -100,8 +100,6 @@ a, p, h1, h2, h3, h4, h5, h6, Buttons, label, input, select, textarea ,img{
 	border-color:rgb(10, 10, 92);
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
-
 /* Define the fade-in animation */
 @keyframes fadeIn {
   from { opacity: 0; }

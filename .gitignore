@@ -6,3 +6,4 @@ __pycache__
 .env
 pong/testenv
 testenv
+profile_images

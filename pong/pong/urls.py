@@ -18,6 +18,7 @@ urlpatterns = [
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('auth42', views.auth42, name='auth42'),
     path('redirect', views.redirect_view, name='redirect_view'),
-    path('profile', views.update_profile, name='profile-detail'),
+    path('profile', views.update_profile, name='profile-update'),
     path('users', views.users, name='user-list'),
+    path('users/<str:username>/', views.show_profile, name='profile-detail'),
 ]

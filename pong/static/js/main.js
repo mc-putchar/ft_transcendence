@@ -128,8 +128,43 @@ function router() {
             document.getElementById('app').innerHTML = "<p>Error loading page content.</p>";
         });
     } else {
-        history.replaceState("", "", "/");
-        router();
+        if (location.pathname.startsWith("/users/")) {
+            fetch(location.pathname + '/', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.title = data.title;
+                const appElement = document.getElementById("app");
+                const newContent = data.content;
+                // document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
+                setTimeout(() => {
+                    appElement.innerHTML = newContent;
+    
+                    appElement.classList.remove('fade-exit');
+                    appElement.classList.add('fade-enter');
+    
+                    setTimeout(() => appElement.classList.remove('fade-enter'), fadeInDuration);
+                }, fadeOutDuration);
+            })
+            .catch(error => {
+                console.error("Error fetching data:", error);
+                document.getElementById('app').innerHTML = "<p>Requested user not found</p>";
+            });
+            history.replaceState("", "", location.pathname);
+        } else {
+            history.replaceState("", "", "/");
+            router();
+        }
     }
 }
 
