@@ -61,6 +61,7 @@
                         <li>
                         {% if user.is_authenticated %}
                                 <li><a class="dropdown-item" href="/profile" data-link>Profile</a></li>
+                                <li><a class="dropdown-item" href="/users" data-link>Users</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <form id="logoutForm" class="dropdown-item" method="post" action="{% url 'logout' %}">
                                     {% csrf_token %}

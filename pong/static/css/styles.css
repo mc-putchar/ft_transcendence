@@ -42,6 +42,11 @@ canvas {
     background-color: black;
 }
 
+.helptext {
+    font-size: 10;
+    font-family: 'Lucida Sans';
+}
+
 .userlist {
     flex-direction: column;
     border: 1px solid rgba(222,222,222,100);
@@ -203,7 +208,7 @@ button {
     color: #fff; /* White text */
     border: none;
     border-radius: 8px; /* Rounded corners */
-    /* padding: 10px 20px; /* Padding */ */
+    /* padding: 10px 20px; /* Padding */
     font-size: 1em; /* Larger text */
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.3s ease;

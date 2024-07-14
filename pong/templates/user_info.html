@@ -9,6 +9,7 @@
                     <ul class="list-group list-group-flush mb-4">
                         <li class="list-group-item">User: {{ user_data.login }}</li>
                         <li class="list-group-item">Email: {{ user_data.email }}</li>
+                        <li class="list-group-item">Alias: {{ user_data.alias }}</li>
                         <li class="list-group-item">
                             <img src="{{ user_data.image.versions.medium }}" alt="Profile Image" class="img-thumbnail">
                         </li>
@@ -19,6 +20,8 @@
                         <ul class="list-group list-group-flush mb-4">
                             <li class="list-group-item">User: {{ user_data.login }}</li>
                             <li class="list-group-item">Email: {{ user_data.email }}</li>
+                            <li class="list-group-item">Alias: {{ user_data.alias }}</li>
+                            <li class="list-group-item">Status: {{ user_data.status }}</li>
                             <li class="list-group-item">
                                 <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail">
                             </li>

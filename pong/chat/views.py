@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.db import transaction
 from .models import Lobby
+from api.models import Profile
 from django.template.loader import render_to_string
 
 import logging
@@ -21,7 +22,7 @@ def index(request):
     lobby.add_user(request.user.username)
 
     context = {
-        'user': request.user,
+        'profile': request.user.profile,
         'userslist': lobby.userlist,
     }
 

@@ -1,0 +1,9 @@
+{% load static %}
+{% csrf_token %}
+<div>
+    <ul id="user-list">
+        {% for user in users %}
+            <li><img src="{{ user.image }}" class="img-thumbnail">{{ user.user.username }} ({{ user.alias }})</li>
+        {% endfor %}
+    </ul>
+</div>

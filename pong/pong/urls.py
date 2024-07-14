@@ -9,7 +9,7 @@ urlpatterns = [
     path('local_game', views.local_game, name='local_game'),
     path('contact_data', views.contact_data, name='contact_data'),
 
-    path('logout', views.logout, name='logout'),  # Add this line
+    path('logout', views.logout, name='logout'),
     path('login', views.login, name='login'),
     path('register', views.register, name='register'),
 
@@ -18,7 +18,6 @@ urlpatterns = [
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('auth42', views.auth42, name='auth42'),
     path('redirect', views.redirect_view, name='redirect_view'),
-    path('profile', views.profile, name='profile-detail'),
-
-    path("chat/", include("chat.urls")),
+    path('profile', views.update_profile, name='profile-detail'),
+    path('users', views.users, name='user-list'),
 ]

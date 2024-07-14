@@ -1,7 +1,7 @@
 # make login forms here for django login
 from django import forms
 from django.contrib.auth.models import User
-from .models import Profile
+from api.models import Profile
 
 class LoginForm(forms.Form):
     username = forms.CharField(label='Username', max_length=100)
@@ -38,4 +38,4 @@ class UserUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['image']
+        fields = ['alias', 'image']

@@ -9,7 +9,7 @@ from .auth42 import exchange_code_for_token, get_user_data
 from django.conf import settings
 from django.contrib.auth import authenticate
 from chat.models import Lobby
-from .models import Profile
+from api.models import Profile
 
 import logging
 import random
@@ -40,7 +40,9 @@ def home_data(request):
             user_data = {
                 'login': request.user.username,
                 'email': str(request.user.username) + "@42.pong",
-                'image': request.user.profile.image
+                'image': request.user.profile.image,
+                'alias': request.user.profile.alias,
+                'status': str(request.user.profile.isOnline),
             }
             context = {'user_data': user_data}
             content = render_to_string('user_info.html', context=context)
@@ -53,7 +55,7 @@ def home_data(request):
     return JsonResponse(data)
 
 
-def profile(request):
+def update_profile(request):
     if request.method == 'POST':
         u_form = UserUpdateForm(request.POST, instance=request.user)
         p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
@@ -72,6 +74,20 @@ def profile(request):
     data = {'title': 'Profile', 'content': content}
     return JsonResponse(data)
 
+
+def users(request):
+    if request.user.is_authenticated:
+        users = Profile.objects.all()
+        context = {'users': users}
+        content = render_to_string('list_users.html', context=context)
+        data = {'title': 'Users', 'content': content}
+
+    else:
+        html = render_to_string(
+            'registration/needlogin.html', request=request)
+        data = {"title": "Online", "content": html}
+
+    return JsonResponse(data)
 
 def local_game(request):
     data = {"title": 'local', 'content': render_to_string("local_game.html")}
@@ -109,6 +125,9 @@ def logout(request):
 
     lobby = Lobby.objects.get(id=1)
     lobby.remove_user(request.user.username)
+
+    request.user.profile.set_online_status(False)
+    request.user.profile.save()
 
     return JsonResponse(data)
 

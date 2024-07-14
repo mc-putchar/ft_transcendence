@@ -15,6 +15,7 @@ const viewFunctions = {
     "/logout": renderLogout,
     "/register": renderRegister,
     "/profile": renderProfile,
+    "/users": renderUsersList,
     "/chat": renderChat,
 };
 
@@ -26,6 +27,7 @@ const routes = {
     "/logout": { title: "Logout", endpoint: "/logout" },
     "/register": { title: "Register", endpoint: "/register" },
     "/profile": { title: "Profile", endpoint: "/profile" },
+    "/users": { title: "Users", endpoint: "/users" },
     "/chat": { title: "Chat", endpoint: "/chat" },
 };
 
@@ -56,6 +58,10 @@ function renderRegister(data) {
 }
 
 function renderProfile(data) {
+    return `<div>${data.content}</div>`;
+}
+
+function renderUsersList(data) {
     return `<div>${data.content}</div>`;
 }
 
