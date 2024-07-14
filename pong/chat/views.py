@@ -20,11 +20,14 @@ def room(request, room_name):
 
     # add this user to the lobby
     lobby.add_user(request.user.username)
+    
+    csrf_token = request.META.get('CSRF_COOKIE', None)
 
     context = {
         'user': request.user,
         'userslist': lobby.userlist,
         'room_name': room_name,
+        'csrf_token': csrf_token,
     }
 
     data = {

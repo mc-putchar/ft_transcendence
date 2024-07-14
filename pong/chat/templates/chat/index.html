@@ -1,3 +1,4 @@
+{% csrf_token %}
 <div class="container-fluid chat-container">
   <div class="row">
     <div class="col-12 text-center">
@@ -36,9 +37,9 @@
         </button>
       </div>
     </div>
-    <a class="btn btn-dark" href="/chat/{{ user.username }}" data-link
-      >Private Chat {{ user.username }}
-    </a>
+    <!-- <a class="btn btn-dark" href="/chat/{{ user.username }}" data-link -->
+    <!-- >Private Chat {{ user.username }} -->
+    <!-- </a> -->
   </div>
 </div>
 
