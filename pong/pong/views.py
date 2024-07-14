@@ -9,11 +9,12 @@ from .auth42 import exchange_code_for_token, get_user_data
 from django.conf import settings
 from django.contrib.auth import authenticate
 from chat.models import Lobby
-from api.models import Profile
+from api.models import Profile, Friend
 
 import logging
 import random
 import string
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,14 @@ def index(request):
     return render(request, 'index.html', context)
 
 
+def get_friends(user):
+    friend_instance, created = Friend.objects.get_or_create(current_user=user)
+    friends = []
+    for friend in friend_instance.users.all():
+        friends += Profile.objects.get_or_create(user=friend)
+    return friends
+
+
 def home_data(request):
     user_data = request.session.get('user_data')
     if user_data is not None:
@@ -37,12 +46,17 @@ def home_data(request):
         data = {'title': 'Home', 'content': content}
     else:
         if request.user.is_authenticated:
+            if request.user.profile.isOnline:
+                status = "Online"
+            else:
+                status = "Offline"
             user_data = {
                 'login': request.user.username,
                 'email': str(request.user.username) + "@42.pong",
                 'image': request.user.profile.image,
                 'alias': request.user.profile.alias,
-                'status': str(request.user.profile.isOnline),
+                'status': status,
+                'friends': get_friends(request.user),
             }
             context = {'user_data': user_data}
             content = render_to_string('user_info.html', context=context)

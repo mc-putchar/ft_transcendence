@@ -25,6 +25,14 @@
                             <li class="list-group-item">
                                 <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail">
                             </li>
+                            <p>Friends:</p>
+                            {% for friend in user_data.friends %}
+                                {% if friend.isOnline %}
+                                    <li class="list-group-item text-success">{{ friend.user.username }}</li>
+                                {% else %}
+                                    <li class="list-group-item text-danger">{{ friend.user.username }}</li>
+                                {% endif %}
+                            {% endfor %}
                         </ul>
                    </div>
                     {% endif %}
