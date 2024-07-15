@@ -11,7 +11,7 @@
                         <li class="list-group-item">Email: {{ user_data.email }}</li>
                         <li class="list-group-item">Alias: {{ user_data.alias }}</li>
                         <li class="list-group-item">
-                            <img src="{{ user_data.image.versions.medium }}" alt="Profile Image" class="img-thumbnail">
+                            <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail">
                         </li>
                     </ul>
                     {% elif user_data.login %}      <!-- Regular User -->

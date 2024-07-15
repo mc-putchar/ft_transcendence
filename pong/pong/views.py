@@ -1,7 +1,8 @@
-import json
 import logging
 import random
 import string
+import json
+import requests
 
 from api.models import Friend, Profile
 from chat.models import Lobby
@@ -39,33 +40,33 @@ def get_friends(user):
 
 
 def home_data(request):
-    user_data = request.session.get('user_data')
-    if user_data is not None:
-        # Ensure the user_data is a dictionary
+    # user_data = request.session.get('user_data')
+    # if user_data is not None:
+    #     # Ensure the user_data is a dictionary
+    #     context = {'user_data': user_data}
+    #     content = render_to_string('user_info.html', context=context)
+    #     data = {'title': 'Home', 'content': content}
+    # else:
+    if request.user.is_authenticated:
+        if request.user.profile.isOnline:
+            status = "Online"
+        else:
+            status = "Offline"
+        user_data = {
+            'login': request.user.username,
+            'email': str(request.user.username) + "@42.pong",
+            'image': request.user.profile.image,
+            'alias': request.user.profile.alias,
+            'status': status,
+            'friends': get_friends(request.user),
+        }
         context = {'user_data': user_data}
         content = render_to_string('user_info.html', context=context)
         data = {'title': 'Home', 'content': content}
     else:
-        if request.user.is_authenticated:
-            if request.user.profile.isOnline:
-                status = "Online"
-            else:
-                status = "Offline"
-            user_data = {
-                'login': request.user.username,
-                'email': str(request.user.username) + "@42.pong",
-                'image': request.user.profile.image,
-                'alias': request.user.profile.alias,
-                'status': status,
-                'friends': get_friends(request.user),
-            }
-            context = {'user_data': user_data}
-            content = render_to_string('user_info.html', context=context)
-            data = {'title': 'Home', 'content': content}
-        else:
-            html = render_to_string(
-                'registration/needlogin.html', request=request)
-            data = {"title": "Online", "content": html}
+        html = render_to_string(
+            'registration/needlogin.html', request=request)
+        data = {"title": "Online", "content": html}
 
     return JsonResponse(data)
 
@@ -76,15 +77,17 @@ def show_profile(request, username):
         status = 'Online'
     else:
         status = 'Offline'
-    context = { 'user': user, 'status': status }
+    context = {'user': user, 'status': status}
     content = render_to_string('profile.html', context=context)
     data = {'title': 'Profile', 'content': content}
     return JsonResponse(data)
 
+
 def update_profile(request):
     if request.method == 'POST':
         u_form = UserUpdateForm(request.POST, instance=request.user)
-        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+        p_form = ProfileUpdateForm(
+            request.POST, request.FILES, instance=request.user.profile)
         if u_form.is_valid() and p_form.is_valid():
             u_form.save()
             p_form.save()
@@ -96,7 +99,7 @@ def update_profile(request):
         'u_form': u_form,
         'p_form': p_form,
         'username': request.user.username,
-        'profilepic' : request.user.profile.image.url
+        'profilepic': request.user.profile.image.url
     }
     content = render_to_string('update_profile.html', context=context)
     data = {'title': 'Profile', 'content': content}
@@ -116,6 +119,7 @@ def users(request):
         data = {"title": "Online", "content": html}
 
     return JsonResponse(data)
+
 
 def local_game(request):
     data = {"title": 'local', 'content': render_to_string("local_game.html")}
@@ -244,15 +248,31 @@ def redirect_view(request):
         user_data = get_user_data(access_token)
         if user_data:
             request.session['user_data'] = user_data
-            # Get or create the Django user
-            # assuming 'login' is the username field from 42 API
             username = user_data.get('login')
             email = user_data.get('email')
+            image_url = user_data.get('image')
+
             user, created = User.objects.get_or_create(
                 username=username, defaults={'email': email})
 
-            django_login(request, user)
+            profile, created = Profile.objects.get_or_create(
+                user=user, defaults={'alias': username})
 
+            if not created:
+                profile.alias = username
+
+            # takes the intra profile picture and adds it as a Profile user
+            if created and image_url:
+                response = requests.get(image_url['versions']['medium'])
+                logger.critical(image_url)
+                if response.status_code == 200:
+                    image_path = f'profile_images/{username}.png'
+                    with open(f'media/{image_path}', 'wb') as f:
+                        f.write(response.content)
+                    profile.image = image_path
+
+            profile.save()
+            django_login(request, user)
             return redirect('/')
         else:
             return HttpResponse('No user data returned', status=404)
