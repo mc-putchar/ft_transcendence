@@ -1,0 +1,29 @@
+{% load static %}
+{% csrf_token %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card p-2 shadow-sm">
+            <div class="card-body text-center container-background">
+                <button class="btn btn-dark" onclick="history.back()">Go Back</button>
+                <div class="container-fluid">
+                    <div class="card-body text-center" >
+                        <ul class="list-group list-group-flush mb-4">
+                            <li class="list-group-item list-group-item-dark"><b>User:</b> {{ user.user.username }}</li>
+                            <li class="list-group-item list-group-item-dark"><b>Email:</b> {{ user.user.email }}</li>
+                            <li class="list-group-item list-group-item-dark"><b>Alias:</b> {{ user.alias }}</li>
+                            <li class="list-group-item list-group-item-dark"><b>Status:</b>
+                                {% if user.isOnline %}
+                                    <span class="text-success">{{ status }}</span>
+                                {% else %}
+                                    <span class="text-danger">{{ status }}</span>
+                                {% endif %}
+                            </li>
+                            <li class="list-group-item list-group-item-dark">
+                                <img src="../{{ user.image }}" alt="Profile Image" class="img-thumbnail">
+                            </li>
+                        </ul>
+                   </div>
+                </div>
+            </div>
+        </div>
+    </div>

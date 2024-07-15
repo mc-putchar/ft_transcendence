@@ -2,7 +2,9 @@ import logging
 
 from django.db import transaction
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.db import transaction
+from .models import Lobby
+from api.models import Profile
 from django.template.loader import render_to_string
 
 from .models import Lobby
@@ -24,7 +26,7 @@ def room(request, room_name):
     csrf_token = request.META.get('CSRF_COOKIE', None)
 
     context = {
-        'user': request.user,
+        'profile': request.user.profile,
         'userslist': lobby.userlist,
         'room_name': room_name,
         'csrf_token': csrf_token,

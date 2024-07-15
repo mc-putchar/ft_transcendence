@@ -30,17 +30,30 @@
       />
     </div>
 
-    <div class="col-2">
-      <div class="col-2">
-        <button id="chat-message-submit" class="btn btn-primary btn-block">
-          Send
-        </button>
-      </div>
-    </div>
-    <!-- <a class="btn btn-dark" href="/chat/{{ user.username }}" data-link -->
-    <!-- >Private Chat {{ user.username }} -->
-    <!-- </a> -->
-  </div>
+	</div>
+
+	<div class="row flex-fill">
+
+		<div class="col-10">
+			<textarea id="chat-log" class="form-control" rows="14" readonly></textarea>
+		</div>
+		<div class="col-2">
+			<div class='container' id="chat-userlist"></div>
+		</div>
+
+	</div>
+	<div class="row">
+		<div class="col-10">
+			<label id="chat-username"> {{ profile.user.username }}</label>
+			<input id="chat-message-input" class="form-control" type="text" placeholder="Type your message here...">
+		</div>
+
+		<div class="col-2">
+			<div class="col-2">
+				<button id="chat-message-submit" class="btn btn-primary btn-block">Send</button>
+			</div>
+		</div>
+	</div>
 </div>
 
 <!--

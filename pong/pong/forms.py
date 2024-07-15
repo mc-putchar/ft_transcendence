@@ -1,7 +1,7 @@
 # make login forms here for django login
 from django import forms
 from django.contrib.auth.models import User
-# serializable form that can be converted to json
+from api.models import Profile
 
 class LoginForm(forms.Form):
     username = forms.CharField(label='Username', max_length=100)
@@ -28,3 +28,14 @@ class RegisterForm(forms.ModelForm):
 
         return cleaned_data
 
+class UserUpdateForm(forms.ModelForm):
+    email = forms.EmailField()
+
+    class Meta:
+        model = User
+        fields = ['username', 'email']
+
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['alias', 'image']
