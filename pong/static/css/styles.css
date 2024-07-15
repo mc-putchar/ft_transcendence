@@ -87,11 +87,12 @@ canvas {
 /* Make the app take the full width and till the bottom of the page */
 .app {
   margin-top: 12vh;
-  display: flex;
+  display: block;
   flex-direction: column;
   min-height: 100vh;
   min-width: 100vw;
   height: 100%;
+  width: 100%;
 }
 
 a,
@@ -267,13 +268,6 @@ button:focus {
   box-shadow: 0 0 0 3px rgba(255, 143, 255, 0.5); /* Focus outline */
 }
 
-/* Image styling */
-/* img { */
-/*     width: 40%; */
-/*     height: auto; */
-/*     margin-top: 20px; */
-/* } */
-
 /* Responsive Design */
 @media (max-width: 768px) {
   button {
@@ -321,17 +315,6 @@ img.mp3-hover:hover {
   z-index: 2;
 }
 
-.mp3-audio {
-}
-
-/* .music-button { */
-/*     position: fixed; */
-/*     bottom: 0; */
-/*     left: 0; */
-/*     border-radius: 20%; */
-/*     max-width: 180px; */
-/* } */
-/**/
 .chat-container {
   display: flex;
   flex-direction: column;

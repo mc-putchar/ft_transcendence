@@ -157,13 +157,21 @@ document.getElementById("app").addEventListener("click", (event) => {
   // playTone(222, 0.5, 122);
 });
 
+// - Handle back and forward browser navigation
+// - popstate event is fired when the active history entry changes
 window.addEventListener("popstate", router());
 
+const navNav = document.getElementById("navbarNav");
+
+// - Main hook for navigation
+// - Navbar autoclose
 document.addEventListener("click", (e) => {
   if (e.target.matches("[data-link]")) {
     e.preventDefault();
     history.pushState("", "", e.target.href);
     router();
+  } else if (navNav.classList.contains("show") && !e.target.closest("nav")) {
+    navNav.classList.remove("show");
   }
 });
 
