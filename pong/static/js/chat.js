@@ -1,5 +1,8 @@
 import { csrftoken } from "./main.js";
 
+const commands = { "/pm": "Send a private message to a user", "/commands": "List all available commands"};
+
+
 export function initWS(roomName) {
   const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
 
@@ -44,6 +47,40 @@ export function initWS(roomName) {
 
   document.querySelector("#chat-message-input").focus();
 
+  document.querySelector("#chat-message-input").onkeydown = function (e) {
+    const chatInput = document.querySelector("#chat-message-input")
+    const commands = {
+      "/pm": "Send a private message to a user",
+      "/add": "Add a user as a friend",
+      "/block": "Block a user",
+      "/duel": "Challenge a user to a duel",
+      "/tournament": "Create a tournament",
+      "/help": "List all available commands"
+    };
+
+    chatInput.setAttribute('data-bs-toggle', 'popover');
+    chatInput.setAttribute('data-bs-trigger', 'manual');
+
+    const popoverContent = Object.entries(commands)
+      .map(([cmd, desc]) => `<strong>${cmd}</strong>    ${desc}`)
+      .join('<br>');
+
+    const popover = new bootstrap.Popover(chatInput, {
+      content: popoverContent,
+      html: true,
+      placement: 'left',
+      container: 'body',
+    });
+
+    chatInput.addEventListener('keyup', (event) => {
+      if (event.key === '/') {
+        popover.show();
+      } else {
+          popover.hide();
+      }
+    });
+  };
+
   document.querySelector("#chat-message-input").onkeyup = function (e) {
     if (e.keyCode === 13) {
       document.querySelector("#chat-message-submit").click();
@@ -82,7 +119,6 @@ export function initWS(roomName) {
 }
 
 // get command /commands
-const commands = { "/pm": "Send a private message to a user" };
 
 function handleCommand(message, username) {
   if (message.startsWith("/pm")) {
