@@ -22,5 +22,7 @@ urlpatterns = [
     path('profile', views.update_profile, name='profile-update'),
     path('users', views.users, name='user-list'),
     path('users/<str:username>/', views.show_profile, name='profile-detail'),
-    path("chat/", include("chat.urls")),
+    
+    # re_path(r'^.*$', views.index, name='index'),
 ]
+

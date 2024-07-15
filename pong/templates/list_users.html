@@ -3,7 +3,7 @@
 <div>
     <ul id="user-list">
         {% for user in users %}
-            <a class="btn btn-dark" href="users/{{ user.user.username }}" data-link>{{ user.user.username }} ({{ user.alias }})</a>
+            <a class="btn btn-dark" href="users/{{ user.user.username }}/" data-link>{{ user.user.username }} {{ user.alias }}</a>
         {% endfor %}
     </ul>
 </div>

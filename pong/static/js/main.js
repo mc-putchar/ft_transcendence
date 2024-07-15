@@ -21,6 +21,7 @@ const viewFunctions = {
   "/register": renderRegister,
   "/chat": renderContent,
   "/profile": renderContent,
+  "/users": renderContent,
 };
 
 const routes = {
@@ -54,14 +55,15 @@ function renderContent(data) {
 }
 
 function router() {
+  
   let view = routes[location.pathname];
   if (view) {
     document.title = view.title;
 
     const appElement = document.getElementById("app");
+    
     appElement.classList.add("fade-exit");
-
-    console.log("view.endpoint:", view.endpoint);
+  
     fetch(view.endpoint, {
       method: "GET",
       headers: {
@@ -102,7 +104,7 @@ function router() {
           } else if (location.pathname.startsWith("/chat")) {
             const roomName = location.pathname.split("/")[2] || "lobby";
             handleChat(roomName);
-          }
+          }  
         }, fadeOutDuration);
       })
       .catch((error) => {

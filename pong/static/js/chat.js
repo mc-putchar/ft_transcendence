@@ -89,12 +89,18 @@ export function initWS(roomName) {
       .then((data) => {
         const fields = [
           { key: "user.username", label: "User" },
+          { key: "isOnline", label: "Online" },
           { key: "user.email", label: "Email" },
           { key: "alias", label: "Alias" },
-          { key: "isOnline", label: "Online" },
         ];
-
-        createModal(data, "ProfileModal", "ProfileModalLabel", fields);
+        console.log("data:", data);
+        console.log("image:", data.image);
+        const customContent = `
+          <img src="${data.image}" alt="Profile Image" class="img-fluid">
+        `;
+        createModal(
+          data,"ProfileModal","ProfileModalLabel",fields, customContent,
+        );
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -104,7 +110,7 @@ export function initWS(roomName) {
   };
 }
 
-function createModal(data, modalId, modalLabelId, fields) {
+function createModal(data, modalId, modalLabelId, fields, customContent = "") {
   const modal = document.createElement("div");
   modal.className = "modal";
   modal.id = modalId;
@@ -124,6 +130,7 @@ function createModal(data, modalId, modalLabelId, fields) {
                 </div>
                 <div class="modal-body">
                     ${modalBodyContent}
+                    ${customContent}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal" id="close${modalId}">Close</button>
