@@ -5,15 +5,11 @@ function startPong4PGame() {
 	const parent = document.getElementById("app");
 	const canvas = document.createElement("canvas");
 
-	// delete all previous children
+	const nav = document.getElementById("nav");
+
 	while (parent.firstChild) {
 		parent.removeChild(parent.firstChild);
 	}
-
-	const nav = document.getElementById("nav");
-	
-	parent.height = screen.availHeight - (window.outerHeight - parent.height) - nav.offsetHeight - 10;
-	parent.width = screen.availWidth - (window.outerWidth - parent.width);
 
 	parent.appendChild(canvas);
 
@@ -25,70 +21,90 @@ function startPong4PGame() {
 	const player_bottom_colour = "orange";
 	const player_left_colour = "green";
 	const player_right_colour = "purple";
-	
+
 	const left_ai = true;
 	const right_ai = true;
 	const top_ai = true;
 	const bottom_ai = false;
-	
-	const ball_velocity_div = 500;
-	
-	let button_up = document.createElement("button_up");
-	let button_down = document.createElement("button_down"); // tried putting them both in the same class and using getElementByClassName(), but it somehow doesn't work
-	
-	button_up.className = "Buttons";
-	button_down.className = "Buttons";
 
-	parent.appendChild(button_up);
-	parent.appendChild(button_down);
+	const ball_velocity_div = 300;
 
 	let format;
-	
+
 	let font_size;
 	let position;
 	let paddle_pace;
 	let	last_touch = "none";
-	
+
 	// const single_player = false;
-	
+
 	const preSleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-	
+
 	const realSleep = async (ms) => {
 		await preSleep(ms);
 	};
-	
+
+	let button_up;
+	let button_down;
+
 	function init ()
 	{
+
+		if (button_up && button_down) {
+			button_up.remove();
+			button_down.remove();
+		}
+
+		button_up = document.createElement("button");
+		button_down = document.createElement("button"); // tried putting them both in the same class and using getElementByClassName(), but it somehow doesn't work
+
+		button_up.className = "Buttons";
+		button_down.className = "Buttons";
+	
+		button_up.addEventListener("mousedown", button_up_onmousedown);
+		button_down.addEventListener("mousedown", button_down_onmousedown);
+		button_up.addEventListener("mouseup",  button_up_onmouseup);
+		button_down.addEventListener("mouseup", button_down_onmouseup);
+
+		document.getElementById("body").appendChild(button_up);
+		document.getElementById("body").appendChild(button_down);
+
+		parent.height = (screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - 10);
+		parent.width = (screen.availWidth - (window.outerWidth - window.innerWidth));
+
+		canvas_old_width = canvas.width;
+		canvas_old_height = canvas.height;
 		canvas.width = parent.width;
 		canvas.height = parent.height;
 
-		paddle_pace = Math.abs(canvas.width / 60);
-		canvas_old_width = canvas.width;
-		canvas_old_height = canvas.height;
-		if(parent.width <= parent.height) {
-			canvas.width=parent.width - parent.width / 20;
-			canvas.height=canvas.width;
+		if(parent.width < parent.height) {
+			canvas.width = canvas.width - canvas.width / 20;
+			canvas.height = canvas.width;
 			format = "width";
 		}
 		else {
-			canvas.width=parent.height - parent.height / 20;
-			canvas.height=canvas.width;
+			canvas.height = canvas.height - canvas.height / 20;
+			canvas.width = canvas.height;
 			format = "height";
 		}
-		if(format == "height") {
-			position = (parent.width - canvas.width) / 6;
+
+		console.log("format: ", format);
+		if(window.innerWidth > window.innerHeight) {
 			font_size = canvas.height / 60;
-		
+
 			[button_up, button_down].forEach(button => {
 				button.style.backgroundColor = 'rgb(2, 2, 27)';
 				button.style.color = 'white';
 				button.style.cursor = 'pointer';
 				button.style.margin = '5px 0'; // somehow modifying border-width and some other border params doesn't work here, so it's in the css file
-		
+
 				button.style.position = "absolute";
-		
-				button.style.left = position;
-		
+
+				if(window.innerWidth > parent.width * 0.8)
+					button.style.left = "10%";
+				else 
+					button.style.left = 0;
+
 				button.style.height = "10%";
 				button.style.width = "5%";
 				button.style.fontSize = font_size;
@@ -100,8 +116,8 @@ function startPong4PGame() {
 			button_down.style.top = "55%";
 			button_down.innerText = "DOWN / LEFT";
 		}
-		if(format == "width") {
-			position = (parent.height - canvas.height) / 6;
+		else {
+			position = window.innerHeight - window.innerHeight / 3;
 			font_size = canvas.height / 60;
 	
 			[button_up, button_down].forEach(button => {
@@ -112,25 +128,29 @@ function startPong4PGame() {
 		
 				button.style.position = "absolute";
 		
-				button.style.bottom = position;
+				if(window.innerHeight > parent.height * 0.85)
+					button.style.bottom = "8%";
+				else 
+					button.style.bottom = 0;
 		
 				button.style.height = "5%";
 				button.style.width = "10%";
 				button.style.fontSize = font_size;
 			});
 		
-			button_down.style.right = "45%";
+			button_up.style.right = "45%";
+			button_up.innerText = "UP / RIGHT";
+			button_down.style.right = "55%";
 			button_down.innerText = "DOWN / LEFT";
 		
-			button_up.style.right = "55%";
-			button_up.innerText = "UP / RIGHT";
 		}
+		paddle_pace = Math.abs(canvas.width / 60);
 	}
-	
+
 	init();
-	
+
 	// FUNCTION constructors
-	
+
 	class make_paddle {
 		constructor (player) {
 		this.player = player,
@@ -166,17 +186,10 @@ function startPong4PGame() {
 		}
 		this.resize_paddle = function ()
 		{
-			console.log("PRE paddle:", this);
-			console.log("canv old height", canvas_old_height);
-			console.log("canv old width", canvas_old_width);
-			console.log("canv height", canvas.height);
-			console.log("canv width", canvas.width);
 			this.pos_x = this.pos_x * canvas.width / canvas_old_width;
 			this.pos_y = this.pos_y * canvas.height / canvas_old_height;
 			this.height = this.height * canvas.width / canvas_old_width;
 			this.width = this.width * canvas.height / canvas_old_height;
-			console.log("POST paddle:", this);
-			debugger;
 		}
 		this.draw_paddle = function ()
 		{
@@ -203,6 +216,7 @@ function startPong4PGame() {
 		this.min_y = (canvas.width / 4),
 		this.max_y = (canvas.width / 4) * 3
 		this.radius = canvas.width / 60
+
 		if(previous == null)
 		{
 			this.pos_x = canvas.height / 2,
@@ -253,10 +267,19 @@ function startPong4PGame() {
 		}
 		this.speed_up = function()
 		{
-			this.ball_velocity_x += 0.08 * canvas.width / ball_velocity_div;
-			this.ball_velocity_y += 0.08 * canvas.width / ball_velocity_div;
-			this.ball_velocity_x += 0.08 * this.ball_velocity_x;
-			this.ball_velocity_y += 0.08 * this.ball_velocity_y;
+			let mulitplier = 0.08;
+			if( Math.abs(this.ball_velocity_x) > (canvas.width / ball_velocity_div * 1.5))
+				mulitplier = 0.05;
+
+			if(this.ball_velocity_x > 0)
+				this.ball_velocity_x += mulitplier * canvas.width / ball_velocity_div;
+			else
+				this.ball_velocity_x -= mulitplier * canvas.width / ball_velocity_div;
+
+			if(this.ball_velocity_y > 0)
+				this.ball_velocity_y += mulitplier * canvas.width / ball_velocity_div;
+			else
+				this.ball_velocity_y -= mulitplier * canvas.width / ball_velocity_div;
 		}
 		this.reposition_ball_above_paddle = function(last_touch)
 		{
@@ -272,7 +295,7 @@ function startPong4PGame() {
 		if(previous == null)
 			this.setVelocity(this.direction);
 	}}
-	
+
 	class make_scores {
 		constructor (cpy_goals)
 	{
@@ -283,6 +306,9 @@ function startPong4PGame() {
 		this.pos_y = canvas.height / 2;
 		this.pos_x = {left: canvas.width / 2 - canvas.width / 6, top: canvas.width / 2 - canvas.width / 16,
 			right: canvas.width / 2 + canvas.width / 6, bottom: canvas.width / 2 + canvas.width / 16};
+		
+		console.log("canvas width: ", canvas.width);
+		console.log("canvas height: ", canvas.height);
 		this.draw_scores = function()
 		{
 			for (let key in this.goals) {
@@ -354,13 +380,13 @@ function startPong4PGame() {
 		}
 		return (false);
 	}
-	
+
 	function colliding_ball_paddle (ball, paddles) {
 		if((ball.pos_x <= ball.radius + paddles.left.width) // LEFT PADDLE
 			&& ball.pos_y >= paddles.left.pos_y - ball.radius && ball.pos_y <= paddles.left.pos_y + paddles.left.height + ball.radius) // left paddle
 		{
 			ball.ball_velocity_x = -ball.ball_velocity_x;
-	
+
 			if(ball.pos_y - ball.radius / 2 <= paddles.left.pos_y) // ball hits left paddle upper edge
 				ball.ball_velocity_y = - Math.abs(ball.ball_velocity_y);
 			if(ball.pos_y + ball.radius / 2 >= paddles.left.pos_y + paddles.left.height)
@@ -373,7 +399,7 @@ function startPong4PGame() {
 		{
 			ball.ball_velocity_y = -ball.ball_velocity_y;
 	
-			if(ball.pos_x - ball.radius / 2<= paddles.top.pos_x) // left edge
+			if(ball.pos_x - ball.radius / 2 <= paddles.top.pos_x) // left edge
 				ball.ball_velocity_x = - Math.abs(ball.ball_velocity_x);
 			if(ball.pos_x + ball.radius / 2 >= paddles.top.pos_x + paddles.top.height)
 				ball.ball_velocity_x = Math.abs(ball.ball_velocity_x);
@@ -535,8 +561,7 @@ function startPong4PGame() {
 			if(paddle_top.pos_x < 0)
 				paddle_top.pos_x = 0;
 		}
-		if(left_direction != 0)
-		{
+		if(left_direction != 0) {
 			if(paddle_left.pos_y + paddle_left.height <= canvas.width)
 				paddle_left.pos_y -= left_direction * paddle_pace;
 			if(paddle_left.pos_y + paddle_left.height > canvas.width)
@@ -544,8 +569,7 @@ function startPong4PGame() {
 			if(paddle_left.pos_y < 0)
 				paddle_left.pos_y = 0;
 		}
-		if(right_direction != 0)
-		{
+		if(right_direction != 0) {
 			if(paddle_right.pos_y + paddle_right.height <= canvas.width)
 				paddle_right.pos_y -= right_direction * paddle_pace;
 			if(paddle_right.pos_y + paddle_right.height > canvas.width)
@@ -567,9 +591,10 @@ function startPong4PGame() {
 	let scores = new make_scores(empty_score);
 	let prev_scores = new make_scores(empty_score);
 
+	// init_paddle_scores();
+
 		async function gameLoop()
 		{
-			console.log("Loop Start");
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			
 			for (let key in paddles)
@@ -590,6 +615,8 @@ function startPong4PGame() {
 					scores.draw_big_scores2(prev_scores);
 					await realSleep(500);
 				}
+				else
+					init();
 				ball = new make_ball(null);
 				for (let key in paddles)
 					paddles[key].init_position(paddles[key].player);
@@ -604,7 +631,6 @@ function startPong4PGame() {
 			move_paddle();
 			ball.move_ball();
 			ball.draw_ball();
-			console.log("Loop Start");
 			if(colliding_ball_paddle(ball, paddles) == true)
 			{
 				ball.speed_up();
@@ -620,9 +646,10 @@ function startPong4PGame() {
 		}
 		
 		// EVENTS
-		
-		button_up.onmousedown = function ()
+
+		function button_up_onmousedown ()
 		{
+			console.log("button_up mouse down");
 			if(bottom_ai == false)
 				bottom_direction = 1;
 			if(top_ai == false)
@@ -633,8 +660,9 @@ function startPong4PGame() {
 				right_direction = 1;
 		}
 		
-		button_down.onmousedown = function ()
+		function button_down_onmousedown ()
 		{
+			console.log("button_down mouse down");
 			if(bottom_ai == false)
 				bottom_direction = -1;
 			if(top_ai == false)
@@ -645,7 +673,7 @@ function startPong4PGame() {
 				right_direction = -1;
 		}
 		
-		button_up.onmouseup = function ()
+		function button_up_onmouseup ()
 		{
 			if(bottom_ai == false)
 				bottom_direction = 0;
@@ -657,7 +685,7 @@ function startPong4PGame() {
 				right_direction = 0;
 		}
 		
-		button_down.onmouseup = function ()
+		function button_down_onmouseup ()
 		{
 			if(bottom_ai == false)
 				bottom_direction = 0;
@@ -670,7 +698,6 @@ function startPong4PGame() {
 		}
 
 		window.addEventListener('resize', function() {
-			console.log("RESIZE CALLED");
 			init();
 			init_paddle_scores();
 		});
@@ -684,9 +711,7 @@ function startPong4PGame() {
 			key_up(event);
 			return ;
 		});
-		
 		gameLoop();
 }
 
 export { startPong4PGame };
-
