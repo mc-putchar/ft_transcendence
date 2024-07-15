@@ -1,3 +1,4 @@
+pong/media
 postgres_data/
 migrations
 staticfiles
