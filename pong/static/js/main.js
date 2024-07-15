@@ -122,7 +122,6 @@ function router() {
         .then((data) => {
           document.title = data.title;
           document.getElementById("app").innerHTML = data.content;
-          //handleChat(roomName);
         });
     }
   }
@@ -153,11 +152,8 @@ document.getElementById("app").addEventListener("click", (event) => {
   // playTone(222, 0.5, 122);
 });
 
-// popstate event is fired when the active history entry changes
 window.addEventListener("popstate", router());
 
-// catch the refresh event and call router instead of reloading the page
-// this is necessary to maintain the SPA behavior
 
 document.addEventListener("click", (e) => {
   if (e.target.matches("[data-link]")) {
@@ -168,7 +164,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  router();
+     router();
 });
 
 export { router };

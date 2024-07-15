@@ -22,5 +22,6 @@ urlpatterns = [
     path("chat/", include("chat.urls")),
 
     # catch all other urls
-    re_path(r'^.*', views.index, name='index'),
+    # re_path(r'^.*', views.index, name='index'),
+    re_path(r'^.*$', views.index, name='index'),
 ]
