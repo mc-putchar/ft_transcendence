@@ -32,7 +32,6 @@ function startPong4PGame() {
 	let format;
 
 	let font_size;
-	let position;
 	let paddle_pace;
 	let	last_touch = "none";
 	let conceder = null;
@@ -70,15 +69,15 @@ function startPong4PGame() {
 		document.getElementById("body").appendChild(button_up);
 		document.getElementById("body").appendChild(button_down);
 
-		parent.height = (screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - 10);
-		parent.width = (screen.availWidth - (window.outerWidth - window.innerWidth));
+		parent.style.height = (screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - 10);
+		parent.style.width = (screen.availWidth - (window.outerWidth - window.innerWidth));
 
 		canvas_old_width = canvas.width;
 		canvas_old_height = canvas.height;
-		canvas.width = parent.width;
-		canvas.height = parent.height;
+		canvas.width = parent.style.width;
+		canvas.height = parent.style.height;
 
-		if(parent.width < parent.height) {
+		if(parent.style.width < parent.style.height) {
 			canvas.width = canvas.width - canvas.width / 20;
 			canvas.height = canvas.width;
 			format = "width";
@@ -100,7 +99,7 @@ function startPong4PGame() {
 
 				button.style.position = "absolute";
 
-				if(window.innerWidth > parent.width * 0.8)
+				if(window.innerWidth > parent.style.width * 0.8)
 					button.style.left = "10%";
 				else 
 					button.style.left = 0;
@@ -128,7 +127,7 @@ function startPong4PGame() {
 		
 				button.style.position = "absolute";
 		
-				if(window.innerHeight > parent.height * 0.85)
+				if(window.innerHeight > parent.style.height * 0.85)
 					button.style.bottom = "8%";
 				else 
 					button.style.bottom = 0;
