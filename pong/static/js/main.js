@@ -101,7 +101,6 @@ function router() {
             document.getElementById("username").focus();
           } else if (location.pathname.startsWith("/chat")) {
             const roomName = location.pathname.split("/")[2] || "lobby";
-            console.log("roomName:", roomName);
             handleChat(roomName);
           }
         }, fadeOutDuration);
@@ -150,6 +149,7 @@ function getCookie(name) {
 export const csrftoken = getCookie("csrftoken");
 
 function handleChat(roomName) {
+  chatEventListeners();
   initWS(roomName);
 }
 
@@ -178,5 +178,52 @@ document.addEventListener("click", (e) => {
 document.addEventListener("DOMContentLoaded", () => {
   router();
 });
+
+function chatEventListeners() {
+  document.querySelector("#chat-message-input").focus();
+
+  document.querySelector("#chat-message-input").onkeydown = function (e) {
+    const chatInput = document.querySelector("#chat-message-input");
+
+    const commands = {
+      "/pm": "Send a private message to a user",
+      "/add": "Add a user as a friend",
+      "/block": "Block a user",
+      "/duel": "Challenge a user to a duel",
+      "/tournament": "Create a tournament",
+      "/help": "List all available commands",
+    };
+
+    chatInput.setAttribute("data-bs-toggle", "popover");
+    chatInput.setAttribute("data-bs-trigger", "manual");
+
+    const popoverContent = Object.entries(commands)
+      .map(([cmd, desc]) => `<strong>${cmd}</strong>    ${desc}`)
+      .join("<br>");
+
+    const popover = new bootstrap.Popover(chatInput, {
+      content: popoverContent,
+      html: true,
+      placement: "auto",
+      container: "body",
+    });
+
+    chatInput.addEventListener("keyup", (event) => {
+      if (event.key === "/") {
+        popover.show();
+      } else if (event.key === "@") {
+        popover.show();
+      } else {
+        if (event.key === "Shift") return;
+        popover.hide();
+      }
+    });
+  };
+  document.querySelector("#chat-message-input").onkeyup = function (e) {
+    if (e.keyCode === 13) {
+      document.querySelector("#chat-message-submit").click();
+    }
+  };
+}
 
 export { router };

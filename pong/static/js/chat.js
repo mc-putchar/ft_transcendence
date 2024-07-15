@@ -1,7 +1,9 @@
 import { csrftoken } from "./main.js";
 
-const commands = { "/pm": "Send a private message to a user", "/commands": "List all available commands"};
-
+const commands = {
+  "/pm": "Send a private message to a user",
+  "/commands": "List all available commands",
+};
 
 export function initWS(roomName) {
   const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
@@ -45,48 +47,6 @@ export function initWS(roomName) {
     if (!e.wasClean) console.error("Chat socket closed unexpectedly", e);
   };
 
-  document.querySelector("#chat-message-input").focus();
-
-  document.querySelector("#chat-message-input").onkeydown = function (e) {
-    const chatInput = document.querySelector("#chat-message-input")
-    const commands = {
-      "/pm": "Send a private message to a user",
-      "/add": "Add a user as a friend",
-      "/block": "Block a user",
-      "/duel": "Challenge a user to a duel",
-      "/tournament": "Create a tournament",
-      "/help": "List all available commands"
-    };
-
-    chatInput.setAttribute('data-bs-toggle', 'popover');
-    chatInput.setAttribute('data-bs-trigger', 'manual');
-
-    const popoverContent = Object.entries(commands)
-      .map(([cmd, desc]) => `<strong>${cmd}</strong>    ${desc}`)
-      .join('<br>');
-
-    const popover = new bootstrap.Popover(chatInput, {
-      content: popoverContent,
-      html: true,
-      placement: 'left',
-      container: 'body',
-    });
-
-    chatInput.addEventListener('keyup', (event) => {
-      if (event.key === '/') {
-        popover.show();
-      } else {
-          popover.hide();
-      }
-    });
-  };
-
-  document.querySelector("#chat-message-input").onkeyup = function (e) {
-    if (e.keyCode === 13) {
-      document.querySelector("#chat-message-submit").click();
-    }
-  };
-
   document.querySelector("#chat-message-submit").onclick = function (e) {
     const messageInputDom = document.querySelector("#chat-message-input");
     const data = {
@@ -113,8 +73,69 @@ export function initWS(roomName) {
   // if user clicks on the userlist
   document.querySelector("#chat-userlist").onclick = function (e) {
     const user = e.target.textContent;
+
+    fetch("/api/profile/" + user + "/", {
+      method: "GET",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        const fields = [
+          { key: "user.username", label: "User" },
+          { key: "user.email", label: "Email" },
+          { key: "alias", label: "Alias" },
+          { key: "isOnline", label: "Online" },
+        ];
+
+        createModal(data, "ProfileModal", "ProfileModalLabel", fields);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
     document.querySelector("#chat-message-input").value = "@" + user + " ";
     document.querySelector("#chat-message-input").focus();
+  };
+}
+
+function createModal(data, modalId, modalLabelId, fields) {
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.id = modalId;
+  modal.style.display = "block";
+
+  let modalBodyContent = "";
+  fields.forEach((field) => {
+    const value = field.key.split(".").reduce((o, i) => o[i], data);
+    modalBodyContent += `<p>${field.label}: ${value}</p>`;
+  });
+
+  modal.innerHTML = `
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="${modalLabelId}">${fields[0].key.split(".").reduce((o, i) => o[i], data)}</h5>
+                </div>
+                <div class="modal-body">
+                    ${modalBodyContent}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="close${modalId}">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+  document.body.appendChild(modal);
+  document.getElementById(`close${modalId}`).onclick = function () {
+    modal.style.display = "none";
+    document.body.removeChild(modal);
   };
 }
 

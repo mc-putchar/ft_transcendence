@@ -316,19 +316,18 @@ img.mp3-hover:hover {
 }
 
 #chat-input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 20px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 20px;
 }
 
-
 .popover-body {
-  position: relative;
-  border: 1px solid #d1d1d1;
-  justify-content: left;
-  text-align: left;
-  font-size: 1rem;
-  width: 50vw;
+  /* position: relative; */
+  /* border: 1px solid #d1d1d1; */
+  /* justify-content: left; */
+  /* text-align: left; */
+  /* font-size: 1rem; */
+  /* width: 50vw; */
   font-family: "Lucida Sans";
 }
 
