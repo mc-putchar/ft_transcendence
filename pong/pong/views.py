@@ -94,7 +94,9 @@ def update_profile(request):
 
     context = {
         'u_form': u_form,
-        'p_form': p_form
+        'p_form': p_form,
+        'username': request.user.username,
+        'profilepic' : request.user.profile.image.url
     }
     content = render_to_string('update_profile.html', context=context)
     data = {'title': 'Profile', 'content': content}
