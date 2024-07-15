@@ -1,18 +1,21 @@
-from django.contrib.auth.models import User
-from django.contrib.auth import login as django_login
-from django.shortcuts import render, redirect
-from django.http import JsonResponse, HttpResponse
-from .forms import LoginForm
-from django.template.loader import render_to_string
-from django.contrib.auth import logout as django_logout  # Import logout
-from .auth42 import exchange_code_for_token, get_user_data
-from django.conf import settings
-from django.contrib.auth import authenticate
-from chat.models import Lobby
-
+import json
 import logging
 import random
 import string
+
+from api.models import Friend, Profile
+from chat.models import Lobby
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as django_login
+from django.contrib.auth import logout as django_logout  # Import logout
+from django.contrib.auth.models import User
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+
+from .auth42 import exchange_code_for_token, get_user_data
+from .forms import LoginForm, ProfileUpdateForm, UserUpdateForm
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +30,14 @@ def index(request):
     return render(request, 'index.html', context)
 
 
+def get_friends(user):
+    friend_instance, created = Friend.objects.get_or_create(current_user=user)
+    friends = []
+    for friend in friend_instance.users.all():
+        friends += Profile.objects.get_or_create(user=friend)
+    return friends
+
+
 def home_data(request):
     user_data = request.session.get('user_data')
     if user_data is not None:
@@ -36,8 +47,18 @@ def home_data(request):
         data = {'title': 'Home', 'content': content}
     else:
         if request.user.is_authenticated:
+            if request.user.profile.isOnline:
+                status = "Online"
+            else:
+                status = "Offline"
             user_data = {
-                'login': request.user.username, 'email': str(request.user.username) + "@42.pong"}
+                'login': request.user.username,
+                'email': str(request.user.username) + "@42.pong",
+                'image': request.user.profile.image,
+                'alias': request.user.profile.alias,
+                'status': status,
+                'friends': get_friends(request.user),
+            }
             context = {'user_data': user_data}
             content = render_to_string('user_info.html', context=context)
             data = {'title': 'Home', 'content': content}
@@ -48,6 +69,51 @@ def home_data(request):
 
     return JsonResponse(data)
 
+
+def show_profile(request, username):
+    user = get_object_or_404(Profile, user__username=username)
+    if user.isOnline:
+        status = 'Online'
+    else:
+        status = 'Offline'
+    context = { 'user': user, 'status': status }
+    content = render_to_string('profile.html', context=context)
+    data = {'title': 'Profile', 'content': content}
+    return JsonResponse(data)
+
+def update_profile(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    content = render_to_string('update_profile.html', context=context)
+    data = {'title': 'Profile', 'content': content}
+    return JsonResponse(data)
+
+
+def users(request):
+    if request.user.is_authenticated:
+        users = Profile.objects.all()
+        context = {'users': users}
+        content = render_to_string('list_users.html', context=context)
+        data = {'title': 'Users', 'content': content}
+
+    else:
+        html = render_to_string(
+            'registration/needlogin.html', request=request)
+        data = {"title": "Online", "content": html}
+
+    return JsonResponse(data)
 
 def local_game(request):
     data = {"title": 'local', 'content': render_to_string("local_game.html")}
@@ -85,6 +151,9 @@ def logout(request):
 
     lobby = Lobby.objects.get(id=1)
     lobby.remove_user(request.user.username)
+
+    request.user.profile.set_online_status(False)
+    request.user.profile.save()
 
     return JsonResponse(data)
 

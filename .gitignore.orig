@@ -1,0 +1,14 @@
+postgres_data/
+migrations
+staticfiles
+*/venv
+venv/
+__pycache__
+.env
+pong/testenv
+testenv
+<<<<<<< HEAD
+tags
+=======
+profile_images
+>>>>>>> origin/mc-putchar

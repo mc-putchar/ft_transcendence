@@ -1,8 +1,17 @@
 # chat/consumers.py
 import json
+<<<<<<< HEAD
+
+from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+
+from .models import Lobby
+=======
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .models import Lobby
+from api.models import Profile
 from asgiref.sync import sync_to_async
+>>>>>>> origin/mc-putchar
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -15,6 +24,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if self.room_name == "lobby":
             lobby = await sync_to_async(Lobby.objects.get_or_create)(id=1)
             await sync_to_async(lobby[0].add_user)(self.username)
+<<<<<<< HEAD
+=======
+
+            profile = await sync_to_async(Profile.objects.get)(user=self.scope["user"])
+            await sync_to_async(profile.set_online_status)(True)
+
+>>>>>>> origin/mc-putchar
             await self.channel_layer.group_send(
                 self.room_group_name, {
                     "type": "user_list",
@@ -24,16 +40,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name,
                                            self.channel_name)
         await self.accept()
-<<<<<<< HEAD
-=======
         await self.chat_message({"message": "", "username": self.username})
->>>>>>> dev
 
     async def disconnect(self, close_code):
         # Remove user from the lobby
         if self.room_name == "lobby":
             lobby = await sync_to_async(Lobby.objects.get)(id=1)
             await sync_to_async(lobby.remove_user)(self.username)
+            profile = await sync_to_async(Profile.objects.get)(user=self.scope["user"])
+            await sync_to_async(profile.set_online_status)(False)
             await self.channel_layer.group_send(
                 self.room_group_name, {"type": "user_list",
                                        "users_list": lobby.get_userlist()})
@@ -72,3 +87,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "users_list": users_list
         }))
+
+
+
+

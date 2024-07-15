@@ -274,11 +274,8 @@ export function startPongGame() {
 	const parent = document.getElementById('app');
 	const nav = document.getElementById('nav');
 
-	console.log(nav);
-	console.log("nav h: ", nav.offsetHeight);
 	parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
 	parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
-	console.log("Height: " + parent.height);
 	while (parent.firstChild) {
 		parent.removeChild(parent.lastChild);
 	}

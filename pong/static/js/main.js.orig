@@ -13,6 +13,7 @@ const fadeOutDuration = 200;
 const fadeInDuration = 600;
 
 const viewFunctions = {
+<<<<<<< HEAD
   "/": renderContent,
   "/local": renderContent,
   "/login": renderLogin,
@@ -20,7 +21,6 @@ const viewFunctions = {
   "/logout": renderLogout,
   "/register": renderRegister,
   "/chat": renderContent,
-  "/profile": renderContent,
 };
 
 const routes = {
@@ -30,9 +30,30 @@ const routes = {
   "/online": { title: "Online", endpoint: "/online" },
   "/logout": { title: "Logout", endpoint: "/logout" },
   "/register": { title: "Register", endpoint: "/register" },
-  "/chat": { title: "Chat", endpoint: "/chat/lobby/" },
-  "/users": { title: "Users", endpoint: "/users" },
-  "/profile": { title: "Profile", endpoint: "/profile" },
+  "/chat": { title: "Chat", endpoint: "/chat/lobby" },
+=======
+    "/": renderHome,
+    "/local": renderLocalGame,
+    "/login": renderLogin,
+    "/online": renderOnlineGame,
+    "/logout": renderLogout,
+    "/register": renderRegister,
+    "/profile": renderProfile,
+    "/users": renderUsersList,
+    "/chat": renderChat,
+};
+
+const routes = {
+    "/": { endpoint: "/home_data" },
+    "/local": { title: "Local", endpoint: "/local_game" },
+    "/login": { title: "Login", endpoint: "/login" },
+    "/online": { title: "Online", endpoint: "/online" },
+    "/logout": { title: "Logout", endpoint: "/logout" },
+    "/register": { title: "Register", endpoint: "/register" },
+    "/profile": { title: "Profile", endpoint: "/profile" },
+    "/users": { title: "Users", endpoint: "/users" },
+    "/chat": { title: "Chat", endpoint: "/chat" },
+>>>>>>> origin/mc-putchar
 };
 
 const wsRoutes = ["/chat"];
@@ -49,8 +70,28 @@ function renderRegister(data) {
   return `${data.content}`;
 }
 
+<<<<<<< HEAD
 function renderContent(data) {
   return ` ${data.content}`;
+=======
+function renderProfile(data) {
+    return `<div>${data.content}</div>`;
+}
+
+function renderUsersList(data) {
+    return `<div>${data.content}</div>`;
+}
+
+// check if the location is different from wsRoutes in any location change
+function checkWS() {
+    if (!wsRoutes.includes(location.pathname)) {
+        if (window.chatSocket) {
+            window.chatSocket.close();
+            console.log("Chat socket closed : ", window.chatSocket);
+            delete window.chatSocket;
+        }
+    }
+>>>>>>> origin/mc-putchar
 }
 
 function router() {
@@ -61,7 +102,6 @@ function router() {
     const appElement = document.getElementById("app");
     appElement.classList.add("fade-exit");
 
-    console.log("view.endpoint:", view.endpoint);
     fetch(view.endpoint, {
       method: "GET",
       headers: {
@@ -101,7 +141,6 @@ function router() {
             document.getElementById("username").focus();
           } else if (location.pathname.startsWith("/chat")) {
             const roomName = location.pathname.split("/")[2] || "lobby";
-            console.log("roomName:", roomName);
             handleChat(roomName);
           }
         }, fadeOutDuration);
@@ -114,7 +153,7 @@ function router() {
   } else {
     if (location.pathname.startsWith("/chat")) {
       const roomName = location.pathname.split("/")[2];
-      fetch("/chat/" + roomName, {
+      fetch("/chat/" + roomName + "/", {
         method: "GET",
         headers: { "X-Requested-With": "XMLHttpRequest" },
       })
@@ -128,6 +167,47 @@ function router() {
           document.title = data.title;
           document.getElementById("app").innerHTML = data.content;
         });
+<<<<<<< HEAD
+=======
+    } else {
+        if (location.pathname.startsWith("/users/")) {
+            fetch(location.pathname + '/', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.title = data.title;
+                const appElement = document.getElementById("app");
+                const newContent = data.content;
+                // document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
+                setTimeout(() => {
+                    appElement.innerHTML = newContent;
+    
+                    appElement.classList.remove('fade-exit');
+                    appElement.classList.add('fade-enter');
+    
+                    setTimeout(() => appElement.classList.remove('fade-enter'), fadeInDuration);
+                }, fadeOutDuration);
+            })
+            .catch(error => {
+                console.error("Error fetching data:", error);
+                document.getElementById('app').innerHTML = "<p>Requested user not found</p>";
+            });
+            history.replaceState("", "", location.pathname);
+        } else {
+            history.replaceState("", "", "/");
+            router();
+        }
+>>>>>>> origin/mc-putchar
     }
   }
 }
@@ -159,6 +239,7 @@ document.getElementById("app").addEventListener("click", (event) => {
 
 window.addEventListener("popstate", router());
 
+
 document.addEventListener("click", (e) => {
   if (e.target.matches("[data-link]")) {
     e.preventDefault();
@@ -168,7 +249,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  router();
+     router();
 });
 
 export { router };
