@@ -35,6 +35,7 @@ function startPong4PGame() {
 	let position;
 	let paddle_pace;
 	let	last_touch = "none";
+	let conceder = null;
 
 	// const single_player = false;
 
@@ -88,7 +89,6 @@ function startPong4PGame() {
 			format = "height";
 		}
 
-		console.log("format: ", format);
 		if(window.innerWidth > window.innerHeight) {
 			font_size = canvas.height / 60;
 
@@ -307,8 +307,6 @@ function startPong4PGame() {
 		this.pos_x = {left: canvas.width / 2 - canvas.width / 6, top: canvas.width / 2 - canvas.width / 16,
 			right: canvas.width / 2 + canvas.width / 6, bottom: canvas.width / 2 + canvas.width / 16};
 		
-		console.log("canvas width: ", canvas.width);
-		console.log("canvas height: ", canvas.height);
 		this.draw_scores = function()
 		{
 			for (let key in this.goals) {
@@ -367,15 +365,18 @@ function startPong4PGame() {
 	function colliding_goal (){
 		if(ball.pos_x <= ball.radius || ball.pos_y <= ball.radius || ball.pos_x + ball.radius >= canvas.width || ball.pos_y + ball.radius >= canvas.height)
 		{
-			scores.goals[last_touch]++;
 			if (ball.pos_x <= ball.radius)
-				scores.goals["left"]--;
-			if (ball.pos_y <= ball.radius)
-				scores.goals["top"]--;
-			if(ball.pos_x + ball.radius >= canvas.width)
-				scores.goals["right"]--;
-			if(ball.pos_y + ball.radius >= canvas.height)
-				scores.goals["bottom"]--;
+				conceder = "left";
+			else if (ball.pos_y <= ball.radius)
+				conceder = "top";
+			else if(ball.pos_x + ball.radius >= canvas.width)
+				conceder = "right";
+			else if(ball.pos_y + ball.radius >= canvas.height)
+				conceder = "bottom";
+
+			if(conceder != last_touch)
+				scores.goals[last_touch]++;
+			scores.goals[conceder]--;
 			return (true);
 		}
 		return (false);
@@ -392,7 +393,7 @@ function startPong4PGame() {
 			if(ball.pos_y + ball.radius / 2 >= paddles.left.pos_y + paddles.left.height)
 				ball.ball_velocity_y = Math.abs(ball.ball_velocity_y);
 			last_touch = "left";
-			return (true);
+			return ("left");
 		}
 		else if((ball.pos_y <= ball.radius + paddles.top.width) // TOP PADDLE
 			&& ball.pos_x >= paddles.top.pos_x - ball.radius && ball.pos_x <= paddles.top.pos_x + paddles.top.height + ball.radius) // top paddle
@@ -404,7 +405,7 @@ function startPong4PGame() {
 			if(ball.pos_x + ball.radius / 2 >= paddles.top.pos_x + paddles.top.height)
 				ball.ball_velocity_x = Math.abs(ball.ball_velocity_x);
 			last_touch = "top";
-			return (true);
+			return ("top");
 		}
 		else if((ball.pos_x >= canvas.width - (ball.radius + paddles.right.width)) // RIGHT PADDLE
 			&& ball.pos_y >= paddles.right.pos_y - ball.radius && ball.pos_y <= paddles.right.pos_y + paddles.right.height + ball.radius) // right paddle
@@ -416,7 +417,7 @@ function startPong4PGame() {
 			if(ball.pos_y + ball.radius / 2 >= paddles.right.pos_y + paddles.right.height)
 				ball.ball_velocity_y = Math.abs(ball.ball_velocity_y);
 			last_touch = "right";
-			return (true);
+			return ("right");
 		}
 		else if((ball.pos_y >= canvas.height - (ball.radius + paddles.bottom.width)) // BOTTOM PADDLE
 			&& ball.pos_x >= paddles.bottom.pos_x - ball.radius && ball.pos_x <= paddles.bottom.pos_x + paddles.bottom.height + ball.radius) // bottom paddle
@@ -428,9 +429,9 @@ function startPong4PGame() {
 			if(ball.pos_x + ball.radius / 2 >= paddles.bottom.pos_x + paddles.bottom.height)
 				ball.ball_velocity_x = Math.abs(ball.ball_velocity_x);
 			last_touch = "bottom";
-			return (true);
+			return ("bottom");
 		}
-		return (false);
+		return (null);
 	}
 	
 	// PLAY
@@ -438,7 +439,13 @@ function startPong4PGame() {
 	function goal_animation_text (scorer)
 	{
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		if (scorer !== "none") {
+		if (scorer == conceder) {
+			ctx.fillStyle = scores.colour[scorer];
+			ctx.font = `${canvas.width / 40}px Orbitron`;
+			let text = "What an own Goal by " + scorer + "!? Watch for the spins!";
+			ctx.fillText(text, canvas.width / 2 - canvas.width / 4, canvas.height / 4 * 3);
+		}
+		else if (scorer !== "none") { // nobody touched the ball since kick off and it's a goal
 			ctx.fillStyle = scores.colour[scorer];
 			ctx.font = `${canvas.width / 40}px Orbitron`;
 			let text = "Beautiful Goal by " + scorer;
@@ -446,7 +453,7 @@ function startPong4PGame() {
 		} else {
 			ctx.fillStyle = "white";
 			ctx.font = `${canvas.width / 40}px Orbitron`;
-			ctx.fillText("OMG how did that go in ?!", canvas.width / 2 - canvas.width / 7, canvas.height / 4 * 3);
+			ctx.fillText("How did that go in?! WAKE UP!", canvas.width / 2 - canvas.width / 7, canvas.height / 4 * 3);
 		}
 	};
 	
@@ -457,29 +464,36 @@ function startPong4PGame() {
 	let left_direction = 0;
 	let right_direction = 0;
 	
+	let mouse_down = {left: 0, top: 0, right: 0, bottom: 0};
+
 	function key_up(event)
 	{
-		if(event.key == "ArrowUp" || event.key == "ArrowRight")
+		if(event.key == "ArrowUp" || event.key == "ArrowRight" || event.key == "ArrowDown" || event.key == "ArrowLeft")
 		{
 			if(bottom_ai == false)
-				bottom_direction = 0;
+			{
+				mouse_down.bottom--;
+				if(mouse_down.bottom == 0)
+					bottom_direction = 0;
+			}
 			if(top_ai == false)
-				top_direction = 0;
+			{
+				mouse_down.top--;
+				if(mouse_down.top == 0)
+					top_direction = 0;
+			}
 			if(left_ai == false)
-				left_direction = 0;
+			{
+				mouse_down.left--;
+				if(mouse_down.left == 0)
+					left_direction = 0;
+			}
 			if(right_ai == false)
-				right_direction = 0;
-		}
-		else if (event.key == "ArrowDown" || event.key == "ArrowLeft")
-		{
-			if(bottom_ai == false)
-				bottom_direction = 0;
-			if(top_ai == false)
-				top_direction = 0;
-			if(left_ai == false)
-				left_direction = 0;
-			if(right_ai == false)
-				right_direction = 0;
+			{
+				mouse_down.right--;
+				if(mouse_down.right == 0)
+					right_direction = 0;
+			}
 		}
 	}
 	
@@ -488,24 +502,56 @@ function startPong4PGame() {
 		if(event.key == "ArrowUp" || event.key == "ArrowRight")    // if user plays online best option is ArrowUp and ArrowRight work the same,
 		{															// and ArrowLeft and ArrowDown work the same 
 			if(bottom_ai == false)
+			{
+				if(bottom_direction != 1)
+					mouse_down.bottom++;
 				bottom_direction = 1;
+			}
 			if(top_ai == false)
+			{
+				if(top_direction != 1)
+					mouse_down.top++;
 				top_direction = 1;
+			}
 			if(left_ai == false)
-				left_direction = 1;
+			{
+				if(left_direction != 1)
+					left_direction = 1;
+				mouse_down.left++;
+			}
 			if(right_ai == false)
-				right_direction = 1;
+			{
+				if(right_direction != 1)
+					right_direction = 1;
+				mouse_down.right++;
+			}
 		}
 		else if (event.key == "ArrowDown" || event.key == "ArrowLeft")
 		{
 			if(bottom_ai == false)
+			{
+				if(bottom_direction != -1)
+					mouse_down.bottom++;
 				bottom_direction = -1;
+			}
 			if(top_ai == false)
+			{
+				if(top_direction != -1)
+					mouse_down.top++;
 				top_direction = -1;
+			}
 			if(left_ai == false)
-				left_direction = -1;
+			{
+				if(left_direction != -1)
+					left_direction = -1;
+				mouse_down.left++;
+			}
 			if(right_ai == false)
-				right_direction = -1;
+			{
+				if(right_direction != -1)
+					right_direction = -1;
+				mouse_down.right++;
+			}
 		}
 	}
 
@@ -584,21 +630,71 @@ function startPong4PGame() {
 	let paddle_right = new make_paddle("right");
 	let paddle_top = new make_paddle("top");
 	let paddle_bottom = new make_paddle("bottom");
-	let paddles = {left: paddle_left, right: paddle_right, top: paddle_top, bottom:paddle_bottom};
+	let paddles = {left: paddle_left, right: paddle_right, top: paddle_top, bottom: paddle_bottom};
 	let isGoal = false;
 	let	first = true;
 	let empty_score = {left: 0, right: 0, top: 0, bottom: 0}
 	let scores = new make_scores(empty_score);
 	let prev_scores = new make_scores(empty_score);
 
-	// init_paddle_scores();
+	function apply_paddle_movement(touch)
+	{
+		let dir;
+
+		switch (touch)
+		{
+			case "left":
+				dir = left_direction;
+				break;
+			case "right":
+				dir = left_direction;
+				break;
+			case "bottom":
+				dir = bottom_direction;
+				break;
+			case "top":
+				dir = top_direction;
+				break;
+		}
+		if (dir)
+		{
+			if(touch == "bottom" || touch == "top")
+			{
+				if(dir == 1 && ball.ball_velocity_x > 0 || dir == -1 && ball.ball_velocity_x < 0)
+				{
+					ball.ball_velocity_x *= 1.5;
+					ball.ball_velocity_y /= 1.5;
+				}
+				else if(dir == -1 && ball.ball_velocity_x > 0 || dir == 1 && ball.ball_velocity_x < 0)
+				{
+					ball.ball_velocity_x /= 1.5;
+					ball.ball_velocity_y *= 1.5;
+				}
+			}
+			else
+			{
+				if(dir == 1 && ball.ball_velocity_y > 0 || dir == -1 && ball.ball_velocity_y < 0)
+				{
+					ball.ball_velocity_y *= 1.5;
+					ball.ball_velocity_x /= 1.5;
+				}
+				else if(dir == -1 && ball.ball_velocity_y > 0 || dir == 1 && ball.ball_velocity_y < 0)
+				{
+					ball.ball_velocity_y /= 1.5;
+					ball.ball_velocity_x *= 1.5;
+				}
+			}
+		}
+	}
 
 		async function gameLoop()
 		{
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			
 			for (let key in paddles)
-				paddles[key].draw_paddle();
+			{
+				if(key != "directions")
+					paddles[key].draw_paddle();
+			}
 			if(isGoal == true || first == true)
 			{
 				if(first != true)
@@ -619,7 +715,10 @@ function startPong4PGame() {
 					init();
 				ball = new make_ball(null);
 				for (let key in paddles)
+				{
+					if(key != "directions")
 					paddles[key].init_position(paddles[key].player);
+				}
 				first = false;
 				isGoal = false;
 				last_touch = "none";
@@ -631,8 +730,9 @@ function startPong4PGame() {
 			move_paddle();
 			ball.move_ball();
 			ball.draw_ball();
-			if(colliding_ball_paddle(ball, paddles) == true)
+			if(colliding_ball_paddle(ball, paddles) != null)
 			{
+				apply_paddle_movement(last_touch);
 				ball.speed_up();
 				ball.move_ball();
 				while(colliding_ball_paddle(ball, paddles) == true)
@@ -644,12 +744,11 @@ function startPong4PGame() {
 			requestAnimationFrame(gameLoop);
 			return ;
 		}
-		
+
 		// EVENTS
 
 		function button_up_onmousedown ()
 		{
-			console.log("button_up mouse down");
 			if(bottom_ai == false)
 				bottom_direction = 1;
 			if(top_ai == false)
@@ -662,7 +761,6 @@ function startPong4PGame() {
 		
 		function button_down_onmousedown ()
 		{
-			console.log("button_down mouse down");
 			if(bottom_ai == false)
 				bottom_direction = -1;
 			if(top_ai == false)
@@ -670,7 +768,7 @@ function startPong4PGame() {
 			if(left_ai == false)
 				left_direction = -1;
 			if(right_ai == false)
-				right_direction = -1;
+				mouse_down.right++;
 		}
 		
 		function button_up_onmouseup ()
@@ -688,13 +786,29 @@ function startPong4PGame() {
 		function button_down_onmouseup ()
 		{
 			if(bottom_ai == false)
-				bottom_direction = 0;
+			{
+				mouse_down.bottom--;
+				if(mouse_down.bottom == 0)
+					bottom_direction = 0;
+			}
 			if(top_ai == false)
-				top_direction = 0;
+			{
+				mouse_down.top--;
+				if(mouse_down.top == 0)
+					top_direction = 0;
+			}
 			if(left_ai == false)
-				left_direction = 0;
+			{
+				mouse_down.left--;
+				if(mouse_down.left == 0)
+					left_direction = 0;
+			}
 			if(right_ai == false)
-				right_direction = 0;
+			{
+				mouse_down.right--;
+				if(mouse_down.right == 0)
+					right_direction = 0;
+			}
 		}
 
 		window.addEventListener('resize', function() {
