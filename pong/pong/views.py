@@ -40,13 +40,6 @@ def get_friends(user):
 
 
 def home_data(request):
-    # user_data = request.session.get('user_data')
-    # if user_data is not None:
-    #     # Ensure the user_data is a dictionary
-    #     context = {'user_data': user_data}
-    #     content = render_to_string('user_info.html', context=context)
-    #     data = {'title': 'Home', 'content': content}
-    # else:
     if request.user.is_authenticated:
         if request.user.profile.isOnline:
             status = "Online"
