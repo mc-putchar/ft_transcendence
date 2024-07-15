@@ -1,6 +1,10 @@
-
-DOCKER := docker
-DC := docker compose
+# detect debian system (cloud)
+ifeq ($(shell uname -a | grep -c Debian), 1)
+	DOCKER := docker
+	DC := docker-compose
+else
+	DC := docker compose
+endif
 
 up:
 	$(DC) up --build
