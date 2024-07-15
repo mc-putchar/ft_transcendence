@@ -22,6 +22,8 @@ export function initWS(roomName) {
   chatSocket.onopen = function (e) {
     document.querySelector("#room-name").textContent = roomName;
     document.querySelector("#chat-log").value = "";
+    // focus on the chat input
+    document.querySelector("#chat-message-input").focus();
   };
 
   chatSocket.onmessage = function (e) {
@@ -45,6 +47,13 @@ export function initWS(roomName) {
 
   chatSocket.onclose = function (e) {
     if (!e.wasClean) console.error("Chat socket closed unexpectedly", e);
+  };
+
+
+  document.querySelector("#chat-message-input").onkeyup = function (e) {
+    if (e.keyCode === 13) {
+      document.querySelector("#chat-message-submit").click();
+    }
   };
 
   document.querySelector("#chat-message-submit").onclick = function (e) {

@@ -55,82 +55,84 @@ function renderContent(data) {
 }
 
 function router() {
-  
-  let view = routes[location.pathname];
+  const path = location.pathname;
+
+  // Check if the route is dynamic for user profiles
+  if (path.startsWith("/users/")) {
+    const username = path.split("/")[2];
+    if (username) {
+      document.title = "Loading...";
+      fetchData(`/users/${username}/`, renderContent, () => {
+        // Any additional logic needed after fetching user data
+      });
+      return;
+    }
+  }
+
+  // Static routes handling
+  let view = routes[path];
   if (view) {
     document.title = view.title;
 
-    const appElement = document.getElementById("app");
-    
-    appElement.classList.add("fade-exit");
-  
-    fetch(view.endpoint, {
-      method: "GET",
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        document.title = data.title;
-        const renderFunction = viewFunctions[location.pathname];
-        const newContent = renderFunction
-          ? renderFunction(data)
-          : "<p>Page not found</p>";
-
-        setTimeout(() => {
-          appElement.innerHTML = newContent;
-
-          appElement.classList.remove("fade-exit");
-          appElement.classList.add("fade-enter");
-
-          setTimeout(
-            () => appElement.classList.remove("fade-enter"),
-            fadeInDuration,
-          );
-          if (location.pathname === "/login") {
-            handleLoginForm();
-            document.getElementById("username").focus();
-          } else if (location.pathname === "/logout") {
-            handleLogoutForm();
-          } else if (location.pathname === "/register") {
-            handleRegisterForm();
-            document.getElementById("username").focus();
-          } else if (location.pathname.startsWith("/chat")) {
-            const roomName = location.pathname.split("/")[2] || "lobby";
-            handleChat(roomName);
-          }  
-        }, fadeOutDuration);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-        document.getElementById("app").innerHTML =
-          "<p>Error loading page content.</p>";
-      });
-  } else {
-    if (location.pathname.startsWith("/chat")) {
-      const roomName = location.pathname.split("/")[2];
-      fetch("/chat/" + roomName, {
-        method: "GET",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          document.title = data.title;
-          document.getElementById("app").innerHTML = data.content;
-        });
-    }
+    fetchData(view.endpoint, viewFunctions[path], () => {
+      if (path === "/login") {
+        handleLoginForm();
+        document.getElementById("username").focus();
+      } else if (path === "/logout") {
+        handleLogoutForm();
+      } else if (path === "/register") {
+        handleRegisterForm();
+        document.getElementById("username").focus();
+      } else if (path.startsWith("/chat")) {
+        const roomName = path.split("/")[2] || "lobby";
+        handleChat(roomName);
+      }
+    });
+  } else if (path.startsWith("/chat")) {
+    const roomName = path.split("/")[2];
+    fetchData("/chat/" + roomName, renderContent, () => {
+      // Any additional logic needed after fetching chat data
+    });
   }
+}
+
+function fetchData(endpoint, renderFunction, callback) {
+  fetch(endpoint, {
+    method: "GET",
+    headers: {
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      document.title = data.title;
+      const newContent = renderFunction
+        ? renderFunction(data)
+        : "<p>Page not found</p>";
+
+      const appElement = document.getElementById("app");
+      appElement.classList.add("fade-exit");
+
+      setTimeout(() => {
+        appElement.innerHTML = newContent;
+        appElement.classList.remove("fade-exit");
+        appElement.classList.add("fade-enter");
+
+        setTimeout(() => appElement.classList.remove("fade-enter"), fadeInDuration);
+
+        if (callback) callback();
+
+      }, fadeOutDuration);
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+      document.getElementById("app").innerHTML = "<p>Error loading page content.</p>";
+    });
 }
 
 function getCookie(name) {
@@ -167,6 +169,8 @@ const navNav = document.getElementById("navbarNav");
 
 // - Main hook for navigation
 // - Navbar autoclose
+window.addEventListener("popstate", router);
+
 document.addEventListener("click", (e) => {
   if (e.target.matches("[data-link]")) {
     e.preventDefault();

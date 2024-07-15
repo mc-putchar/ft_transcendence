@@ -84,7 +84,6 @@ canvas {
 .user-label:hover {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
   gradient: linear-gradient(90deg, #000000 0%, #000000 100%);
-  background-color: #000000;
 }
 /* Make the app take the full width and till the bottom of the page */
 .app {
@@ -398,11 +397,6 @@ img.mp3-hover:hover {
   color: red;
 }
 
-.navbar.navbar-default {
-  background-color: #ffffff;
-  border-color: #ffffff;
-}
-
 .navbar-nav .dropdown-menu {
   display: none;
   opacity: 0;
@@ -412,7 +406,7 @@ img.mp3-hover:hover {
     scale 1.5s ease;
 }
 
-.navbar-nav.navbar-default .dropdown:hover .dropdown-menu {
+.navbar-nav .dropdown:hover .dropdown-menu {
   display: block;
   opacity: 1;
   visibility: visible;

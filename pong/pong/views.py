@@ -1,9 +1,9 @@
+import json
 import logging
 import random
 import string
-import json
-import requests
 
+import requests
 from api.models import Friend, Profile
 from chat.models import Lobby
 from django.conf import settings
@@ -70,6 +70,9 @@ def show_profile(request, username):
         status = 'Online'
     else:
         status = 'Offline'
+
+    logger.critical("Profile: " + str(user))
+
     context = {'user': user, 'status': status}
     content = render_to_string('profile.html', context=context)
     data = {'title': 'Profile', 'content': content}
@@ -168,6 +171,9 @@ def login(request):
 
             if user is not None:
                 django_login(request, user)
+                request.user.profile.set_online_status(True)
+                request.user.profile.save()
+
                 data = {"title": "Login", "content": "Login successful"}
                 lobby, created = Lobby.objects.get_or_create(
                     id=1, defaults={'num_players': 0, 'userlist': ''})
