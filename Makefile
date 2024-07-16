@@ -25,4 +25,6 @@ migrate:
 collect:
 	$(DC) run web python manage.py collectstatic --noinput --clear
 
-
+clean:
+	$(DC) run web python manage.py flush --noinput
+	$(DC) exec db psql -U postgres -c "DROP DATABASE pong"

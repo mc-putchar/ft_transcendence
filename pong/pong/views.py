@@ -4,8 +4,6 @@ import random
 import string
 
 import requests
-from api.models import Friend, Profile
-from chat.models import Lobby
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
@@ -14,6 +12,9 @@ from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+
+from api.models import Friend, Profile
+from chat.models import Lobby
 
 from .auth42 import exchange_code_for_token, get_user_data
 from .forms import LoginForm, ProfileUpdateForm, UserUpdateForm
@@ -171,7 +172,7 @@ def login(request):
 
             if user is not None:
                 django_login(request, user)
-                request.user.profile.set_online_status(True)
+                request.user.profile.set_online_status(False)
                 request.user.profile.save()
 
                 data = {"title": "Login", "content": "Login successful"}

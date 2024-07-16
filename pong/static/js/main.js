@@ -12,6 +12,7 @@ import { initWS } from "./chat.js";
 const fadeOutDuration = 200;
 const fadeInDuration = 600;
 
+
 const viewFunctions = {
   "/": renderContent,
   "/local": renderContent,
@@ -61,6 +62,7 @@ function router() {
   if (path.startsWith("/users/")) {
     const username = path.split("/")[2];
     if (username) {
+
       document.title = "Loading...";
       fetchData(`/users/${username}/`, renderContent, () => {
         // Any additional logic needed after fetching user data
@@ -157,6 +159,7 @@ function handleChat(roomName) {
   initWS(roomName);
 }
 
+// test audio on click from in house monophonic FM synthesizer
 document.getElementById("app").addEventListener("click", (event) => {
   // playTone(222, 0.5, 122);
 });
@@ -188,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function chatEventListeners() {
   document.querySelector("#chat-message-input").focus();
 
-  document.querySelector("#chat-message-input").onkeydown = function (e) {
+  document.querySelector("#chat-message-input").onkeydown = function(e) {
     const chatInput = document.querySelector("#chat-message-input");
 
     const commands = {
@@ -218,15 +221,18 @@ function chatEventListeners() {
       if (event.key === "/") {
         popover.show();
       } else if (event.key === "@") {
+        //replace popover content 
+        popover.update();
+        popoverContent = "List of users";
         popover.show();
-      } else {
+      } else {          // avoid hiding popover when shift key is released
         if (event.key === "Shift") return;
         popover.hide();
       }
     });
   };
-  document.querySelector("#chat-message-input").onkeyup = function (e) {
-    if (e.keyCode === 13) {
+  document.querySelector("#chat-message-input").onkeyup = function(e) {
+    if (e.keyCode === 13) { // map enter key to submit chat message
       document.querySelector("#chat-message-submit").click();
     }
   };

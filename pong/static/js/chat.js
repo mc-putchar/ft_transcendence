@@ -1,5 +1,6 @@
 import { csrftoken } from "./main.js";
 
+
 const commands = {
   "/pm": "Send a private message to a user",
   "/commands": "List all available commands",
@@ -19,14 +20,14 @@ export function initWS(roomName) {
 
   const username = document.querySelector("#chat-username").textContent;
 
-  chatSocket.onopen = function (e) {
+  chatSocket.onopen = function(e) {
     document.querySelector("#room-name").textContent = roomName;
     document.querySelector("#chat-log").value = "";
     // focus on the chat input
     document.querySelector("#chat-message-input").focus();
   };
 
-  chatSocket.onmessage = function (e) {
+  chatSocket.onmessage = function(e) {
     const data = JSON.parse(e.data);
     if (data.message) {
       if (getMention(data.message)) notifyUser(data.message);
@@ -37,26 +38,29 @@ export function initWS(roomName) {
       document.querySelector("#chat-userlist").innerHTML = "";
 
       for (let user of data.users_list) {
-        const user_label = document.createElement("p");
+        // const user_label = document.createElement("p");
+        // user_label.textContent = user;
+        // user_label.className = "user_label";
+        const user_label = document.createElement("button");
         user_label.textContent = user;
-        user_label.className = "user_label";
+        user_label.className = "btn btn-light";
         document.querySelector("#chat-userlist").appendChild(user_label);
       }
     }
   };
 
-  chatSocket.onclose = function (e) {
+  chatSocket.onclose = function(e) {
     if (!e.wasClean) console.error("Chat socket closed unexpectedly", e);
   };
 
 
-  document.querySelector("#chat-message-input").onkeyup = function (e) {
+  document.querySelector("#chat-message-input").onkeyup = function(e) {
     if (e.keyCode === 13) {
       document.querySelector("#chat-message-submit").click();
     }
   };
 
-  document.querySelector("#chat-message-submit").onclick = function (e) {
+  document.querySelector("#chat-message-submit").onclick = function(e) {
     const messageInputDom = document.querySelector("#chat-message-input");
     const data = {
       message: messageInputDom.value,
@@ -80,7 +84,7 @@ export function initWS(roomName) {
   window.chatSocket = chatSocket;
 
   // if user clicks on the userlist
-  document.querySelector("#chat-userlist").onclick = function (e) {
+  document.querySelector("#chat-userlist").onclick = function(e) {
     const user = e.target.textContent;
 
     fetch("/api/profile/" + user + "/", {
@@ -102,13 +106,15 @@ export function initWS(roomName) {
           { key: "user.email", label: "Email" },
           { key: "alias", label: "Alias" },
         ];
-        console.log("data:", data);
-        console.log("image:", data.image);
-        const customContent = `
+        const customContent = `<div="img-container">
           <img src="${data.image}" alt="Profile Image" class="img-fluid">
-        `;
+          </div>
+          <div class="bio">
+          <button><a href="/users/${user}/" class="btn btn-primary" data-link>View Profile</a></button>
+          </div>
+          `;
         createModal(
-          data,"ProfileModal","ProfileModalLabel",fields, customContent,
+          data, "ProfileModal", "ProfileModalLabel", fields, customContent,
         );
       })
       .catch((error) => {
@@ -119,8 +125,16 @@ export function initWS(roomName) {
   };
 }
 
+
+
+// creates a dinamic modal with data to be displayed
 function createModal(data, modalId, modalLabelId, fields, customContent = "") {
   const modal = document.createElement("div");
+  // <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  modal.tabIndex = "-1";
+  modal.role = "dialog";
+  modal.ariaHidden = "false";
+
   modal.className = "modal";
   modal.id = modalId;
   modal.style.display = "block";
@@ -135,21 +149,24 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "") {
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="${modalLabelId}">${fields[0].key.split(".").reduce((o, i) => o[i], data)}</h5>
+                    <div class="col-12">
+                      <h5 class="modal-title" id="${modalLabelId}">${fields[0].key.split(".").reduce((o, i) => o[i], data)}</h5>
+                    </div>
+                    <div class="col-12" style="text-align: left; position: absolute; right: 0; top: 0;">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal" id="close${modalId}">X</button>
+                    </div>
                 </div>
                 <div class="modal-body">
                     ${modalBodyContent}
                     ${customContent}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="close${modalId}">Close</button>
                 </div>
             </div>
         </div>
     `;
 
   document.body.appendChild(modal);
-  document.getElementById(`close${modalId}`).onclick = function () {
+
+  document.getElementById(`close${modalId}`).onclick = function() {
     modal.style.display = "none";
     document.body.removeChild(modal);
   };
@@ -251,7 +268,7 @@ function createNotification(message) {
   document.body.appendChild(modal);
   document.getElementById("NotificationModal").style.display = "block";
 
-  document.getElementById("closeNotif").onclick = function () {
+  document.getElementById("closeNotif").onclick = function() {
     document.getElementById("NotificationModal").style.display = "none";
     document.body.removeChild(modal);
     return;

@@ -71,7 +71,7 @@ function playTone(freq, modulation, mod_amt) {
   osc.frequency.value = freq;
 
   vca.gain.exponentialRampToValueAtTime(1, ctx.currentTime + attack);
-  vca.gain.exponentialRampToValueAtTime(0.8, ctx.currentTime + sustain);
+  vca.gain.exponentialRampToValueAtTime(vca.gain.value , ctx.currentTime + sustain);
   vca.gain.exponentialRampToValueAtTime(
     0.00001,
     ctx.currentTime + release + sustain,

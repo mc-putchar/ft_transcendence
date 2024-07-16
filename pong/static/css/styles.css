@@ -154,6 +154,11 @@ img {
   animation: fadeOut 0.3s forwards;
 }
 
+.modal {
+  animation: all fadeIn 0.3s ease;
+
+}
+
 html,
 body {
   padding: 0;
@@ -185,6 +190,7 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
   gradient: linear-gradient(90deg, #000000 0%, #000000 100%);
 }
+
 
 /* Make the app take the full width and till the bottom of the page */
 .app {
@@ -271,10 +277,19 @@ button:focus {
 }
 
 /* Responsive Design */
+
 @media (max-width: 768px) {
   button {
     padding-left: 42px;
     font-size: 1em;
+    chat-container {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+    }
+    chat-log {
+      width: 100%;
+    }
   }
   img {
     width: 50%;
@@ -331,6 +346,12 @@ img.mp3-hover:hover {
   /* font-size: 1rem; */
   /* width: 50vw; */
   font-family: "Lucida Sans";
+}
+
+chat-userlist {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
 }
 
 .chat-container {

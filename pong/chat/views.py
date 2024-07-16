@@ -30,7 +30,7 @@ def index(request):
 
     data = {
         'title': "lobby" + ' Chat',
-        'content': render_to_string('chat/index.html', request=request, context=context),
+        'content': render_to_string('chat_index.html', request=request, context=context),
     }
 
     logger.info("\nDATA:\n%s", data)
@@ -60,7 +60,7 @@ def room(request, room_name):
 
     data = {
         'title': room_name + ' Chat',
-        'content': render_to_string('chat/index.html', request=request, context=context),
+        'content': render_to_string('chat_index.html', request=request, context=context),
     }
 
     logger.info("\nDATA:\n%s", data)
