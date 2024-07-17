@@ -1,10 +1,10 @@
-## Ft_Transcendence
+## _Ft_Transcendence_
 
-### Basics:
+### _Basics_:
   - Everything must be launched with a single command line to run an autonomous
     container provided by Docker . Example : docker-compose up --build
 
-  * III.3 Game
+  * _III.3 Game_
     - *`tournament`*. This tournament will consist of multiple players who
       can take turns playing against each other. You have flexibility in how you implement
       the tournament, but it must clearly display who is playing against whom and the
@@ -17,7 +17,7 @@
     - *`matchmaking`* system: the tournament system organize the
       matchmaking o**f the participants, and announce the next fight.
 
-  * III.4 Security
+  * _III.4 Security_
     - Any password stored in your database, if applicable, must be **_hashed_**.
 
     - Your website must be protected against **_SQL injections/XSS._**
@@ -49,7 +49,6 @@
 ```
       required 7 ,     current total  = 8
 ```python
-Extra:
 
 1   - Remote Player Management		1
 1   - AI Opponent			1
@@ -62,20 +61,21 @@ Extra:
 ```
 <br>
 
-### Live Chat.
+### _Live Chat_.
 
 You have to create a chat for your users in this module:
 
-◦ The user should be able to send direct messages to other users.
+◦ The user should be able to send direct messages to other users. [X]
 
-◦ The user should be able to block other users. This way, they will see no more
+◦ The user should be able to _block_ other users. This way, they will _see_ no more
   messages from the account they blocked.
 
-◦ The user should be able to invite other users to play a Pong game through the
+◦ The user should be able to _invite_ other users to play a Pong game through the
   chat interface.
 
 ◦ The tournament system should be able to warn users expected for the next
   game.
+    - *_IN THE CHAT??_*
 
 ◦ The user should be able to access other players profiles through the chat in-
 terface.
