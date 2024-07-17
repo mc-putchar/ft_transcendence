@@ -186,6 +186,10 @@ body {
   width: 100%;
 }
 
+.separator {
+    margin-top: 55px;
+}
+
 .user-label:hover {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
   gradient: linear-gradient(90deg, #000000 0%, #000000 100%);
@@ -238,6 +242,7 @@ h1 {
   color: #007bff; /* Primary color */
   margin-bottom: 10px;
 }
+
 
 h2 {
   color: #0056b3; /* Slightly darker primary color */

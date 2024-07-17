@@ -1,10 +1,6 @@
-# detect debian system (cloud)
-ifeq ($(shell uname -a | grep -c Debian), 1)
-	DOCKER := docker
-	DC := docker-compose
-else
-	DC := docker compose
-endif
+
+DOCKER := docker
+DC := docker-compose
 
 .PHONY: up down start stop re migrate collect
 up:

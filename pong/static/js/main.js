@@ -51,6 +51,10 @@ function renderRegister(data) {
   return `${data.content}`;
 }
 
+function renderProfile(data) {
+    return `<div>${data.content}</div>`;
+}
+
 function renderContent(data) {
   return ` ${data.content}`;
 }

@@ -31,6 +31,7 @@
 
     <!-- Navbar -->
     <nav id="nav" class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav id="nav" class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/" data-link>Pong</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,6 +50,16 @@
                 </li>
 
                     <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="callsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Play
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="callsDropdown">
+                        <li><a class="dropdown-item" href="/local" data-link>Local Game</a></li>
+                        <li><a class="dropdown-item" href="/online" data-link>Online Game</a></li>
+                    </ul>
+                </li>
+
+                    <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if user.is_authenticated and not user.is_anonymous %}
                                 Account</a>
@@ -56,6 +67,7 @@
                             Login</a>
                         {% endif %}
                       <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li>
                         {% if user.is_authenticated %}
                                 <li><a class="dropdown-item" href="/profile" data-link>Profile</a></li>
                                 <li><a class="dropdown-item" href="/users" data-link>Users</a></li>
@@ -74,6 +86,7 @@
                         {% endif %}
                     </ul>
                         <li class="nav-item">
+                           <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#musicModal" style="border-radius: 20%; max-width:80px">
                            <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#musicModal" style="border-radius: 20%; max-width:80px">
                                   🎵</button>
                                   <div class="modal fade" id="musicModal" tabindex="-1" aria-labelledby="musicModalLabel" aria-hidden="true">
@@ -95,6 +108,7 @@
             </div>
     </nav>
     <br>
+    <br>
     <!-- Main Content  to be loaded dynamically -->
     <main id="app" class="container"></main>
     <!--                                        -->
@@ -103,6 +117,8 @@
     <script type="module" src="{% static 'js/events.js' %}"></script>
     <script type="module" id="pong-classic" src="{% static 'js/pong-game.js' %}"></script>
     <script type="module" id="pong-3d" src="{% static 'js/pong3d.js' %}"></script>
+    <script type="module" id="pong-4p" src="{% static 'js/multi_pong4.js' %}"></script>
+    <script type="module" id="profile" src="{% static 'js/profile.js' %}"></script>
     <script type="module" id="pong-4p" src="{% static 'js/multi_pong4.js' %}"></script>
     <script type="module" id="profile" src="{% static 'js/profile.js' %}"></script>
 
