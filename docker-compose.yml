@@ -1,0 +1,55 @@
+#version: '42'
+
+name: ft_transcendence
+
+networks:
+  transcendeNet:
+    driver: bridge
+
+services:
+  db:
+    image: postgres:16.3-alpine3.20
+    environment:
+      POSTGRES_DB: "$POSTGRES_DB"
+      POSTGRES_USER: "$POSTGRES_USER"
+      POSTGRES_PASSWORD: "$POSTGRES_PASSWORD"
+    volumes:
+      - "${PWD}/postgres_data:/var/lib/postgresql/data:rw"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.2.5-alpine
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+  django:
+    build:
+      context: "${PWD}/pong"
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - "${PWD}/pong:/code:ro"
+    env_file:
+      - "${PWD}/.env"
+    environment:
+      POSTGRES_DB: "$POSTGRES_DB"
+      POSTGRES_USER: "$POSTGRES_USER"
+      POSTGRES_PASSWORD: "$POSTGRES_PASSWORD"
+      DJANGO_SECRET_KEY: "$DJANGO_SECRET_KEY"
+    ports:
+      - "4222:8000"
+    networks:
+      - transcendeNet
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
