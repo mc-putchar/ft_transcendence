@@ -17,13 +17,23 @@ CLIENT_SECRET = env('CLIENT_SECRET')
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['pong.ktano-studio.com',
-                 'localhost', '127.0.0.1', '.42berlin.de', '10.18.206.20']
-CSRF_TRUSTED_ORIGINS = ['https://pong.ktano-studio.com']
+ALLOWED_HOSTS = [
+    'pong.ktano-studio.com',
+    'localhost',
+    '127.0.0.1',
+    '.42berlin.de',
+    'transcend42.online',
+]
+CSRF_TRUSTED_ORIGINS = [
+    'https://pong.ktano-studio.com',
+    'https://localhost:4243',
+    'https://127.0.0.1:4243',
+    'https://transcend42.online',
+]
+
 # Application definition
-
 INSTALLED_APPS = [
     'daphne',
 
@@ -154,5 +164,5 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MEDIA = '/media'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

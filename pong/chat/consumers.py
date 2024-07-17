@@ -6,10 +6,6 @@ from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from .models import Lobby
-
-# profile = await sync_to_async(Profile.objects.get)(user=self.scope["user"])
-# await sync_to_async(profile.set_online_status)(False)
-
 # abstracted into a function
 class ChatConsumer(AsyncWebsocketConsumer):
     
@@ -85,7 +81,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "users_list": users_list
         }))
-
-
-
 

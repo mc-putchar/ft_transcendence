@@ -56,6 +56,7 @@
                             Login</a>
                         {% endif %}
                       <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li>
                         {% if user.is_authenticated %}
                                 <li><a class="dropdown-item" href="/profile" data-link>Profile</a></li>
                                 <li><a class="dropdown-item" href="/users" data-link>Users</a></li>
@@ -94,6 +95,7 @@
                 </div>
             </div>
     </nav>
+    <br>
     <br>
     <!-- Main Content  to be loaded dynamically -->
     <main id="app" class="container"></main>

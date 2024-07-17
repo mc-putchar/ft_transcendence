@@ -49,7 +49,7 @@ def home_data(request):
         user_data = {
             'login': request.user.username,
             'email': str(request.user.username) + "@42.pong",
-            'image': request.user.profile.image,
+            'image': request.user.profile.image.url,
             'alias': request.user.profile.alias,
             'status': status,
             'friends': get_friends(request.user),
@@ -74,7 +74,11 @@ def show_profile(request, username):
 
     logger.critical("Profile: " + str(user))
 
-    context = {'user': user, 'status': status}
+    context = {
+        'user': user,
+        'status': status,
+        'profilepic': user.image.url
+    }
     content = render_to_string('profile.html', context=context)
     data = {'title': 'Profile', 'content': content}
     return JsonResponse(data)
@@ -115,6 +119,26 @@ def users(request):
             'registration/needlogin.html', request=request)
         data = {"title": "Online", "content": html}
 
+    return JsonResponse(data)
+
+
+def profile(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    content = render_to_string('profile.html', context=context)
+    data = {'title': 'Profile', 'content': content}
     return JsonResponse(data)
 
 
