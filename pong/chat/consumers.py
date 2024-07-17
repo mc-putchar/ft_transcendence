@@ -38,6 +38,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name,
                                            self.channel_name)
         await self.accept()
+        await self.chat_message({"message": "", "username": self.username})
 
     async def disconnect(self, close_code):
         # Remove user from the lobby
