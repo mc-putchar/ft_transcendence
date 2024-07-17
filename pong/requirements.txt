@@ -17,3 +17,4 @@ daphne
 channels_redis
 django-cors-headers
 pillow
+web3
