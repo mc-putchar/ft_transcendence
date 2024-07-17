@@ -1,20 +1,34 @@
 # chat/consumers.py
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer
-from .models import Lobby
+
+from api.models import Profile
 from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
 
+from .models import Lobby
 
+# profile = await sync_to_async(Profile.objects.get)(user=self.scope["user"])
+# await sync_to_async(profile.set_online_status)(False)
+
+# abstracted into a function
 class ChatConsumer(AsyncWebsocketConsumer):
+    
+    async def set_online_status(self, status):
+        profile = await sync_to_async(Profile.objects.get)(user=self.scope["user"])
+        await sync_to_async(profile.set_online_status)(status)
 
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
         self.username = self.scope["user"].username
 
+        # set user online status
+        await self.set_online_status(True)
+
         if self.room_name == "lobby":
             lobby = await sync_to_async(Lobby.objects.get_or_create)(id=1)
             await sync_to_async(lobby[0].add_user)(self.username)
+
             await self.channel_layer.group_send(
                 self.room_group_name, {
                     "type": "user_list",
@@ -97,6 +111,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.chat_message({"message": "", "username": self.username})
 
     async def disconnect(self, close_code):
+        await self.set_online_status(False)
+
         # Remove user from the lobby
         if self.room_name == "lobby":
             lobby = await sync_to_async(Lobby.objects.get)(id=1)
@@ -139,3 +155,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "users_list": users_list
         }))
+
+
+
+

@@ -1,259 +1,245 @@
-import { startOscillator, stopOscillator, playAudioTrack } from "./audio.js";
-import { renderHome } from "./views/home.js";
-import { renderLocalGame } from "./views/local.js";
+import { playAudioTrack, playTone } from "./audio.js";
+
+import {
+  handleLoginForm,
+  handleLogoutForm,
+  handleRegisterForm,
+} from "./views/forms.js";
+
 import { initWS } from "./chat.js";
 
 // Transition durations in milliseconds
 const fadeOutDuration = 200;
 const fadeInDuration = 600;
 
+
 const viewFunctions = {
-    "/": renderHome,
-    "/local": renderLocalGame,
-    "/login": renderLogin,
-    "/online": renderOnlineGame,
-    "/logout": renderLogout,
-    "/register": renderRegister,
-    "/profile": renderProfile,
-    "/chat": renderChat,
+  "/": renderContent,
+  "/local": renderContent,
+  "/login": renderLogin,
+  "/online": renderContent,
+  "/logout": renderLogout,
+  "/register": renderRegister,
+  "/chat": renderContent,
+  "/profile": renderContent,
+  "/users": renderContent,
 };
 
 const routes = {
-    "/": { endpoint: "/home_data" },
-    "/local": { title: "Local", endpoint: "/local_game" },
-    "/login": { title: "Login", endpoint: "/login" },
-    "/online": { title: "Online", endpoint: "/online" },
-    "/logout": { title: "Logout", endpoint: "/logout" },
-    "/register": { title: "Register", endpoint: "/register" },
-    "/profile": { title: "Profile", endpoint: "/profile" },
-    "/chat": { title: "Chat", endpoint: "/chat" },
+  "/": { endpoint: "/home_data" },
+  "/local": { title: "Local", endpoint: "/local_game" },
+  "/login": { title: "Login", endpoint: "/login" },
+  "/online": { title: "Online", endpoint: "/online" },
+  "/logout": { title: "Logout", endpoint: "/logout" },
+  "/register": { title: "Register", endpoint: "/register" },
+  "/chat": { title: "Chat", endpoint: "/chat/lobby/" },
+  "/users": { title: "Users", endpoint: "/users" },
+  "/profile": { title: "Profile", endpoint: "/profile" },
 };
 
-// list of routes that use websockets
-const wsRoutes = [
-    "/chat",
-];
-
-function renderChat(data) {
-    return `${data.content}`;
-}
-
-
-function renderOnlineGame(data) {
-    return `<div>${data.content}</div>`;
-}
+const wsRoutes = ["/chat"];
 
 function renderLogin(data) {
-    return `<h2>${data.title}</h2>${data.content}`
+  return `<h2>${data.title}</h2>${data.content}`;
 }
 
 function renderLogout(data) {
-    return `<h2>${data.title}</h2><p>${data.content}</p>`;
+  return `<h2>${data.title}</h2><p>${data.content}</p>`;
 }
 
 function renderRegister(data) {
-    return `<div>${data.content}</div>`;
+  return `${data.content}`;
 }
 
 function renderProfile(data) {
     return `<div>${data.content}</div>`;
 }
 
-// check if the location is different from wsRoutes in any location change
-function checkWS() {
-    if (!wsRoutes.includes(location.pathname)) {
-        if (window.chatSocket) {
-            window.chatSocket.close();
-            console.log("Chat socket closed : ", window.chatSocket);
-            delete window.chatSocket;
-        }
-    }
+function renderContent(data) {
+  return ` ${data.content}`;
 }
 
 function router() {
-    let view = routes[location.pathname];
-    if (view) {
-        document.title = view.title;
+  const path = location.pathname;
 
-        const appElement = document.getElementById('app');
-        appElement.classList.add('fade-exit');
+  // Check if the route is dynamic for user profiles
+  if (path.startsWith("/users/")) {
+    const username = path.split("/")[2];
+    if (username) {
 
-        fetch(view.endpoint, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            document.title = data.title;
-            const renderFunction = viewFunctions[location.pathname];
-            const newContent = renderFunction ? renderFunction(data) : "<p>Page not found</p>";
-
-            setTimeout(() => {
-                appElement.innerHTML = newContent;
-
-                appElement.classList.remove('fade-exit');
-                appElement.classList.add('fade-enter');
-
-                setTimeout(() => appElement.classList.remove('fade-enter'), fadeInDuration);
-                
-                checkWS();
-                if (location.pathname === "/login") {
-                    handleLoginForm();
-                    document.getElementById("username").focus();
-                } else if (location.pathname === "/logout") {
-                    handleLogoutForm();
-                } else if (location.pathname === "/register") {
-                    handleRegisterForm();
-                    document.getElementById("username").focus();
-                } else if (location.pathname === "/chat") {
-                    handleChat();
-                }
-            }, fadeOutDuration);
-        })
-        .catch(error => {
-            console.error("Error fetching data:", error);
-            document.getElementById('app').innerHTML = "<p>Error loading page content.</p>";
-        });
-    } else {
-        history.replaceState("", "", "/");
-        router();
+      document.title = "Loading...";
+      fetchData(`/users/${username}/`, renderContent, () => {
+        // Any additional logic needed after fetching user data
+      });
+      return;
     }
+  }
+
+  // Static routes handling
+  let view = routes[path];
+  if (view) {
+    document.title = view.title;
+
+    fetchData(view.endpoint, viewFunctions[path], () => {
+      if (path === "/login") {
+        handleLoginForm();
+        document.getElementById("username").focus();
+      } else if (path === "/logout") {
+        handleLogoutForm();
+      } else if (path === "/register") {
+        handleRegisterForm();
+        document.getElementById("username").focus();
+      } else if (path.startsWith("/chat")) {
+        const roomName = path.split("/")[2] || "lobby";
+        handleChat(roomName);
+      }
+    });
+  } else if (path.startsWith("/chat")) {
+    const roomName = path.split("/")[2];
+    fetchData("/chat/" + roomName, renderContent, () => {
+      // Any additional logic needed after fetching chat data
+    });
+  }
+}
+
+function fetchData(endpoint, renderFunction, callback) {
+  fetch(endpoint, {
+    method: "GET",
+    headers: {
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      document.title = data.title;
+      const newContent = renderFunction
+        ? renderFunction(data)
+        : "<p>Page not found</p>";
+
+      const appElement = document.getElementById("app");
+      appElement.classList.add("fade-exit");
+
+      setTimeout(() => {
+        appElement.innerHTML = newContent;
+        appElement.classList.remove("fade-exit");
+        appElement.classList.add("fade-enter");
+
+        setTimeout(() => appElement.classList.remove("fade-enter"), fadeInDuration);
+
+        if (callback) callback();
+
+      }, fadeOutDuration);
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+      document.getElementById("app").innerHTML = "<p>Error loading page content.</p>";
+    });
 }
 
 function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
     }
-    return cookieValue;
+  }
+  return cookieValue;
 }
 
-const csrftoken = getCookie('csrftoken');
+export const csrftoken = getCookie("csrftoken");
 
-function handleLoginForm() {
-    document.getElementById("loginForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        fetch("/login", {
-            method: "POST",
-            body: formData,
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
-            if (data.content === "Login successful") {
-                history.pushState("", "", "/");
-                // go to home page redirect
-                window.location.href = "/";
-                router();
-            }
-        })
-        .catch(error => {
-            console.error("Login error:", error);
-            document.getElementById("app").innerHTML = `<p>Login failed: ${error.message}</p>`;
-        });
-    });
+function handleChat(roomName) {
+  chatEventListeners();
+  initWS(roomName);
 }
 
-function handleChat() {
-    initWS();
-}
-
-function handleLogoutForm() {
-    document.getElementById("logoutForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        fetch("/logout", {
-            method: "POST",
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
-            if (data.content === "Logout successful") {
-                setTimeout(() => {
-                    window.location.href = "/";
-                }, 1000);
-            }
-        })
-        .catch(error => {
-            console.error("Logout error:", error);
-            document.getElementById("app").innerHTML = `<p>Logout failed: ${error.message}</p>`;
-        });
-    });
-}
-
-function handleRegisterForm() {
-    document.getElementById("registerForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        fetch("/register", {
-            method: "POST",
-            body: formData,
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error("Network response was not ok");
-            }
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
-            if (data.content === "Registration successful") {
-                history.pushState("", "", "/");
-                router();
-            }
-        })
-        .catch(error => {
-            console.error("Registration error:", error);
-            document.getElementById("app").innerHTML = `<p>Registration failed: ${error.message}</p>`;
-        });
-    });
-}
-
+// test audio on click from in house monophonic FM synthesizer
 document.getElementById("app").addEventListener("click", (event) => {
-        startOscillator();
-        // TODO any click will contract the navbar from the expanded state
-        // playAudioTrack();
+  // playTone(222, 0.5, 122);
 });
 
+// - Handle back and forward browser navigation
+// - popstate event is fired when the active history entry changes
+window.addEventListener("popstate", router());
 
+const navNav = document.getElementById("navbarNav");
 
+// - Main hook for navigation
+// - Navbar autoclose
 window.addEventListener("popstate", router);
 
-document.addEventListener("click", e => {
-    if (e.target.matches("[data-link]")) {
-        e.preventDefault();
-        history.pushState("", "", e.target.href);
-        router();
-    }
+document.addEventListener("click", (e) => {
+  if (e.target.matches("[data-link]")) {
+    e.preventDefault();
+    history.pushState("", "", e.target.href);
+    router();
+  } else if (navNav.classList.contains("show") && !e.target.closest("nav")) {
+    navNav.classList.remove("show");
+  }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    router();
+  router();
 });
 
+function chatEventListeners() {
+  document.querySelector("#chat-message-input").focus();
+
+  document.querySelector("#chat-message-input").onkeydown = function(e) {
+    const chatInput = document.querySelector("#chat-message-input");
+
+    const commands = {
+      "/pm": "Send a private message to a user",
+      "/add": "Add a user as a friend",
+      "/block": "Block a user",
+      "/duel": "Challenge a user to a duel",
+      "/tournament": "Create a tournament",
+      "/help": "List all available commands",
+    };
+
+    chatInput.setAttribute("data-bs-toggle", "popover");
+    chatInput.setAttribute("data-bs-trigger", "manual");
+
+    const popoverContent = Object.entries(commands)
+      .map(([cmd, desc]) => `<strong>${cmd}</strong>    ${desc}`)
+      .join("<br>");
+
+    const popover = new bootstrap.Popover(chatInput, {
+      content: popoverContent,
+      html: true,
+      placement: "auto",
+      container: "body",
+    });
+
+    chatInput.addEventListener("keyup", (event) => {
+      if (event.key === "/") {
+        popover.show();
+      } else if (event.key === "@") {
+        //replace popover content 
+        popover.update();
+        popoverContent = "List of users";
+        popover.show();
+      } else {          // avoid hiding popover when shift key is released
+        if (event.key === "Shift") return;
+        popover.hide();
+      }
+    });
+  };
+  document.querySelector("#chat-message-input").onkeyup = function(e) {
+    if (e.keyCode === 13) { // map enter key to submit chat message
+      document.querySelector("#chat-message-submit").click();
+    }
+  };
+}
+
+export { router };

@@ -1,0 +1,24 @@
+{% load static %}
+ <h2>Profile</h2>
+ <div class="fluid">
+ <h3> {{ username }} </h3>
+         <img src="{{ profilepic }}" class="rounded-circle account-img" alt="Profile Picture" style="width: 100px; height: auto;">
+ </div>
+    <div class="col-md-18">
+      <div class="row mt-12">
+        <div class="card p-12 shadow-sm">
+            <div class="card-body text-center container-background">
+                <div class="container-fluid">
+                                       {% csrf_token %}
+                    <form class="form" id="profile-form" method="POST" enctype="multipart/form-data">
+                      {{ u_form.as_p }}
+                      {{ p_form.as_p }}
+
+                      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                      <button class="btn btn-dark" type="submit" onclick="updateProfile()">Update</button>
+                    </form>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>

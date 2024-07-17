@@ -1,8 +1,10 @@
+__pycache__
+.env
+.venv/
+venv/
+testenv/
+pong/media/
 postgres_data/
 migrations
 staticfiles
-.venv
-__pycache__
-.env
-pong/testenv
-testenv
+tags

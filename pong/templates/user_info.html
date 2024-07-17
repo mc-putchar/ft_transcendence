@@ -9,8 +9,9 @@
                     <ul class="list-group list-group-flush mb-4">
                         <li class="list-group-item">User: {{ user_data.login }}</li>
                         <li class="list-group-item">Email: {{ user_data.email }}</li>
+                        <li class="list-group-item">Alias: {{ user_data.alias }}</li>
                         <li class="list-group-item">
-                            <img src="{{ user_data.image.versions.medium }}" alt="Profile Image" class="img-thumbnail">
+                            <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail">
                         </li>
                     </ul>
                     {% elif user_data.login %}      <!-- Regular User -->
@@ -19,9 +20,19 @@
                         <ul class="list-group list-group-flush mb-4">
                             <li class="list-group-item">User: {{ user_data.login }}</li>
                             <li class="list-group-item">Email: {{ user_data.email }}</li>
+                            <li class="list-group-item">Alias: {{ user_data.alias }}</li>
+                            <li class="list-group-item">Status: {{ user_data.status }}</li>
                             <li class="list-group-item">
                                 <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail">
                             </li>
+                            <p>Friends:</p>
+                            {% for friend in user_data.friends %}
+                                {% if friend.isOnline %}
+                                    <li class="list-group-item text-success">{{ friend.user.username }}</li>
+                                {% else %}
+                                    <li class="list-group-item text-danger">{{ friend.user.username }}</li>
+                                {% endif %}
+                            {% endfor %}
                         </ul>
                    </div>
                     {% endif %}

@@ -1,7 +1,8 @@
 
 DOCKER := docker
-DC := docker compose
+DC := docker-compose
 
+.PHONY: up down start stop re migrate collect
 up:
 	$(DC) up --build
 down:
@@ -15,10 +16,12 @@ re:
 	$(DC) --build --force-recreate
 
 migrate:
-	$(DC) run web python manage.py makemigrations pong chat
-	$(DC) run web python manage.py migrate
+	$(DC) run django python manage.py makemigrations pong chat api
+	$(DC) run django python manage.py migrate
 
 collect:
-	$(DC) run web python manage.py collectstatic --noinput --clear
+	$(DC) run django python manage.py collectstatic --noinput --clear
 
-
+clean:
+	$(DC) run web python manage.py flush --noinput
+	$(DC) exec db psql -U postgres -c "DROP DATABASE pong"

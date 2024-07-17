@@ -1,15 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Orbitron&display=swap");
 
 /* Define the fade-in animation */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Define the fade-out animation */
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 /* Apply the animation to .fade-enter */
@@ -25,42 +33,157 @@
 }
 
 * {
-    font-family: "Orbitron", system-ui;
+  font-family: "Orbitron", system-ui;
 }
 
-html, body {
-    padding: 0;
-    margin: 0;
+html,
+body {
+  padding: 0;
+  margin: 0;
 }
 
 canvas {
-    margin-bottom: 30px;
-    margin-top: auto;
-    width: 90%;
-    display: flex;
-    align-content: center;
-    background-color: black;
+  margin-bottom: 30px;
+  margin-top: auto;
+  width: 90%;
+  display: flex;
+  align-content: center;
+  background-color: black;
+}
+
+.helptext {
+  font-size: 10;
+  font-family: "Lucida Sans";
 }
 
 .userlist {
-    flex-direction: column;
-    border: 1px solid rgba(222,222,222,100);
-    border-radius: 2px;
-    display: block;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    width: 100%;
+  flex-direction: column;
+  border: 1px solid rgba(222, 222, 222, 100);
+  border-radius: 2px;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  width: 100%;
 }
 
 .user-label {
-    border: 1px solid rgba(222,222,222,0.8);
-    border-radius: 2px;
-    display: block;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    width: 100%;
+  border: 1px solid rgba(222, 222, 222, 0.8);
+  border-radius: 2px;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  width: 100%;
+}
+
+.separator {
+  margin-top: 55px;
+}
+
+.user-label:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+  gradient: linear-gradient(90deg, #000000 0%, #000000 100%);
+}
+/* Make the app take the full width and till the bottom of the page */
+.app {
+  margin-top: 12vh;
+  display: block;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 100vw;
+  height: 100%;
+  width: 100%;
+}
+
+a,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+Buttons,
+label,
+input,
+select,
+textarea,
+img {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 4player */
+.Buttons {
+  border-style: solid;
+  border-color: rgb(10, 10, 92);
+}
+
+/* Define the fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Define the fade-out animation */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Apply the animation to .fade-enter */
+.fade-enter {
+  opacity: 0;
+  animation: fadeIn 0.7s forwards;
+}
+
+/* Apply the animation to .fade-exit */
+.fade-exit {
+  opacity: 1;
+  animation: fadeOut 0.3s forwards;
+}
+
+.modal {
+  animation: all fadeIn 0.3s ease;
+
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+.userlist {
+  flex-direction: column;
+  border: 1px solid rgba(222, 222, 222, 100);
+  border-radius: 2px;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  width: 100%;
+}
+
+.user-label {
+  border: 1px solid rgba(222, 222, 222, 0.8);
+  border-radius: 2px;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  width: 100%;
 }
 
 .separator {
@@ -68,256 +191,212 @@ canvas {
 }
 
 .user-label:hover {
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-    
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+  gradient: linear-gradient(90deg, #000000 0%, #000000 100%);
 }
+
 
 /* Make the app take the full width and till the bottom of the page */
 .app {
-    margin-top: 12vh;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    min-width: 100vw;
-    height: 100%;
+  margin-top: 12vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 100vw;
 }
 
-a, p, h1, h2, h3, h4, h5, h6, Buttons, label, input, select, textarea ,img{
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+a,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+label,
+li,
+title,
+input,
+select,
+textarea,
+img {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
-
-/* 4player */
-.Buttons {
-	border-style: solid;
-	border-color:rgb(10, 10, 92);
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
-
-/* Define the fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Define the fade-out animation */
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-/* Apply the animation to .fade-enter */
-.fade-enter {
-  opacity: 0;
-  animation: fadeIn 0.7s forwards;
-}
-
-/* Apply the animation to .fade-exit */
-.fade-exit {
-  opacity: 1;
-  animation: fadeOut 0.3s forwards;
-}
-
-html, body {
-    padding: 0;
-    margin: 0;
-}
-
-.userlist {
-    flex-direction: column;
-    border: 1px solid rgba(222,222,222,100);
-    border-radius: 2px;
-    display: block;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    width: 100%;
-}
-
-.user-label {
-    border: 1px solid rgba(222,222,222,0.8);
-    border-radius: 2px;
-    display: block;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    width: 100%;
-}
-
-.user-label:hover {
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-    
-}
-
-/* Make the app take the full width and till the bottom of the page */
-.app {
-    margin-top: 12vh;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    min-width: 100vw;
-
-}
-
-a, p, h1, h2, h3, h4, h5, h6, button, label, li, title, input, select, textarea ,img {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-
 
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f4f8; /* Light background color */
-    color: #222; /* Dark text color */
-    text-align: center;
-    margin: 0;
-    padding: 0;
-    height: 100%;
+  font-family: Arial, sans-serif;
+  background-color: #f0f4f8; /* Light background color */
+  color: #222; /* Dark text color */
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
 /* Header styling */
 h1 {
-    color: #007bff; /* Primary color */
-    margin-bottom: 10px;
+  color: #007bff; /* Primary color */
+  margin-bottom: 10px;
 }
 
 
 h2 {
-    color: #0056b3; /* Slightly darker primary color */
-    margin-bottom: 15px;
+  color: #0056b3; /* Slightly darker primary color */
+  margin-bottom: 15px;
 }
 
 h3 {
-    color: #333; /* Dark text color */
-    margin-bottom: 20px;
+  color: #333; /* Dark text color */
+  margin-bottom: 20px;
 }
 
 /* Form button styling */
 button {
-    background-color: #007bff; /* Primary color */
-    color: #fff; /* White text */
-    border: none;
-    border-radius: 8px; /* Rounded corners */
-    /* padding: 10px 20px; /* Padding */ */
-    font-size: 1em; /* Larger text */
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  background-color: #007bff; /* Primary color */
+  color: #fff; /* White text */
+  border: none;
+  border-radius: 8px; /* Rounded corners */
+  /* padding: 10px 20px; /* Padding */
+  font-size: 1em; /* Larger text */
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    transform 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
 }
 
 /* Button hover effect */
 button:hover {
-    background-color: #0056b3; /* Darker shade of primary color */
-    transform: translateY(-2px); /* Slightly lift the button */
+  background-color: #0056b3; /* Darker shade of primary color */
+  transform: translateY(-2px); /* Slightly lift the button */
 }
 
 /* Button focus effect */
 button:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(255, 143, 255, 0.5); /* Focus outline */
-}
-
-/* Image styling */
-img {
-    width: 30%;
-    height: auto;
-    margin-top: 20px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 143, 255, 0.5); /* Focus outline */
 }
 
 /* Responsive Design */
+
 @media (max-width: 768px) {
-    button {
-        padding-left: 42px;
-        font-size: 1em;
+  button {
+    padding-left: 42px;
+    font-size: 1em;
+    chat-container {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
     }
-    img {
-        width: 50%;
+    chat-log {
+      width: 100%;
     }
+  }
+  img {
+    width: 50%;
+  }
 }
 
 @media (max-width: 480px) {
-    button {
-        padding-left: 42px;
-        font-size: 0.9em;
-    }
+  button {
+    padding-left: 42px;
+    font-size: 0.9em;
+  }
 
-    img {
-        width: 60%;
-    }
+  img {
+    width: 60%;
+  }
 }
 
 /* Footer styling */
 .footer {
-    /* stay always at the bottom of the screen */
-    position: absolute;
-    text-align: center;
-    bottom: 0;
-    width: 100%;
+  /* stay always at the bottom of the screen */
+  position: absolute;
+  text-align: center;
+  bottom: 0;
+  width: 100%;
 }
 
-.mp3-hover:hover
-{
-	-webkit-transition: all 200ms ease-in;
-	-webkit-transform: scale(1.1);
-	-ms-transition: all 200ms ease-in;
-	-ms-transform: scale(1.1);   
-	-moz-transition: all 200ms ease-in;
-	-moz-transform: scale(1.1);
-	transition: all 200ms ease-in;
-	transform: scale(1.1);
+.mp3-hover:hover {
+  -webkit-transition: all 200ms ease-in;
+  -webkit-transform: scale(1.1);
+  -ms-transition: all 200ms ease-in;
+  -ms-transform: scale(1.1);
+  -moz-transition: all 200ms ease-in;
+  -moz-transform: scale(1.1);
+  transition: all 200ms ease-in;
+  transform: scale(1.1);
 }
 
-img.mp3-hover:hover{
-	box-shadow: 0px 0px 100px #94a7ba;
-	z-index: 2;
+img.mp3-hover:hover {
+  box-shadow: 0px 0px 100px #94a7ba;
+  z-index: 2;
 }
 
-.mp3-audio{
+#chat-input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 20px;
 }
 
-/* .music-button { */
-/*     position: fixed; */
-/*     bottom: 0; */
-/*     left: 0; */
-/*     border-radius: 20%; */
-/*     max-width: 180px; */
-/* } */
-/**/
+.popover-body {
+  /* position: relative; */
+  /* border: 1px solid #d1d1d1; */
+  /* justify-content: left; */
+  /* text-align: left; */
+  /* font-size: 1rem; */
+  /* width: 50vw; */
+  font-family: "Lucida Sans";
+}
+
+chat-userlist {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+
 .chat-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 #chat-log {
-    flex: 1;
-    margin-bottom: 15px;
-    overflow-y: auto;
+  flex: 1;
+  margin-bottom: 15px;
+  overflow-y: auto;
 }
 
 #chat-message-input {
-    width: 100%;
+  width: 100%;
 }
 
 #room-name {
-    margin-top: 15px;
+  margin-top: 15px;
 }
 
 /* Define the fade-in animation */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Define the fade-out animation */
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 /* Apply the animation to .fade-enter */
@@ -330,4 +409,60 @@ img.mp3-hover:hover{
 .fade-exit {
   opacity: 1;
   animation: fadeOut 0.3s forwards;
+}
+
+.navbar.navbar-default {
+  background-color: #ffffff;
+  border-color: #ffffff;
+}
+
+.navbar-nav .dropdown-menu.show {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  color: red;
+}
+
+.navbar-nav .dropdown-menu {
+  display: none;
+  opacity: 0;
+  transition:
+    opacity 0.8s ease,
+    visibility 0.8s ease,
+    scale 1.5s ease;
+}
+
+.navbar-nav .dropdown:hover .dropdown-menu {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.5s ease,
+    visibility 0.5s ease,
+    scale 0.5s ease;
+}
+
+.form-control {
+  max-width: 100%;
+}
+
+.form {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+
+.form-control-file {
+  border-radius: 0.375rem; /* Rounded corners */
+  box-shadow: none; /* Remove default box-shadow */
+}
+
+.form-check-input {
+  margin-right: 0.5rem; /* Space between checkbox and label */
+}
+
+.form-check-label {
+  margin-bottom: 0; /* Remove margin from label */
 }

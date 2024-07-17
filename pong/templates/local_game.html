@@ -1,34 +1,37 @@
 {% load static %}
-<div class="row justify-content-center">
-
-<p3> Play on the same computer with others </p>
-
- <div class="row align-items-start">
-    <div class="col">
-        <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand ms-auto" style="height: 42px;">
+<div class="row justify-content-center mb-3">
+    <div class="col-12 text-center">
+        <h3> Play on the same computer with others </h3>
     </div>
+<div class="row align-items-start justify-content-center">
 
-    <div class="col">
-         <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand ms-auto" style="height: 42px; witdh: 100%">
+    <!-- Center-aligned Images -->
+    <div class="row justify-content-center mb-4">
+      <div class="col-auto text-center">
+        <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" style="height: 42px;">
+      </div>
+      <div class="col-auto text-center">
+        <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" style="height: 42px;">
+      </div>
     </div>
-    <div class="container">
-        <br>
     </div>
-      <div class="row justify-content-center separator">
+        <div class="container row"><p class="mb-3 text-center separator">
+            Arcade:</p>
+      <div class="row justify-content-center ">
             <div class="col-md-4 col-8 text-center">
-                <button id="StartLocalGameButton" type="button" class="btn btn-outline-dark w-100" onclick="startPongGame()">Pong Classic</button>
+                <button id="StartLocalGameButton" type="button" class="btn btn-outline-dark w-100 mb-3" onclick="startPongGame()">Pong Classic</button>
             </div>
         </div>
         <br>
         <div class="row justify-content-center separator">
             <div class="col-md-4 col-8 text-center">
-                <button id="StartLocal3DGameButton" type="button" class="btn btn-outline-dark w-100" onclick="startPong3DGame()">Pong 3D</button>
+                <button id="StartLocal3DGameButton" type="button" class="btn btn-outline-dark w-100 mb-3" onclick="startPong3DGame()">Pong 3D</button>
             </div>
         </div>
         <div class="row justify-content-center separator">
             <div class="col-md-4 col-8 text-center">
-                <button id="StartLocal4PGameButton" type="button" class="btn btn-outline-dark w-100" onclick="startPong4PGame()">Pong 4P</button>
+                <button id="StartLocal4PGameButton" type="button" class="btn btn-outline-dark w-100 mb-3" onclick="startPong4PGame()">Pong 4P</button>
             </div>
         </div>
+    </div>
 </div>
-    <!-- TODO TAKE BUTTON AND REDIRECT TO GAME , CHANGE ALSO main.js -->

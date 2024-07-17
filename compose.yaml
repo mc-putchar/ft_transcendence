@@ -1,0 +1,75 @@
+#version: '42'
+
+name: ft_transcendence
+
+networks:
+  transcendeNet:
+    driver: bridge
+
+services:
+  server:
+    image: caddy:2.8.4-alpine
+    environment:
+      ACME_AGREE: "true"
+    volumes:
+    - "${PWD}/server/Caddyfile:/etc/caddy/Caddyfile:ro"
+    - "${PWD}/pong/static:/usr/share/caddy/static:ro"
+    - "${PWD}/pong/media:/usr/share/caddy/media:rw"
+    ports:
+      - "8080:80"
+      - "4243:443"
+    networks:
+      - transcendeNet
+    depends_on:
+      django:
+        condition: service_started
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16.3-alpine3.20
+    environment:
+      POSTGRES_DB: "$POSTGRES_DB"
+      POSTGRES_USER: "$POSTGRES_USER"
+      POSTGRES_PASSWORD: "$POSTGRES_PASSWORD"
+    volumes:
+      - "${PWD}/postgres_data:/var/lib/postgresql/data:rw"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.2.5-alpine
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+  django:
+    build:
+      context: "${PWD}/pong"
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - "${PWD}/pong:/code:ro"
+    env_file:
+      - "${PWD}/.env"
+    environment:
+      POSTGRES_DB: "$POSTGRES_DB"
+      POSTGRES_USER: "$POSTGRES_USER"
+      POSTGRES_PASSWORD: "$POSTGRES_PASSWORD"
+      DJANGO_SECRET_KEY: "$DJANGO_SECRET_KEY"
+    expose:
+      - 8000
+    networks:
+      - transcendeNet
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
