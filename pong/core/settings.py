@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'pong',
     'chat',
     'api',
+	'blockchain',
 ]
 
 MIDDLEWARE = [

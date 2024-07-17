@@ -9,8 +9,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path("chat/", include("chat.urls")),
+    path("web3/", include("blockchain.urls")),
     path('', include('pong.urls')),
-    re_path(r'^(?!admin/).*$', lambda request: redirect("/")) # Catch all other URLs
+    # re_path(r'^(?!admin/).*$', lambda request: redirect("/")) # Catch all other URLs
 ]
 
 if settings.DEBUG:
