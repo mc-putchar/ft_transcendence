@@ -6,12 +6,15 @@ from compile import compileSmartContract
 PATH_ENV = "../.env"
 
 abi, bytecode = compileSmartContract()
+
 # Load environment variables from .env file
 if not load_dotenv(PATH_ENV):
      raise ValueError("No .env file found")
 infura_url = os.getenv('INFURA_TESTNET')
 if infura_url is None:
 	raise ValueError("INFURA_TESTNET environment variable not set")
+
+# Connect to the Ethereum network
 web3 = Web3(HTTPProvider(infura_url))
 if not web3.is_connected():
 	raise ValueError("Web3 connection failed")
