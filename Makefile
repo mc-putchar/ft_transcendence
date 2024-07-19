@@ -32,6 +32,6 @@ clean:
 	$(MAKE) migrate
 
 collect:
-	$(DC) run web python manage.py collectstatic --noinput --clear
+	$(DC) run django python manage.py collectstatic --noinput --clear
 
 
