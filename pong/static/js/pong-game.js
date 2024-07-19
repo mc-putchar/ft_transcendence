@@ -97,7 +97,7 @@ class Ball {
 };
 
 class Game {
-	constructor(parentElement) {
+	constructor(parentElement, scoreLimit) {
 		this.parent = parentElement;
 		this.canvas = document.createElement("canvas");
 		this.parent.appendChild(this.canvas);
@@ -109,6 +109,8 @@ class Game {
 		this.player2 = new Player("right", this.canvas.height, this.canvas.width);
 		this.ball = new Ball(this.canvas.height, this.canvas.width);
 		this.running = false;
+		this.scoreLimit = scoreLimit;
+		this.gameover = false;
 		this.last_scored = 0;
 		this.animRequestId = 0;
 		this.lastUpdate = Date.now();
@@ -158,13 +160,19 @@ class Game {
 	}
 	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
-		let now = Date.now();
-		let elapsed = now - this.lastUpdate;
-		if (elapsed > this.fpsInterval) {
-			this.lastUpdate = now;
-			this.update();
+		if (!this.gameover) {
+			if (this.player1.score === this.scoreLimit
+			|| this.player2.score === this.scoreLimit) {
+				this.endGame();
+			}
+			let now = Date.now();
+			let elapsed = now - this.lastUpdate;
+			if (elapsed > this.fpsInterval) {
+				this.lastUpdate = now;
+				this.update();
+			}
+			this.draw();
 		}
-		this.draw();
 	}
 	update() {
 		if (!this.running)	return;
@@ -267,6 +275,19 @@ class Game {
 			this.context.fillRect(this.ball.x - (this.ball.width / 2), y, this.ball.width, 1);
 		}
 	}
+	endGame() {
+		document.removeEventListener("keydown", ev => this.keydown(ev));
+		document.removeEventListener("keyup", ev => this.keyup(ev));
+		this.gameover = true;
+		this.context.font = "48px serif";
+		if (this.player1.score > this.player2.score) {
+			this.context.fillText("Player 1 WINS", 10, 50);
+			console.log("P1 wins");
+		} else {
+			this.context.fillText("Player 2 WINS", 10, 50);
+			console.log("P2 wins");
+		}
+	}
 };
 
 export function startPongGame() {
@@ -280,7 +301,7 @@ export function startPongGame() {
 		parent.removeChild(parent.lastChild);
 	}
 
-	const pong = new Game(parent);
-	pong.draw();
+	const pong = new Game(parent, 1);
+	pong.loop();
 }
 window.startPongGame = startPongGame;

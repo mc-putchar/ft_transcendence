@@ -30,6 +30,7 @@ const CAM_START_X = -150;
 const CAM_START_Y = 200;
 
 const SCORE_FONT = "static/fonts/helvetiker_regular.typeface.json";
+const WIN_FONT = "static/fonts/optimer_regular.typeface.json";
 const BALL_TEX_IMG = "static/img/green-texture.avif"
 const WALL_TEX_IMG = "static/img/matrix-purple.jpg"
 const AVATAR1_IMG = "static/img/avatar.jpg"
@@ -137,7 +138,7 @@ class Player {
 };
 
 class Game {
-	constructor(parentElement) {
+	constructor(parentElement, scoreLimit) {
 		this.parent = parentElement;
 		this.canvas = document.createElement('canvas');
 		this.parent.appendChild(this.canvas);
@@ -183,6 +184,8 @@ class Game {
 		this.last_scored = 0;
 		this.lastUpdate = Date.now();
 		this.fpsInterval = 1000 / TARGET_FPS;
+		this.scoreLimit = scoreLimit;
+		this.gameover = false;
 
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
@@ -197,6 +200,7 @@ class Game {
 		this.renderer.setSize(this.parent.clientWidth, this.parent.clientHeight);
 	}
 	keydown(key) {
+		if (this.gameover)	return;
 		if (this.running === false) {
 			this.running = true;
 			if (this.last_scored === 1)
@@ -224,19 +228,39 @@ class Game {
 		}
 	}
 	keyup(key) {
+		if (this.gameover)	return;
 		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
 			this.playerOne.direction = 0;
 		} else if (key.code == "KeyW" || key.code == "KeyS") {
 			this.playerTwo.direction = 0;
 		}
 	}
+	endGame() {
+		document.removeEventListener("keydown", ev => this.keydown(ev));
+		document.removeEventListener("keyup", ev => this.keyup(ev));
+		if (this.playerOne.score > this.playerTwo.score) {
+			this.showText("P1 WINS");
+		} else {
+			this.showText("P2 WINS");
+		}
+		this.gameover = true;
+		this.scene.remove(this.ball);
+		this.cam_controls.autoRotate = true;
+	}
 	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
-		let now = Date.now();
-		let elapsed = now - this.lastUpdate;
-		if (elapsed > this.fpsInterval) {
-			this.lastUpdate = now;
-			this.update();
+		if (!this.gameover) {
+			if (this.playerOne.score === this.scoreLimit
+			|| this.playerTwo.score === this.scoreLimit) {
+				this.endGame();
+			} else {
+				let now = Date.now();
+				let elapsed = now - this.lastUpdate;
+				if (elapsed > this.fpsInterval) {
+					this.lastUpdate = now;
+					this.update();
+				}
+			}
 		}
 		this.draw();
 	}
@@ -292,7 +316,8 @@ class Game {
 					this.playerOne.score + ' : ' + this.playerTwo.score, {
 					font: font,
 					size: 80,
-					depth: 10,
+					height: 10,
+					depth: 5,
 					curveSegments: 12,
 					bevelEnabled: true,
 					bevelThickness: 10,
@@ -321,6 +346,41 @@ class Game {
 			this.scene.add(this.score);
 		} );
 	}
+	showText(text) {
+		this.scene.remove(this.score);
+		this.loader.load(WIN_FONT, font => {
+			const textGeo = new TextGeometry(
+					text, {
+					font: font,
+					size: 42,
+					height: 10,
+					depth: 2,
+					curveSegments: 8,
+					bevelEnabled: true,
+					bevelThickness: 1,
+					bevelSize: 1,
+					bevelOffset: 1,
+					bevelSegments: 1
+				}
+			);
+			textGeo.computeBoundingBox();
+			const centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
+			const score_mat = new THREE.MeshBasicMaterial(
+				{
+					color: 0x2bee2b,
+					opacity: 0.85,
+					side: THREE.FrontSide
+				} );
+			this.score = new THREE.Mesh(textGeo, score_mat);
+			this.score.position.x = ARENA_HEIGHT / 2;
+			this.score.position.y = SCORE_HEIGHT;
+			this.score.position.z = centerOffset;
+			this.score.rotation.y = -Math.PI / 2;
+			this.score.castShadow = true;
+			this.score.receiveShadow = true;
+			this.scene.add(this.score);
+		} );
+	}
 }
 
 export function startPong3DGame() {
@@ -333,7 +393,7 @@ export function startPong3DGame() {
 	while (parent.firstChild) {
 		parent.removeChild(parent.lastChild);
 	}
-	const pong = new Game(parent);
+	const pong = new Game(parent, 11);
 	pong.loop();
 }
 window.startPong3DGame = startPong3DGame;

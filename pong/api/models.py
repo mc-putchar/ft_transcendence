@@ -42,8 +42,6 @@ class Friend(models.Model):
 
 
 class Match(models.Model):
-    player1 = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    player2 = models.ForeignKey(Profile, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -64,7 +62,7 @@ class PlayerMatch(models.Model):
 
 
 class Tournament(models.Model):
-    players = models.ManyToManyField(Profile, related_name='players', on_delete=models.CASCADE)
-    matches = models.ManyToManyField(Match, related_name='matches', on_delete=models.CASCADE)
+    players = models.ManyToManyField(Profile, related_name='players')
+    matches = models.ManyToManyField(Match, related_name='matches')
 
 # class Message

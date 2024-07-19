@@ -22,7 +22,7 @@ re:
 	$(DC) -f $(SRC) --build --force-recreate
 
 migrate:
-	$(DC) -f $(SRC) run django python manage.py makemigrations pong chat
+	$(DC) -f $(SRC) run django python manage.py makemigrations pong chat api
 	$(DC) -f $(SRC) run django python manage.py migrate
 
 collect:
@@ -33,3 +33,4 @@ clean:
 	$(DC) -f $(SRC) exec db dropdb -U $(DB_USER) db_transcendence
 	$(DC) -f $(SRC) exec db createdb -U $(DB_USER) db_transcendence
 	$(DC) -f $(SRC) down
+	$(MAKE) migrate
