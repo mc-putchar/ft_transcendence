@@ -1,5 +1,5 @@
 NAME := ft_transcendence
-
+DB_USER := ft_user
 # detect debian system (cloud)
 ifeq ($(shell uname -a | grep -c Debian), 1)
 	DC := docker-compose
@@ -9,23 +9,27 @@ else
 	SRC := compose.yaml
 endif
 
+.PHONY: up down start stop re migrate collect clean
 
-.PHONY: up down start stop re migrate collect
 up:
 	$(DC) -f $(SRC) up --build
-down:
-	$(DC) -f $(SRC) down
-start:
-	$(DC) -f $(SRC) start
-stop:
-	$(DC) -f $(SRC) stop
+
+down start stop:
+	$(DC) -f $(SRC) $(MAKECMDGOALS)
 
 re:
 	$(DC) -f $(SRC) --build --force-recreate
 
 migrate:
-	$(DC) run web python manage.py makemigrations pong chat
-	$(DC) run web python manage.py migrate
+	$(DC) -f $(SRC) run django python manage.py makemigrations pong chat api
+	$(DC) -f $(SRC) run django python manage.py migrate
+
+clean:
+	$(DC) -f $(SRC) up --build -d
+	$(DC) -f $(SRC) exec db dropdb -U $(DB_USER) db_transcendence
+	$(DC) -f $(SRC) exec db createdb -U $(DB_USER) db_transcendence
+	$(DC) -f $(SRC) down
+	$(MAKE) migrate
 
 collect:
 	$(DC) run web python manage.py collectstatic --noinput --clear
