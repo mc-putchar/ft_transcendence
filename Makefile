@@ -1,4 +1,5 @@
 NAME := ft_transcendence
+DB_USER := ft_user
 
 # detect debian system (cloud)
 ifeq ($(shell uname -a | grep -c Debian), 1)
@@ -28,5 +29,7 @@ collect:
 	$(DC) -f $(SRC) run django python manage.py collectstatic --noinput --clear
 
 clean:
-	$(DC) -f $(SRC) run django python manage.py flush --noinput
-	$(DC) -f $(SRC) exec db psql -U postgres -c "DROP DATABASE db_transcendence"
+	$(DC) -f $(SRC) up --build -d
+	$(DC) -f $(SRC) exec db dropdb -U $(DB_USER) db_transcendence
+	$(DC) -f $(SRC) exec db createdb -U $(DB_USER) db_transcendence
+	$(DC) -f $(SRC) down
