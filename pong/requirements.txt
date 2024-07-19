@@ -18,3 +18,4 @@ channels_redis
 django-cors-headers
 pillow
 web3
+python-dotenv
