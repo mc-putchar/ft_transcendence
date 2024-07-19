@@ -5,14 +5,16 @@
 {% load static %}
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0 , user-scalable=no">
-    <title>Transcendence</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0 , user-scalable=no">
+        <title>Transcendence</title>
 
+    <!-- Favicon -->
     <link rel="icon" href="{% static 'assets/favicon.ico' %}" type="image/x-icon">
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-
+    
+    <!-- Our Global CSS modifications -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 
     <!-- ThreeJS -->
@@ -45,14 +47,6 @@
                         <li><a class="dropdown-item" href="/online" data-link>Online Game</a></li>
                     </ul>
                 </li>
-                        <a class="nav-link dropdown-toggle" href="#" id="callsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Play
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="callsDropdown">
-                            <li><a class="dropdown-item" href="/local" data-link>Local Game</a></li>
-                            <li><a class="dropdown-item" href="/online" data-link>Online Game</a></li>
-                        </ul>
-                    </li>
 
                     <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -79,26 +73,24 @@
                             <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item"  href="/register" class="btn btn-outline-dark" data-link>Register</a></li>
                         {% endif %}
-                        </li>
-                      </ul>
+                    </ul>
                         <li class="nav-item">
                            <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#musicModal" style="border-radius: 20%; max-width:80px">
-                           <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#musicModal" style="border-radius: 20%; max-width:80px">
                                   🎵</button>
-                          <div class="modal fade" id="musicModal" tabindex="-1" aria-labelledby="musicModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                              <div class="modal-content">
-                                <h5 class="justify-content-center" id="musicModalLabel">Music Controls</h5>
-                                <div class="modal-body">
-                                  <audio controls>
-                                    <source src="{% static 'assets/music.mp3' %}" type="audio/mpeg">
-                                    Your browser does not support the audio element.
-                                  </audio>
-                                </div>
-                              </div>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                          </div>
+                                  <div class="modal fade" id="musicModal" tabindex="-1" aria-labelledby="musicModalLabel" aria-hidden="true">
+                                      <div class="modal-dialog">
+                                          <div class="modal-content">
+                                                  <h5 class="justify-content-center" id="musicModalLabel">Music Controls</h5>
+                                              <div class="modal-body">
+                                                  <audio controls>
+                                                      <source src="{% static 'assets/music.mp3' %}" type="audio/mpeg">
+                                                      Your browser does not support the audio element.
+                                                  </audio>
+                                              </div>
+                                          </div>
+                          
+                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                               </div>
                         </li>
                 </div>
             </div>
@@ -120,3 +112,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>
+
