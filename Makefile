@@ -18,7 +18,7 @@ down start stop:
 	$(DC) -f $(SRC) $(MAKECMDGOALS)
 
 re:
-	$(DC) -f $(SRC) --build --force-recreate
+	$(DC) -f $(SRC) up --build --force-recreate
 
 migrate:
 	$(DC) -f $(SRC) run django python manage.py makemigrations pong chat api

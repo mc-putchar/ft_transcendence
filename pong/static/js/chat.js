@@ -34,13 +34,13 @@ export function initWS(roomName) {
         data.username + ": " + data.message + "\n";
     }
     if (data.users_list) {
-      document.querySelector("#chat-userlist").innerHTML = "";
+      document.getElementById("chat-userlist").innerHTML = "";
 
       for (let user of data.users_list) {
         const user_label = document.createElement("button");
         user_label.textContent = user;
         user_label.className = "btn btn-light";
-        document.querySelector("#chat-userlist").appendChild(user_label);
+        document.getElementById("chat-userlist").appendChild(user_label);
       }
     }
   };
@@ -80,7 +80,7 @@ export function initWS(roomName) {
   window.chatSocket = chatSocket;
 
   // if user clicks on the userlist
-  document.querySelector("#chat-userlist").onclick = function(e) {
+  document.getElementById("chat-userlist").onclick = function(e) {
     const user = e.target.textContent;
 
     fetch("/api/profile/" + user + "/", {

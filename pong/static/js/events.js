@@ -1,4 +1,4 @@
-import { csrfToken } from "./main.js";
+import { csrftoken } from "./main.js";
 
 document.addEventListener('DOMContentLoaded', function() {
   // Function to apply the animations to the modal
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
            method: "POST",
            body: JSON.stringify({ 'friend_id': document.getElementById('friend-id').value }),  // Include friend_id in the body as JSON
            headers: {
-               "X-CSRFToken": csrfToken,
+               "X-CSRFToken": csrftoken,
                "X-Requested-With": "XMLHttpRequest",
                "Content-Type": "application/json"  // Set the Content-Type to application/json
            },
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
           method: "POST",
           body: JSON.stringify({ 'friend_id': document.getElementById('friend-id').value }),  // Include friend_id in the body as JSON
           headers: {
-                  "X-CSRFToken": csrfToken,
+                  "X-CSRFToken": csrftoken,
                   "X-Requested-With": "XMLHttpRequest",
                   "Content-Type": "application/json"  // Set the Content-Type to application/json
           },   

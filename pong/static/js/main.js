@@ -157,7 +157,7 @@ function getCookie(name) {
   return cookieValue;
 }
 
-export const csrftoken = getCookie("csrftoken");
+const csrftoken = getCookie("csrftoken");
 
 function handleChat(roomName) {
   chatEventListeners();
@@ -243,4 +243,4 @@ function chatEventListeners() {
   };
 }
 
-export { router };
+export { csrftoken, router };
