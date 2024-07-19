@@ -20,7 +20,7 @@ services:
       - DOMAIN
       - ACME_AGREE="true"
     volumes:
-    - "${PWD}/pong/static:/usr/share/caddy/static:ro"
+    - "${PWD}/pong/static:/usr/share/caddy/static:rw"
     - "${PWD}/pong/media:/usr/share/caddy/media:rw"
     ports:
       - "8080:80"

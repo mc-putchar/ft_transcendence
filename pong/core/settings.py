@@ -32,7 +32,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://127.0.0.1:4243',
     'https://transcend42.online',
 ]
-
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+]
 # Application definition
 INSTALLED_APPS = [
     'daphne',

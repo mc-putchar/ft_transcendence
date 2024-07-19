@@ -19,14 +19,11 @@ down start stop:
 	$(DC) -f $(SRC) $(MAKECMDGOALS)
 
 re:
-	$(DC) -f $(SRC) --build --force-recreate
+	$(DC) -f $(SRC) up --build --force-recreate
 
 migrate:
 	$(DC) -f $(SRC) run django python manage.py makemigrations pong chat api
 	$(DC) -f $(SRC) run django python manage.py migrate
-
-collect:
-	$(DC) -f $(SRC) run django python manage.py collectstatic --noinput --clear
 
 clean:
 	$(DC) -f $(SRC) up --build -d
@@ -34,3 +31,7 @@ clean:
 	$(DC) -f $(SRC) exec db createdb -U $(DB_USER) db_transcendence
 	$(DC) -f $(SRC) down
 	$(MAKE) migrate
+
+collect:
+	$(DC) -f $(SRC) run django python manage.py collectstatic --noinput --clear
+
