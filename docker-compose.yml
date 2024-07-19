@@ -1,7 +1,5 @@
 #version: '42'
 
-name: ft_transcendence
-
 networks:
   transcendeNet:
     driver: bridge
@@ -10,9 +8,9 @@ services:
   db:
     image: postgres:16.3-alpine3.20
     environment:
-      POSTGRES_DB: "$POSTGRES_DB"
-      POSTGRES_USER: "$POSTGRES_USER"
-      POSTGRES_PASSWORD: "$POSTGRES_PASSWORD"
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
     volumes:
       - "${PWD}/postgres_data:/var/lib/postgresql/data:rw"
     healthcheck:
@@ -36,13 +34,14 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - "${PWD}/pong:/code:ro"
-    env_file:
-      - "${PWD}/.env"
     environment:
-      POSTGRES_DB: "$POSTGRES_DB"
-      POSTGRES_USER: "$POSTGRES_USER"
-      POSTGRES_PASSWORD: "$POSTGRES_PASSWORD"
-      DJANGO_SECRET_KEY: "$DJANGO_SECRET_KEY"
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - DJANGO_SECRET_KEY
+      - CLIENT_ID
+      - CLIENT_SECRET
+      - REDIRECT_URI
     ports:
       - "4222:8000"
     networks:

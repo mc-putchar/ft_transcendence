@@ -9,16 +9,13 @@ else
 	SRC := compose.yaml
 endif
 
+.PHONY: up down start stop re migrate collect clean
 
-.PHONY: up down start stop re migrate collect
 up:
 	$(DC) -f $(SRC) up --build
-down:
-	$(DC) -f $(SRC) down
-start:
-	$(DC) -f $(SRC) start
-stop:
-	$(DC) -f $(SRC) stop
+
+down start stop:
+	$(DC) -f $(SRC) $(MAKECMDGOALS)
 
 re:
 	$(DC) -f $(SRC) --build --force-recreate
@@ -31,5 +28,5 @@ collect:
 	$(DC) -f $(SRC) run django python manage.py collectstatic --noinput --clear
 
 clean:
-	$(DC) -f $(SRC) run web python manage.py flush --noinput
-	$(DC) -f $(SRC) exec db psql -U postgres -c "DROP DATABASE pong"
+	$(DC) -f $(SRC) run django python manage.py flush --noinput
+	$(DC) -f $(SRC) exec db psql -U postgres -c "DROP DATABASE db_transcendence"
