@@ -95,6 +95,21 @@ function router() {
     fetchData("/chat/" + roomName, renderContent, () => {
       // Any additional logic needed after fetching chat data
     });
+  } else if (path.location === "/addFriend"){
+         fetch("/api/friends/add/", {
+           method: "POST",
+           body: JSON.stringify({ 'friend_id': document.getElementById("user-id").innerHTML }),  // Include friend_id in the body as JSON;
+           headers: {
+               "X-CSRFToken": csrftoken,
+               "X-Requested-With": "XMLHttpRequest",
+               "Content-Type": "application/json"  // Set the Content-Type to application/json
+           },
+          console.log("USER ID ",document.getElementById("user-id").innerHTML);
+       })
+       .then((response) => response.json(); console.log("res", response.json()))
+       .catch((error) => {
+           console.error("Error:", error);
+       });
   }
 }
 

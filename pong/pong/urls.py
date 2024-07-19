@@ -22,7 +22,6 @@ urlpatterns = [
     path('profile', views.update_profile, name='profile-update'),
     path('users', views.users, name='user-list'),
     path('users/<str:username>/', views.show_profile, name='profile-detail'),
-    
+
     # re_path(r'^.*$', views.index, name='index'),
 ]
-
