@@ -55,7 +55,7 @@ services:
       context: "${PWD}/pong"
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - "${PWD}/pong:/code:ro"
+      - "${PWD}/pong:/code:rw"
     env_file:
       - "${PWD}/.env"
     environment:

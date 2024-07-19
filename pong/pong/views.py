@@ -102,8 +102,11 @@ def update_profile(request):
         'username': request.user.username,
         'profilepic': request.user.profile.image.url
     }
-    content = render_to_string('update_profile.html', context=context)
-    data = {'title': 'Profile', 'content': content}
+    if request.method == 'POST':
+        data = {'image': request.user.profile.image.url}
+    else:
+        content = render_to_string('update_profile.html', context=context)
+        data = {'title': 'Profile', 'content': content}
     return JsonResponse(data)
 
 
