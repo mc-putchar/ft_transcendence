@@ -14,7 +14,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 
 from api.models import Friend, Profile
-from chat.models import Lobby
 
 from .auth42 import exchange_code_for_token, get_user_data
 from .forms import LoginForm, ProfileUpdateForm, UserUpdateForm
@@ -177,9 +176,6 @@ def logout(request):
         "content": template,
     }
 
-    lobby = Lobby.objects.get(id=1)
-    lobby.remove_user(request.user.username)
-
     request.user.profile.set_online_status(False)
     request.user.profile.save()
 
@@ -201,9 +197,6 @@ def login(request):
                 request.user.profile.save()
 
                 data = {"title": "Login", "content": "Login successful"}
-                lobby, created = Lobby.objects.get_or_create(
-                    id=1, defaults={'num_players': 0, 'userlist': ''})
-                lobby.add_user(user.username)
                 return JsonResponse(data)
             else:
                 data = {"title": "Login",

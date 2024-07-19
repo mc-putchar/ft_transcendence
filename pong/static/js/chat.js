@@ -1,6 +1,5 @@
 import { csrftoken } from "./main.js";
 
-
 const commands = {
   "/pm": "Send a private message to a user",
   "/commands": "List all available commands",
@@ -38,9 +37,6 @@ export function initWS(roomName) {
       document.querySelector("#chat-userlist").innerHTML = "";
 
       for (let user of data.users_list) {
-        // const user_label = document.createElement("p");
-        // user_label.textContent = user;
-        // user_label.className = "user_label";
         const user_label = document.createElement("button");
         user_label.textContent = user;
         user_label.className = "btn btn-light";
