@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Profile, Friend
+from .models import Profile, Friend, Blocked
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,3 +21,10 @@ class FriendSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friend
         fields = ['current_user', 'users']
+
+class BlockedSerializer(serializers.ModelSerializer):
+    users = UserSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Blocked
+        fields = ['annoyed_user', 'users']

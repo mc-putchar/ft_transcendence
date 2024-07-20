@@ -26,11 +26,11 @@ migrate:
 	$(DC) -f $(SRC) run django python manage.py migrate
 
 clean:
-	$(DC) -f $(SRC) up --build -d
+	$(DC) -f $(SRC) down
+	$(DC) -f $(SRC) run -d db
+	sleep 5
 	$(DC) -f $(SRC) exec db dropdb -U $(DB_USER) db_transcendence
 	$(DC) -f $(SRC) exec db createdb -U $(DB_USER) db_transcendence
-	$(DC) -f $(SRC) down
-	$(MAKE) migrate
 
 collect:
 	$(DC) -f $(SRC) run django python manage.py collectstatic --noinput --clear

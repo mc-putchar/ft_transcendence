@@ -41,6 +41,30 @@ class Friend(models.Model):
         return False
 
 
+class Blocked(models.Model):
+    annoyed_user = models.ForeignKey(User, related_name='blocker', on_delete=models.CASCADE)
+    users = models.ManyToManyField(User, related_name='blocked')
+
+    @classmethod
+    def block_user(cls, annoyed_user, new_blocked):
+        blocked, created = cls.objects.get_or_create(
+            annoyed_user=annoyed_user
+        )
+        blocked.users.add(new_blocked)
+
+    @classmethod
+    def unblock_user(cls, annoyed_user, old_blocked):
+        blocked, created = cls.objects.get_or_create(
+            annoyed_user=annoyed_user
+        )
+        blocked.users.remove(old_blocked)
+
+    def is_blocked(annoyed_user, other_user):
+        if other_user in self.users:
+            return True
+        return False
+
+
 class Match(models.Model):
     date = models.DateTimeField(auto_now_add=True)
 
