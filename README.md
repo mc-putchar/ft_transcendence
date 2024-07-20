@@ -1,5 +1,14 @@
 ## _Ft_Transcendence_
 
+
+## _TODO_ : _Carlo_
+  - [ ] make mention modals behave like notifications over websockets
+  - [ ] Structure a database model for storing chat messages :
+	* main chat 
+	* direct messages between users
+	* ability to block users 
+	* add them as friends
+
 ### _Basics_:
   - Everything must be launched with a single command line to run an autonomous
     container provided by Docker . Example : docker-compose up --build

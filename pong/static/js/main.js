@@ -23,6 +23,8 @@ const viewFunctions = {
   "/chat": renderContent,
   "/profile": renderContent,
   "/users": renderContent,
+  "/addFriend": null,
+  "/deleteFriend": null,
 };
 
 const routes = {
@@ -35,6 +37,8 @@ const routes = {
   "/chat": { title: "Chat", endpoint: "/chat/lobby/" },
   "/users": { title: "Users", endpoint: "/users" },
   "/profile": { title: "Profile", endpoint: "/profile" },
+  "/addFriend": { title: null, endpoint: "/addFriend" },
+  "/deleteFriend": { title: null, endpoint: "/deleteFriend" },
 };
 
 const wsRoutes = ["/chat"];
@@ -57,8 +61,7 @@ function renderContent(data) {
 
 function router() {
   const path = location.pathname;
-
-  // Check if the route is dynamic for user profiles
+  //  the route is dynamic for user profiles
   if (path.startsWith("/users/")) {
     const username = path.split("/")[2];
     if (username) {
@@ -70,7 +73,9 @@ function router() {
       return;
     }
   }
-
+  if (location.pathname.startsWith("/addFriend") || location.pathname.startsWith("/deleteFriend")) {
+    return;
+  }
   // Static routes handling
   let view = routes[path];
   if (view) {
@@ -88,14 +93,14 @@ function router() {
       } else if (path.startsWith("/chat")) {
         const roomName = path.split("/")[2] || "lobby";
         handleChat(roomName);
-      }
+      } 
     });
   } else if (path.startsWith("/chat")) {
     const roomName = path.split("/")[2];
     fetchData("/chat/" + roomName, renderContent, () => {
       // Any additional logic needed after fetching chat data
     });
-  }
+  } 
 }
 
 function fetchData(endpoint, renderFunction, callback) {
@@ -152,7 +157,7 @@ function getCookie(name) {
   return cookieValue;
 }
 
-export const csrftoken = getCookie("csrftoken");
+const csrftoken = getCookie("csrftoken");
 
 function handleChat(roomName) {
   chatEventListeners();
@@ -238,4 +243,4 @@ function chatEventListeners() {
   };
 }
 
-export { router };
+export { csrftoken, router };

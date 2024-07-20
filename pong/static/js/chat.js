@@ -1,6 +1,5 @@
 import { csrftoken } from "./main.js";
 
-
 const commands = {
   "/pm": "Send a private message to a user",
   "/commands": "List all available commands",
@@ -27,26 +26,32 @@ export function initWS(roomName) {
     document.querySelector("#chat-message-input").focus();
   };
 
+
+  // TODO - add a filter for blocked users so we dont get their messages
+  //      - add a way to get private messages with a different color, private messages are messages that start with /pm
   chatSocket.onmessage = function(e) {
+    
     const data = JSON.parse(e.data);
+    
     if (data.message) {
-      if (getMention(data.message)) notifyUser(data.message);
+      if (getMention(data.message)) notifyUser(data.message);  
+
       document.querySelector("#chat-log").value +=
         data.username + ": " + data.message + "\n";
+
     }
+    
     if (data.users_list) {
-      document.querySelector("#chat-userlist").innerHTML = "";
+      document.getElementById("chat-userlist").innerHTML = "";
 
       for (let user of data.users_list) {
-        // const user_label = document.createElement("p");
-        // user_label.textContent = user;
-        // user_label.className = "user_label";
         const user_label = document.createElement("button");
         user_label.textContent = user;
         user_label.className = "btn btn-light";
-        document.querySelector("#chat-userlist").appendChild(user_label);
+        document.getElementById("chat-userlist").appendChild(user_label);
       }
     }
+  
   };
 
   chatSocket.onclose = function(e) {
@@ -84,13 +89,15 @@ export function initWS(roomName) {
   window.chatSocket = chatSocket;
 
   // if user clicks on the userlist
-  document.querySelector("#chat-userlist").onclick = function(e) {
+document.getElementById("chat-userlist").onclick = function(e) {
     const user = e.target.textContent;
 
     fetch("/api/profile/" + user + "/", {
       method: "GET",
       headers: {
         "X-Requested-With": "XMLHttpRequest",
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken,
       },
     })
       .then((response) => {
@@ -106,8 +113,15 @@ export function initWS(roomName) {
           { key: "user.email", label: "Email" },
           { key: "alias", label: "Alias" },
         ];
-        const customContent = `<div="img-container">
-          <img src="${data.image}" alt="Profile Image" class="img-fluid">
+        console.log(data.image);
+        
+        // Ensure the image URL uses HTTPS
+        const imageUrl = data.image.startsWith('http://') 
+          ? data.image.replace('http://', 'https://') 
+          : data.image;
+
+        const customContent = `<div class="img-container">
+          <img src="${imageUrl}" alt="Profile Image" class="rounded-circle account-img">
           </div>
           <div class="bio">
           <button><a href="/users/${user}/" class="btn btn-primary" data-link>View Profile</a></button>
@@ -122,15 +136,11 @@ export function initWS(roomName) {
       });
     document.querySelector("#chat-message-input").value = "@" + user + " ";
     document.querySelector("#chat-message-input").focus();
-  };
+};
 }
-
-
-
 // creates a dinamic modal with data to be displayed
 function createModal(data, modalId, modalLabelId, fields, customContent = "") {
   const modal = document.createElement("div");
-  // <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   modal.tabIndex = "-1";
   modal.role = "dialog";
   modal.ariaHidden = "false";

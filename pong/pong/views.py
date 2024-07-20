@@ -14,7 +14,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 
 from api.models import Friend, Profile
-from chat.models import Lobby
 
 from .auth42 import exchange_code_for_token, get_user_data
 from .forms import LoginForm, ProfileUpdateForm, UserUpdateForm
@@ -49,7 +48,7 @@ def home_data(request):
         user_data = {
             'login': request.user.username,
             'email': str(request.user.username) + "@42.pong",
-            'image': request.user.profile.image,
+            'image': request.user.profile.image.url,
             'alias': request.user.profile.alias,
             'status': status,
             'friends': get_friends(request.user),
@@ -74,7 +73,11 @@ def show_profile(request, username):
 
     logger.critical("Profile: " + str(user))
 
-    context = {'user': user, 'status': status}
+    context = {
+        'user': user,
+        'status': status,
+        'profilepic': user.image.url
+    }
     content = render_to_string('profile.html', context=context)
     data = {'title': 'Profile', 'content': content}
     return JsonResponse(data)
@@ -118,6 +121,27 @@ def users(request):
     return JsonResponse(data)
 
 
+def profile(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(
+            request.POST, request.FILES, instance=request.user.profile)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    content = render_to_string('profile.html', context=context)
+    data = {'title': 'Profile', 'content': content}
+    return JsonResponse(data)
+
+
 def local_game(request):
     data = {"title": 'local', 'content': render_to_string("local_game.html")}
     return JsonResponse(data)
@@ -152,9 +176,6 @@ def logout(request):
         "content": template,
     }
 
-    lobby = Lobby.objects.get(id=1)
-    lobby.remove_user(request.user.username)
-
     request.user.profile.set_online_status(False)
     request.user.profile.save()
 
@@ -176,9 +197,6 @@ def login(request):
                 request.user.profile.save()
 
                 data = {"title": "Login", "content": "Login successful"}
-                lobby, created = Lobby.objects.get_or_create(
-                    id=1, defaults={'num_players': 0, 'userlist': ''})
-                lobby.add_user(user.username)
                 return JsonResponse(data)
             else:
                 data = {"title": "Login",
@@ -234,14 +252,12 @@ def redirect_view(request):
     code = request.GET.get('code')
     state = request.GET.get('state')
     session_state = request.session.get('oauth_state')
-    logger.info(f"Received state: {state}, session state: {session_state}")
 
     if state != session_state:
         return HttpResponse('Invalid state parameter', status=400)
 
     redirect_uri = settings.REDIRECT_URI
     access_token = exchange_code_for_token(code, redirect_uri)
-    logger.info(f"Access token: {access_token}")
 
     if access_token:
         request.session['access_token'] = access_token
@@ -251,7 +267,6 @@ def redirect_view(request):
             username = user_data.get('login')
             email = user_data.get('email')
             image_url = user_data.get('image')
-
             user, created = User.objects.get_or_create(
                 username=username, defaults={'email': email})
 
@@ -264,12 +279,11 @@ def redirect_view(request):
             # takes the intra profile picture and adds it as a Profile user
             if created and image_url:
                 response = requests.get(image_url['versions']['medium'])
-                logger.critical(image_url)
                 if response.status_code == 200:
                     image_path = f'profile_images/{username}.png'
                     with open(f'media/{image_path}', 'wb') as f:
                         f.write(response.content)
-                    profile.image = image_path
+                    profile.image.url = image_path
 
             profile.save()
             django_login(request, user)

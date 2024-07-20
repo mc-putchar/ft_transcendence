@@ -81,10 +81,6 @@ canvas {
   margin-top: 55px;
 }
 
-.user-label:hover {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-  gradient: linear-gradient(90deg, #000000 0%, #000000 100%);
-}
 /* Make the app take the full width and till the bottom of the page */
 .app {
   margin-top: 12vh;
@@ -199,38 +195,6 @@ body {
   flex-direction: column;
   min-height: 100vh;
   min-width: 100vw;
-}
-
-a,
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-button,
-label,
-li,
-title,
-input,
-select,
-textarea,
-img {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f4f8; /* Light background color */
-  color: #222; /* Dark text color */
-  text-align: center;
-  margin: 0;
-  padding: 0;
-  height: 100%;
 }
 
 /* Header styling */

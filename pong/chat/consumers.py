@@ -4,12 +4,11 @@ import json
 from api.models import Profile
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
 
-from .models import Lobby
+import logging
 
-# profile = await sync_to_async(Profile.objects.get)(user=self.scope["user"])
-# await sync_to_async(profile.set_online_status)(False)
-
+logger = logging.getLogger(__name__)
 # abstracted into a function
 class ChatConsumer(AsyncWebsocketConsumer):
     
@@ -21,19 +20,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
         self.username = self.scope["user"].username
-
         # set user online status
         await self.set_online_status(True)
 
         if self.room_name == "lobby":
-            lobby = await sync_to_async(Lobby.objects.get_or_create)(id=1)
-            await sync_to_async(lobby[0].add_user)(self.username)
-
+         
+            user_list = await self.get_online_users()
             await self.channel_layer.group_send(
                 self.room_group_name, {
                     "type": "user_list",
-                    "users_list": lobby[0].get_userlist()})
-
+                    "users_list": user_list
+                })
         # Join room group
         await self.channel_layer.group_add(self.room_group_name,
                                            self.channel_name)
@@ -45,11 +42,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Remove user from the lobby
         if self.room_name == "lobby":
-            lobby = await sync_to_async(Lobby.objects.get)(id=1)
-            await sync_to_async(lobby.remove_user)(self.username)
+            usersList = await self.get_online_users()
             await self.channel_layer.group_send(
                 self.room_group_name, {"type": "user_list",
-                                       "users_list": lobby.get_userlist()})
+                                       "users_list": usersList})
 
         # Leave room group
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
@@ -58,8 +54,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
         username = text_data_json["username"]
-        lobby = await sync_to_async(Lobby.objects.get)(id=1)
-        usersList = lobby.get_userlist()
+        usersList = await self.get_online_users() 
 
         # Send message to room group
         await self.channel_layer.group_send(
@@ -70,9 +65,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         message = event["message"]
         username = event["username"]
-        lobby = await sync_to_async(Lobby.objects.get)(id=1)
-        usersList = lobby.get_userlist()
-
+       
+        usersList = await self.get_online_users()
+        
         await self.send(text_data=json.dumps({
             "message": message,
             "username": username,
@@ -80,12 +75,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     async def user_list(self, event):
-        users_list = event["users_list"]
+       
+        users_list = await self.get_online_users()
 
         await self.send(text_data=json.dumps({
             "users_list": users_list
         }))
-
-
-
-
+  
+    @database_sync_to_async
+    def get_online_users(self):
+        return list(Profile.objects.filter(isOnline=True).values_list("user__username", flat=True))
