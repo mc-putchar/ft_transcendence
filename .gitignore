@@ -10,3 +10,5 @@ pong/testenv
 testenv
 tags
 myenv
+.vscode
+generate.py

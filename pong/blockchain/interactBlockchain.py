@@ -36,12 +36,12 @@ if not web3.is_connected():
 	raise ValueError("Web3 connection failed")
 with open("static/blockchain/build/tournament.json") as f:
 	abi = json.load(f)["contracts"]["tournament.sol"]["PongTournament"]["abi"]
-contractAddress = os.getenv('DEPLOYED_CONTRACT_ADDRESS')
+contractAddress = os.getenv('CONTRACT')
 if contractAddress is None:
-	raise ValueError("DEPLOYED_CONTRACT_ADDRESS environment variable not set")
-senderAddress = os.getenv('ETH_ADDRESS')
+	raise ValueError("CONTRACT environment variable not set")
+senderAddress = os.getenv('ACCOUNT')
 if senderAddress is None:
-	raise ValueError("ETH_ADDRESS environment variable not set")
+	raise ValueError("ACCOUNT environment variable not set")
 contractAddressChecksum = Web3.to_checksum_address(contractAddress)
 senderAddressChecksum = Web3.to_checksum_address(senderAddress)
 privateKey = os.getenv('PRIVATE_KEY')

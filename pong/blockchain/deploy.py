@@ -18,9 +18,9 @@ if infura_url is None:
 web3 = Web3(HTTPProvider(infura_url))
 if not web3.is_connected():
 	raise ValueError("Web3 connection failed")
-eth_address = os.getenv('ETH_ADDRESS')
+eth_address = os.getenv('ACCOUNT')
 if eth_address is None:
-    raise ValueError("ETH_ADDRESS environment variable not set")
+    raise ValueError("ACCOUNT environment variable not set")
 else:
     checksum_address = Web3.to_checksum_address(eth_address)
 
@@ -49,3 +49,5 @@ tx_hash = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
 # Wait for the transaction receipt with a timeout (e.g., 120 seconds)
 receipt = web3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
 address = receipt['contractAddress']
+print(receipt)
+print(f"Contract deployed at address: {address} with abi {abi}")
