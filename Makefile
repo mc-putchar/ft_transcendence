@@ -1,4 +1,6 @@
 NAME := ft_transcendence
+
+APPS := pong chat api game
 DB_USER := ft_user
 
 # detect debian system (cloud)
@@ -22,7 +24,7 @@ re:
 	$(DC) -f $(SRC) up --build --force-recreate
 
 migrate:
-	$(DC) -f $(SRC) run django python manage.py makemigrations pong chat api
+	$(DC) -f $(SRC) run django python manage.py makemigrations $(APPS)
 	$(DC) -f $(SRC) run django python manage.py migrate
 
 clean:
