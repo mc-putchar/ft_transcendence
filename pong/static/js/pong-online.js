@@ -71,11 +71,15 @@ async function startOnlineGame() {
 	}
 	const status = await joinMatch(matchId);
 	console.log(status);
+	setupWebSocket(matchId);
 	return matchId;
 }
 
-async function cancelOnlineGame() {
-	console.error("not implemented");
+async function joinOnlineGame(matchId) {
+	const status = await joinMatch(matchId);
+	console.log(status);
+	setupWebSocket(matchId);
+	return matchId;
 }
 
 async function gameRouter(pathname) {
@@ -85,7 +89,7 @@ async function gameRouter(pathname) {
 		if (matchId === null) {
 			return;
 		}
-		setupWebSocket(matchId);
+		
 	}
 }
 

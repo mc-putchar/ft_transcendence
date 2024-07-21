@@ -40,6 +40,7 @@ html,
 body {
   padding: 0;
   margin: 0;
+  height: 100%;
 }
 
 canvas {
@@ -54,27 +55,6 @@ canvas {
 .helptext {
   font-size: 10;
   font-family: "Lucida Sans";
-}
-
-.userlist {
-  flex-direction: column;
-  border: 1px solid rgba(222, 222, 222, 100);
-  border-radius: 2px;
-  display: block;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  width: 100%;
-}
-
-.user-label {
-  border: 1px solid rgba(222, 222, 222, 0.8);
-  border-radius: 2px;
-  display: block;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  width: 100%;
 }
 
 .separator {
@@ -118,47 +98,9 @@ img {
   border-color: rgb(10, 10, 92);
 }
 
-/* Define the fade-in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Define the fade-out animation */
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Apply the animation to .fade-enter */
-.fade-enter {
-  opacity: 0;
-  animation: fadeIn 0.7s forwards;
-}
-
-/* Apply the animation to .fade-exit */
-.fade-exit {
-  opacity: 1;
-  animation: fadeOut 0.3s forwards;
-}
-
 .modal {
   animation: all fadeIn 0.3s ease;
 
-}
-
-html,
-body {
-  padding: 0;
-  margin: 0;
 }
 
 .userlist {
@@ -336,38 +278,6 @@ chat-userlist {
 
 #room-name {
   margin-top: 15px;
-}
-
-/* Define the fade-in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Define the fade-out animation */
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Apply the animation to .fade-enter */
-.fade-enter {
-  opacity: 0;
-  animation: fadeIn 0.7s forwards;
-}
-
-/* Apply the animation to .fade-exit */
-.fade-exit {
-  opacity: 1;
-  animation: fadeOut 0.3s forwards;
 }
 
 .navbar.navbar-default {

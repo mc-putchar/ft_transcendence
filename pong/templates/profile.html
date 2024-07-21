@@ -22,9 +22,9 @@
                             <li class="list-group-item list-group-item-dark">
                                 <img src="{{ profilepic }}" class="rounded-circle account-img" alt="Profile Picture" style="width: 100px; height: auto;">
                             </li>
-                            <a class="btn btn-dark" href="/addFriend" data-link>Add</a>
+                            <a class="btn btn-success" href="/addFriend" data-link>Add Friend</a>
                             <!-- TODO show one or the other if we are already friends or not -->
-                            <a class="btn btn-dark" href="/deleteFriend" data-link>remove</a>
+                            <a class="btn btn-danger" href="/deleteFriend" data-link>Remove Friend</a>
                             <input type="hidden" id="friend-id" value="{{ user.user.id }}">
                             <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                         </ul>

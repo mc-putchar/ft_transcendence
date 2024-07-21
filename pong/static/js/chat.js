@@ -18,7 +18,7 @@ export function initWS(roomName) {
     wsProtocol + window.location.host + "/ws/chat/" + roomName + "/",
   );
 
-  const username = document.querySelector("#chat-username").textContent;
+  const username = document.querySelector("#chat-username").textContent.trim();
 
   chatSocket.onopen = function(e) {
     document.querySelector("#room-name").textContent = roomName;
@@ -35,10 +35,18 @@ export function initWS(roomName) {
     const data = JSON.parse(e.data);
     
     if (data.message) {
-      if (getMention(data.message)) notifyUser(data.message);
-      if (data.message.startsWith("/duel")) {
-        const challengedUser = data.message.split(' ')[1];
+      if (getMention(data.message)) {
+        if (username !== data.username)
+          notifyUser(data.message);
+      }
+      else if (data.message.startsWith("/duel ")) {
+        const challengedUser = data.message.split(' ')[1].trim();
         console.log("challenged ", challengedUser);
+        document.querySelector("#chat-log").value +=
+        username + " challenged " + challengedUser + " to a Pong duel\n";
+        if (username !== challengedUser) {
+          return;
+        }
         const modalData = {
           "message": `Challenged by ${data.username}`
         };
@@ -50,10 +58,10 @@ export function initWS(roomName) {
         <a href="/game/decline/${data.username}" class="btn btn-danger" data-link>Decline</a>
         </div>`;
         createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom);
+      } else {
+        document.querySelector("#chat-log").value +=
+          data.username + ": " + data.message + "\n";
       }
-      document.querySelector("#chat-log").value +=
-        data.username + ": " + data.message + "\n";
-
     }
     
     if (data.users_list) {
@@ -62,7 +70,7 @@ export function initWS(roomName) {
       for (let user of data.users_list) {
         const user_label = document.createElement("button");
         user_label.textContent = user;
-        user_label.className = "btn btn-light";
+        user_label.className = "btn btn-secondary";
         document.getElementById("chat-userlist").appendChild(user_label);
       }
     }
@@ -244,9 +252,11 @@ function handleCommand(message, username) {
     chatSocket.send(
       JSON.stringify({
         message: message,
-        username: username.trim(),
+        username: username.trim()
       }),
     );
+    document.querySelector("#chat-message-input").value = "";
+    document.querySelector("#chat-message-input").focus();
   }
 }
 

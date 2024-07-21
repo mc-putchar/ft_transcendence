@@ -65,7 +65,7 @@
                                 <li><form id="logoutForm" class="dropdown-item" method="post" action="{% url 'logout' %}">
                                     {% csrf_token %}
                                     {{ form.as_p }}
-                                    <button  class="btn btn-outline-dark" type="submit">Logout</button>
+                                    <button  class="btn btn-outline-danger" type="submit">Logout</button>
                                 </form></li>
                             <li><hr class="dropdown-divider"></li>
                         
