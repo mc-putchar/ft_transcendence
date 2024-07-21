@@ -52,7 +52,7 @@ params = {
 	'gasPrice': web3.to_wei('50', 'gwei')
 }
 
-def test():
+def test_sepolia():
 	print("**********************")
 	print("* Testing blockchain *")
 	print("**********************")
@@ -70,4 +70,5 @@ def test():
 	print("Querying the winner of Match 1")
 	print(getMatchWinner(1))
 
-test()
+test_sepolia()
+

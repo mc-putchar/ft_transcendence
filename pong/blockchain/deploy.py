@@ -30,6 +30,19 @@ def build_transaction(web3, contract, checksum_address, nonce):
 	})
 	return constructor_txn
 
+"""
+On the local testnet the transaction is just a dictionary
+"""
+def build_transaction_local(checksum_address, nonce):
+	constructor_txn = {
+		'from': checksum_address,
+		'nonce': nonce,	
+		'gas': 2000000,
+		'max_fee_per_gas': 2000000000,
+		'max_priority_fee_per_gas': 2000000000
+	}
+	return constructor_txn
+
 def sign_and_send_transaction(web3, constructor_txn, private_key, dry_run):
 	# Sign the transaction locally and send it
 	print("Signing transaction... ", end="")
@@ -62,6 +75,26 @@ def deploy_sepolia_testnet(node, account, private_key, dry_run=True):
 	print("** SUCCESS **\nDeployed at " + address) if address is not None else print("** FAILURE **")
 	print(receipt)
 	print(f"Contract deployed at address: {address} with abi {abi}")
+	return address
+
+def deploy_local_testnet():
+	from web3 import EthereumTesterProvider
+	from eth_tester import EthereumTester
+	web3 = Web3(EthereumTesterProvider())
+	print("Connected to local testnet") if web3.is_connected() else print("Connection failed")
+	t = EthereumTester()
+	accounts = t.get_accounts()
+	account = accounts[0]
+	checksum_address = get_checksum_address(account)
+	nonce = web3.eth.get_transaction_count(checksum_address)
+	contract = web3.eth.contract(
+		abi=abi,
+		bytecode=bytecode)
+	constructor_txn = build_transaction_local(checksum_address, nonce)
+	tx_hash = t.send_transaction(constructor_txn)
+	receipt = t.get_transaction_receipt(tx_hash)
+	print("Contract deployed at address: ", receipt['contract_address'])
+	return receipt['contract_address']
 
 def get_env_variables(*var_names):
 	env_vars = {}
@@ -72,11 +105,9 @@ def get_env_variables(*var_names):
 	return env_vars
 
 abi, bytecode = get_contract_metadata()
-if not load_dotenv(PATH_ENV):
-	raise ValueError("No .env file found")
-env = get_env_variables('INFURA_TESTNET', 'ACCOUNT', 'PRIVATE_KEY')
-# infura_url = os.getenv('INFURA_TESTNET')
-# account = os.getenv('ACCOUNT')
-# private_key = os.getenv('PRIVATE_KEY')
-
-deploy_sepolia_testnet(env['INFURA_TESTNET'], env['ACCOUNT'], env['PRIVATE_KEY'])
+# if not load_dotenv(PATH_ENV):
+# 	raise ValueError("No .env file found")
+# env = get_env_variables('INFURA_TESTNET', 'ACCOUNT', 'PRIVATE_KEY')
+# deploy_sepolia_testnet(env['INFURA_TESTNET'], env['ACCOUNT'], env['PRIVATE_KEY'])
+contract = deploy_local_testnet()
+contract.functions.addPlayer(1, "Foo").call()
