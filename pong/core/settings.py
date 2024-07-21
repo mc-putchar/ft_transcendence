@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'pong',
     'chat',
     'api',
+    'game',
 ]
 
 MIDDLEWARE = [

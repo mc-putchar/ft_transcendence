@@ -2,6 +2,7 @@ import { csrftoken } from "./main.js";
 
 const commands = {
   "/pm": "Send a private message to a user",
+  "/duel": "Challenge a user to a duel",
   "/commands": "List all available commands",
 };
 
@@ -30,6 +31,21 @@ export function initWS(roomName) {
     const data = JSON.parse(e.data);
     if (data.message) {
       if (getMention(data.message)) notifyUser(data.message);
+      if (data.message.startsWith("/duel")) {
+        const challengedUser = data.message.split(' ')[1];
+        console.log("challenged ", challengedUser);
+        const modalData = {
+          "message": `Challenged by ${data.username}`
+        };
+        const fields = [
+          { key: "message", label: "Message" }
+        ];
+        const custom = `<div class="row">
+        <a href="/game/accept/${data.username}" class="btn btn-success" data-link>Accept</a>
+        <a href="/game/decline/${data.username}" class="btn btn-danger" data-link>Decline</a>
+        </div>`;
+        createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom);
+      }
       document.querySelector("#chat-log").value +=
         data.username + ": " + data.message + "\n";
     }
@@ -148,7 +164,7 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "") {
                     <div class="col-12">
                       <h5 class="modal-title" id="${modalLabelId}">${fields[0].key.split(".").reduce((o, i) => o[i], data)}</h5>
                     </div>
-                    <div class="col-12" style="text-align: left; position: absolute; right: 0; top: 0;">
+                    <div class="col-12" style="text-align: right; position: absolute; right: 0.2rem; top: 0.2rem;">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal" id="close${modalId}">X</button>
                     </div>
                 </div>
@@ -210,6 +226,14 @@ function handleCommand(message, username) {
     } else {
       console.error("No recipient specified for /pm command.");
     }
+  } else if (message.startsWith("/duel")) {
+    console.log("command duel");
+    chatSocket.send(
+      JSON.stringify({
+        message: message,
+        username: username.trim(),
+      }),
+    );
   }
 }
 

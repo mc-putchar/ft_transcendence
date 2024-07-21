@@ -7,6 +7,7 @@ import {
 } from "./views/forms.js";
 
 import { initWS } from "./chat.js";
+import { gameRouter } from "./pong-online.js";
 
 // Transition durations in milliseconds
 const fadeOutDuration = 200;
@@ -74,6 +75,10 @@ function router() {
     }
   }
   if (location.pathname.startsWith("/addFriend") || location.pathname.startsWith("/deleteFriend")) {
+    return;
+  }
+  if (location.pathname.startsWith("/game/")) {
+    gameRouter(location.pathname);
     return;
   }
   // Static routes handling

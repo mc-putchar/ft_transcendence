@@ -161,10 +161,10 @@ def online(request):
         data = {"title": "Online", "content": html}
         return JsonResponse(data, safe=False)
 
-    username = request.user.username
+    profile = request.user.profile
 
     html = render_to_string('online_game.html', request=request, context={
-                            "username": username})
+                            "profile": profile})
 
     data = {"title": "Online", "content": html}
     return JsonResponse(data, safe=False)
