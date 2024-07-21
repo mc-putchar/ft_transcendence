@@ -78,8 +78,9 @@ function router() {
     return;
   }
   if (location.pathname.startsWith("/game/")) {
-    gameRouter(location.pathname);
-    return;
+    const gameData = gameRouter(location.pathname);
+    if (gameData === null)
+      return;
   }
   // Static routes handling
   let view = routes[path];

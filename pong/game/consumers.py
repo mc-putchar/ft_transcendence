@@ -2,9 +2,10 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
 class PongGameConsumer(AsyncWebsocketConsumer):
+
     async def connect(self):
-        self.match_id = self.scope['url_route']['kwargs']['match_id']
-        self.match_group_name = f'match_{self.match_id}'
+        self.challenger = self.scope['url_route']['kwargs']['challenger']
+        self.match_group_name = f'match_{self.challenger}'
 
         await self.channel_layer.group_add(
             self.match_group_name,
@@ -12,6 +13,10 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
+        await self.send(text_data=json.dumps({
+                "type": "connection",
+                "message": f'Joined channel: {self.challenger}',
+        }))
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
@@ -21,19 +26,19 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        score = data['score']
+        print(f'Received: {data["message"]}')
 
         await self.channel_layer.group_send(
             self.match_group_name,
             {
-                'type': 'score_update',
-                'score': score
+                'type': "game_message",
+                'message': data['message']
             }
         )
 
-    async def score_update(self, event):
-        score = event['score']
+    async def game_message(self, event):
+        message = event["message"]
 
         await self.send(text_data=json.dumps({
-            'score': score
+            "message": message
         }))

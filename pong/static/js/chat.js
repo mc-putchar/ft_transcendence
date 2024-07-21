@@ -1,4 +1,5 @@
 import { csrftoken } from "./main.js";
+import { startWebSocket } from "./pong-online.js";
 
 const commands = {
   "/pm": "Send a private message to a user",
@@ -41,7 +42,6 @@ export function initWS(roomName) {
       }
       else if (data.message.startsWith("/duel ")) {
         const challengedUser = data.message.split(' ')[1].trim();
-        console.log("challenged ", challengedUser);
         document.querySelector("#chat-log").value +=
         username + " challenged " + challengedUser + " to a Pong duel\n";
         if (username !== challengedUser) {
@@ -249,6 +249,7 @@ function handleCommand(message, username) {
     }
   } else if (message.startsWith("/duel")) {
     console.log("command duel");
+    startWebSocket(username.trim());
     chatSocket.send(
       JSON.stringify({
         message: message,
@@ -257,6 +258,9 @@ function handleCommand(message, username) {
     );
     document.querySelector("#chat-message-input").value = "";
     document.querySelector("#chat-message-input").focus();
+    const gameContainer = document.getElementById("game-container");
+    gameContainer.innerText = "Waiting for player to join...";
+    gameContainer.style = "display: flex";
   }
 }
 
