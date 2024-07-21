@@ -17,5 +17,7 @@ daphne
 channels_redis
 django-cors-headers
 pillow
-"web3[tester]"
+web3[tester]
 python-dotenv
+eth-utils
+py-evm

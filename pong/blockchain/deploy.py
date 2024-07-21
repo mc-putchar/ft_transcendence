@@ -2,6 +2,8 @@ from web3 import Web3, HTTPProvider
 import os
 from dotenv import load_dotenv
 from compile import get_contract_metadata
+from web3 import EthereumTesterProvider
+from eth_tester import PyEVMBackend, EthereumTester
 
 PATH_ENV = "../.env"
 
@@ -73,16 +75,14 @@ def deploy_sepolia_testnet(node, account, private_key, dry_run=True):
 	receipt = web3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
 	address = receipt['contractAddress']
 	print("** SUCCESS **\nDeployed at " + address) if address is not None else print("** FAILURE **")
-	print(receipt)
+	print(receipt, end="\n\n")
 	print(f"Contract deployed at address: {address} with abi {abi}")
 	return address
 
 def deploy_local_testnet():
-	from web3 import EthereumTesterProvider
-	from eth_tester import EthereumTester
 	web3 = Web3(EthereumTesterProvider())
 	print("Connected to local testnet") if web3.is_connected() else print("Connection failed")
-	t = EthereumTester()
+	t = EthereumTester(PyEVMBackend())
 	accounts = t.get_accounts()
 	account = accounts[0]
 	checksum_address = get_checksum_address(account)
@@ -105,9 +105,65 @@ def get_env_variables(*var_names):
 	return env_vars
 
 abi, bytecode = get_contract_metadata()
-# if not load_dotenv(PATH_ENV):
-# 	raise ValueError("No .env file found")
-# env = get_env_variables('INFURA_TESTNET', 'ACCOUNT', 'PRIVATE_KEY')
-# deploy_sepolia_testnet(env['INFURA_TESTNET'], env['ACCOUNT'], env['PRIVATE_KEY'])
-contract = deploy_local_testnet()
-contract.functions.addPlayer(1, "Foo").call()
+address = deploy_local_testnet()
+
+web3 = Web3(EthereumTesterProvider())
+eth_tester = EthereumTester()
+contract = web3.eth.contract(address, abi=abi)
+params = {
+    'from': web3.eth.accounts[0],
+    'gas': 2000000,
+    'gasPrice': web3.to_wei('50', 'gwei')
+}
+
+nonce = web3.eth.get_transaction_count(web3.eth.accounts[0])
+print(f"Initial nonce: {nonce}")
+
+def send_transaction(tx):
+    try:
+        tx_hash = web3.eth.send_transaction(tx)
+        receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
+        print(receipt, end="\n\n")
+        return receipt
+    except Exception as e:
+        print(f"Error sending transaction: {e}")
+        return None
+
+# Add first player
+params['nonce'] = nonce
+tx = contract.functions.addPlayer(1, "Foo").build_transaction(params)
+receipt = send_transaction(tx)
+if receipt:
+    nonce += 1
+
+# Add second player
+params['nonce'] = nonce
+tx = contract.functions.addPlayer(2, "Bar").build_transaction(params)
+receipt = send_transaction(tx)
+if receipt:
+    nonce += 1
+
+# Add match
+params['nonce'] = nonce
+tx = contract.functions.addMatch(1, 1, [1, 2], [6, 8], 2).build_transaction(params)
+receipt = send_transaction(tx)
+if receipt:
+    nonce += 1
+
+# Debugging: Print the state of the contract
+try:
+    player1 = contract.functions.players(1).call()
+    player2 = contract.functions.players(2).call()
+    match = contract.functions.matches(1).call()
+    print(f"Player 1: {player1}")
+    print(f"Player 2: {player2}")
+    print(f"Match: {match}")
+except Exception as e:
+    print(f"Error retrieving contract state: {e}")
+
+# Query the winner of the match
+try:
+    winner = contract.functions.getMatchWinner(1).call()
+    print(f"Match winner: {winner}")
+except Exception as e:
+    print(f"Error calling contract function: {e}")

@@ -11,6 +11,15 @@ configs:
     file: "${PWD}/server/Caddyfile"
 
 services:
+  blockchain:
+    image: trufflesuite/ganache
+    environment:
+      - INFURA_TESTNET
+    networks:
+      - transcendeNet
+    ports:
+      - "8545:8545"
+    restart: unless-stopped
   server:
     image: caddy:2.8.4-alpine
     configs:
