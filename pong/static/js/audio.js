@@ -3,29 +3,32 @@
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
-let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let ctx = new (window.AudioContext || window.webkitAudioContext)();
 
 const initialGain = 0.4;
 
 // ------------------------------------------------------------------------
 // Start (resume) audio context if not started
 function startAudioContext() {
-  if (audioContext.state !== "running") {
-    audioContext.resume();
+  if (ctx.state !== "running") {
+    ctx.resume();
     mod.start();
     modmod.start();
     osc.start();
   }
 }
-
 function playAudioTrack() {
   const audio = new Audio("/static/audio/track.mp3");
+  const trackSource = audioContext.createMediaElementSource(audio);
+  
+  // Connect the track source to the main gain node
+  trackSource.connect(mainGainNode);
+
   audio.play();
   audio.volume = 0.2;
 }
-
 // ---------------------------------------------------------
-let ctx = audioContext;
+
 const osc = ctx.createOscillator();
 const vca = ctx.createGain();
 
@@ -71,11 +74,76 @@ function playTone(freq, modulation, mod_amt) {
   osc.frequency.value = freq;
 
   vca.gain.exponentialRampToValueAtTime(1, ctx.currentTime + attack);
-  vca.gain.exponentialRampToValueAtTime(vca.gain.value , ctx.currentTime + sustain);
+  vca.gain.exponentialRampToValueAtTime(vca.gain.value, ctx.currentTime + sustain);
   vca.gain.exponentialRampToValueAtTime(
     0.00001,
     ctx.currentTime + release + sustain,
   );
 }
+
+// ------------------------------------------------------------------------
+// Frequency Analysis Setup
+const analyser = ctx.createAnalyser();
+analyser.fftSize = 512;
+
+const bufferLength = analyser.frequencyBinCount;
+const dataArray = new Uint8Array(bufferLength);
+
+// Connect the mainGainNode to the analyser
+mainGainNode.connect(analyser);
+// ctx.connect(analyser);
+
+// Smoothing parameters
+const smoothingFactor = 0.8; // Adjust this value to control the smoothing effect
+const smoothedAmplitudes = Array(8).fill(0); // Array to hold smoothed values
+
+// Function to calculate the average amplitude for a given range
+function getAverageAmplitude(start, end) {
+  let sum = 0;
+  for (let i = start; i <= end; i++) {
+    sum += dataArray[i];
+  }
+  return sum / (end - start + 1);
+}
+
+// Function to calculate and print smoothed amplitude for 8 bands
+function printAmplitudeBands() {
+  	const bands = 8;
+  	const bandSize = Math.floor(bufferLength / bands);
+
+  	let bands_frame = "";
+
+	for (let i = 0; i < bands; i++) {
+    const start = i * bandSize;
+    const end = (i + 1) * bandSize - 1;
+    const averageAmplitude = getAverageAmplitude(start, end);
+    // Apply smoothing
+    smoothedAmplitudes[i] = (1 - smoothingFactor) * smoothedAmplitudes[i] + smoothingFactor * averageAmplitude;
+	  bands_frame += `${i + 1}: ${smoothedAmplitudes[i].toFixed(2)} `;    
+  }
+
+  // check if any of the bands are above a certain threshold
+  let threshold = 0.3;
+  let max = Math.max(...smoothedAmplitudes);
+  if (max > threshold) {
+    console.log(bands_frame);
+  } else {
+    // reset to zero
+    bands_frame = "0 ";
+    console.log(bands_frame);
+  }     
+  // console.log(bands_frame);
+}
+
+function draw() {
+  requestAnimationFrame(draw);
+
+  analyser.getByteFrequencyData(dataArray);
+
+  // Print smoothed amplitude for each band
+  printAmplitudeBands();
+}
+
+draw();
 
 export { playAudioTrack, playTone };

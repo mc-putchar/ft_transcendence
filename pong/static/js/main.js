@@ -172,7 +172,10 @@ function handleChat(roomName) {
 
 // test audio on click from in house monophonic FM synthesizer
 document.getElementById("app").addEventListener("click", (event) => {
-  // playTone(222, 0.5, 122);
+    // randomize value from 0.1 to 200
+	let mod = Math.random() * 200 + 0.1;
+	let amount = Math.random() * 200 + 0.1;
+	playTone(112, mod, amount);
 });
 
 // - Handle back and forward browser navigation
