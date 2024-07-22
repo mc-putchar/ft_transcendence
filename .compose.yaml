@@ -1,10 +1,39 @@
 #version: '42'
 
+name: ft_transcendence
+
 networks:
   transcendeNet:
     driver: bridge
 
+configs:
+  caddyfile:
+    file: "${PWD}/server/Caddyfile"
+
 services:
+  server:
+    image: caddy:2.8.4-alpine
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+    environment:
+      - DOMAIN
+      - ACME_AGREE="true"
+    volumes:
+    - "${PWD}/pong/static:/usr/share/caddy/static:rw"
+    - "${PWD}/pong/media:/usr/share/caddy/media:rw"
+    ports:
+      - "8080:80"
+      - "4243:443"
+    networks:
+      - transcendeNet
+    depends_on:
+      django:
+        condition: service_started
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   db:
     image: postgres:16.3-alpine3.20
     environment:
@@ -29,6 +58,7 @@ services:
     restart: unless-stopped
 
   django:
+    image: django
     build:
       context: "${PWD}/pong"
     command: python manage.py runserver 0.0.0.0:8000
@@ -42,8 +72,8 @@ services:
       - CLIENT_ID
       - CLIENT_SECRET
       - REDIRECT_URI
-    ports:
-      - "4222:8000"
+    expose:
+      - 8000
     networks:
       - transcendeNet
     depends_on:
@@ -63,5 +93,3 @@ services:
       - "4444:4444"
       - "5900:5900"  # VNC port
     restart: unless-stopped
-    profiles:
-      - debug
