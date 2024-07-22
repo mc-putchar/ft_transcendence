@@ -69,7 +69,6 @@ canvas {
 
 .user-label:hover {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-    
 }
 
 /* Make the app take the full width and till the bottom of the page */
@@ -79,6 +78,11 @@ canvas {
     flex-direction: column;
     min-height: 100vh;
     min-width: 100vw;
+    height: 50%;
+}
+
+.app_buttons {
+    width: 100%;
     height: 100%;
 }
 
@@ -91,8 +95,8 @@ a, p, h1, h2, h3, h4, h5, h6, Buttons, label, input, select, textarea ,img{
 
 /* 4player */
 .Buttons {
-	border-style: solid;
-	border-color:rgb(10, 10, 92);
+	/* border-style: solid;
+	border-color:rgb(10, 10, 92); */
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Orbitron&display=swap');
@@ -152,16 +156,6 @@ html, body {
     
 }
 
-/* Make the app take the full width and till the bottom of the page */
-.app {
-    margin-top: 12vh;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    min-width: 100vw;
-
-}
-
 a, p, h1, h2, h3, h4, h5, h6, button, label, li, title, input, select, textarea ,img {
     user-select: none;
     -webkit-user-select: none;
@@ -203,7 +197,7 @@ button {
     color: #fff; /* White text */
     border: none;
     border-radius: 8px; /* Rounded corners */
-    /* padding: 10px 20px; /* Padding */ */
+    /* padding: 10px 20px; /* Padding */
     font-size: 1em; /* Larger text */
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.3s ease;

@@ -129,4 +129,3 @@ function playNote() {
 	vca.gain.exponentialRampToValueAtTime(1, ctx.currentTime + attack);
 	vca.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + release + sustain);
 }
-

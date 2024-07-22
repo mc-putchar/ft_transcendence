@@ -27,4 +27,3 @@ class RegisterForm(forms.ModelForm):
                 "Password and Confirm Password do not match")
 
         return cleaned_data
-
