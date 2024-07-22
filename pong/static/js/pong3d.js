@@ -3,13 +3,11 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-// const THREE = await import('three');
-// const { OrbitControls } = await import('three/addons/controls/OrbitControls');
-// const { FontLoader } = await import('three/addons/loaders/FontLoader.js');
-// const { TextGeometry } = await import('three/addons/geometries/TextGeometry.js');
+import { getAmps, playAudioTrack, playTone } from './audio.js';
+
 
 const CANVAS_PADDING = 10;
-const BALL_SIZE = 6;
+const BALL_SIZE = 8;
 const ARENA_WIDTH = 300;
 const ARENA_HEIGHT = 200;
 const SCORE_HEIGHT = 42;
@@ -26,8 +24,8 @@ const DRAW_DISTANCE = 1000;
 const AVATAR_HEIGHT = PADDLE_HEIGHT + 2;
 const WALL_HEIGHT = 20;
 const WALL_THICKNESS = 10;
-const CAM_START_X = -150;
-const CAM_START_Y = 200;
+const CAM_START_X = -160;
+const CAM_START_Y = 130;
 
 const SCORE_FONT = "static/fonts/helvetiker_regular.typeface.json";
 const WIN_FONT = "static/fonts/optimer_regular.typeface.json";
@@ -39,32 +37,63 @@ const FLOOR_TEX_IMG = "static/img/login-install.jpg"
 
 class Arena {
 	constructor() {
-		this.lightbulb = new THREE.PointLight(0xffffff);
-		this.lightbulb.position.set(0, 100, 0);
-		this.lamp = new THREE.PointLightHelper(this.lightbulb);
-		this.ambient_light = new THREE.AmbientLight(0xffffff);
+		this.ambient_light = new THREE.AmbientLight(0x882288);
+
+		this.lightbulb1 = new THREE.SpotLight(0xffaa99, 300);
+		this.lightbulb2 = new THREE.SpotLight(0xaa99ff, 300);
+		this.lightbulb1.position.set(0, 40, -160);
+		this.lightbulb2.position.set(0, 40, 160);
+
+		this.lightbulb1.shadow.camera.near = 1;
+		this.lightbulb1.shadow.camera.far = 80;
+		this.lightbulb1.shadow.focus = 1;
+		this.lightbulb2.shadow.camera.near = 1;
+		this.lightbulb2.shadow.camera.far = 80;
+		this.lightbulb2.shadow.focus = 1;
+
+		this.spotLight = new THREE.SpotLight( 0xffffff, 300 );
+		this.spotLight.position.set( 0, 200, 0 );
+		this.spotLight.angle = Math.PI / 4;
+		this.spotLight.penumbra = 1;
+		this.spotLight.decay = 1;
+		this.spotLight.distance = 0;
+		this.spotLight.castShadow = true;
+		this.spotLight.shadow.camera.near = 1;
+		this.spotLight.shadow.camera.far = 10;
+		this.spotLight.shadow.focus = 1;
+		this.lightHelper = new THREE.SpotLightHelper( this.spotLight );
 
 		this.grid = new THREE.GridHelper(Math.max(ARENA_HEIGHT, ARENA_WIDTH), 40);
 		const plane_geo = new THREE.PlaneGeometry(ARENA_WIDTH, ARENA_HEIGHT);
 		const floor_texture = new THREE.TextureLoader().load(FLOOR_TEX_IMG);
-		const plane_mat = new THREE.MeshBasicMaterial({ map: floor_texture });
+		const plane_mat = new THREE.MeshPhongMaterial({ map: floor_texture });
 		this.plane = new THREE.Mesh(plane_geo, plane_mat);
+		this.plane.receiveShadow = true;
+
 		this.plane.rotateX(-Math.PI / 2);
 		this.plane.rotateZ(-Math.PI / 2);
 		const wall_texture = new THREE.TextureLoader().load(WALL_TEX_IMG);
-		const wall_material = new THREE.MeshBasicMaterial({ map: wall_texture });
-		const wall_geometry = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ARENA_WIDTH, 2, 2, 2);
-		this.topWall = new THREE.Mesh(wall_geometry, wall_material);
-		this.bottomWall = new THREE.Mesh(wall_geometry, wall_material);
+		const wall_material = new THREE.MeshPhongMaterial({ map: wall_texture });
+		const mod_wall_geometry = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ARENA_WIDTH / 8, 2, 2, 2);
+		this.bottomWalls = [];
+		this.topWalls = [];
+		for (let i = 0; i < 8; ++i) {
+			this.bottomWalls.push(new THREE.Mesh(mod_wall_geometry, wall_material));
+			this.topWalls.push(new THREE.Mesh(mod_wall_geometry, wall_material));
+		}
 	}
 	place(scene, topWallPos, bottomWallPos) {
-		this.topWall.position.set(topWallPos - WALL_THICKNESS, 0, 0);
-		this.bottomWall.position.set(bottomWallPos + WALL_THICKNESS, 0, 0);
-		scene.add(this.topWall, this.bottomWall);
-		scene.add(this.ambient_light, this.lightbulb);
-		scene.add(this.lamp);
+		for (let i = 0; i<8; ++i) {
+			this.bottomWalls[i].position.set(bottomWallPos + WALL_THICKNESS, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
+			this.topWalls[7 - i].position.set(topWallPos - WALL_THICKNESS, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
+			scene.add(this.bottomWalls[i], this.topWalls[i]);
+		}
+		scene.add(this.lightbulb1, this.lightbulb2);
+		scene.add( this.spotLight );
+		scene.add(this.ambient_light);
 		scene.add(this.plane);
-		scene.add(this.grid);
+		// scene.add(this.grid);
+		// scene.add( this.lightHelper, this.lightHelper1, this.lightHelper2 );
 	}
 };
 
@@ -106,9 +135,9 @@ class Player {
 
 		this.avatar = new THREE.Mesh(
 			new THREE.BoxGeometry(10, 10, 10),
-			new THREE.MeshBasicMaterial({ map: avatar_tex, })
+			new THREE.MeshLambertMaterial({ map: avatar_tex, })
 			);
-		const wire_material = new THREE.MeshBasicMaterial({ color: 0x42FF42, wireframe: true });
+		const wire_material = new THREE.MeshLambertMaterial({ color: 0x42FF42, wireframe: true });
 		this.avatar_box = new THREE.Mesh(
 			new THREE.BoxGeometry(11, 11, 11),
 			wire_material
@@ -141,12 +170,14 @@ class Game {
 	constructor(parentElement, scoreLimit) {
 		this.parent = parentElement;
 		this.canvas = document.createElement('canvas');
-		this.parent.appendChild(this.canvas);
 		this.canvas.width = this.parent.width;
 		this.canvas.height = this.parent.height;
+		this.parent.appendChild(this.canvas);
 		this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+		this.renderer.shadowMap.enabled = true;
+		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 		this.scene = new THREE.Scene();
 		const FOV = 75;
@@ -162,20 +193,20 @@ class Game {
 		this.loader = new FontLoader();
 
 		const ball_texture = new THREE.TextureLoader().load(BALL_TEX_IMG);
-		const ball_mat = new THREE.MeshBasicMaterial({ map: ball_texture });
-		const icosa_geometry = new THREE.IcosahedronGeometry(BALL_SIZE, 0);
-		this.ball = new Ball(icosa_geometry, ball_mat);
+		const ball_mat = new THREE.MeshPhongMaterial({ map: ball_texture });
+		const ball_geometry = new THREE.SphereGeometry( BALL_SIZE, 32, 16 )
+		this.ball = new Ball(ball_geometry, ball_mat);
 		this.ball.place(this.scene, 0, 0);
 
-		const wire_material = new THREE.MeshBasicMaterial({ color: 0x42FF42, wireframe: true });
+		const wire_material = new THREE.MeshPhongMaterial({ color: 0x42FF42, wireframe: true });
 		const box_geometry = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2);
 		const avatar1_texture = new THREE.TextureLoader().load(AVATAR1_IMG);
 		const avatar2_texture = new THREE.TextureLoader().load(AVATAR2_IMG);
 
 		this.playerOne = new Player(box_geometry, wire_material, avatar1_texture);
 		this.playerTwo = new Player(box_geometry, wire_material, avatar2_texture);
-		this.playerOne.place(this.scene, 0, -ARENA_WIDTH / 2);
-		this.playerTwo.place(this.scene, 0, ARENA_WIDTH / 2);
+		this.playerOne.place(this.scene, 0, -ARENA_WIDTH / 2 + GOAL_LINE);
+		this.playerTwo.place(this.scene, 0, ARENA_WIDTH / 2 - GOAL_LINE);
 
 		this.arena = new Arena();
 		this.arena.place(this.scene, -ARENA_HEIGHT / 2, ARENA_HEIGHT / 2);
@@ -192,6 +223,7 @@ class Game {
 
 		window.addEventListener("resize", ev => this.resize(ev), true);
 		this.showScore();
+		playAudioTrack();
 	}
 	resize(ev) {
 		this.canvas.width = this.parent.clientWidth;
@@ -262,6 +294,17 @@ class Game {
 				}
 			}
 		}
+		this.amps = getAmps();
+		for (let i = 0; i < 8; ++i) {
+			this.arena.topWalls[i].position.y = (50 - this.amps[i + 1])/-5;
+			this.arena.bottomWalls[i].position.y = (50 - this.amps[i + 1])/-5;
+			if (i === 6) {
+				this.arena.lightbulb1.intensity = this.amps[i + 1] * 50;
+				// console.log(this.arena.lightbulb1.intensity);
+			} else if (i === 5) {
+				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
+			}
+		}
 		this.draw();
 	}
 	update() {
@@ -277,13 +320,16 @@ class Game {
 	}
 	checkCollisions() {
 		const [ballX, ballY] = this.ball.position;
-		if (ballX <= -(ARENA_HEIGHT / 2))
-			this.ball.dir.setX(1);
-		else if (ballX >= (ARENA_HEIGHT / 2))
-			this.ball.dir.setX(-1);
+		if (ballX <= -(ARENA_HEIGHT / 2)
+		|| ballX >= (ARENA_HEIGHT / 2)) {
+			playTone(180, 40, 140);
+			this.ball.dir.x *= (-1.1);
+			Math.min(Math.max(this.ball.dir.x, -1), 1);
+		}
 		const [p1x, p1y] = this.playerOne.position;
 		const [p2x, p2y] = this.playerTwo.position;
 		if (ballY < -ARENA_WIDTH / 2 - GOAL_LINE) {
+			playTone(240, 20, 210, 3);
 			this.last_scored = 2;
 			this.running = false;
 			this.ball.reset();
@@ -291,6 +337,7 @@ class Game {
 			this.scene.remove(this.score);
 			this.showScore();
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
+			playTone(240, 20, 210, 3);
 			this.last_scored = 1;
 			this.running = false;
 			this.ball.reset();
@@ -298,14 +345,20 @@ class Game {
 			this.scene.remove(this.score);
 			this.showScore();
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
-			&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
-			&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN))) {
-			this.ball.dir.setZ(-1);
+		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
+		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) {
+			playTone(200, 30, 200, 0.6);
+			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
+			this.ball.dir.setZ(-1 * Math.cos(refAngle));
+			this.ball.dir.setX(Math.sin(refAngle));
 			this.ball.speed += 0.1;
 		} else if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
-			&& (ballY + BALL_SIZE > -(ARENA_WIDTH / 2))
-			&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN))) {
-			this.ball.dir.setZ(1);
+		&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
+		&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
+			playTone(200, 30, 200, 0.6);
+			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
+			this.ball.dir.setZ(1 * Math.cos(refAngle));
+			this.ball.dir.setX(Math.sin(refAngle));
 			this.ball.speed += 0.1;
 		}
 	}
@@ -388,8 +441,8 @@ export function startPong3DGame() {
 	const parent = document.getElementById('app');
 	const nav = document.getElementById('nav');
 
-	parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
-	parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
+	parent.height = window.innerHeight - nav.offsetHeight;
+	parent.width = window.innerWidth - CANVAS_PADDING;
 	while (parent.firstChild) {
 		parent.removeChild(parent.lastChild);
 	}

@@ -7,7 +7,7 @@ import {
 } from "./views/forms.js";
 
 import { initWS } from "./chat.js";
-import { gameRouter } from "./pong-online.js";
+import { gameRouter } from "./game-router.js";
 
 // Transition durations in milliseconds
 const fadeOutDuration = 200;

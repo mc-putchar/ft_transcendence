@@ -47,6 +47,7 @@ canvas {
   margin-bottom: 30px;
   margin-top: auto;
   width: 90%;
+  height: 90%;
   display: flex;
   align-content: center;
   background-color: black;
@@ -72,6 +73,15 @@ canvas {
   width: 100%;
 }
 
+.game-container {
+  margin-top: 12vh;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 100vw;
+  height: 100%;
+  width: 100%;
+}
+
 a,
 p,
 h1,
@@ -90,6 +100,10 @@ img {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+textarea {
+  resize: none;
 }
 
 /* 4player */
@@ -131,13 +145,13 @@ img {
 
 
 /* Make the app take the full width and till the bottom of the page */
-.app {
+/* .app {
   margin-top: 12vh;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-width: 100vw;
-}
+} */
 
 /* Header styling */
 h1 {

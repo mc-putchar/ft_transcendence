@@ -1,11 +1,16 @@
 import { csrftoken } from "./main.js";
-import { startWebSocket } from "./pong-online.js";
+import { startWebSocket } from "./game-router.js";
 
 const commands = {
   "/pm": "Send a private message to a user",
   "/duel": "Challenge a user to a duel",
   "/commands": "List all available commands",
 };
+
+function scrollToBottom() {
+  const chatLog = document.getElementById("chat-log");
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
 
 export function initWS(roomName) {
   const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
@@ -42,11 +47,14 @@ export function initWS(roomName) {
       }
       else if (data.message.startsWith("/duel ")) {
         const challengedUser = data.message.split(' ')[1].trim();
-        document.querySelector("#chat-log").value +=
-        username + " challenged " + challengedUser + " to a Pong duel\n";
         if (username !== challengedUser) {
+          document.querySelector("#chat-log").value +=
+            username + " challenged " + challengedUser + " to a Pong duel\n";
+          scrollToBottom();
           return;
         }
+        document.querySelector("#chat-log").value +=
+          `You're challenged by ${data.username} to a Pong duel\n`;
         const modalData = {
           "message": `Challenged by ${data.username}`
         };
@@ -62,6 +70,7 @@ export function initWS(roomName) {
         document.querySelector("#chat-log").value +=
           data.username + ": " + data.message + "\n";
       }
+      scrollToBottom();
     }
     
     if (data.users_list) {
