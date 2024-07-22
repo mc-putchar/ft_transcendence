@@ -1,6 +1,10 @@
 ## DEBUG
 After the container is up you can trigger the script needed, for now test_selenium.py is the only script available.
 
+Needs user foo and bar to be created in the database.
+with passwd foo bar
+
+```bash
 - we need --profile debug to use selenium from the compose file
 
 ```bash
