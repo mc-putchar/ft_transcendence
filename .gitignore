@@ -8,8 +8,4 @@ pong/media/
 postgres_data/
 migrations
 staticfiles
-.venv
-__pycache__
-.env
-pong/testenv
-testenv
+subject.*
