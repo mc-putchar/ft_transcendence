@@ -168,11 +168,11 @@ class Player {
 
 
 class Game {
-	constructor(rootElement, scoreLimit, player1, player2) {
+	constructor(rootElement, scoreLimit, player1, player2, isChallenger) {
 		this.root = rootElement;
 		this.canvas = document.createElement('canvas');
-		this.canvas.width = this.root.clientWidth;
-		this.canvas.height = this.root.clientHeight;
+		this.canvas.width = window.innerWidth;
+		this.canvas.height = window.innerHeight;
 		this.root.appendChild(this.canvas);
 	
 		this.renderer = new THREE.WebGLRenderer({
@@ -203,6 +203,7 @@ class Game {
 		this.arena = new Arena();
 		this.arena.place(this.scene, -ARENA_HEIGHT / 2, ARENA_HEIGHT / 2);
 
+		this.isChallenger = isChallenger;
 		this.playerOne = player1;
 		this.playerTwo = player2;
 		this.playerOne.place(this.scene, 0, -ARENA_WIDTH / 2 + GOAL_LINE);
@@ -265,9 +266,9 @@ class Game {
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
 		if (this.playerOne.score > this.playerTwo.score) {
-			this.showText("P1 WINS");
+			this.showText(`${this.playerOne.name} WINS`);
 		} else {
-			this.showText("P2 WINS");
+			this.showText(`${this.playerTwo.name} WINS`);
 		}
 		this.gameover = true;
 		this.scene.remove(this.ball);
@@ -297,7 +298,6 @@ class Game {
 			this.arena.bottomWalls[i].position.y = (50 - this.amps[i + 1])/-5;
 			if (i === 6) {
 				this.arena.lightbulb1.intensity = this.amps[i + 1] * 50;
-				// console.log(this.arena.lightbulb1.intensity);
 			} else if (i === 5) {
 				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
 			}
@@ -438,21 +438,23 @@ class Game {
 	}
 }
 
-function startGame(player1, player2) {
-	const root = document.getElementById("game-container");
+function startGame(player1, player2, isChallenger) {
 	const nav = document.getElementById('nav');
+	const root = document.getElementById("game-container");
+	root.style = "display: block";
 	root.height = window.innerHeight - nav.offsetHeight;
 	root.width = window.innerWidth - CANVAS_PADDING;
 	while (root.firstChild) {
 		root.removeChild(root.lastChild);
 	}
+	root.innerText = `${player1.name} vs ${player2.name}\n`;
 
 	let scoreLimit = 11;
-	const pong = new Game(root, scoreLimit, player1, player2);
+	const pong = new Game(root, scoreLimit, player1, player2, isChallenger);
 	pong.loop();
 }
 
-async function initGame(matchId, playerName, opponentName) {
+async function initGame(matchId, playerName, opponentName, isChallenger) {
 	const response = await fetch(`/api/profile/${playerName}/`);
 	if (!response.ok) {
 		console.error("Error retrieving player profile");
@@ -468,11 +470,23 @@ async function initGame(matchId, playerName, opponentName) {
 	const opponentProfile = await reply.json();
 	console.log('opponent:', opponentProfile);
 
-	const playerAvatarTexture = new THREE.TextureLoader().load(playerProfile.image.url);
-	const opponentAvatarTexture = new THREE.TextureLoader().load(opponentProfile.image.url);
+	const texLoader = new THREE.TextureLoader();
+
+	let imgURL = playerProfile.image.replace("http://", "https://");
+	console.log("imgURL:", imgURL);
+	const playerAvatarTexture = texLoader.load(imgURL);
+
+	imgURL = opponentProfile.image.replace("http://", "https://");
+	console.log("opp imgURL:", imgURL);
+	const opponentAvatarTexture = texLoader.load(imgURL);
+
 	const player = new Player(playerProfile.alias, playerAvatarTexture);
 	const opponent = new Player(opponentProfile.alias, opponentAvatarTexture);
-	startGame(player, opponent);
+
+	if (isChallenger)
+		startGame(player, opponent, isChallenger);
+	else
+		startGame(opponent, player, isChallenger);
 }
 
 

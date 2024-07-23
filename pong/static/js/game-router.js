@@ -48,9 +48,10 @@ function startWebSocket(socketId) {
 			gameContainer.innerText = "Challenge accepted! Starting game";
 			const username = document.getElementById("chat-username").innerText.trim();
 			let opponent = socketId;
-			if (username === socketId)
+			const isChallenger = (username === socketId);
+			if (isChallenger)
 				opponent = data.message.split(' ')[2];
-			await initGame(matchId, username, opponent);
+			await initGame(matchId, username, opponent, isChallenger);
 		} else {
 			console.log(data.message);
 		}
