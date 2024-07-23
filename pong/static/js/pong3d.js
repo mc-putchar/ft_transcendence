@@ -169,9 +169,19 @@ class Player {
 class Game {
 	constructor(parentElement, scoreLimit) {
 		this.parent = parentElement;
+
+		window.addEventListener("resize", ev => this.resize(ev), true);
+		window.addEventListener("fullscreenchange", (e) => this.resize(e));
+
+		this.fsButton = document.createElement('div');
+		this.fsButton.id = "fullscreenButton";
+		this.fsButton.innerText = "♐";
+		this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
+		this.parent.appendChild(this.fsButton);
+
 		this.canvas = document.createElement('canvas');
-		this.canvas.width = this.parent.width;
-		this.canvas.height = this.parent.height;
+		this.canvas.width = window.innerWidth;
+		this.canvas.height = window.innerHeight;
 		this.parent.appendChild(this.canvas);
 		this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
 		this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -221,15 +231,29 @@ class Game {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 
-		window.addEventListener("resize", ev => this.resize(ev), true);
 		this.showScore();
 		playAudioTrack();
 	}
+	toggleFullScreen() {
+		if (this.renderer.domElement.requestFullscreen) {
+			this.renderer.domElement.requestFullscreen();
+		} else if (this.renderer.domElement.webkitRequestFullscreen) {
+			/* Safari */
+			this.renderer.domElement.webkitRequestFullscreen();
+		} else if (this.renderer.domElement.msRequestFullscreen) {
+			/* IE11 */
+			this.renderer.domElement.msRequestFullscreen();
+		}
+	}
 	resize(ev) {
-		this.canvas.width = this.parent.clientWidth;
-		this.canvas.height = this.parent.clientHeight;
-		this.renderer.setPixelRatio(window.devicePixelRatio);
-		this.renderer.setSize(this.parent.clientWidth, this.parent.clientHeight);
+		const width = this.canvas.clientWidth;
+		const height = this.canvas.clientHeight;
+		const needResize = this.canvas.width !== width || this.canvas.height !== height;
+		if (needResize) {
+			this.renderer.setSize(width, height, false);
+			this.camera.aspect = width / height;
+			this.camera.updateProjectionMatrix();
+		}
 	}
 	keydown(key) {
 		if (this.gameover)	return;
