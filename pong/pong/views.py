@@ -4,6 +4,7 @@ import random
 import string
 
 import requests
+from api.models import Friend, Profile
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
@@ -12,8 +13,6 @@ from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-
-from api.models import Friend, Profile
 
 from .auth42 import exchange_code_for_token, get_user_data
 from .forms import LoginForm, ProfileUpdateForm, UserUpdateForm
@@ -278,9 +277,8 @@ def redirect_view(request):
 
             if not created:
                 profile.alias = username
-
-            # takes the intra profile picture and adds it as a Profile user
-            if created and image_url:
+                
+            if profile.image.url == 'profile_images/default.png' and image_url:
                 response = requests.get(image_url['versions']['medium'])
                 if response.status_code == 200:
                     image_path = f'profile_images/{username}.png'

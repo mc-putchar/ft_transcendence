@@ -10,7 +10,7 @@ with passwd foo bar
 ```bash
 ❯ docker-compose --profile debug up --build --force-recreate
 
-#command to trigger selenium test
+#command to trigger selenium test exec $containerName .. ..
 docker exec ft_transcendence-django-1 python test_selenium.py
 ```
 
