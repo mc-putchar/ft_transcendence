@@ -13,7 +13,7 @@ else
 endif
 
 
-.PHONY: up down start stop re migrate collect clean
+.PHONY: up down start stop re debug migrate collect clean
 
 up:
 	@echo "Building and starting containers, with $(DC) and $(SRC)"
@@ -24,6 +24,15 @@ down start stop:
 
 re:
 	$(DC) -f $(SRC) up --build --force-recreate
+
+
+debug:
+	# docker-compose -f docker-compose.yml --profile debug up --build
+	$(DC) -f $(SRC) --profile debug up --build
+
+testlogin:
+	# docker exec ft_transcendence-django-1 python test_selenium.py
+	docker exec ft_transcendence-django-1 python test_selenium.py
 
 migrate:
 	$(DC) -f $(SRC) run django python manage.py makemigrations $(APPS)
