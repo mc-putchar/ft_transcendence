@@ -22,7 +22,7 @@
                             <li class="list-group-item">Alias: {{ user_data.alias }}</li>
                             <li class="list-group-item">Status: {{ user_data.status }}</li>
                             <li class="list-group-item">
-                                <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail">
+                                <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail" style="width: 20vw; height: auto;">
                             </li>
                             <p>Friends:</p>
                             {% for friend in user_data.friends %}

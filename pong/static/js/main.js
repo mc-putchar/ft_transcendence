@@ -20,7 +20,7 @@ const viewFunctions = {
   "/login": renderLogin,
   "/online": renderContent,
   "/logout": renderLogout,
-  "/register": renderRegister,
+  "/register": renderContent,
   "/chat": renderContent,
   "/profile": renderContent,
   "/users": renderContent,
@@ -52,12 +52,8 @@ function renderLogout(data) {
   return `<h2>${data.title}</h2><p>${data.content}</p>`;
 }
 
-function renderRegister(data) {
-  return `${data.content}`;
-}
-
 function renderContent(data) {
-  return ` ${data.content}`;
+  return `${data.content}`;
 }
 
 function router() {
@@ -99,14 +95,9 @@ function router() {
       } else if (path.startsWith("/chat")) {
         const roomName = path.split("/")[2] || "lobby";
         handleChat(roomName);
-      } 
+      }
     });
-  } else if (path.startsWith("/chat")) {
-    const roomName = path.split("/")[2];
-    fetchData("/chat/" + roomName, renderContent, () => {
-      // Any additional logic needed after fetching chat data
-    });
-  } 
+  }
 }
 
 function fetchData(endpoint, renderFunction, callback) {
@@ -171,11 +162,11 @@ function handleChat(roomName) {
 }
 
 // test audio on click from in house monophonic FM synthesizer
-document.getElementById("app").addEventListener("click", (event) => {
-    // randomize value from 0.1 to 200
-	let mod = Math.random() * 200 + 0.1;
-	let amount = Math.random() * 200 + 0.1;
-	playTone(112, mod, amount);
+document.getElementById("app").addEventListener("click", () => {
+  // randomize value from 0.1 to 200
+  let mod = Math.random() * 200 + 0.1;
+  let amount = Math.random() * 200 + 0.1;
+  playTone(112, mod, amount);
 });
 
 // - Handle back and forward browser navigation
@@ -205,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function chatEventListeners() {
   document.querySelector("#chat-message-input").focus();
 
-  document.querySelector("#chat-message-input").onkeydown = function(e) {
+  document.querySelector("#chat-message-input").onkeydown = function() {
     const chatInput = document.querySelector("#chat-message-input");
 
     const commands = {

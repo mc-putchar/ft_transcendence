@@ -37,9 +37,9 @@ export function initWS(roomName) {
   // TODO - add a filter for blocked users so we dont get their messages
   //      - add a way to get private messages with a different color, private messages are messages that start with /pm
   chatSocket.onmessage = function(e) {
-    
+
     const data = JSON.parse(e.data);
-    
+
     if (data.message) {
       if (getMention(data.message)) {
         if (username !== data.username)
@@ -72,7 +72,7 @@ export function initWS(roomName) {
       }
       scrollToBottom();
     }
-    
+
     if (data.users_list) {
       document.getElementById("chat-userlist").innerHTML = "";
 
@@ -83,7 +83,7 @@ export function initWS(roomName) {
         document.getElementById("chat-userlist").appendChild(user_label);
       }
     }
-  
+
   };
 
   chatSocket.onclose = function(e) {
@@ -121,7 +121,7 @@ export function initWS(roomName) {
   window.chatSocket = chatSocket;
 
   // if user clicks on the userlist
-document.getElementById("chat-userlist").onclick = function(e) {
+  document.getElementById("chat-userlist").onclick = function(e) {
     const user = e.target.textContent;
 
     fetch("/api/profile/" + user + "/", {
@@ -146,10 +146,10 @@ document.getElementById("chat-userlist").onclick = function(e) {
           { key: "alias", label: "Alias" },
         ];
         console.log(data.image);
-        
+
         // Ensure the image URL uses HTTPS
-        const imageUrl = data.image.startsWith('http://') 
-          ? data.image.replace('http://', 'https://') 
+        const imageUrl = data.image.startsWith('http://')
+          ? data.image.replace('http://', 'https://')
           : data.image;
 
         const customContent = `<div class="img-container">
@@ -168,7 +168,7 @@ document.getElementById("chat-userlist").onclick = function(e) {
       });
     document.querySelector("#chat-message-input").value = "@" + user + " ";
     document.querySelector("#chat-message-input").focus();
-};
+  };
 }
 // creates a dinamic modal with data to be displayed
 function createModal(data, modalId, modalLabelId, fields, customContent = "") {
@@ -223,36 +223,9 @@ function handleCommand(message, username) {
 
     if (user2) {
       let chatUsers = [user1, user2];
-      chatUsers.sort();
-      let chatId = btoa(chatUsers.join(""));
-      chatId = chatId.replace(/=/g, "");
-
-      fetch("/chat/" + chatId + "/", {
-        method: "POST",
-        body: JSON.stringify({
-          message: message,
-          username: username,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrftoken,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Failed to send private message");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          const app = document.getElementById("app");
-          app.innerHTML = data.content;
-          initWS(chatId);
-          console.log("Loaded data.content, from /chat/" + chatId + "/");
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
+      console.log("command /pm between users: ", chatUsers);
+      // TODO HANDLE PM MESSAGES IN MAIN CHAT
+      //
     } else {
       console.error("No recipient specified for /pm command.");
     }
