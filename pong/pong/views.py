@@ -11,7 +11,7 @@ from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout  # Import logout
 from django.contrib.auth.models import User
 from django.core.files.images import ImageFile
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 
@@ -228,7 +228,6 @@ def register(request):
 
         if user is not None:
             django_login(request, user)
-
         return JsonResponse({"title": "Register", "content": "Registration successful"})
     else:
         form_html = render_to_string(
