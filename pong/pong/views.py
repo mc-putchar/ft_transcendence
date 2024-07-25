@@ -274,18 +274,21 @@ def redirect_view(request):
             user, created = User.objects.get_or_create(
                 username=username, defaults={'email': email})
 
-            profile, created = Profile.objects.get_or_create(
-                user=user, defaults={'alias': username, 'image': ImageFile(image_url)})
+            profile, profile_created = Profile.objects.get_or_create(
+                user=user, defaults={'alias': username})
 
-            if not created:
+            if not profile_created:
                 profile.alias = username
- 
-            if image_url:
-                image = requests.get(image_url)
-                profile.image.save(f'{username}.png', image.content, save=True)
-                logger.critical("Image: " + str(profile.image))
 
-
+            # Check if the profile picture is still the default
+            if profile_created or profile.image.name == 'profile_images/default.png':
+                if image_url:
+                    response = requests.get(image_url['versions']['medium'])
+                    if response.status_code == 200:
+                        image_path = f'profile_images/{username}.png'
+                        with open(f'media/{image_path}', 'wb') as f:
+                            f.write(response.content)
+                        profile.image = image_path
 
             profile.save()
             django_login(request, user)

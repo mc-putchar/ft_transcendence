@@ -12,7 +12,6 @@
                             <li class="list-group-item list-group-item-dark"><b>Email:</b> {{ user.user.email }}</li>
                             <li class="list-group-item list-group-item-dark"><b>Alias:</b> {{ user.alias }}</li>
                             <li class="list-group-item list-group-item-dark"><b>Status:</b>
-                            <li id="user-id">{{ user.user.id }} </li>
                                 {% if user.isOnline %}
                                     <span class="text-success">{{ status }}</span>
                                 {% else %}
