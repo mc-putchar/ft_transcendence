@@ -737,14 +737,121 @@ function startPong4PGame() {
 
 	let last_move = 0;
 
-	// boss_AI(ball)
-	// {
-	// 	let now = Date.now();
-	// 	if(last_move - now < 1000)
-	// 		return ;
-		
-	// }
+	let start = {x : 0, y : 0};
+	let end = {x : 0, y : 0};
+	let vector = {x : 0, y : 0};
+	let time = {x : 0, y : 0};
+	let objectives = {left : null, top : null, right : null, bottom : null};
 
+	function find_next_point_of_contact(start, vector, ball) {
+		let contact_width = paddle_left.width + ball.radius;
+
+		if(vector.x < 0)
+			end.x = contact_width;
+		else
+			end.x = canvas.width - contact_width;
+		
+		time.x = Math.abs((end.x - start.x) / vector.x);
+
+		if(vector.y < 0)
+			end.y = contact_width;
+		else
+			end.y = canvas.width - contact_width;
+
+		time.y = Math.abs((end.y - start.y) / vector.y);
+
+		if(time.x < time.y) // will hit left or right wall first
+		{
+			end.y = Math.abs(start.y + vector.y * time.x);
+		}
+		else // will hit top or bottom
+		{
+			end.x = Math.abs(start.x + vector.x * time.y);
+		}
+		console.log("end.x", end.x);
+		console.log("end.y: ", end.y);
+		console.log(end);
+	}
+
+	const randomness_play = canvas.height / 20;
+
+	function boss_AI(ball)
+	{
+		let contact_width = (paddle_left.width + ball.radius);
+		if(left_direction == 1 && paddle_left.pos_y <= objectives.left)
+			left_direction = 0;
+		else if (left_direction == -1 && paddle_left.pos_y >= objectives.left)
+			left_direction = 0;
+
+		let now = Date.now();
+		if(now - last_move < 1000 || left_boss_ai == false)
+			return ;
+
+		last_move = Date.now();
+		console.log("EXECUTING move: ", last_move);
+		start.x = ball.pos_x;
+		start.y = ball.pos_y;
+		vector.x = ball.ball_velocity_x;
+		vector.y = ball.ball_velocity_y;
+
+		let rounds = 0;
+		find_next_point_of_contact(start, vector, ball);
+		while(end.x > contact_width && rounds < 5)
+		{
+			start.x = end.x;
+			start.y = end.y;
+			console.log("CONTACT IN LOOP: ", end);
+			if(end.y <= contact_width || end.y >= canvas.width - contact_width)
+				vector.y = -vector.y;
+			else
+				vector.x = -vector.x;
+			find_next_point_of_contact(start, vector, ball);
+			rounds++;
+		}
+
+		if(rounds == 5)
+			console.log("ROUNDS == 5 WTF?");
+		// if(end.x <= paddle_left.width * 1.2)
+		if(end.x <= contact_width)
+		{
+			// fix objective
+			objectives.left = end.y - (paddle_left.height / 2);
+			objectives.left += - (randomness_play / 2) + (Math.random() * randomness_play);
+			if(paddle_left.pos_y >= objectives.left - paddle_left.height / 6 && paddle_left.pos_y <= objectives.left + paddle_left.height / 6)
+				return ;
+			if(paddle_left.pos_y < objectives.left) //
+				left_direction = -1;
+			else if (paddle_left.pos_y > objectives.left)
+				left_direction = 1;
+			if(left_direction != 0)
+			{
+				console.log("objective left: ", objectives.left);
+				console.log("paddle_left: ", paddle_left.pos_y);
+				debugger;
+			}
+			else
+				console.log("direction = 0");
+		}
+		// console.log("left_dir: ", left_direction);
+		else if(end.x > paddle_left.width)
+		{
+			console.log("no threat found");
+			return ;
+		}
+		// find next point of contact with THE wall
+	}
+
+	function reset_directions()
+	{
+		if(left_boss_ai == true)
+			left_direction = 0;
+		if(top_boss_ai == true)
+			top_direction = 0;
+		if(right_boss_ai == true)
+			right_direction = 0;
+		if(bottom_boss_ai == true)
+			bottom_direction = 0;
+	}
 		async function gameLoop()
 		{
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -782,7 +889,7 @@ function startPong4PGame() {
 					prev_scores.goals[key] = scores.goals[key];
 			}
 			simple_AI(ball);
-			// boss_AI(ball);
+			boss_AI(ball);
 			scores.draw_scores();
 			move_paddle();
 			ball.move_ball();
@@ -801,6 +908,8 @@ function startPong4PGame() {
 				return ; // return required for the above case or game speed is doubled
 			}
 			isGoal = colliding_goal(ball);
+			if(isGoal == true)
+				reset_directions();
 			requestAnimationFrame(gameLoop);
 			return ;
 		}

@@ -1,0 +1,27 @@
+for (final_x == 0)
+
+final_x = start_x + (vector_x * t)
+
+- start_x = (vector_x * t)
+
+- start_x / t = vector_x
+
+- t / start_x = 1 / vector_x
+
+t = - start_x / vector_x
+
+else if (final_x == canvas.width)
+
+final_x = start_x + (vector_x * t)
+
+final_x - start_x = (vector_x * t)
+
+(final_x - start_x) / t = vector_x
+
+t / (final_x - start_x) = 1 / vector_x
+
+t = (final_x - start_x) / vector_x
+
+
+
+pos_y = pos_y + (velocity_y * t)
