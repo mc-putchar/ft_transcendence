@@ -33,6 +33,7 @@ export function initWS(roomName) {
     document.querySelector("#room-name").textContent = roomName;
     document.querySelector("#chat-log").value = "";
     document.querySelector("#chat-message-input").focus();
+    updateFriendsAndBlocked(); 
   };
 
   const chatLog = document.getElementById("chat-log");
@@ -67,7 +68,7 @@ export function initWS(roomName) {
           const message = data.message.split(" ").slice(2).join(" ");
           chatLog.value += data.username + " pm: " + message + "\n";
         }
-      } else if (await canReadMessage(data)) {
+      } else if (canReadMessage(data)) { // Remove 'await' here
         chatLog.value += data.username + ": " + data.message + "\n";
       }
       scrollToBottom();
@@ -83,7 +84,7 @@ export function initWS(roomName) {
         document.getElementById("chat-userlist").appendChild(user_label);
       }
     }
-  };
+  };  
 
   chatSocket.onclose = function (e) {
     if (!e.wasClean) console.error("Chat socket closed unexpectedly", e);
@@ -304,8 +305,7 @@ function createNotification(message) {
   };
 }
 
-// TODO - Update friends and blocked list on certain events
-async function canReadMessage(data) {
+async function updateFriendsAndBlocked() {
   try {
     const [friendsResponse, blockedResponse] = await Promise.all([
       fetch("/api/friends/", {
@@ -336,23 +336,51 @@ async function canReadMessage(data) {
     const friendsData = await friendsResponse.json();
     const blockedData = await blockedResponse.json();
 
-    friends = friendsData.map((friend) => friend.username);
-    blocked = blockedData.blocked;
-
-    if (blocked.length === 0) {
-      console.log("Blocked list is empty");
-      return true;
-    }
-
-    if (friends.includes(data.username)) {
-      return true;
-    } else if (blocked.includes(data.username)) {
-      return false;
-    } else {
-      return true;
-    }
+    sessionStorage.setItem('friends', JSON.stringify(friendsData.map(friend => friend.username)));
+    sessionStorage.setItem('blocked', JSON.stringify(blockedData.map(blocked => blocked.username)));
+  
   } catch (error) {
     console.error("Error:", error);
-    return false;
   }
 }
+
+export function getFriendsAndBlocked() {
+  console.log("Getting friends and blocked from sessionStorage");
+  let friends = [];
+  let blocked = [];
+  
+  try {
+    friends = JSON.parse(sessionStorage.getItem('friends')) || [];
+    console.log("Friends from localStorage:", friends);
+  } catch (error) {
+    console.error("Error parsing friends from localStorage:", error);
+  }
+
+  try {
+    blocked = JSON.parse(sessionStorage.getItem('blocked')) || [];
+    console.log("Blocked from localStorage:", blocked);
+  } catch (error) {
+    blocked = []; 
+  }
+  
+  console.log("Friends {} and Blocked {}", friends, blocked);
+
+  return { friends, blocked };
+}
+
+function canReadMessage(data) {
+  const { friends, blocked } = getFriendsAndBlocked();
+
+  if (blocked.length === 0) {
+    return true;
+  }
+
+  if (friends.includes(data.username)) {
+    return true;
+  } else if (blocked.includes(data.username)) {
+    return false;
+  } else {
+    return true;
+  }
+}
+

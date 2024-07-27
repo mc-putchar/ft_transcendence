@@ -6,7 +6,7 @@ import {
   handleRegisterForm,
 } from "./views/forms.js";
 
-import { initWS } from "./chat.js";
+import { initWS, getFriendsAndBlocked } from "./chat.js";
 import { gameRouter } from "./game-router.js";
 
 // Transition durations in milliseconds
@@ -24,8 +24,9 @@ const viewFunctions = {
   "/chat": renderContent,
   "/profile": renderContent,
   "/users": renderContent,
-  "/addFriend": null,
-  "/deleteFriend": null,
+  "/addFriend": getFriendsAndBlocked,
+  "/deleteFriend": getFriendsAndBlocked,
+  "/block": getFriendsAndBlocked,
 };
 
 const routes = {
@@ -40,6 +41,7 @@ const routes = {
   "/profile": { title: "Profile", endpoint: "/profile" },
   "/addFriend": { title: null, endpoint: "/addFriend" },
   "/deleteFriend": { title: null, endpoint: "/deleteFriend" },
+  "/block": { title: null, endpoint: "/block" },
 };
 
 const wsRoutes = ["/chat"];
@@ -70,7 +72,7 @@ function router() {
       return;
     }
   }
-  if (location.pathname.startsWith("/addFriend") || location.pathname.startsWith("/deleteFriend")) {
+  if (location.pathname.startsWith("/addFriend") || location.pathname.startsWith("/deleteFriend") || location.pathname.startsWith("/block")) {
     return;
   }
   if (location.pathname.startsWith("/game/")) {

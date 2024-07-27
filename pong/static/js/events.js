@@ -75,12 +75,29 @@ document.addEventListener('DOMContentLoaded', function() {
            console.error("Error:", error);
     });
     }
-    if (event.target.matches('[data-link]') && event.target.href.includes('/deleteFriend')){
+    else if (event.target.matches('[data-link]') && event.target.href.includes('/deleteFriend')){
       event.preventDefault();
 
       fetch("/api/friends/remove/", {
           method: "POST",
           body: JSON.stringify({ 'friend_id': document.getElementById('friend-id').value }),  // Include friend_id in the body as JSON
+          headers: {
+                  "X-CSRFToken": csrftoken,
+                  "X-Requested-With": "XMLHttpRequest",
+                  "Content-Type": "application/json"  // Set the Content-Type to application/json
+          },   
+       })
+       .then((response) => response.json())
+       .catch((error) => {
+           console.error("Error:", error);
+        });
+    }
+    else if (event.target.matches('[data-link]') && event.target.href.includes('/block')){
+      event.preventDefault();
+
+      fetch("/api/blocklist/add/", {
+          method: "POST",
+          body: JSON.stringify({ 'blocked_id': document.getElementById('friend-id').value }),  // Include friend_id in the body as JSON
           headers: {
                   "X-CSRFToken": csrftoken,
                   "X-Requested-With": "XMLHttpRequest",

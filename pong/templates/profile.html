@@ -24,6 +24,10 @@
                             <a class="btn btn-success" href="/addFriend" data-link>Add Friend</a>
                             <!-- TODO show one or the other if we are already friends or not -->
                             <a class="btn btn-danger" href="/deleteFriend" data-link>Remove Friend</a>
+                            
+                            <!-- block user -->
+                            <a class="btn btn-danger" href="/block" data-link>Block</a>
+
                             <input type="hidden" id="friend-id" value="{{ user.user.id }}">
                             <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                         </ul>
