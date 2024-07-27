@@ -339,12 +339,16 @@ async function canReadMessage(data) {
     friends = friendsData.map((friend) => friend.username);
     blocked = blockedData.blocked;
 
-    if (friends.includes(data.username)) {
+    if (blocked.length === 0) {
+      console.log("Blocked list is empty");
       return true;
     }
-    // } else if (blocked.includes(data.username)) {
-    //   return false;
-    else {
+
+    if (friends.includes(data.username)) {
+      return true;
+    } else if (blocked.includes(data.username)) {
+      return false;
+    } else {
       return true;
     }
   } catch (error) {
