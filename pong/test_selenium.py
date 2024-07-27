@@ -89,11 +89,10 @@ def send_pm():
     try:
         time.sleep(0.5)
         # get the chat input field
-        message_field = WebDriverWait(driver, 10).until(
+        WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "chat-message-input"))
-        ).send_keys("/pm foo Hello World")
+        ).send_keys("/pm foo Hello Foo")
         
-        # send the message
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "chat-message-submit"))
         ).click()
@@ -118,9 +117,13 @@ if __name__ == "__main__":
     test_login_navigation("foo", "foo")
     driver.switch_to.new_window('window')
     test_login_navigation("bar", "bar")
-    driver.switch_to.new_window('window')
-    test_login_navigation("maria", "jesus")
+    # driver.switch_to.new_window('window')
+    # test_login_navigation("maria", "jesus")
     send_pm()
+
+    # remove the driver but keep the browser open
+    driver.quit()
+    
 
     # duel_user()
     # driver.switch_to.window(driver.window_handles[0])

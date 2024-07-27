@@ -27,12 +27,14 @@ re:
 
 
 debug:
+	@echo 'using $(DC) and $(SRC)'
 	# docker-compose -f docker-compose.yml --profile debug up --build
-	$(DC) -f $(SRC) --profile debug up --build
+	$(DC) -f $(SRC) --profile debug up --build 
 
 testlogin:
 	# docker exec ft_transcendence-django-1 python test_selenium.py
 	docker exec ft_transcendence-django-1 python test_selenium.py
+	@echo "Test done"
 
 migrate:
 	$(DC) -f $(SRC) run django python manage.py makemigrations $(APPS)
