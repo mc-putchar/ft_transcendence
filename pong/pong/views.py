@@ -35,7 +35,8 @@ def get_friends(user):
     friend_instance, created = Friend.objects.get_or_create(current_user=user)
     friends = []
     for friend in friend_instance.users.all():
-        friends += Profile.objects.get_or_create(user=friend)
+        profile, created = Profile.objects.get_or_create(user=friend)
+        friends.append(profile)
     return friends
 
 
