@@ -12,9 +12,11 @@ else
 	SRC := compose.yaml
 endif
 
+
 .PHONY: up down start stop re migrate collect clean
 
 up:
+	@echo "Building and starting containers, with $(DC) and $(SRC)"
 	$(DC) -f $(SRC) up --build
 
 down start stop:
