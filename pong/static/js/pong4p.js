@@ -290,7 +290,7 @@ function startPong4PGame() {
 		this.speed_up = function()
 		{
 			let mulitplier = 0.08;
-			if( Math.abs(this.ball_velocity_x) > (canvas.width / ball_velocity_div * 1.5))
+			if(Math.abs(this.ball_velocity_x) > (canvas.width / ball_velocity_div * 1.5))
 				mulitplier = 0.05;
 
 			if(this.ball_velocity_x > 0)
@@ -750,7 +750,7 @@ function startPong4PGame() {
 			end.x = contact_width;
 		else
 			end.x = canvas.width - contact_width;
-		
+
 		time.x = Math.abs((end.x - start.x) / vector.x);
 
 		if(vector.y < 0)
@@ -852,67 +852,68 @@ function startPong4PGame() {
 		if(bottom_boss_ai == true)
 			bottom_direction = 0;
 	}
-		async function gameLoop()
+
+	async function gameLoop()
+	{
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		for (let key in paddles)
 		{
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			if(key != "directions")
+				paddles[key].draw_paddle();
+		}
+		if(isGoal == true || first == true)
+		{
+			if(first != true)
+			{
+				goal_animation_text(last_touch);
+				prev_scores.draw_scores();
+				await realSleep(300);
+		
+				goal_animation_text(last_touch);
+				scores.draw_big_scores1(prev_scores);
+				await realSleep(500);
+		
+				goal_animation_text(last_touch);
+				scores.draw_big_scores2(prev_scores);
+				await realSleep(500);
+			}
+			ball = new make_ball(null);
 			for (let key in paddles)
 			{
 				if(key != "directions")
-					paddles[key].draw_paddle();
+				paddles[key].init_position(paddles[key].player);
 			}
-			if(isGoal == true || first == true)
-			{
-				if(first != true)
-				{
-					goal_animation_text(last_touch);
-					prev_scores.draw_scores();
-					await realSleep(300);
-			
-					goal_animation_text(last_touch);
-					scores.draw_big_scores1(prev_scores);
-					await realSleep(500);
-			
-					goal_animation_text(last_touch);
-					scores.draw_big_scores2(prev_scores);
-					await realSleep(500);
-				}
-				ball = new make_ball(null);
-				for (let key in paddles)
-				{
-					if(key != "directions")
-					paddles[key].init_position(paddles[key].player);
-				}
-				first = false;
-				isGoal = false;
-				last_touch = "none";
-				for(let key in scores.goals)
-					prev_scores.goals[key] = scores.goals[key];
-			}
-			simple_AI(ball);
-			boss_AI(ball);
-			scores.draw_scores();
-			move_paddle();
-			ball.move_ball();
-			ball.draw_ball();
-			if(colliding_ball_paddle(ball, paddles) != null)
-			{
-				while(stillCollides(ball) != null)
-				{
-					ball.move_ball();
-					ball.draw_ball();
-					ball.reposition_ball_above_paddle(last_touch); // in case the paddle hits the ball right before it hits the wall or else ball lags and sticks to paddle
-				}
-				ball.speed_up();
-				apply_paddle_movement(last_touch);
-				requestAnimationFrame(gameLoop); // handles case where it hits both the goal and the paddle at the same time
-				return ; // return required for the above case or game speed is doubled
-			}
-			isGoal = colliding_goal(ball);
-			if(isGoal == true)
-				reset_directions();
-			requestAnimationFrame(gameLoop);
-			return ;
+			first = false;
+			isGoal = false;
+			last_touch = "none";
+			for(let key in scores.goals)
+				prev_scores.goals[key] = scores.goals[key];
 		}
+		simple_AI(ball);
+		boss_AI(ball);
+		scores.draw_scores();
+		move_paddle();
+		ball.move_ball();
+		ball.draw_ball();
+		if(colliding_ball_paddle(ball, paddles) != null)
+		{
+			while(stillCollides(ball) != null)
+			{
+				ball.move_ball();
+				ball.draw_ball();
+				ball.reposition_ball_above_paddle(last_touch); // in case the paddle hits the ball right before it hits the wall or else ball lags and sticks to paddle
+			}
+			ball.speed_up();
+			apply_paddle_movement(last_touch);
+			requestAnimationFrame(gameLoop); // handles case where it hits both the goal and the paddle at the same time
+			return ; // return required for the above case or game speed is doubled
+		}
+		isGoal = colliding_goal(ball);
+		if(isGoal == true)
+			reset_directions();
+		requestAnimationFrame(gameLoop);
+		return ;
+	}
 
 		// EVENTS
 
