@@ -5,14 +5,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("--incognito")
-chrome_options.add_argument("--window-size=360,900")
-chrome_options.add_argument("--user-agent=Mozilla/5.0 (Linux; Android 4.2.1; en-us; Nexus 5 Build/JOP40D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Mobile Safari/535.19")
-
-driver = webdriver.Remote(
-    command_executor='http://selenium:4444/wd/hub',
-    options=chrome_options )
 
 def test_login_navigation(username="foo", password="foo"):
     try:
@@ -47,7 +39,7 @@ def test_login_navigation(username="foo", password="foo"):
         ).click()
 
 
-        message_field = WebDriverWait(driver, 10).until(
+        WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "chat-message-input"))
         ).send_keys("Hello World")
 
@@ -85,7 +77,6 @@ def accept_duel():
     try:
         time.sleep(0.5)
         WebDriverWait(driver, 10).until(
-            # a modal with a <a> element btn-success class
             EC.presence_of_element_located((By.CSS_SELECTOR, "a.btn-success"))
         ).click()
 
@@ -94,14 +85,47 @@ def accept_duel():
         driver.quit()
         exit()
 
+def send_pm():
+    try:
+        time.sleep(0.5)
+        # get the chat input field
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "chat-message-input"))
+        ).send_keys("/pm foo Hello Foo")
+        
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "chat-message-submit"))
+        ).click()
+
+        time.sleep(1)
+
+    except Exception as e:
+        print(e)
+        driver.quit()
+        exit()
+
 if __name__ == "__main__":
+
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--incognito")
+    chrome_options.add_argument("--window-size=360,900")
+    chrome_options.add_argument("--user-agent=Mozilla/5.0 (Linux; Android 4.2.1; en-us; Nexus 5 Build/JOP40D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Mobile Safari/535.19")
+
+    driver = webdriver.Remote(
+    command_executor='http://selenium:4444/wd/hub',
+    options=chrome_options )
     test_login_navigation("foo", "foo")
     driver.switch_to.new_window('window')
     test_login_navigation("bar", "bar")
+    # driver.switch_to.new_window('window')
+    # test_login_navigation("maria", "jesus")
+    send_pm()
 
-    duel_user()
-    driver.switch_to.window(driver.window_handles[0])
-    accept_duel()
+    # remove the driver but keep the browser open
+    driver.quit()
+    
+
+    # duel_user()
+    # driver.switch_to.window(driver.window_handles[0])
+    # accept_duel()
     # hangs here for manual testing
-
-

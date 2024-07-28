@@ -19,13 +19,15 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'pong.ktano-studio.com',
-    'localhost',
-    '127.0.0.1',
-    '.42berlin.de',
-    'transcend42.online',
-]
+ALLOWED_HOSTS = ["*"]
+
+# ALLOWED_HOSTS = [
+#     'pong.ktano-studio.com',
+#     'localhost',
+#     '127.0.0.1',
+#     '.42berlin.de',
+#     'transcend42.online',
+# ]
 CSRF_TRUSTED_ORIGINS = [
     'https://pong.ktano-studio.com',
     'https://localhost:4243',
@@ -94,10 +96,7 @@ CHANNEL_LAYERS = {
         },
     },
 }
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# Use database-backed sessions
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
@@ -111,10 +110,6 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -141,9 +136,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -156,7 +148,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # LOGOUT REDIRECT
 LOGOUT_REDIRECT_URL = '/'
-LOGIN_REDIRECT_URL = '/'
+
+LOGIN_REDIRECT_URL = ''
 
 
 STATIC_URL = '/static/'

@@ -1,6 +1,9 @@
 import { csrftoken } from "./main.js";
 import { startWebSocket } from "./game-router.js";
 
+let friends = [];
+let blocked = [];
+
 const commands = {
   "/pm": "Send a private message to a user",
   "/duel": "Challenge a user to a duel",
@@ -26,53 +29,51 @@ export function initWS(roomName) {
 
   const username = document.querySelector("#chat-username").textContent.trim();
 
-  chatSocket.onopen = function(e) {
+  chatSocket.onopen = function (e) {
     document.querySelector("#room-name").textContent = roomName;
     document.querySelector("#chat-log").value = "";
-    // focus on the chat input
     document.querySelector("#chat-message-input").focus();
+    updateFriendsAndBlocked(); 
   };
 
+  const chatLog = document.getElementById("chat-log");
 
-  // TODO - add a filter for blocked users so we dont get their messages
-  //      - add a way to get private messages with a different color, private messages are messages that start with /pm
-  chatSocket.onmessage = function(e) {
-    
+  chatSocket.onmessage = async function (e) {
     const data = JSON.parse(e.data);
-    
+
     if (data.message) {
       if (getMention(data.message)) {
-        if (username !== data.username)
-          notifyUser(data.message);
-      }
-      else if (data.message.startsWith("/duel ")) {
-        const challengedUser = data.message.split(' ')[1].trim();
+        if (username !== data.username) notifyUser(data.message);
+      } else if (data.message.startsWith("/duel ")) {
+        const challengedUser = data.message.split(" ")[1].trim();
         if (username !== challengedUser) {
-          document.querySelector("#chat-log").value +=
+          chatLog.value +=
             username + " challenged " + challengedUser + " to a Pong duel\n";
           scrollToBottom();
           return;
         }
-        document.querySelector("#chat-log").value +=
-          `You're challenged by ${data.username} to a Pong duel\n`;
+        chatLog.value += `You're challenged by ${data.username} to a Pong duel\n`;
         const modalData = {
-          "message": `Challenged by ${data.username}`
+          message: `Challenged by ${data.username}`,
         };
-        const fields = [
-          { key: "message", label: "Message" }
-        ];
+        const fields = [{ key: "message", label: "Message" }];
         const custom = `<div class="row">
         <a href="/game/accept/${data.username}" class="btn btn-success" data-link>Accept</a>
         <a href="/game/decline/${data.username}" class="btn btn-danger" data-link>Decline</a>
         </div>`;
         createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom);
-      } else {
-        document.querySelector("#chat-log").value +=
-          data.username + ": " + data.message + "\n";
+      } else if (data.message.startsWith("/pm ")) {
+        const recipient = data.message.split(" ")[1].trim();
+        if (recipient === username || data.username === username) {
+          const message = data.message.split(" ").slice(2).join(" ");
+          chatLog.value += data.username + " pm: " + message + "\n";
+        }
+      } else if (canReadMessage(data)) { // Remove 'await' here
+        chatLog.value += data.username + ": " + data.message + "\n";
       }
       scrollToBottom();
     }
-    
+
     if (data.users_list) {
       document.getElementById("chat-userlist").innerHTML = "";
 
@@ -83,35 +84,33 @@ export function initWS(roomName) {
         document.getElementById("chat-userlist").appendChild(user_label);
       }
     }
-  
-  };
+  };  
 
-  chatSocket.onclose = function(e) {
+  chatSocket.onclose = function (e) {
     if (!e.wasClean) console.error("Chat socket closed unexpectedly", e);
+    else console.log("Chat socket closed cleanly", e);
   };
 
-
-  document.querySelector("#chat-message-input").onkeyup = function(e) {
+  document.querySelector("#chat-message-input").onkeyup = function (e) {
     if (e.keyCode === 13) {
       document.querySelector("#chat-message-submit").click();
     }
   };
 
-  document.querySelector("#chat-message-submit").onclick = function(e) {
+  document.querySelector("#chat-message-submit").onclick = function (e) {
     const messageInputDom = document.querySelector("#chat-message-input");
     const data = {
       message: messageInputDom.value,
       username: document.querySelector("#chat-username").textContent,
     };
-    const message = messageInputDom.value;
 
-    if (checkCommand(message)) {
-      handleCommand(message, username);
+    if (checkCommand(data.message)) {
+      handleCommand(data, username);
       return;
     }
     chatSocket.send(
       JSON.stringify({
-        message: message,
+        message: data.message,
         username: username,
       }),
     );
@@ -120,8 +119,7 @@ export function initWS(roomName) {
 
   window.chatSocket = chatSocket;
 
-  // if user clicks on the userlist
-document.getElementById("chat-userlist").onclick = function(e) {
+  document.getElementById("chat-userlist").onclick = function (e) {
     const user = e.target.textContent;
 
     fetch("/api/profile/" + user + "/", {
@@ -146,10 +144,9 @@ document.getElementById("chat-userlist").onclick = function(e) {
           { key: "alias", label: "Alias" },
         ];
         console.log(data.image);
-        
-        // Ensure the image URL uses HTTPS
-        const imageUrl = data.image.startsWith('http://') 
-          ? data.image.replace('http://', 'https://') 
+
+        const imageUrl = data.image.startsWith("http://")
+          ? data.image.replace("http://", "https://")
           : data.image;
 
         const customContent = `<div class="img-container">
@@ -160,7 +157,11 @@ document.getElementById("chat-userlist").onclick = function(e) {
           </div>
           `;
         createModal(
-          data, "ProfileModal", "ProfileModalLabel", fields, customContent,
+          data,
+          "ProfileModal",
+          "ProfileModalLabel",
+          fields,
+          customContent,
         );
       })
       .catch((error) => {
@@ -168,9 +169,9 @@ document.getElementById("chat-userlist").onclick = function(e) {
       });
     document.querySelector("#chat-message-input").value = "@" + user + " ";
     document.querySelector("#chat-message-input").focus();
-};
+  };
 }
-// creates a dinamic modal with data to be displayed
+
 function createModal(data, modalId, modalLabelId, fields, customContent = "") {
   const modal = document.createElement("div");
   modal.tabIndex = "-1";
@@ -208,61 +209,38 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "") {
 
   document.body.appendChild(modal);
 
-  document.getElementById(`close${modalId}`).onclick = function() {
+  document.getElementById(`close${modalId}`).onclick = function () {
     modal.style.display = "none";
     document.body.removeChild(modal);
   };
 }
 
-// get command /commands
-
-function handleCommand(message, username) {
-  if (message.startsWith("/pm")) {
-    let user2 = message.split(" ")[1]?.trim();
+function handleCommand(data, username) {
+  if (data.message.startsWith("/pm")) {
+    let user2 = data.message.split(" ")[1]?.trim();
     let user1 = username.trim();
 
     if (user2) {
       let chatUsers = [user1, user2];
-      chatUsers.sort();
-      let chatId = btoa(chatUsers.join(""));
-      chatId = chatId.replace(/=/g, "");
 
-      fetch("/chat/" + chatId + "/", {
-        method: "POST",
-        body: JSON.stringify({
-          message: message,
-          username: username,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrftoken,
-        },
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Failed to send private message");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          const app = document.getElementById("app");
-          app.innerHTML = data.content;
-          initWS(chatId);
-          console.log("Loaded data.content, from /chat/" + chatId + "/");
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
+      console.log("command /pm between users: ", chatUsers);
+
+      chatSocket.send(
+        JSON.stringify({ message: data.message, username: username }),
+      );
+
+      document.querySelector("#chat-message-input").value = "";
+      document.querySelector("#chat-message-input").focus();
     } else {
       console.error("No recipient specified for /pm command.");
     }
-  } else if (message.startsWith("/duel")) {
+  } else if (data.message.startsWith("/duel")) {
     console.log("command duel");
     startWebSocket(username.trim());
     chatSocket.send(
       JSON.stringify({
-        message: message,
-        username: username.trim()
+        message: data.message,
+        username: username.trim(),
       }),
     );
     document.querySelector("#chat-message-input").value = "";
@@ -273,7 +251,6 @@ function handleCommand(message, username) {
   }
 }
 
-// check if a message is a command
 function checkCommand(message) {
   let trim = message.trim();
   let words = trim.split(" ");
@@ -281,7 +258,6 @@ function checkCommand(message) {
   return firstWord in commands ? true : false;
 }
 
-// check if a message is tagging our user
 function getMention(message) {
   const username = document.querySelector("#chat-username").textContent;
   const mention = "@" + username.trim();
@@ -292,14 +268,12 @@ function getMention(message) {
   return firstWord === mention ? true : false;
 }
 
-// Spawn a notification if the user is tagged
 function notifyUser(message) {
   if (getMention(message)) {
     createNotification(message);
   }
 }
 
-// A notification modal that pops up when the user is tagged
 function createNotification(message) {
   const modal = document.createElement("div");
   modal.className = "modal";
@@ -324,9 +298,89 @@ function createNotification(message) {
   document.body.appendChild(modal);
   document.getElementById("NotificationModal").style.display = "block";
 
-  document.getElementById("closeNotif").onclick = function() {
+  document.getElementById("closeNotif").onclick = function () {
     document.getElementById("NotificationModal").style.display = "none";
     document.body.removeChild(modal);
     return;
   };
 }
+
+async function updateFriendsAndBlocked() {
+  try {
+    const [friendsResponse, blockedResponse] = await Promise.all([
+      fetch("/api/friends/", {
+        method: "GET",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,
+        },
+      }),
+      fetch("/api/blocklist/", {
+        method: "GET",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,
+        },
+      }),
+    ]);
+
+    if (!friendsResponse.ok) {
+      throw new Error(`HTTP error! status: ${friendsResponse.status}`);
+    }
+    if (!blockedResponse.ok) {
+      throw new Error(`HTTP error! status: ${blockedResponse.status}`);
+    }
+
+    const friendsData = await friendsResponse.json();
+    const blockedData = await blockedResponse.json();
+
+    sessionStorage.setItem('friends', JSON.stringify(friendsData.map(friend => friend.username)));
+    sessionStorage.setItem('blocked', JSON.stringify(blockedData.map(blocked => blocked.username)));
+  
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export function getFriendsAndBlocked() {
+  console.log("Getting friends and blocked from sessionStorage");
+  let friends = [];
+  let blocked = [];
+  
+  try {
+    friends = JSON.parse(sessionStorage.getItem('friends')) || [];
+    console.log("Friends from localStorage:", friends);
+  } catch (error) {
+    console.error("Error parsing friends from localStorage:", error);
+  }
+
+  try {
+    blocked = JSON.parse(sessionStorage.getItem('blocked')) || [];
+    console.log("Blocked from localStorage:", blocked);
+  } catch (error) {
+    blocked = []; 
+  }
+  
+  console.log("Friends {} and Blocked {}", friends, blocked);
+
+  return { friends, blocked };
+}
+
+function canReadMessage(data) {
+  const { friends, blocked } = getFriendsAndBlocked();
+
+  if (blocked.length === 0) {
+    return true;
+  }
+
+  if (friends.includes(data.username)) {
+    return true;
+  } else if (blocked.includes(data.username)) {
+    return false;
+  } else {
+    return true;
+  }
+}
+

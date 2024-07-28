@@ -65,3 +65,17 @@ services:
     restart: unless-stopped
     profiles:
       - debug
+
+  novnc:
+    image: javanile/novnc
+    environment:
+      - REMOTE_HOST=localhost
+      - REMOTE_PORT=5901
+    ports:
+      - 8081:8081
+    links:
+      - selenium
+    profiles:
+      - debug
+    networks:
+      - transcendeNet

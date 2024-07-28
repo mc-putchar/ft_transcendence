@@ -4,16 +4,16 @@ import random
 import string
 
 import requests
+from api.models import Friend, Profile
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout  # Import logout
 from django.contrib.auth.models import User
-from django.http import HttpResponse, JsonResponse
+from django.core.files.images import ImageFile
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-
-from api.models import Friend, Profile
 
 from .auth42 import exchange_code_for_token, get_user_data
 from .forms import LoginForm, ProfileUpdateForm, UserUpdateForm
@@ -71,8 +71,6 @@ def show_profile(request, username):
         status = 'Online'
     else:
         status = 'Offline'
-
-    logger.critical("Profile: " + str(user))
 
     context = {
         'user': user,
@@ -231,7 +229,6 @@ def register(request):
 
         if user is not None:
             django_login(request, user)
-
         return JsonResponse({"title": "Register", "content": "Registration successful"})
     else:
         form_html = render_to_string(
@@ -274,20 +271,21 @@ def redirect_view(request):
             user, created = User.objects.get_or_create(
                 username=username, defaults={'email': email})
 
-            profile, created = Profile.objects.get_or_create(
+            profile, profile_created = Profile.objects.get_or_create(
                 user=user, defaults={'alias': username})
 
-            if not created:
+            if not profile_created:
                 profile.alias = username
 
-            # takes the intra profile picture and adds it as a Profile user
-            if created and image_url:
-                response = requests.get(image_url['versions']['medium'])
-                if response.status_code == 200:
-                    image_path = f'profile_images/{username}.png'
-                    with open(f'media/{image_path}', 'wb') as f:
-                        f.write(response.content)
-                    profile.image.url = image_path
+            # Check if the profile picture is still the default
+            if profile_created or profile.image.name == 'profile_images/default.png':
+                if image_url:
+                    response = requests.get(image_url['versions']['medium'])
+                    if response.status_code == 200:
+                        image_path = f'profile_images/{username}.png'
+                        with open(f'media/{image_path}', 'wb') as f:
+                            f.write(response.content)
+                        profile.image = image_path
 
             profile.save()
             django_login(request, user)

@@ -1,37 +1,37 @@
 import { csrftoken } from "./main.js";
-import { initGame } from './pong-online.js';
+import { initGame } from "./pong-online.js";
 
-async function postJSON(endpoint, json='') {
-	const response = await fetch(endpoint, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'Accept': 'application/json',
-			'X-Requested-With': 'XMLHttpRequest',
-			'X-CSRFToken': csrftoken,
-		},
-		body: json,
-		credentials: 'include'
-	});
-	if (response.ok) {
-		const data = await response.json();
-		return data;
-	} else {
-		console.error("Server returned error response");
-		return null;
-	}
+async function postJSON(endpoint, json = "") {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+      "X-CSRFToken": csrftoken,
+    },
+    body: json,
+    credentials: "include",
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return data;
+  } else {
+    console.error("Server returned error response");
+    return null;
+  }
 }
 
 async function getJSON(endpoint) {
 	const response = await fetch(endpoint, {
-		method: 'GET',
+		method: "GET",
 		headers: {
-			'Content-Type': 'application/json',
-			'Accept': 'application/json',
-			'X-Requested-With': 'XMLHttpRequest',
-			'X-CSRFToken': csrftoken,
+			"Content-Type": "application/json",
+			"Accept": "application/json",
+			"X-Requested-With": "XMLHttpRequest",
+			"X-CSRFToken": csrftoken,
 		},
-		credentials: 'include'
+		credentials: "include"
 	});
 	if (response.ok) {
 		const data = await response.json();
@@ -57,6 +57,7 @@ class GameData {
 		this.score_limit = 11;
 		this.timestamp = Date.now();
 	}
+
 	update(data) {
 		this.status = data.status;
 		this.player1Position = data.player1_position;
@@ -106,7 +107,7 @@ function startWebSocket(socketId) {
 				let opponent = socketId;
 				const isChallenger = (username === socketId);
 				if (isChallenger)
-					opponent = data.message.split(' ')[2];
+					opponent = data.message.split(" ")[2];
 				await initGame(gameData, matchId, username, opponent, isChallenger);
 			} else if (data.message === "declined") {
 				gameSocket.close();
@@ -118,57 +119,53 @@ function startWebSocket(socketId) {
 		}
 	};
 
-	gameSocket.onclose = function(e) {
-		if (!e.wasClean) console.error("Game socket closed unexpectedly", e);
-		else console.log("Game socket closed:", e);
-	};
+  gameSocket.onclose = function (e) {
+    if (!e.wasClean) console.error("Game socket closed unexpectedly", e);
+    else console.log("Game socket closed:", e);
+  };
 
-	gameSocket.onerror = function(e) {
-		console.error("Game websocket error:", e);
-	}
+  gameSocket.onerror = function (e) {
+    console.error("Game websocket error:", e);
+  };
 
-	window.gameSocket = gameSocket;
-	return gameSocket;
+  window.gameSocket = gameSocket;
+  return gameSocket;
 }
 
 async function createMatch() {
-	const data = await postJSON("/game/matches/create_match/");
-	if (data === null) {
-		console.error("Failed to create match");
-		return null;
-	}
-	return data.match_id;
+  const data = await postJSON("/game/matches/create_match/");
+  if (data === null) {
+    console.error("Failed to create match");
+    return null;
+  }
+  return data.match_id;
 }
 
 async function joinMatch(matchId) {
-	const data = await postJSON(`/game/matches/${matchId}/join/`);
-	if (data === null) {
-		console.error("Failed to join match");
-		return null;
-	}
-	return data.status;
+  const data = await postJSON(`/game/matches/${matchId}/join/`);
+  if (data === null) {
+    console.error("Failed to join match");
+    return null;
+  }
+  return data.status;
 }
 
-
-function sendMessage(ws, msg){
-	waitForSocketConnection(ws, () => ws.send(msg));
+function sendMessage(ws, msg) {
+  waitForSocketConnection(ws, () => ws.send(msg));
 }
 
-function waitForSocketConnection(socket, callback){
-	setTimeout(
-		function () {
-			if (socket.readyState === 1) {
-				if (callback != null)
-					callback();
-			} else
-				waitForSocketConnection(socket, callback);
-		}, 10);
+function waitForSocketConnection(socket, callback) {
+  setTimeout(function () {
+    if (socket.readyState === 1) {
+      if (callback != null) callback();
+    } else waitForSocketConnection(socket, callback);
+  }, 10);
 }
 
 async function gameRouter(pathname) {
 	console.log(pathname);
 	if (pathname.startsWith("/game/accept/")) {
-		const socketId = pathname.split('/')[3];
+		const socketId = pathname.split("/")[3];
 		// console.log("socketId:", socketId);
 		startWebSocket(socketId);
 		const matchId = await createMatch();
@@ -189,7 +186,7 @@ async function gameRouter(pathname) {
 			})
 		);
 	} else if (pathname.startsWith("/game/decline/")) {
-		const socketId = pathname.split('/')[3];
+		const socketId = pathname.split("/")[3];
 		startWebSocket(socketId);
 		sendMessage(
 			window.gameSocket,
@@ -201,4 +198,4 @@ async function gameRouter(pathname) {
 	}
 }
 
-export {postJSON, getJSON, GameData, gameRouter, startWebSocket};
+export { postJSON, getJSON, GameData, gameRouter, startWebSocket };
