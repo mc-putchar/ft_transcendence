@@ -4,6 +4,7 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 import { getAmps, playAudioTrack, playTone } from './audio.js';
+import { getJSON, postJSON, GameData } from './game-router.js';
 
 
 const SCORE_FONT = "../../static/fonts/helvetiker_regular.typeface.json";
@@ -13,18 +14,19 @@ const WALL_TEX_IMG = "../../static/img/matrix-purple.jpg"
 const FLOOR_TEX_IMG = "../../static/img/login-install.jpg"
 
 const CANVAS_PADDING = 10;
-const CAM_START_X = -160;
-const CAM_START_Y = 130;
+const CAM_START_X = -240;
+const CAM_START_Y = 70;
+const CAM_START_Z = 0;
 const TARGET_FPS = 60;
 const DRAW_DISTANCE = 1000;
 const ARENA_WIDTH = 300;
 const ARENA_HEIGHT = 200;
 const WALL_HEIGHT = 20;
 const WALL_THICKNESS = 10;
+const WALL_SEGMENTS = 8;
 const GOAL_LINE = 20;
 const SCORE_HEIGHT = 42;
 const BALL_SIZE = 8;
-const BALL_START_SPEED = 2;
 const PADDLE_SPEED = 5;
 const PADDLE_LEN = 42;
 const PADDLE_WIDTH = 6;
@@ -71,15 +73,15 @@ class Arena {
 		const mod_wall_geometry = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ARENA_WIDTH / 8, 2, 2, 2);
 		this.bottomWalls = [];
 		this.topWalls = [];
-		for (let i = 0; i < 8; ++i) {
+		for (let i = 0; i < WALL_SEGMENTS; ++i) {
 			this.bottomWalls.push(new THREE.Mesh(mod_wall_geometry, wall_material));
 			this.topWalls.push(new THREE.Mesh(mod_wall_geometry, wall_material));
 		}
 	}
 	place(scene, topWallPos, bottomWallPos) {
-		for (let i = 0; i<8; ++i) {
-			this.bottomWalls[i].position.set(bottomWallPos + WALL_THICKNESS, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
-			this.topWalls[7 - i].position.set(topWallPos - WALL_THICKNESS, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
+		for (let i = 0; i < WALL_SEGMENTS; ++i) {
+			this.bottomWalls[i].position.set(bottomWallPos + (WALL_THICKNESS / 2), 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / WALL_SEGMENTS) + ARENA_WIDTH / (WALL_SEGMENTS * 2));
+			this.topWalls[7 - i].position.set(topWallPos - (WALL_THICKNESS / 2), 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / WALL_SEGMENTS) + ARENA_WIDTH / (WALL_SEGMENTS * 2));
 			scene.add(this.bottomWalls[i], this.topWalls[i]);
 		}
 		scene.add(this.lightbulb1, this.lightbulb2);
@@ -88,7 +90,6 @@ class Arena {
 		scene.add(this.plane);
 	}
 };
-
 
 class Ball {
 	constructor() {
@@ -100,28 +101,48 @@ class Ball {
 		this.pos = new THREE.Vector3();
 		this.dir = new THREE.Vector3();
 		this.speed = 0;
+		this.lastUpdateTime = Date.now();
 	}
+
 	place(scene, x, z) {
 		this.mesh.position.set(x, BALL_SIZE, z);
 		scene.add(this.mesh);
 	}
+
 	get position() {
 		this.mesh.getWorldPosition(this.pos);
 		return [this.pos.x, this.pos.z];
 	}
+
 	doMove() {
-		this.mesh.translateX(this.dir.x * this.speed);
-		this.mesh.translateZ(this.dir.z * this.speed);
+		// this.mesh.translateX(this.dir.x * this.speed);
+		// this.mesh.translateZ(this.dir.z * this.speed);
+
+		const now = Date.now();
+		const elapsedTime = (now - this.lastUpdateTime) / 1000;
+		this.lastUpdateTime = now;
+
+		this.mesh.translateX(this.dir.x * this.speed * elapsedTime);
+		this.mesh.translateZ(this.dir.z * this.speed * elapsedTime);
 	}
+
 	reset() {
 		this.mesh.position.set(0, BALL_SIZE, 0);
 		this.dir.set(0, 0, 0);
+		this.speed = 0;
+	}
+
+	sync(pos, dir, speed, timestamp) {
+		this.mesh.position.set(pos.x, BALL_SIZE, pos.y);
+		this.dir.set(dir.dx, 0, dir.dy);
+		this.speed = speed;
+		this.lastUpdateTime = timestamp;
 	}
 };
 
-
 class Player {
-	constructor(name, avatar_tex) {
+	constructor(user, name, avatar_tex) {
+		this.user = user;
 		this.name = name;
 		this.mesh = new THREE.Mesh(
 			new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2),
@@ -133,6 +154,7 @@ class Player {
 		this.score = 0;
 		this.direction = 0;
 		this.speed = PADDLE_SPEED;
+		this.lastUpdateTime = Date.now();
 
 		this.avatar = new THREE.Mesh(
 			new THREE.BoxGeometry(10, 10, 10),
@@ -143,6 +165,7 @@ class Player {
 			new THREE.MeshLambertMaterial({ color: 0x42FF42, wireframe: true })
 		);
 	}
+
 	place(scene, x, y) {
 		this.mesh.position.set(x, PADDLE_HEIGHT, y);
 		this.avatar.position.set(0, AVATAR_HEIGHT, 0);
@@ -150,31 +173,54 @@ class Player {
 		this.mesh.add(this.avatar, this.avatar_box)
 		scene.add(this.mesh);
 	}
+
 	get position() {
 		this.mesh.getWorldPosition(this.pos);
 		return [this.pos.x, this.pos.z];
 	}
+
 	doMove() {
-		const limit = (ARENA_HEIGHT / 2 - WALL_THICKNESS);
-		if (this.direction) {
-			this.mesh.getWorldPosition(this.pos);
-			let move = this.direction * this.speed;
-			if (move + this.pos.x < limit && move + this.pos.x > -limit) {
-				this.mesh.translateX(move);
-			}
-		}
+		// const limit = (ARENA_HEIGHT / 2 - (PADDLE_LEN / 2));
+		// const delta = this.direction * this.speed;
+		// this.mesh.position.x = Math.min(limit, Math.max(-limit, this.mesh.position.x + delta));
+		const now = Date.now();
+		const elapsedTime = (now - this.lastUpdateTime) / 100;
+		this.lastUpdateTime = now;
+
+		const limit = (ARENA_HEIGHT / 2 - (PADDLE_LEN / 2));
+		const delta = this.direction * this.speed * elapsedTime;
+		this.mesh.position.x = Math.min(limit, Math.max(-limit, this.mesh.position.x + delta));
+
+	}
+
+	sync(pos, dir, timestamp) {
+		this.direction = dir;
+		this.mesh.position.x = pos;
+
+		this.lastUpdateTime = timestamp;
 	}
 };
 
-
 class Game {
-	constructor(rootElement, scoreLimit, player1, player2, isChallenger) {
+	constructor(gameData, rootElement, scoreLimit, player1, player2, isChallenger, matchId) {
+		this.gameData = gameData;
+		this.matchId = matchId;
 		this.root = rootElement;
+
+		window.addEventListener("resize", ev => this.resize(ev), true);
+		window.addEventListener("fullscreenchange", (e) => this.resize(e));
+
+		this.fsButton = document.createElement('div');
+		this.fsButton.id = "fullscreenButton";
+		this.fsButton.innerText = "♐";
+		this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
+		this.root.appendChild(this.fsButton);
+
 		this.canvas = document.createElement('canvas');
 		this.canvas.width = window.innerWidth;
 		this.canvas.height = window.innerHeight;
 		this.root.appendChild(this.canvas);
-	
+
 		this.renderer = new THREE.WebGLRenderer({
 			antialias: true,
 			canvas: this.canvas
@@ -191,10 +237,11 @@ class Game {
 		this.camera = new THREE.PerspectiveCamera(
 			FOV, this.canvas.clientWidth / this.canvas.clientHeight, near, far
 		);
-		this.camera.position.set(CAM_START_X, CAM_START_Y, 0);
+		this.camera.position.set(CAM_START_X, CAM_START_Y, CAM_START_Z);
 		this.camera.lookAt(0, 0, 0);
 
 		this.cam_controls = new OrbitControls(this.camera, this.renderer.domElement);
+		this.cam_controls.enabled = false;
 		this.loader = new FontLoader();
 
 		this.ball = new Ball();
@@ -219,81 +266,141 @@ class Game {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 
-		window.addEventListener("resize", ev => this.resize(ev), true);
-
 		this.showScore();
 		playAudioTrack();
+		this.send_register_player();
+		this.intro();
+	}
+
+	intro() {
+		this.cam_controls.autoRotate = true;
+		if (this.isChallenger) {
+			this.cam_controls.autoRotateSpeed = 5;
+		} else {
+			this.cam_controls.autoRotateSpeed = -5;
+		}
+		setTimeout(() => {
+			this.cam_controls.autoRotate = false;
+			this.cam_controls.enabled = true;
+			this.send_ready();
+		}, 3000);
+	}
+
+	send_register_player() {
+		const thisPlayer = this.isChallenger ? "player1" : "player2";
+		const username = this.isChallenger ? this.playerOne.user : this.playerTwo.user;
+		window.gameSocket.send(JSON.stringify({
+			type: 'register',
+			player: thisPlayer,
+			user: username,
+			match_id: this.matchId,
+		}));
+	}
+
+	send_ready() {
+		const thisPlayer = this.isChallenger ? "player1" : "player2"
+		window.gameSocket.send(JSON.stringify({
+			type: 'ready',
+			player: thisPlayer,
+		}));
+	}
+
+	sendPlayerUpdate(player) {
+		const [position, _] = player.position;
+		const direction = player.direction;
+		const msgType = this.isChallenger ? "player1_position" : "player2_position";
+		window.gameSocket.send(JSON.stringify({
+			type: msgType,
+			position: position,
+			direction: direction
+		}));
+	}
+
+	toggleFullScreen() {
+		if (this.renderer.domElement.requestFullscreen) {
+			this.renderer.domElement.requestFullscreen();
+		} else if (this.renderer.domElement.webkitRequestFullscreen) {
+			/* Safari */
+			this.renderer.domElement.webkitRequestFullscreen();
+		} else if (this.renderer.domElement.msRequestFullscreen) {
+			/* IE11 */
+			this.renderer.domElement.msRequestFullscreen();
+		}
 	}
 
 	resize(ev) {
-		this.canvas.width = this.root.clientWidth;
-		this.canvas.height = this.root.clientHeight;
-		this.renderer.setPixelRatio(window.devicePixelRatio);
-		this.renderer.setSize(this.root.clientWidth, this.root.clientHeight);
+		const width = this.canvas.clientWidth;
+		const height = this.canvas.clientHeight;
+		const needResize = this.canvas.width !== width || this.canvas.height !== height;
+		if (needResize) {
+			this.renderer.setSize(width, height, false);
+			this.camera.aspect = width / height;
+			this.camera.updateProjectionMatrix();
+		}
 	}
 
 	keydown(key) {
-		if (this.gameover)	return;
-		if (this.running === false) {
-			this.running = true;
-			if (this.last_scored === 1)
-				this.ball.dir.z = -1;
-			else
-				this.ball.dir.z = 1;
-			this.ball.dir.x = 1;
-			this.ball.speed = BALL_START_SPEED;
-		}
+		if (this.gameover || this.gameData.status === "starting") return;
+		const player = this.isChallenger ? this.playerOne : this.playerTwo;
 		switch(key.code) {
-			case "ArrowUp":
-				this.playerOne.direction = 1;
+			case "KeyW":
+				player.direction = 1;
 				break;
-			case "ArrowDown":
-				this.playerOne.direction = -1;
+			case "KeyS":
+				player.direction = -1;
 				break;
 			default:
 				break;
 		}
+		this.sendPlayerUpdate(player);
 	}
 
 	keyup(key) {
-		if (this.gameover)	return;
-		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
-			this.playerOne.direction = 0;
+		if (this.gameover || this.gameData.status === "starting") return;
+		const player = this.isChallenger ? this.playerOne : this.playerTwo;
+		if (key.code === "KeyW" || key.code === "KeyS") {
+			player.direction = 0;
 		}
+		this.sendPlayerUpdate(player);
 	}
 
 	endGame() {
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
 		if (this.playerOne.score > this.playerTwo.score) {
-			this.showText(`${this.playerOne.name} WINS`);
+			this.mc_putchar(`${this.playerOne.name} WINS`);
 		} else {
-			this.showText(`${this.playerTwo.name} WINS`);
+			this.mc_putchar(`${this.playerTwo.name} WINS`);
 		}
-		this.gameover = true;
 		this.scene.remove(this.ball);
 		this.cam_controls.autoRotate = true;
+		if (this.isChallenger) {
+			this.cam_controls.autoRotateSpeed = -10;
+		} else {
+			this.cam_controls.autoRotateSpeed = 10;
+		}
 	}
 
 	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 
-		if (!this.gameover) {
-			if (this.playerOne.score === this.scoreLimit
-			|| this.playerTwo.score === this.scoreLimit) {
-				this.endGame();
-			} else {
-				let now = Date.now();
-				let elapsed = now - this.lastUpdate;
-				if (elapsed > this.fpsInterval) {
-					this.lastUpdate = now;
-					this.update();
-				}
-			}
+		let now = Date.now();
+		let elapsed = now - this.lastUpdate;
+		if (elapsed > this.fpsInterval) {
+			this.lastUpdate = now;
+			this.syncData();
 		}
+		if (this.gameover) {
+			this.endGame();
+		}
+		if (this.running) {
+			this.ball.doMove();
+		}
+		this.playerOne.doMove();
+		this.playerTwo.doMove();
 
 		this.amps = getAmps();
-		for (let i = 0; i < 8; ++i) {
+		for (let i = 0; i < WALL_SEGMENTS; ++i) {
 			this.arena.topWalls[i].position.y = (50 - this.amps[i + 1])/-5;
 			this.arena.bottomWalls[i].position.y = (50 - this.amps[i + 1])/-5;
 			if (i === 6) {
@@ -305,62 +412,45 @@ class Game {
 		this.draw();
 	}
 
-	update() {
-		if (!this.running)	return;
-		this.playerOne.doMove();
-		this.playerTwo.doMove();
-		this.ball.doMove();
-		this.checkCollisions();
+	syncData() {
+		const now = Date.now();
+
+		this.running = (this.gameData.status === 'running');
+		this.gameover = (this.gameData.status === 'finished' || this.gameData.status === 'forfeited');
+
+		if (this.isChallenger) {
+			this.playerTwo.sync(this.gameData.player2Position, this.gameData.player2Direction, now);
+		} else {
+			this.playerOne.sync(this.gameData.player1Position, this.gameData.player1Direction, now);
+		}
+
+		this.ball.sync(this.gameData.ballPosition, this.gameData.ballDirection, this.gameData.ballSpeed, now);
+
+		if (this.playerOne.score != this.gameData.player1Score || this.playerTwo.score != this.gameData.player2Score) {
+			this.playerOne.score = this.gameData.player1Score;
+			this.playerTwo.score = this.gameData.player2Score;
+			this.ball.reset();
+			this.showScore();
+			if (!this.gameover)
+				this.send_ready();
+		}
+
+		if (this.gameData.status === 'forfeited') {
+			if (this.isChallenger) {
+				this.playerOne.score = 11;
+				this.playerTwo.score = 0;
+			} else {
+				this.playerOne.score = 0;
+				this.playerTwo.score = 11;
+			}
+			this.showScore();
+			this.endGame();
+		}
 	}
 
 	draw() {
 		this.cam_controls.update();
 		this.renderer.render(this.scene, this.camera);
-	}
-
-	checkCollisions() {
-		const [ballX, ballY] = this.ball.position;
-		if (ballX <= -(ARENA_HEIGHT / 2)
-		|| ballX >= (ARENA_HEIGHT / 2)) {
-			playTone(180, 40, 140);
-			this.ball.dir.x *= (-1.1);
-			Math.min(Math.max(this.ball.dir.x, -1), 1);
-		}
-		const [p1x, p1y] = this.playerOne.position;
-		const [p2x, p2y] = this.playerTwo.position;
-		if (ballY < -ARENA_WIDTH / 2 - GOAL_LINE) {
-			playTone(240, 20, 210, 3);
-			this.last_scored = 2;
-			this.running = false;
-			this.ball.reset();
-			this.playerTwo.score++;
-			this.scene.remove(this.score);
-			this.showScore();
-		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
-			playTone(240, 20, 210, 3);
-			this.last_scored = 1;
-			this.running = false;
-			this.ball.reset();
-			this.playerOne.score++;
-			this.scene.remove(this.score);
-			this.showScore();
-		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
-		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
-		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) {
-			playTone(200, 30, 200, 0.6);
-			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
-			this.ball.dir.setZ(-1 * Math.cos(refAngle));
-			this.ball.dir.setX(Math.sin(refAngle));
-			this.ball.speed += 0.1;
-		} else if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
-		&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
-		&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
-			playTone(200, 30, 200, 0.6);
-			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
-			this.ball.dir.setZ(1 * Math.cos(refAngle));
-			this.ball.dir.setX(Math.sin(refAngle));
-			this.ball.speed += 0.1;
-		}
 	}
 
 	showScore() {
@@ -401,17 +491,25 @@ class Game {
 		} );
 	}
 
-	showText(text) {
-		this.scene.remove(this.score);
-		this.loader.load(WIN_FONT, font => {
+	// TODO: sanitize input
+	mc_putchar(
+		text='',
+		font=WIN_FONT,
+		size=42,
+		height=10,
+		depth=2,
+		curveSegments=8,
+		bevelEnabled=true
+	) {
+		this.loader.load(font, font => {
 			const textGeo = new TextGeometry(
 					text, {
-					font: font,
-					size: 42,
-					height: 10,
-					depth: 2,
-					curveSegments: 8,
-					bevelEnabled: true,
+					font,
+					size,
+					height,
+					depth,
+					curveSegments,
+					bevelEnabled,
 					bevelThickness: 1,
 					bevelSize: 1,
 					bevelOffset: 1,
@@ -438,7 +536,7 @@ class Game {
 	}
 }
 
-function startGame(player1, player2, isChallenger) {
+function startGame(gameData, player1, player2, isChallenger, matchId) {
 	const nav = document.getElementById('nav');
 	const root = document.getElementById("game-container");
 	root.style = "display: block";
@@ -450,43 +548,35 @@ function startGame(player1, player2, isChallenger) {
 	root.innerText = `${player1.name} vs ${player2.name}\n`;
 
 	let scoreLimit = 11;
-	const pong = new Game(root, scoreLimit, player1, player2, isChallenger);
+	const pong = new Game(gameData, root, scoreLimit, player1, player2, isChallenger, matchId);
 	pong.loop();
 }
 
-async function initGame(matchId, playerName, opponentName, isChallenger) {
-	const response = await fetch(`/api/profile/${playerName}/`);
-	if (!response.ok) {
-		console.error("Error retrieving player profile");
+async function initGame(gameData, matchId, playerName, opponentName, isChallenger) {
+	const playerProfile = await getJSON(`/api/profile/${playerName}/`);
+	const opponentProfile = await getJSON(`/api/profile/${opponentName}/`);
+	if (playerProfile === null || opponentProfile === null) {
+		console.error("Error fetching player profiles");
 		return;
 	}
-	const reply = await fetch(`/api/profile/${opponentName}/`);
-	if (!response.ok) {
-		console.error("Error retrieving opponent profile");
-		return;
-	}
-	const playerProfile = await response.json();
 	console.log('player:', playerProfile);
-	const opponentProfile = await reply.json();
 	console.log('opponent:', opponentProfile);
 
 	const texLoader = new THREE.TextureLoader();
 
 	let imgURL = playerProfile.image.replace("http://", "https://");
-	console.log("imgURL:", imgURL);
 	const playerAvatarTexture = texLoader.load(imgURL);
 
 	imgURL = opponentProfile.image.replace("http://", "https://");
-	console.log("opp imgURL:", imgURL);
 	const opponentAvatarTexture = texLoader.load(imgURL);
 
-	const player = new Player(playerProfile.alias, playerAvatarTexture);
-	const opponent = new Player(opponentProfile.alias, opponentAvatarTexture);
+	const player = new Player(playerProfile.user.username, playerProfile.alias, playerAvatarTexture);
+	const opponent = new Player(opponentProfile.user.username, opponentProfile.alias, opponentAvatarTexture);
 
 	if (isChallenger)
-		startGame(player, opponent, isChallenger);
+		startGame(gameData, player, opponent, isChallenger, matchId);
 	else
-		startGame(opponent, player, isChallenger);
+		startGame(gameData, opponent, player, isChallenger, matchId);
 }
 
 

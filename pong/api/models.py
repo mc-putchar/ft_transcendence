@@ -82,7 +82,6 @@ class Tournament(models.Model):
 class Match(models.Model):
     tournament = models.ForeignKey(Tournament, null=True, blank=True, on_delete=models.CASCADE, related_name='matches')
     date = models.DateTimeField(auto_now_add=True)
-    players = models.IntegerField(default=0)
 
     def __str__(self):
         return f"Match on {self.date}"

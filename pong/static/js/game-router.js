@@ -22,8 +22,60 @@ async function postJSON(endpoint, json='') {
 	}
 }
 
+async function getJSON(endpoint) {
+	const response = await fetch(endpoint, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			'Accept': 'application/json',
+			'X-Requested-With': 'XMLHttpRequest',
+			'X-CSRFToken': csrftoken,
+		},
+		credentials: 'include'
+	});
+	if (response.ok) {
+		const data = await response.json();
+		return data;
+	} else {
+		console.error("Server returned error response");
+		return null;
+	}
+}
+
+class GameData {
+	constructor() {
+		this.status = "starting";
+		this.player1Position = 0;
+		this.player1Direction = 0;
+		this.player2Position = 0;
+		this.player2Direction = 0;
+		this.ballPosition = {x: 0, y: 0};
+		this.ballDirection = {dx: 0, dy: 0};
+		this.ballSpeed = 2;
+		this.player1Score = 0;
+		this.player2Score = 0;
+		this.score_limit = 11;
+		this.timestamp = Date.now();
+	}
+	update(data) {
+		this.status = data.status;
+		this.player1Position = data.player1_position;
+		this.player1Direction = data.player1_direction;
+		this.player2Position = data.player2_position;
+		this.player1Direction = data.player2_direction;
+		this.ballPosition = data.ball_position;
+		this.ballDirection = data.ball_direction;
+		this.ballSpeed = data.ball_speed;
+		this.player1Score = data.player1_score;
+		this.player2Score = data.player2_score;
+		this.score_limit = data.score_limit;
+		this.timestamp = data.timestamp;
+	}
+};
+
 function startWebSocket(socketId) {
 	const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+	let gameData;
 	if (window.gameSocket) {
 		window.gameSocket.close();
 		console.log("Game socket closed for new one");
@@ -32,28 +84,37 @@ function startWebSocket(socketId) {
 
 	gameSocket.onopen = function(e) {
 		console.log("Match socket opened", gameSocket);
+		gameData = new GameData();
 	};
 
 	gameSocket.onmessage = async function(event) {
 		const data = JSON.parse(event.data);
-		console.log("socket data:", data);
-		const gameContainer = document.getElementById("game-container");
-		if (data.message.startsWith("match_id")) {
-			const matchId = data.message.split(' ')[1];
-			const result = await joinMatch(matchId);
-			if (result === null) {
-				gameContainer.innerText = "Error! Match cancelled.";
-				return;
+		// console.log("socket data:", data);
+		if (data.type === 'game_state') {
+			gameData.update(data.game_state);
+		} else if (data.hasOwnProperty('message')) {
+			if (data.message.startsWith("match_id")) {
+				const gameContainer = document.getElementById("game-container");
+				const matchId = data.message.split(' ')[1];
+				const result = await joinMatch(matchId);
+				if (result === null) {
+					gameContainer.innerText = "Error! Match cancelled.";
+					return;
+				}
+				gameContainer.innerText = "Challenge accepted! Starting game";
+				const username = document.getElementById("chat-username").innerText.trim();
+				let opponent = socketId;
+				const isChallenger = (username === socketId);
+				if (isChallenger)
+					opponent = data.message.split(' ')[2];
+				await initGame(gameData, matchId, username, opponent, isChallenger);
+			} else if (data.message === "declined") {
+				gameSocket.close();
+			} else {
+				console.log(`Received msg: ${data.message}`);
 			}
-			gameContainer.innerText = "Challenge accepted! Starting game";
-			const username = document.getElementById("chat-username").innerText.trim();
-			let opponent = socketId;
-			const isChallenger = (username === socketId);
-			if (isChallenger)
-				opponent = data.message.split(' ')[2];
-			await initGame(matchId, username, opponent, isChallenger);
 		} else {
-			console.log(data.message);
+			console.log(`Received type ${data.type}`);
 		}
 	};
 
@@ -134,10 +195,10 @@ async function gameRouter(pathname) {
 			window.gameSocket,
 			JSON.stringify({
 				"type": "decline",
-				"message": "N/A",
+				"message": "declined",
 			})
 		);
 	}
 }
 
-export {gameRouter, startWebSocket};
+export {postJSON, getJSON, GameData, gameRouter, startWebSocket};
