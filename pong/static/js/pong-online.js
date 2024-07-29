@@ -115,9 +115,6 @@ class Ball {
 	}
 
 	doMove() {
-		// this.mesh.translateX(this.dir.x * this.speed);
-		// this.mesh.translateZ(this.dir.z * this.speed);
-
 		const now = Date.now();
 		const elapsedTime = (now - this.lastUpdateTime) / 1000;
 		this.lastUpdateTime = now;
@@ -180,9 +177,6 @@ class Player {
 	}
 
 	doMove() {
-		// const limit = (ARENA_HEIGHT / 2 - (PADDLE_LEN / 2));
-		// const delta = this.direction * this.speed;
-		// this.mesh.position.x = Math.min(limit, Math.max(-limit, this.mesh.position.x + delta));
 		const now = Date.now();
 		const elapsedTime = (now - this.lastUpdateTime) / 100;
 		this.lastUpdateTime = now;
@@ -190,7 +184,6 @@ class Player {
 		const limit = (ARENA_HEIGHT / 2 - (PADDLE_LEN / 2));
 		const delta = this.direction * this.speed * elapsedTime;
 		this.mesh.position.x = Math.min(limit, Math.max(-limit, this.mesh.position.x + delta));
-
 	}
 
 	sync(pos, dir, timestamp) {
@@ -212,6 +205,8 @@ class Game {
 
 		this.fsButton = document.createElement('div');
 		this.fsButton.id = "fullscreenButton";
+		this.fsButton.style = "font-size: 24px; cursor: pointer; top: 20%; right: 20%;";
+		this.fsButton.classList.add("game-ui", "btn", "bg-transparent", "btn-outline-light");
 		this.fsButton.innerText = "♐";
 		this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
 		this.root.appendChild(this.fsButton);
@@ -541,13 +536,14 @@ function startGame(gameData, player1, player2, isChallenger, matchId) {
 	const nav = document.getElementById('nav');
 	const root = document.getElementById("game-container");
 	root.style = "display: block";
+	root.classList.add("game-container");
 	root.height = window.innerHeight - nav.offsetHeight;
 	root.width = window.innerWidth - CANVAS_PADDING;
 	while (root.firstChild) {
 		root.removeChild(root.lastChild);
 	}
 	root.innerText = `${player1.name} vs ${player2.name}\n`;
-
+	(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 	const pong = new Game(gameData, root, player1, player2, isChallenger, matchId);
 	pong.loop();
 }
