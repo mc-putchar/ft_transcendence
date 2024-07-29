@@ -26,7 +26,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         self.match_group_name = f"match_{self.challenger}"
         self.user = self.scope["user"]
         if not self.user.is_authenticated:
-            self.close()
+            await self.close()
             return
 
         await self.channel_layer.group_add(
