@@ -270,5 +270,5 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         await game_manager.update_player_state(self.game_id, player, position, direction)
 
     async def set_player_ready(self, player):
-        game_manager.set_player_ready(self.game_id, player)
+        await game_manager.set_player_ready(self.game_id, player)
 
