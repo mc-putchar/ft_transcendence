@@ -4,7 +4,7 @@ import random
 import string
 
 import requests
-from api.models import Friend, Profile
+from api.models import Friend, Profile, Blocked
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
@@ -72,10 +72,16 @@ def show_profile(request, username):
     else:
         status = 'Offline'
 
+    is_me = request.user == user.user
+    is_friend = Friend.is_friend(request.user, user.user)
+    is_blocked = Blocked.is_blocked(request.user, user.user)
     context = {
         'user': user,
         'status': status,
-        'profilepic': user.image.url
+        'profilepic': user.image.url,
+        'is_me': is_me,
+        'is_friend': is_friend,
+        'is_blocked': is_blocked,
     }
     content = render_to_string('profile.html', context=context)
     data = {'title': 'Profile', 'content': content}
