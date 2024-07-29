@@ -12,7 +12,7 @@ else
 	SRC := compose.yaml
 endif
 
-.PHONY: up down start stop re debug migrate collect clean
+.PHONY: up down start stop re debug migrate collect clean schema
 
 up:
 	@echo "Building and starting containers, with $(DC) and $(SRC)"
@@ -49,3 +49,5 @@ clean:
 collect:
 	$(DC) -f $(SRC) run django python manage.py collectstatic --noinput --clear
 
+schema:
+	$(DC) -f $(SRC) run django python manage.py spectacular --validate --color --file schema.yml
