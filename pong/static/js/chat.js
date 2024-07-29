@@ -150,7 +150,7 @@ export function initWS(roomName) {
           : data.image;
 
         const customContent = `<div class="img-container">
-          <img src="${imageUrl}" alt="Profile Image" class="rounded-circle account-img">
+          <img src="${imageUrl}" alt="Profile Image" class="rounded-circle account-img mb-3" style="width: 150px; height: auto;">
           </div>
           <div class="bio">
           <button><a href="/users/${user}/" class="btn btn-primary" data-link>View Profile</a></button>
