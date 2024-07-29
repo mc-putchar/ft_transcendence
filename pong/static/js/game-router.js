@@ -54,7 +54,7 @@ class GameData {
 		this.ballSpeed = 2;
 		this.player1Score = 0;
 		this.player2Score = 0;
-		this.score_limit = 11;
+		this.scoreLimit = 11;
 		this.timestamp = Date.now();
 	}
 
@@ -69,7 +69,7 @@ class GameData {
 		this.ballSpeed = data.ball_speed;
 		this.player1Score = data.player1_score;
 		this.player2Score = data.player2_score;
-		this.score_limit = data.score_limit;
+		this.scoreLimit = data.score_limit;
 		this.timestamp = data.timestamp;
 	}
 };

@@ -14,7 +14,7 @@ const WALL_TEX_IMG = "../../static/img/matrix-purple.jpg"
 const FLOOR_TEX_IMG = "../../static/img/login-install.jpg"
 
 const CANVAS_PADDING = 10;
-const CAM_START_X = -240;
+const CAM_START_X = -250;
 const CAM_START_Y = 70;
 const CAM_START_Z = 0;
 const TARGET_FPS = 60;
@@ -202,7 +202,7 @@ class Player {
 };
 
 class Game {
-	constructor(gameData, rootElement, scoreLimit, player1, player2, isChallenger, matchId) {
+	constructor(gameData, rootElement, player1, player2, isChallenger, matchId) {
 		this.gameData = gameData;
 		this.matchId = matchId;
 		this.root = rootElement;
@@ -260,7 +260,6 @@ class Game {
 		this.last_scored = 0;
 		this.lastUpdate = Date.now();
 		this.fpsInterval = 1000 / TARGET_FPS;
-		this.scoreLimit = scoreLimit;
 		this.gameover = false;
 
 		document.addEventListener("keydown", ev => this.keydown(ev));
@@ -384,20 +383,19 @@ class Game {
 	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 
-		let now = Date.now();
-		let elapsed = now - this.lastUpdate;
-		if (elapsed > this.fpsInterval) {
-			this.lastUpdate = now;
-			this.syncData();
+		if (!this.gameover) {
+			let now = Date.now();
+			let elapsed = now - this.lastUpdate;
+			if (elapsed > this.fpsInterval) {
+				this.lastUpdate = now;
+				this.syncData();
+			}
+			if (this.running) {
+				this.ball.doMove();
+			}
+			this.playerOne.doMove();
+			this.playerTwo.doMove();
 		}
-		if (this.gameover) {
-			this.endGame();
-		}
-		if (this.running) {
-			this.ball.doMove();
-		}
-		this.playerOne.doMove();
-		this.playerTwo.doMove();
 
 		this.amps = getAmps();
 		for (let i = 0; i < WALL_SEGMENTS; ++i) {
@@ -417,6 +415,7 @@ class Game {
 
 		this.running = (this.gameData.status === 'running');
 		this.gameover = (this.gameData.status === 'finished' || this.gameData.status === 'forfeited');
+		this.scoreLimit = this.gameData.scoreLimit;
 
 		if (this.isChallenger) {
 			this.playerTwo.sync(this.gameData.player2Position, this.gameData.player2Direction, now);
@@ -433,15 +432,17 @@ class Game {
 			this.showScore();
 			if (!this.gameover)
 				this.send_ready();
+			else
+				this.endGame();
 		}
 
 		if (this.gameData.status === 'forfeited') {
 			if (this.isChallenger) {
-				this.playerOne.score = 11;
+				this.playerOne.score = this.gameData.scoreLimit;
 				this.playerTwo.score = 0;
 			} else {
 				this.playerOne.score = 0;
-				this.playerTwo.score = 11;
+				this.playerTwo.score = this.gameData.scoreLimit;
 			}
 			this.showScore();
 			this.endGame();
@@ -547,8 +548,7 @@ function startGame(gameData, player1, player2, isChallenger, matchId) {
 	}
 	root.innerText = `${player1.name} vs ${player2.name}\n`;
 
-	let scoreLimit = 11;
-	const pong = new Game(gameData, root, scoreLimit, player1, player2, isChallenger, matchId);
+	const pong = new Game(gameData, root, player1, player2, isChallenger, matchId);
 	pong.loop();
 }
 
