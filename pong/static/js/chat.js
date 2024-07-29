@@ -33,7 +33,7 @@ export function initWS(roomName) {
     document.querySelector("#room-name").textContent = roomName;
     document.querySelector("#chat-log").value = "";
     document.querySelector("#chat-message-input").focus();
-    updateFriendsAndBlocked(); 
+    updateFriendsAndBlocked();
   };
 
   const chatLog = document.getElementById("chat-log");
@@ -336,8 +336,8 @@ async function updateFriendsAndBlocked() {
     const friendsData = await friendsResponse.json();
     const blockedData = await blockedResponse.json();
 
-    sessionStorage.setItem('friends', JSON.stringify(friendsData.map(friend => friend.username)));
-    sessionStorage.setItem('blocked', JSON.stringify(blockedData.map(blocked => blocked.username)));
+    sessionStorage.setItem('friends', JSON.stringify(friendsData.results.map(friend => friend.username)));
+    sessionStorage.setItem('blocked', JSON.stringify(blockedData.results.map(blocked => blocked.username)));
   
   } catch (error) {
     console.error("Error:", error);
