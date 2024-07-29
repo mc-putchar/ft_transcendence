@@ -36,18 +36,18 @@ testlogin:
 	@echo "Test done"
 
 migrate:
-	$(DC) -f $(SRC) run django python manage.py makemigrations $(APPS)
-	$(DC) -f $(SRC) run django python manage.py migrate
+	$(DC) -f $(SRC) run --rm django python manage.py makemigrations $(APPS)
+	$(DC) -f $(SRC) run --rm django python manage.py migrate
+	$(DC) -f $(SRC) stop
 
 clean:
-	$(DC) -f $(SRC) down
-	$(DC) -f $(SRC) run -d db
-	sleep 5
+	$(DC) -f $(SRC) start db
 	$(DC) -f $(SRC) exec db dropdb -U $(DB_USER) db_transcendence
 	$(DC) -f $(SRC) exec db createdb -U $(DB_USER) db_transcendence
+	$(DC) -f $(SRC) stop db
 
 collect:
-	$(DC) -f $(SRC) run django python manage.py collectstatic --noinput --clear
+	$(DC) -f $(SRC) run --rm --no-deps django python manage.py collectstatic --noinput --clear
 
 schema:
-	$(DC) -f $(SRC) run django python manage.py spectacular --validate --color --file schema.yml
+	$(DC) -f $(SRC) run --rm --no-deps django python manage.py spectacular --validate --color --file schema.yml
