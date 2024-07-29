@@ -4,7 +4,7 @@ import random
 import string
 
 import requests
-from api.models import Friend, Profile, Blocked
+from api.models import Friend, Profile, Blocked, PlayerMatch
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 
 from .auth42 import exchange_code_for_token, get_user_data
 from .forms import LoginForm, ProfileUpdateForm, UserUpdateForm
+from game.serializers import PlayerSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -67,21 +68,30 @@ def home_data(request):
 
 def show_profile(request, username):
     user = get_object_or_404(Profile, user__username=username)
-    if user.isOnline:
-        status = 'Online'
-    else:
-        status = 'Offline'
+    status = 'Online' if user.isOnline else 'Offline'
 
     is_me = request.user == user.user
-    is_friend = Friend.is_friend(request.user, user.user)
-    is_blocked = Blocked.is_blocked(request.user, user.user)
+    is_friend = False if not is_me else Friend.is_friend(request.user, user.user)
+    is_blocked = False if not is_me else Blocked.is_blocked(request.user, user.user)
+
+    played = PlayerMatch.objects.filter(player=user)
+    wins = played.filter(winner=True).count()
+    losses = played.count() - wins
+    match_stats = {
+        'played': played.count(),
+        'wins': wins,
+        'losses': losses,
+    }
+    serializer = PlayerSerializer(user)
     context = {
-        'user': user,
+        'username': user.user.username,
+        'user': serializer.data,
         'status': status,
         'profilepic': user.image.url,
         'is_me': is_me,
         'is_friend': is_friend,
         'is_blocked': is_blocked,
+        'match_stats': match_stats,
     }
     content = render_to_string('profile.html', context=context)
     data = {'title': 'Profile', 'content': content}

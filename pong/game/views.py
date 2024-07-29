@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from api.models import Match, Profile, PlayerMatch
-from .serializers import MatchSerializer, PlayerSerializer, PlayerMatchSerializer
+from api.models import Match, Profile, PlayerMatch, TournamentPlayer
+from .serializers import MatchSerializer, PlayerSerializer, PlayerMatchSerializer, TournamentPlayerSerializer
 from django.contrib.auth.models import User
 
 
@@ -29,18 +29,26 @@ class MatchViewSet(viewsets.ModelViewSet):
         else:
             return Response({'status': 'already joined'}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post'])
-    def play(self, request, pk=None):
-        match = self.get_object()
-        player = Profile.objects.get(user=request.user)
-        player_match = PlayerMatch.objects.get(match=match, player=player)
-        player_match.save()
-        return Response({'status': 'score updated', 'score': player_match.score})
-
 class PlayerViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = PlayerSerializer
 
+    @action(detail=True, methods=['get'])
+    def match_history(self, request, pk=None):
+        player = self.get_object()
+        player_matches = PlayerMatch.objects.filter(player=player)
+        serializer = PlayerMatchSerializer(player_matches, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'])
+    def tournament_history(self, request, pk=None):
+        player = self.get_object()
+        tournament_players = TournamentPlayer.objects.filter(player=player)
+        serializer = TournamentPlayerSerializer(tournament_players, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class PlayerMatchViewSet(viewsets.ModelViewSet):
     queryset = PlayerMatch.objects.all()
     serializer_class = PlayerMatchSerializer
+
