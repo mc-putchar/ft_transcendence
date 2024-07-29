@@ -23,7 +23,7 @@ class Friend(models.Model):
 
     @classmethod
     def make_friend(cls, current_user, new_friend):
-        friend, created = cls.objects.get_or_create(
+        friend, _ = cls.objects.get_or_create(
             current_user=current_user
         )
         friend.users.add(new_friend)
@@ -31,17 +31,17 @@ class Friend(models.Model):
     # Forever alone
     @classmethod
     def lose_friend(cls, current_user, old_friend):
-        friend, created = cls.objects.get_or_create(
+        friend, _ = cls.objects.get_or_create(
             current_user=current_user
         )
         friend.users.remove(old_friend)
 
     @classmethod
-    def is_friend(current_user, other_user):
-        friend, created = cls.objects.get_or_create(
+    def is_friend(cls, current_user, other_user):
+        friend, _ = cls.objects.get_or_create(
             current_user=current_user
         )
-        return other_user in friend.users
+        return friend.users.filter(id=other_user.id).exists()
 
 
 class Blocked(models.Model):
@@ -50,24 +50,24 @@ class Blocked(models.Model):
 
     @classmethod
     def block_user(cls, annoyed_user, new_blocked):
-        blocked, created = cls.objects.get_or_create(
+        blocked, _ = cls.objects.get_or_create(
             annoyed_user=annoyed_user
         )
         blocked.users.add(new_blocked)
 
     @classmethod
     def unblock_user(cls, annoyed_user, old_blocked):
-        blocked, created = cls.objects.get_or_create(
+        blocked, _ = cls.objects.get_or_create(
             annoyed_user=annoyed_user
         )
         blocked.users.remove(old_blocked)
 
     @classmethod
-    def is_blocked(annoyed_user, other_user):
-        blocked, created = cls.objects.get_or_create(
+    def is_blocked(cls, annoyed_user, other_user):
+        blocked, _ = cls.objects.get_or_create(
             annoyed_user=annoyed_user
         )
-        return other_user in blocked.users
+        return blocked.users.filter(id=other_user.id).exists()
 
 
 class Tournament(models.Model):
