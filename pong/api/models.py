@@ -4,10 +4,15 @@ from django.utils import timezone
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    alias = models.CharField(max_length=150, default='alias')
+    alias = models.CharField(max_length=150, blank=True)
     friendList = models.TextField(default="[]")
     isOnline = models.BooleanField(default=False)
     image = models.ImageField(upload_to='profile_images', default='profile_images/default.png')
+
+    def save(self, *args, **kwargs):
+        if not self.alias:
+            self.alias = f'player#{self.user.id}'
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.user.username} Profile'
