@@ -14,7 +14,7 @@ services:
   blockchain:
     image: blockchain
     build:
-      context: "${PWD}/blockchain"
+      context: "${PWD}/pong/blockchain"
     environment:
       - INFURA_TESTNET
     networks:

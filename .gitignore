@@ -17,5 +17,5 @@ tags
 myenv
 .vscode
 generate.py
-hardhat
+node-modules
 en.subject*
