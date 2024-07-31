@@ -17,5 +17,5 @@ tags
 myenv
 .vscode
 generate.py
-node-modules
+node_modules
 en.subject*
