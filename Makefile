@@ -1,5 +1,8 @@
 NAME := ft_transcendence
+
+APPS := pong chat api game
 DB_USER := ft_user
+
 # detect debian system (cloud)
 ifeq ($(shell uname -a | grep -c Debian), 1)
 	DC := docker-compose
@@ -9,9 +12,10 @@ else
 	SRC := compose.yaml
 endif
 
-.PHONY: up down start stop re migrate collect clean
+.PHONY: up down start stop re debug migrate collect clean schema
 
 up:
+	@echo "Building and starting containers, with $(DC) and $(SRC)"
 	$(DC) -f $(SRC) up --build
 
 down start stop:
@@ -20,18 +24,30 @@ down start stop:
 re:
 	$(DC) -f $(SRC) up --build --force-recreate
 
+
+debug:
+	@echo 'using $(DC) and $(SRC)'
+	# docker-compose -f docker-compose.yml --profile debug up --build
+	$(DC) -f $(SRC) --profile debug up --build 
+
+testlogin:
+	# docker exec ft_transcendence-django-1 python test_selenium.py
+	docker exec ft_transcendence-django-1 python test_selenium.py
+	@echo "Test done"
+
 migrate:
-	$(DC) -f $(SRC) run django python manage.py makemigrations pong chat api
-	$(DC) -f $(SRC) run django python manage.py migrate
+	$(DC) -f $(SRC) run --rm django python manage.py makemigrations $(APPS)
+	$(DC) -f $(SRC) run --rm django python manage.py migrate
+	$(DC) -f $(SRC) stop
 
 clean:
-	$(DC) -f $(SRC) up --build -d
+	$(DC) -f $(SRC) start db
 	$(DC) -f $(SRC) exec db dropdb -U $(DB_USER) db_transcendence
 	$(DC) -f $(SRC) exec db createdb -U $(DB_USER) db_transcendence
-	$(DC) -f $(SRC) down
-	$(MAKE) migrate
+	$(DC) -f $(SRC) stop db
 
 collect:
-	$(DC) run django python manage.py collectstatic --noinput --clear
+	$(DC) -f $(SRC) run --rm --no-deps django python manage.py collectstatic --noinput --clear
 
-
+schema:
+	$(DC) -f $(SRC) run --rm --no-deps django python manage.py spectacular --validate --color --file schema.yml

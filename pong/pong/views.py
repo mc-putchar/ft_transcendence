@@ -4,19 +4,20 @@ import random
 import string
 
 import requests
+from api.models import Friend, Profile, Blocked, PlayerMatch
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout  # Import logout
 from django.contrib.auth.models import User
-from django.http import HttpResponse, JsonResponse
+from django.core.files.images import ImageFile
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 
-from api.models import Friend, Profile
-
 from .auth42 import exchange_code_for_token, get_user_data
 from .forms import LoginForm, ProfileUpdateForm, UserUpdateForm
+from game.serializers import PlayerSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,8 @@ def get_friends(user):
     friend_instance, created = Friend.objects.get_or_create(current_user=user)
     friends = []
     for friend in friend_instance.users.all():
-        friends += Profile.objects.get_or_create(user=friend)
+        profile, created = Profile.objects.get_or_create(user=friend)
+        friends.append(profile)
     return friends
 
 
@@ -66,17 +68,30 @@ def home_data(request):
 
 def show_profile(request, username):
     user = get_object_or_404(Profile, user__username=username)
-    if user.isOnline:
-        status = 'Online'
-    else:
-        status = 'Offline'
+    status = 'Online' if user.isOnline else 'Offline'
 
-    logger.critical("Profile: " + str(user))
+    is_me = request.user == user.user
+    is_friend = False if not is_me else Friend.is_friend(request.user, user.user)
+    is_blocked = False if not is_me else Blocked.is_blocked(request.user, user.user)
 
+    played = PlayerMatch.objects.filter(player=user)
+    wins = played.filter(winner=True).count()
+    losses = played.count() - wins
+    match_stats = {
+        'played': played.count(),
+        'wins': wins,
+        'losses': losses,
+    }
+    serializer = PlayerSerializer(user)
     context = {
-        'user': user,
+        'username': user.user.username,
+        'user': serializer.data,
         'status': status,
-        'profilepic': user.image.url
+        'profilepic': user.image.url,
+        'is_me': is_me,
+        'is_friend': is_friend,
+        'is_blocked': is_blocked,
+        'match_stats': match_stats,
     }
     content = render_to_string('profile.html', context=context)
     data = {'title': 'Profile', 'content': content}
@@ -101,8 +116,11 @@ def update_profile(request):
         'username': request.user.username,
         'profilepic': request.user.profile.image.url
     }
-    content = render_to_string('update_profile.html', context=context)
-    data = {'title': 'Profile', 'content': content}
+    if request.method == 'POST':
+        data = {'image': request.user.profile.image.url}
+    else:
+        content = render_to_string('update_profile.html', context=context)
+        data = {'title': 'Profile', 'content': content}
     return JsonResponse(data)
 
 
@@ -158,10 +176,10 @@ def online(request):
         data = {"title": "Online", "content": html}
         return JsonResponse(data, safe=False)
 
-    username = request.user.username
+    profile = request.user.profile
 
     html = render_to_string('online_game.html', request=request, context={
-                            "username": username})
+                            "profile": profile})
 
     data = {"title": "Online", "content": html}
     return JsonResponse(data, safe=False)
@@ -227,7 +245,6 @@ def register(request):
 
         if user is not None:
             django_login(request, user)
-
         return JsonResponse({"title": "Register", "content": "Registration successful"})
     else:
         form_html = render_to_string(
@@ -270,20 +287,21 @@ def redirect_view(request):
             user, created = User.objects.get_or_create(
                 username=username, defaults={'email': email})
 
-            profile, created = Profile.objects.get_or_create(
+            profile, profile_created = Profile.objects.get_or_create(
                 user=user, defaults={'alias': username})
 
-            if not created:
+            if not profile_created:
                 profile.alias = username
 
-            # takes the intra profile picture and adds it as a Profile user
-            if created and image_url:
-                response = requests.get(image_url['versions']['medium'])
-                if response.status_code == 200:
-                    image_path = f'profile_images/{username}.png'
-                    with open(f'media/{image_path}', 'wb') as f:
-                        f.write(response.content)
-                    profile.image.url = image_path
+            # Check if the profile picture is still the default
+            if profile_created or profile.image.name == 'profile_images/default.png':
+                if image_url:
+                    response = requests.get(image_url['versions']['medium'])
+                    if response.status_code == 200:
+                        image_path = f'profile_images/{username}.png'
+                        with open(f'media/{image_path}', 'wb') as f:
+                            f.write(response.content)
+                        profile.image = image_path
 
             profile.save()
             django_login(request, user)

@@ -1,7 +1,10 @@
 ## _Ft_Transcendence_
 
 
-## _TODO_ : _Carlo_
+## _TODO_ :  
+
+### _Carlo_:
+
   - [ ] make mention modals behave like notifications over websockets
   - [ ] Structure a database model for storing chat messages :
 	* main chat 
@@ -9,9 +12,21 @@
 	* ability to block users 
 	* add them as friends
 
-### _Basics_:
+### _Martin_:
+
+  - [ ] Implement tournament creation (local and online)
+  - [ ] Rework Pong Classic
+  - [ ] Improve predictive client side rendering
+  - [ ] TranscendCLI
+
+
+## _Basics_:
+
   - Everything must be launched with a single command line to run an autonomous
-    container provided by Docker . Example : docker-compose up --build
+    container provided by Docker . Example : docker-compose up --build  
+	```bash
+	$ make 
+	```
 
   * _III.3 Game_
     - *`tournament`*. This tournament will consist of multiple players who
@@ -24,7 +39,7 @@
       begin
 
     - *`matchmaking`* system: the tournament system organize the
-      matchmaking o**f the participants, and announce the next fight.
+      matchmaking of the participants, and announce the next fight.
 
   * _III.4 Security_
     - Any password stored in your database, if applicable, must be **_hashed_**.
@@ -44,29 +59,29 @@
   - [x] The project must use vanilla JavaScript for the frontend.
 
 ### _Points:_
-```python
-1   - Django			        1
+```
+1   - Django                            1
 0.5 - Bootstrap
-0.5 - Postgres	                        1
-1   - Advance 3d Techniques             1
+0.5 - Postgres                          1
+1   - Advanced 3D Techniques            1
 1   - Multiple players                  1
 1   - remote authentication 42 Oauth    1
-0.5 - Additional browser suppor
-0.5 - Support of all devices		1
-1   - Standart User managment		1
+0.5 - Additional browser support
+0.5 - Support of all devices            1
+1   - Standard User managment           1
 1   - Blockchain                        1
+1   - Remote Player Management          1
+1   - Server-Side Pong Game with API    1
+1   - Live Chat                         1
 ```
-      required 7 ,     current total  = 8
-```python
+      required 7 ,     current total  = 11
+```
 
-1   - Remote Player Management		1
-1   - AI Opponent			1
-1   - Additional Game			1
-1   - Live Chat				1
+1   - AI Opponent					1
+1   - Additional Game				1
 1   - Designing the Backend as		1
 	  Microservices.
 
-1  - Server-Side Pong Game		1
 ```
 <br>
 

@@ -6,7 +6,8 @@ import {
   handleRegisterForm,
 } from "./views/forms.js";
 
-import { initWS } from "./chat.js";
+import { initWS, getFriendsAndBlocked } from "./chat.js";
+import { gameRouter } from "./game-router.js";
 
 // Transition durations in milliseconds
 const fadeOutDuration = 200;
@@ -19,12 +20,13 @@ const viewFunctions = {
   "/login": renderLogin,
   "/online": renderContent,
   "/logout": renderLogout,
-  "/register": renderRegister,
+  "/register": renderContent,
   "/chat": renderContent,
   "/profile": renderContent,
   "/users": renderContent,
-  "/addFriend": null,
-  "/deleteFriend": null,
+  "/addFriend": getFriendsAndBlocked,
+  "/deleteFriend": getFriendsAndBlocked,
+  "/block": getFriendsAndBlocked,
 };
 
 const routes = {
@@ -39,6 +41,7 @@ const routes = {
   "/profile": { title: "Profile", endpoint: "/profile" },
   "/addFriend": { title: null, endpoint: "/addFriend" },
   "/deleteFriend": { title: null, endpoint: "/deleteFriend" },
+  "/block": { title: null, endpoint: "/block" },
 };
 
 const wsRoutes = ["/chat"];
@@ -51,12 +54,8 @@ function renderLogout(data) {
   return `<h2>${data.title}</h2><p>${data.content}</p>`;
 }
 
-function renderRegister(data) {
-  return `${data.content}`;
-}
-
 function renderContent(data) {
-  return ` ${data.content}`;
+  return `${data.content}`;
 }
 
 function router() {
@@ -73,8 +72,13 @@ function router() {
       return;
     }
   }
-  if (location.pathname.startsWith("/addFriend") || location.pathname.startsWith("/deleteFriend")) {
+  if (location.pathname.startsWith("/addFriend") || location.pathname.startsWith("/deleteFriend") || location.pathname.startsWith("/block")) {
     return;
+  }
+  if (location.pathname.startsWith("/game/")) {
+    const gameData = gameRouter(location.pathname);
+    if (gameData === null)
+      return;
   }
   // Static routes handling
   let view = routes[path];
@@ -93,14 +97,9 @@ function router() {
       } else if (path.startsWith("/chat")) {
         const roomName = path.split("/")[2] || "lobby";
         handleChat(roomName);
-      } 
+      }
     });
-  } else if (path.startsWith("/chat")) {
-    const roomName = path.split("/")[2];
-    fetchData("/chat/" + roomName, renderContent, () => {
-      // Any additional logic needed after fetching chat data
-    });
-  } 
+  }
 }
 
 function fetchData(endpoint, renderFunction, callback) {
@@ -165,8 +164,11 @@ function handleChat(roomName) {
 }
 
 // test audio on click from in house monophonic FM synthesizer
-document.getElementById("app").addEventListener("click", (event) => {
-  // playTone(222, 0.5, 122);
+document.getElementById("app").addEventListener("click", () => {
+  // randomize value from 0.1 to 200
+  let mod = Math.random() * 200 + 0.1;
+  let amount = Math.random() * 200 + 0.1;
+  playTone(112, mod, amount);
 });
 
 // - Handle back and forward browser navigation
@@ -196,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function chatEventListeners() {
   document.querySelector("#chat-message-input").focus();
 
-  document.querySelector("#chat-message-input").onkeydown = function(e) {
+  document.querySelector("#chat-message-input").onkeydown = function() {
     const chatInput = document.querySelector("#chat-message-input");
 
     const commands = {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
 
 {% load static %}
@@ -65,7 +65,7 @@
                                 <li><form id="logoutForm" class="dropdown-item" method="post" action="{% url 'logout' %}">
                                     {% csrf_token %}
                                     {{ form.as_p }}
-                                    <button  class="btn btn-outline-dark" type="submit">Logout</button>
+                                    <button  class="btn btn-outline-danger" type="submit">Logout</button>
                                 </form></li>
                             <li><hr class="dropdown-divider"></li>
                         
@@ -96,8 +96,6 @@
                 </div>
             </div>
     </nav>
-    <br>
-    <br>
     <!-- Main Content  to be loaded dynamically -->
     <main id="app" class="container"></main>
     <!--                                        -->
@@ -106,6 +104,7 @@
     <script type="module" id="pong-classic" src="{% static 'js/pong-game.js' %}"></script>
     <script type="module" id="pong-3d" src="{% static 'js/pong3d.js' %}"></script>
     <script type="module" id="pong-4p" src="{% static 'js/multi_pong4.js' %}"></script>
+    <script type="module" id="pong-online" src="{% static 'js/pong-online.js' %}"></script>
     <script type="module" id="profile" src="{% static 'js/profile.js' %}"></script>
 
     <!-- Bootstrap JS -->

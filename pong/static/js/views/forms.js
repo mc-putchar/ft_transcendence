@@ -1,7 +1,7 @@
 import { csrftoken, router } from "../main.js";
 
 function handleLoginForm() {
-  document.getElementById("loginForm").addEventListener("submit", function (e) {
+  document.getElementById("loginForm").addEventListener("submit", function(e) {
     e.preventDefault();
     const formData = new FormData(this);
     fetch("/login", {
@@ -31,7 +31,7 @@ function handleLoginForm() {
 function handleLogoutForm() {
   document
     .getElementById("logoutForm")
-    .addEventListener("submit", function (e) {
+    .addEventListener("submit", function(e) {
       e.preventDefault();
       fetch("/logout", {
         method: "POST",
@@ -60,7 +60,7 @@ function handleLogoutForm() {
 function handleRegisterForm() {
   document
     .getElementById("registerForm")
-    .addEventListener("submit", function (e) {
+    .addEventListener("submit", function(e) {
       e.preventDefault();
       const formData = new FormData(this);
       fetch("/register", {
@@ -81,6 +81,7 @@ function handleRegisterForm() {
           document.getElementById("app").innerHTML = `<p>${data.content}</p>`;
           if (data.content === "Registration successful") {
             history.pushState("", "", "/");
+            window.location.href = "/";
             router();
           }
         })

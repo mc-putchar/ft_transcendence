@@ -1,35 +1,84 @@
 {% load static %}
+{% load custom_filters %}
 {% csrf_token %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card p-2 shadow-sm">
-            <div class="card-body text-center container-background">
-                <button class="btn btn-dark" onclick="history.back()">Go Back</button>
-                <div class="container-fluid">
-                    <div class="card-body text-center" >
-                        <ul class="list-group list-group-flush mb-4">
-                            <li class="list-group-item list-group-item-dark"><b>User:</b> {{ user.user.username }}</li>
-                            <li class="list-group-item list-group-item-dark"><b>Email:</b> {{ user.user.email }}</li>
-                            <li class="list-group-item list-group-item-dark"><b>Alias:</b> {{ user.alias }}</li>
-                            <li class="list-group-item list-group-item-dark"><b>Status:</b>
-                            <li id="user-id">{{ user.user.id }} </li>
-                                {% if user.isOnline %}
-                                    <span class="text-success">{{ status }}</span>
-                                {% else %}
-                                    <span class="text-danger">{{ status }}</span>
-                                {% endif %}
-                            </li>
-                            <li class="list-group-item list-group-item-dark">
-                                <img src="{{ profilepic }}" class="rounded-circle account-img" alt="Profile Picture" style="width: 100px; height: auto;">
-                            </li>
-                            <a class="btn btn-dark" href="/addFriend" data-link>Add</a>
-                            <!-- TODO show one or the other if we are already friends or not -->
-                            <a class="btn btn-dark" href="/deleteFriend" data-link>remove</a>
-                            <input type="hidden" id="friend-id" value="{{ user.user.id }}">
-                            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                        </ul>
-                   </div>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
+                    <h5 class="mb-0">Profile</h5>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ profilepic }}" class="rounded-circle account-img mb-3" alt="Profile Picture" style="width: 150px; height: auto;">
+                    <h3 class="card-title">{{ username }}</h3>
+                    <p class="card-text"><b>Alias:</b> {{ user.alias }}</p>
+                    <p class="card-text"><b>Status:</b> 
+                        <span class="{% if user.isOnline %}text-success{% else %}text-danger{% endif %}">{{ status }}</span>
+                    </p>
+                    <p class="card-text"><b>Games played:</b> {{ match_stats.played }}</p>
+                    <p class="card-text"><b>Won: <span class="text-success">{{ match_stats.wins }}</span> / Lost: <span class="text-danger">{{ match_stats.losses }}</span></b></p>
+                    
+                    {% if is_me %}
+                        <a class="btn btn-primary" href="/profile" data-link>Edit Profile</a>
+                    {% else %}
+                        {% if is_friend %}
+                            <a class="btn btn-danger" href="/deleteFriend" data-link>Remove Friend</a>
+                        {% else %}
+                            <a class="btn btn-success" href="/addFriend" data-link>Add Friend</a>
+                        {% endif %}
+                        {% if is_blocked %}
+                            <a class="btn btn-success" href="/unblock" data-link>Unblock</a>
+                        {% else %}
+                            <a class="btn btn-danger" href="/block" data-link>Block</a>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <input type="hidden" id="friend-id" value="{{ user.user }}">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                </div>
+                <div class="accordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#matchesCollapse" aria-expanded="true" aria-controls="matchesCollapse">
+                                Match History
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="matchesCollapse" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="list-group">
+                                {% for match in user.matches_played %}
+                                    <div class="list-group-item">
+                                        <p><b>Match Date:</b> {{ match.match.date | format_datetime:"%d-%m-%Y %I:%M" }}</p>
+                                        <p><span class="{% if match.winner %}text-success{% else %}text-danger{% endif %}"><b>Scored:</b> {{ match.score }}</span></p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tournamentsCollapse" aria-expanded="true" aria-controls="tournamentsCollapse">
+                                Tournament History
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="tournamentsCollapse" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="list-group">
+                                {% for t in user.tournaments_played %}
+                                    <div class="list-group-item">
+                                        <p><b>Tournament Name:</b> {{ t.tournament.name }}</p>
+                                        <p><b>Tournament Date:</b> {{ t.tournament.start_date }}</p>
+                                        <p><b>Place:</b> {{ t.tournament.place }}</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>

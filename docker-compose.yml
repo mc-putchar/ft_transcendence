@@ -61,3 +61,30 @@ services:
       redis:
         condition: service_started
     restart: unless-stopped
+
+  selenium:
+    image: selenium/standalone-chrome:latest
+    volumes:
+      - /dev/shm:/dev/shm
+    networks:
+      - transcendeNet
+    ports:
+      - "4444:4444"
+      - "5900:5900"  # VNC port
+    restart: unless-stopped
+    profiles:
+      - debug
+
+  novnc:
+    image: javanile/novnc
+    environment:
+      - REMOTE_HOST=localhost
+      - REMOTE_PORT=5901
+    ports:
+      - 8081:8081
+    links:
+      - selenium
+    profiles:
+      - debug
+    networks:
+      - transcendeNet

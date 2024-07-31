@@ -4,7 +4,6 @@
         <div class="card p-2 shadow-sm">
             <div class="card-body text-center container-background">
                 <h2 class="h4 mb-4">Logged in</h1>
-                    <!-- <button onclick="window.location.href='/enter'" class="btn btn-primary btn-lg mb-3">Enter</button> -->
                     {% if user_data.displayname %} <!-- 42 User -->
                     <ul class="list-group list-group-flush mb-4">
                         <li class="list-group-item">User: {{ user_data.login }}</li>
@@ -23,7 +22,7 @@
                             <li class="list-group-item">Alias: {{ user_data.alias }}</li>
                             <li class="list-group-item">Status: {{ user_data.status }}</li>
                             <li class="list-group-item">
-                                <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail">
+                                <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail" style="width: 20vw; height: auto;">
                             </li>
                             <p>Friends:</p>
                             {% for friend in user_data.friends %}
@@ -38,7 +37,7 @@
                     {% endif %}
                     <div class="container-fluid">
                         <div class="row">
-                            <a class="btn btn-dark" href="/chat" data-link>Enter Chat</a>
+                            <a class="btn btn-primary" href="/chat" data-link>Enter Chat</a>
                         </div>
                     </div>
                     <div class="row">

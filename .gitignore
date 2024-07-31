@@ -1,4 +1,3 @@
-pong/media
 __pycache__
 .env
 .venv/
@@ -19,3 +18,4 @@ myenv
 generate.py
 node_modules
 en.subject*
+subject.*

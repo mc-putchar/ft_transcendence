@@ -40,41 +40,28 @@ html,
 body {
   padding: 0;
   margin: 0;
+  height: 100%;
 }
 
 canvas {
   margin-bottom: 30px;
   margin-top: auto;
-  width: 90%;
-  display: flex;
+  width: 100%;
+  height: 100%;
+  display: block;
   align-content: center;
   background-color: black;
+}
+
+#fullscreenButton {
+  text-align: left;
+  cursor: pointer;
+  font-size: 32px;
 }
 
 .helptext {
   font-size: 10;
   font-family: "Lucida Sans";
-}
-
-.userlist {
-  flex-direction: column;
-  border: 1px solid rgba(222, 222, 222, 100);
-  border-radius: 2px;
-  display: block;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  width: 100%;
-}
-
-.user-label {
-  border: 1px solid rgba(222, 222, 222, 0.8);
-  border-radius: 2px;
-  display: block;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  width: 100%;
 }
 
 .separator {
@@ -90,6 +77,20 @@ canvas {
   min-width: 100vw;
   height: 100%;
   width: 100%;
+}
+
+.game-container {
+  position: relative;
+  display: block;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 100vw;
+  height: 100%;
+  width: 100%;
+}
+
+.game-ui {
+  position: absolute;
 }
 
 a,
@@ -112,53 +113,19 @@ img {
   -ms-user-select: none;
 }
 
+textarea {
+  resize: none;
+}
+
 /* 4player */
 .Buttons {
   border-style: solid;
   border-color: rgb(10, 10, 92);
 }
 
-/* Define the fade-in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Define the fade-out animation */
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Apply the animation to .fade-enter */
-.fade-enter {
-  opacity: 0;
-  animation: fadeIn 0.7s forwards;
-}
-
-/* Apply the animation to .fade-exit */
-.fade-exit {
-  opacity: 1;
-  animation: fadeOut 0.3s forwards;
-}
-
 .modal {
   animation: all fadeIn 0.3s ease;
 
-}
-
-html,
-body {
-  padding: 0;
-  margin: 0;
 }
 
 .userlist {
@@ -189,13 +156,13 @@ body {
 
 
 /* Make the app take the full width and till the bottom of the page */
-.app {
+/* .app {
   margin-top: 12vh;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-width: 100vw;
-}
+} */
 
 /* Header styling */
 h1 {
@@ -336,38 +303,6 @@ chat-userlist {
 
 #room-name {
   margin-top: 15px;
-}
-
-/* Define the fade-in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Define the fade-out animation */
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Apply the animation to .fade-enter */
-.fade-enter {
-  opacity: 0;
-  animation: fadeIn 0.7s forwards;
-}
-
-/* Apply the animation to .fade-exit */
-.fade-exit {
-  opacity: 1;
-  animation: fadeOut 0.3s forwards;
 }
 
 .navbar.navbar-default {

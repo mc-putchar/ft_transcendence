@@ -1,4 +1,5 @@
 {% csrf_token %}
+<div id="game-container" class="container-fluid" style="display: none">GAME</div>
 <div class="container-fluid chat-container">
   <div class="row">
     <div class="col-12 text-center">
@@ -15,7 +16,7 @@
     </div </div>
     <div class="row">
       <div class="col-10">
-        <label id="chat-username"> {{ user.username }}</label>
+        <label id="chat-username">{{ user.username }}</label>
         <input id="chat-message-input" class="form-control" type="text" autocomplete="off"
           placeholder="Type your message here..." />
       </div>

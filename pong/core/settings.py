@@ -19,13 +19,15 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'pong.ktano-studio.com',
-    'localhost',
-    '127.0.0.1',
-    '.42berlin.de',
-    'transcend42.online',
-]
+ALLOWED_HOSTS = ["*"]
+
+# ALLOWED_HOSTS = [
+#     'pong.ktano-studio.com',
+#     'localhost',
+#     '127.0.0.1',
+#     '.42berlin.de',
+#     'transcend42.online',
+# ]
 CSRF_TRUSTED_ORIGINS = [
     'https://pong.ktano-studio.com',
     'https://localhost:4243',
@@ -48,11 +50,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'drf_spectacular',
 
     'pong',
     'chat',
     'api',
 	'blockchain',
+    'game',
 ]
 
 MIDDLEWARE = [
@@ -94,10 +98,7 @@ CHANNEL_LAYERS = {
         },
     },
 }
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# Use database-backed sessions
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
@@ -111,10 +112,6 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -132,6 +129,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
@@ -139,10 +137,17 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+	'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 42,
 }
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
+SPECTACULAR_SETTINGS = {
+    'TITLE': '42 Transcendence API',
+    'DESCRIPTION': '42Berlin Hyper Transcendence API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
+}
 
 LANGUAGE_CODE = 'en-us'
 
@@ -156,7 +161,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # LOGOUT REDIRECT
 LOGOUT_REDIRECT_URL = '/'
-LOGIN_REDIRECT_URL = '/'
+
+LOGIN_REDIRECT_URL = ''
 
 
 STATIC_URL = '/static/'
