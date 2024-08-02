@@ -1,10 +1,12 @@
 # chat/consumers.py
 import json
+import jwt
 
 from api.models import Profile
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
+from django.conf import settings
 
 import logging
 
@@ -13,16 +15,38 @@ logger = logging.getLogger(__name__)
 class ChatConsumer(AsyncWebsocketConsumer):
     
     async def set_online_status(self, status):
-        profile = await sync_to_async(Profile.objects.get)(user=self.scope["user"])
-        await sync_to_async(profile.set_online_status)(status)
+        try:
+            profile = await sync_to_async(Profile.objects.get)(user=self.user)
+            await sync_to_async(profile.set_online_status)(status)
+        except Exception as e:
+            logger.error(f"Error setting online status: {e}")
+
+    @database_sync_to_async
+    def get_user_by_id(self, user_id):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        return User.objects.get(id=user_id)
 
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
-        self.username = self.scope["user"].username
-        if not self.scope["user"].is_authenticated:
+        self.token = self.scope['query_string'].decode().split('=')[1]
+        try:
+            decoded_token = jwt.decode(self.token, settings.SECRET_KEY, algorithms=["HS256"])
+            self.user = await self.get_user_by_id(decoded_token['user_id'])
+            if not self.user:
+                raise jwt.InvalidTokenError("User not found")
+        except jwt.ExpiredSignatureError:
             await self.close()
             return
+        except jwt.InvalidTokenError:
+            await self.close()
+            return
+        except Profile.DoesNotExist:
+            await self.close()
+            return
+
+        self.username = self.user.username
         # set user online status
         await self.set_online_status(True)
 
@@ -41,6 +65,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.chat_message({"message": "", "username": self.username})
 
     async def disconnect(self, close_code):
+        try:
+            if not self.user:
+                return
+        except AttributeError:
+            return
         await self.set_online_status(False)
 
         # Remove user from the lobby

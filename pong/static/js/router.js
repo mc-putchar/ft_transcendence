@@ -22,6 +22,7 @@ class Router {
 		window.addEventListener('hashchange', () => this.route());
 		this.loadNav();
 		this.loadCookieConsentFooter();
+		this.loadChat('lobby');
 		this.route();
 	}
 
@@ -34,18 +35,21 @@ class Router {
 		const template = hash || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
+		} else if (template.startsWith('chat')) {
+			const roomName = template.substring(5) || 'lobby';
+			this.loadChat(roomName);
 		} else {
 			this.loadTemplate(template);
 		}
 	}
 
-	animateContent(newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
-		this.appElement.classList.add("fade-exit");
+	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
+		element.classList.add("fade-exit");
 		setTimeout(() => {
-			this.appElement.innerHTML = newContent;
-			this.appElement.classList.remove("fade-exit");
-			this.appElement.classList.add("fade-enter");
-			setTimeout(() => this.appElement.classList.remove("fade-enter"), fadeInDuration);
+			element.innerHTML = newContent;
+			element.classList.remove("fade-exit");
+			element.classList.add("fade-enter");
+			setTimeout(() => element.classList.remove("fade-enter"), fadeInDuration);
 			if (callback) callback();
 		}, fadeOutDuration);
 	}
@@ -84,8 +88,9 @@ class Router {
 			if (!response.ok) {
 				throw new Error(`Cannot load ${template}: ${response.status}`);
 			}
+			const element = this.appElement;
 			const html = await response.text();
-			this.animateContent(html, () => this.handlePostLoad(template));
+			this.animateContent(element, html, () => this.handlePostLoad(template));
 		} catch (error) {
 			console.error("Error loading template: ", error);
 			this.displayError("Error loading content");
@@ -106,10 +111,36 @@ class Router {
 				throw new Error(`Cannot load ${template}: ${response.status}`);
 			}
 			const html = await response.text();
-			this.animateContent(html);
+			this.animateContent(this.appElement, html);
 		} catch (error) {
 			console.error("Error loading user template: ", error);
 			this.displayError("Error loading content");
+		}
+	}
+
+	async loadChat(roomName) {
+		try {
+			const accessToken = sessionStorage.getItem('access_token') || '';
+			if (!accessToken) {
+				throw new Error("You need to login to access the chat");
+			}
+			const response = await fetch(`/templates/chat`, {
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest',
+					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+					'Authorization': `Bearer ${accessToken || ''}`,
+				}
+			});
+			if (!response.ok) {
+				throw new Error(`Cannot load chat: ${response.status}`);
+			}
+			const html = await response.text();
+			const element = document.getElementById('chat');
+			this.animateContent(element, html, () => 
+				this.chat.setupChatWebSocket(roomName));
+		} catch (error) {
+			console.error("Error loading chat: ", error);
+			this.displayError("Error loading chat");
 		}
 	}
 
@@ -166,9 +197,6 @@ class Router {
 				break;
 			case 'game':
 				this.game.setupGameWebSocket();
-				break;
-			case 'chat':
-				this.chat.setupChatWebSocket();
 				break;
 			case 'pong-classic':
 				startPongGame();

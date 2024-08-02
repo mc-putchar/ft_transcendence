@@ -5,13 +5,11 @@ import string
 
 import requests
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.core.files.images import ImageFile
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.template import loader
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.models import Profile, PlayerMatch, Friend, Blocked
 from game.serializers import PlayerSerializer
@@ -40,10 +38,12 @@ def templates(request, template_name):
             template = loader.get_template('leaderboard.html')
             users = Profile.objects.all()
             context = { 'users': users }
+        case 'chat':
+            template = loader.get_template('chat.html')
+            context = user_data
         case _:
             try:
                 template = loader.get_template(f"{template_name}.html")
-                logger.debug(f"Template: {template_name}")
             except:
                 template = loader.get_template("404.html")
     return HttpResponse(template.render(context, request=request))

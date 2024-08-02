@@ -8,3 +8,4 @@ postgres_data/
 migrations
 staticfiles
 subject.*
+*.log

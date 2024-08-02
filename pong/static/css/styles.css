@@ -279,7 +279,7 @@ img.mp3-hover:hover {
   font-family: "Lucida Sans";
 }
 
-chat-userlist {
+.chat-userlist {
   display: flex;
   flex-direction: column;
   margin-top: 20px;
@@ -359,4 +359,12 @@ chat-userlist {
 
 .form-check-label {
   margin-bottom: 0; /* Remove margin from label */
+}
+
+.notifications {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  margin: 10px;
+  z-index: 1000;
 }
