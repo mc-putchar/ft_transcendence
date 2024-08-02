@@ -7,11 +7,11 @@ class Profile(models.Model):
     alias = models.CharField(max_length=150, blank=True)
     isOnline = models.BooleanField(default=False)
     image = models.ImageField(upload_to='profile_images', default='profile_images/default.png')
-    evm_addr = models.CharField(max_length=42, default='')
+    evm_addr = models.CharField(max_length=42, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.alias:
-            self.alias = f'marvin#{self.user.id}'
+            self.alias = f'marvin#{self.user.id}' # TODO fix security issue of exposing id
         super().save(*args, **kwargs)
 
     def __str__(self):

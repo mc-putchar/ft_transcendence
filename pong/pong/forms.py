@@ -64,10 +64,12 @@ class UserUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['alias', 'image']
+        # TODO Add blockchain address field
+        fields = ['alias', 'image', 'evm_addr']
         widgets = {
             'alias': forms.TextInput(attrs={'class': 'form-control'}),
            'image': forms.FileInput(attrs={'class': 'form-control'}),
+              'evm_addr': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
 class ChangePasswordForm(forms.Form):

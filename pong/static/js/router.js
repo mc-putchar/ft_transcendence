@@ -187,13 +187,13 @@ class Router {
 	handleRegistrationForm() {
 		const form = document.getElementById('registration-form');
 		form.addEventListener('submit', async (e) => {
-			e.preventDefault();
+            e.preventDefault();
 			const username = document.getElementById('username').value;
 			const email = document.getElementById('email').value;
 			const password = document.getElementById('password').value;
 			const password_confirmation = document.getElementById('password_confirmation').value;
 			// TODO Add blockchain address field
-            const evm_address = document.getElementById('evm_address').value;
+            // const evm_address = document.getElementById('evm_addr').value;
 			if (password !== password_confirmation) {
 				console.error("Passwords do not match");
 				alert("Passwords do not match");
@@ -207,8 +207,7 @@ class Router {
 						'Content-Type': 'application/json',
 						'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
 					},
-                    // TODO pass along blockchain address
-					body: JSON.stringify({ username, email, password, password_confirmation, evm_address })
+					body: JSON.stringify({ username, email, password, password_confirmation })
 				});
 				const data = await response.json();
 				if (response.ok) {
@@ -339,9 +338,11 @@ class Router {
 					body: formData
 				});
 				if (response.ok) {
-					const html = await response.text();
+					let html = await response.text();
 					this.animateContent(html, () => this.handlePostLoad("profile"));
 					this.loadNav();
+                    const newUsername = formData.get('alias');
+                    console.log(newUsername);
 				} else {
 					throw new Error("Failed to update profile");
 				}

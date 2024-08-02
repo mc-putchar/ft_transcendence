@@ -43,16 +43,13 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password_confirmation = serializers.CharField(write_only=True)
 	
-	# TODO Add blockchain address field, signature and validation
     class Meta:
         model = User
-        fields = ['username', 'password', 'password_confirmation', 'email', 'evm-addr']
+        fields = ['username', 'password', 'password_confirmation', 'email']
 
     def validate(self, data):
         if data['password'] != data['password_confirmation']:
             raise serializers.ValidationError("Passwords do not match.")
-        if data['evm-addr'] != '0x' and (len(data['evm-addr']) != 42 or data['evm-addr'][:2] != '0x'):
-            raise serializers.ValidationError("Invalid EVM address.")
         return data
 
     def create(self, validated_data):
@@ -60,6 +57,5 @@ class RegisterSerializer(serializers.ModelSerializer):
             username=validated_data['username'],
             password=validated_data['password'],
             email=validated_data['email'],
-            evm_addr=validated_data['evm-addr']
         )
         return user
