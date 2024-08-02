@@ -42,7 +42,8 @@ class BlockedSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password_confirmation = serializers.CharField(write_only=True)
-
+	
+	# TODO Add blockchain address field, signature and validation
     class Meta:
         model = User
         fields = ['username', 'password', 'password_confirmation', 'email']

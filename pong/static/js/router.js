@@ -192,7 +192,7 @@ class Router {
 			const email = document.getElementById('email').value;
 			const password = document.getElementById('password').value;
 			const password_confirmation = document.getElementById('password_confirmation').value;
-	
+			// TODO Add blockchain address field
 			if (password !== password_confirmation) {
 				console.error("Passwords do not match");
 				alert("Passwords do not match");
