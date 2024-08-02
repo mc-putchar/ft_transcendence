@@ -1,0 +1,28 @@
+POST https://localhost:4243/api/register/
+Content-Type: application/json
+
+{ "username": "foo", "password": "foo", "email": "foo@foo.com" }
+
+###
+
+POST https://localhost:4243/api/login/
+Content-Type: application/json
+
+{ "username": "foo", "password": "foo" }
+
+###
+
+POST https://localhost:4243/api/token/
+Content-Type: application/json
+
+{ "username": "foo", "password": "foo" }
+
+###
+
+POST https://localhost:4243/api/logout/
+Content-Type: application/json
+Authorization: Bearer 
+
+{ }
+
+###

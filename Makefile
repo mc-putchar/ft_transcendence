@@ -22,7 +22,7 @@ COLOUR_MAGB := \033[1;35m
 COLOUR_CYN := \033[0;36m
 COLOUR_CYNB := \033[1;36m
 
-.PHONY: up down start stop re debug migrate collect clean schema
+.PHONY: up down start stop re debug migrate collect clean schema tests
 
 up: # Build and start containers
 	@echo "Building and starting containers, with $(COLOUR_CYNB)$(DC)$(COLOUR_END) and $(COLOUR_MAGB)$(SRC)$(COLOUR_END)"
@@ -62,6 +62,11 @@ collect: # Collect static files to be served
 
 schema: # Output OpenAPI3 Schema into pong/schema.yml
 	$(DC) -f $(SRC) run --rm --no-deps django python manage.py spectacular --validate --color --file schema.yml
+
+tests: # Run automated tests
+	$(DC) -f $(SRC) start
+	$(DC) -f $(SRC) run --rm django python manage.py test
+	$(DC) -f $(SRC) stop
 
 help: # Display this helpful message
 	@awk 'BEGIN { \
