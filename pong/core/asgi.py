@@ -1,4 +1,3 @@
-# mysite/asgi.py
 import os
 
 from channels.auth import AuthMiddlewareStack
