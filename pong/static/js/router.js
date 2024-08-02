@@ -193,6 +193,7 @@ class Router {
 			const password = document.getElementById('password').value;
 			const password_confirmation = document.getElementById('password_confirmation').value;
 			// TODO Add blockchain address field
+            const evm_address = document.getElementById('evm_address').value;
 			if (password !== password_confirmation) {
 				console.error("Passwords do not match");
 				alert("Passwords do not match");
@@ -206,7 +207,8 @@ class Router {
 						'Content-Type': 'application/json',
 						'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
 					},
-					body: JSON.stringify({ username, email, password, password_confirmation })
+                    // TODO pass along blockchain address
+					body: JSON.stringify({ username, email, password, password_confirmation, evm_address })
 				});
 				const data = await response.json();
 				if (response.ok) {
