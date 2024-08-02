@@ -1,5 +1,3 @@
-window.startPong4PGame = startPong4PGame;
-
 function startPong4PGame() {
   const parent = document.getElementById("app");
   const canvas = document.createElement("canvas");

@@ -290,7 +290,7 @@ class Game {
 	}
 };
 
-export function startPongGame() {
+function startPongGame() {
 	console.log("Pong Classic - Starting new game");
 	const parent = document.getElementById('app');
 	const nav = document.getElementById('nav');
@@ -301,7 +301,8 @@ export function startPongGame() {
 		parent.removeChild(parent.lastChild);
 	}
 
-	const pong = new Game(parent, 1);
+	const pong = new Game(parent, 11);
 	pong.loop();
 }
-window.startPongGame = startPongGame;
+
+export { startPongGame };

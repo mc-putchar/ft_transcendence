@@ -175,6 +175,8 @@ class Game {
 
 		this.fsButton = document.createElement('div');
 		this.fsButton.id = "fullscreenButton";
+		this.fsButton.style = "font-size: 24px; cursor: pointer; top: 20%; right: 20%;";
+		this.fsButton.classList.add("game-ui", "btn", "bg-transparent", "btn-outline-light");
 		this.fsButton.innerText = "♐";
 		this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
 		this.parent.appendChild(this.fsButton);
@@ -306,16 +308,15 @@ class Game {
 	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		if (!this.gameover) {
-			if (this.playerOne.score === this.scoreLimit
-			|| this.playerTwo.score === this.scoreLimit) {
+			let now = Date.now();
+			let elapsed = now - this.lastUpdate;
+			if (elapsed > this.fpsInterval) {
+				this.lastUpdate = now;
+				this.update();
+			}
+			this.gameover = this.playerOne.score >= this.scoreLimit || this.playerTwo.score >= this.scoreLimit;
+			if (this.gameover) {
 				this.endGame();
-			} else {
-				let now = Date.now();
-				let elapsed = now - this.lastUpdate;
-				if (elapsed > this.fpsInterval) {
-					this.lastUpdate = now;
-					this.update();
-				}
 			}
 		}
 		this.amps = getAmps();
@@ -460,12 +461,13 @@ class Game {
 	}
 }
 
-export function startPong3DGame() {
+function startPong3DGame() {
 	console.log("Pong 3D - Starting new game");
 	const parent = document.getElementById('app');
 	const nav = document.getElementById('nav');
+	const footer = document.getElementById('footer');
 
-	parent.height = window.innerHeight - nav.offsetHeight;
+	parent.height = window.innerHeight - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
 	parent.width = window.innerWidth - CANVAS_PADDING;
 	while (parent.firstChild) {
 		parent.removeChild(parent.lastChild);
@@ -473,4 +475,5 @@ export function startPong3DGame() {
 	const pong = new Game(parent, 11);
 	pong.loop();
 }
-window.startPong3DGame = startPong3DGame;
+
+export { startPong3DGame };
