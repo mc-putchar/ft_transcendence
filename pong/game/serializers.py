@@ -28,5 +28,5 @@ class PlayerSerializer(serializers.ModelSerializer):
     tournaments_played = TournamentPlayerSerializer(source='tournamentplayer_set', many=True, read_only=True)
     class Meta:
         model = Profile
-        fields = ['user', 'alias', 'friendList', 'isOnline', 'image', 'matches_played', 'tournaments_played']
+        fields = ['user', 'alias', 'isOnline', 'image', 'matches_played', 'tournaments_played']
 

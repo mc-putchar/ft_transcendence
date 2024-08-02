@@ -4,77 +4,72 @@ import random
 import string
 
 import requests
-from api.models import Friend, Profile, Blocked, PlayerMatch
 from django.conf import settings
-from django.contrib.auth import authenticate
-from django.contrib.auth import login as django_login
-from django.contrib.auth import logout as django_logout  # Import logout
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.core.files.images import ImageFile
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template.loader import render_to_string
+from django.template import loader
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .auth42 import exchange_code_for_token, get_user_data
-from .forms import LoginForm, ProfileUpdateForm, UserUpdateForm
+from api.models import Profile, PlayerMatch, Friend, Blocked
 from game.serializers import PlayerSerializer
+from .forms import ProfileUpdateForm, UserUpdateForm, ChangePasswordForm
+from .auth42 import exchange_code_for_token, get_user_data
+
+from .context_processors import get_user_from_token
 
 logger = logging.getLogger(__name__)
 
-
 def index(request):
-    user_data = request.session.get('user_data', {})
-
-    context = {
-        'user': request.user,
-        'username': user_data.get('login', request.user.username)
-    }
+    context = { 'user': get_user_from_token(request) }
     return render(request, 'index.html', context)
 
+def templates(request, template_name):
+    user_data = get_user_from_token(request)
+    context = {}
+    match template_name:
+        case 'home' | 'navbar':
+            template = loader.get_template(f"{template_name}.html")
+            context = user_data
+        case 'profile':
+            template = loader.get_template('profile.html')
+            context = update_profile(request, user_data)
+        case 'leaderboard':
+            template = loader.get_template('leaderboard.html')
+            users = Profile.objects.all()
+            context = { 'users': users }
+        case _:
+            try:
+                template = loader.get_template(f"{template_name}.html")
+                logger.debug(f"Template: {template_name}")
+            except:
+                template = loader.get_template("404.html")
+    return HttpResponse(template.render(context, request=request))
 
-def get_friends(user):
-    friend_instance, created = Friend.objects.get_or_create(current_user=user)
-    friends = []
-    for friend in friend_instance.users.all():
-        profile, created = Profile.objects.get_or_create(user=friend)
-        friends.append(profile)
-    return friends
-
-
-def home_data(request):
-    if request.user.is_authenticated:
-        if request.user.profile.isOnline:
-            status = "Online"
-        else:
-            status = "Offline"
-        user_data = {
-            'login': request.user.username,
-            'email': str(request.user.username) + "@42.pong",
-            'image': request.user.profile.image.url,
-            'alias': request.user.profile.alias,
-            'status': status,
-            'friends': get_friends(request.user),
-        }
-        context = {'user_data': user_data}
-        content = render_to_string('user_info.html', context=context)
-        data = {'title': 'Home', 'content': content}
+def profiles(request, username):
+    context = get_user_info(request, username)
+    if context:
+        template = loader.get_template('user-profile.html')
     else:
-        html = render_to_string(
-            'registration/needlogin.html', request=request)
-        data = {"title": "Online", "content": html}
+        template = loader.get_template("404.html")
+    return HttpResponse(template.render(context, request=request))
 
-    return JsonResponse(data)
+def get_user_info(request, username):
+    user_data = get_user_from_token(request)
+    user = user_data['user']
+    try:
+        profile = Profile.objects.get(user__username=username)
+    except Profile.DoesNotExist:
+        return None
+    status = 'Online' if profile.isOnline else 'Offline'
 
+    is_me = user == profile.user
+    is_friend = False if not is_me else Friend.is_friend(user, profile.user)
+    is_blocked = False if not is_me else Blocked.is_blocked(user, profile.user)
 
-def show_profile(request, username):
-    user = get_object_or_404(Profile, user__username=username)
-    status = 'Online' if user.isOnline else 'Offline'
-
-    is_me = request.user == user.user
-    is_friend = False if not is_me else Friend.is_friend(request.user, user.user)
-    is_blocked = False if not is_me else Blocked.is_blocked(request.user, user.user)
-
-    played = PlayerMatch.objects.filter(player=user)
+    played = PlayerMatch.objects.filter(player=profile)
     wins = played.filter(winner=True).count()
     losses = played.count() - wins
     match_stats = {
@@ -82,174 +77,44 @@ def show_profile(request, username):
         'wins': wins,
         'losses': losses,
     }
-    serializer = PlayerSerializer(user)
+    serializer = PlayerSerializer(profile)
     context = {
-        'username': user.user.username,
+        'username': profile.user.username,
         'user': serializer.data,
         'status': status,
-        'profilepic': user.image.url,
+        'profilepic': profile.image.url,
         'is_me': is_me,
         'is_friend': is_friend,
         'is_blocked': is_blocked,
         'match_stats': match_stats,
     }
-    content = render_to_string('profile.html', context=context)
-    data = {'title': 'Profile', 'content': content}
-    return JsonResponse(data)
+    return context
 
-
-def update_profile(request):
+def update_profile(request, user_data):
+    user = user_data['user']
     if request.method == 'POST':
-        u_form = UserUpdateForm(request.POST, instance=request.user)
+        u_form = UserUpdateForm(request.POST, instance=user)
         p_form = ProfileUpdateForm(
-            request.POST, request.FILES, instance=request.user.profile)
+            request.POST, request.FILES, instance=user.profile)
+        cp_form = ChangePasswordForm(request.POST)
         if u_form.is_valid() and p_form.is_valid():
             u_form.save()
             p_form.save()
+        if cp_form.is_valid():
+            user.set_password(cp_form.cleaned_data['password'])
+            user.save()
     else:
-        u_form = UserUpdateForm(instance=request.user)
-        p_form = ProfileUpdateForm(instance=request.user.profile)
+        u_form = UserUpdateForm(instance=user)
+        p_form = ProfileUpdateForm(instance=user.profile)
+        cp_form = ChangePasswordForm()
 
     context = {
         'u_form': u_form,
         'p_form': p_form,
-        'username': request.user.username,
-        'profilepic': request.user.profile.image.url
+        'username': user.username,
+        'profilepic': user.profile.image.url
     }
-    if request.method == 'POST':
-        data = {'image': request.user.profile.image.url}
-    else:
-        content = render_to_string('update_profile.html', context=context)
-        data = {'title': 'Profile', 'content': content}
-    return JsonResponse(data)
-
-
-def users(request):
-    if request.user.is_authenticated:
-        users = Profile.objects.all()
-        context = {'users': users}
-        content = render_to_string('list_users.html', context=context)
-        data = {'title': 'Users', 'content': content}
-
-    else:
-        html = render_to_string(
-            'registration/needlogin.html', request=request)
-        data = {"title": "Online", "content": html}
-
-    return JsonResponse(data)
-
-
-def profile(request):
-    if request.method == 'POST':
-        u_form = UserUpdateForm(request.POST, instance=request.user)
-        p_form = ProfileUpdateForm(
-            request.POST, request.FILES, instance=request.user.profile)
-        if u_form.is_valid() and p_form.is_valid():
-            u_form.save()
-            p_form.save()
-    else:
-        u_form = UserUpdateForm(instance=request.user)
-        p_form = ProfileUpdateForm(instance=request.user.profile)
-
-    context = {
-        'u_form': u_form,
-        'p_form': p_form
-    }
-    content = render_to_string('profile.html', context=context)
-    data = {'title': 'Profile', 'content': content}
-    return JsonResponse(data)
-
-
-def local_game(request):
-    data = {"title": 'local', 'content': render_to_string("local_game.html")}
-    return JsonResponse(data)
-
-
-def contact_data(request):
-    data = {"title": "Contact", "content": "Welcome to the Contact Page"}
-    return JsonResponse(data)
-
-
-def online(request):
-    if not request.user.is_authenticated:
-        html = render_to_string('registration/needlogin.html', request=request)
-        data = {"title": "Online", "content": html}
-        return JsonResponse(data, safe=False)
-
-    profile = request.user.profile
-
-    html = render_to_string('online_game.html', request=request, context={
-                            "profile": profile})
-
-    data = {"title": "Online", "content": html}
-    return JsonResponse(data, safe=False)
-
-
-def logout(request):
-    if request.method == 'POST':
-        django_logout(request)
-    template = render_to_string('registration/logout.html', request=request)
-    data = {
-        "title": "Logout",
-        "content": template,
-    }
-
-    request.user.profile.set_online_status(False)
-    request.user.profile.save()
-
-    return JsonResponse(data)
-
-
-def login(request):
-    if request.method == 'POST':
-        form = LoginForm(request.POST)
-
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(username=username, password=password)
-
-            if user is not None:
-                django_login(request, user)
-                request.user.profile.set_online_status(False)
-                request.user.profile.save()
-
-                data = {"title": "Login", "content": "Login successful"}
-                return JsonResponse(data)
-            else:
-                data = {"title": "Login",
-                        "content": "Invalid username or password"}
-                return JsonResponse(data, status=400)
-
-        else:
-            data = {"title": "Login", "content": "Form validation failed"}
-            return JsonResponse(data, status=400)
-
-    else:
-        form = LoginForm()
-        html_form = render_to_string(
-            'partial.html', {'form': form}, request=request)
-        data = {"title": "Login", "content": html_form}
-        return JsonResponse(data)
-
-
-def register(request):
-    if request.method == 'POST':
-        email = request.POST['email']
-        username = request.POST['username']
-        password = request.POST['password1']
-
-        user = User.objects.create_user(
-            username=username, password=password, email=email)
-        user.save()
-
-        if user is not None:
-            django_login(request, user)
-        return JsonResponse({"title": "Register", "content": "Registration successful"})
-    else:
-        form_html = render_to_string(
-            'registration/register.html', {}, request=request)
-        return JsonResponse({"title": "Register", "content": form_html})
+    return context
 
 
 def generate_state():
@@ -287,14 +152,11 @@ def redirect_view(request):
             user, created = User.objects.get_or_create(
                 username=username, defaults={'email': email})
 
-            profile, profile_created = Profile.objects.get_or_create(
-                user=user, defaults={'alias': username})
-
-            if not profile_created:
-                profile.alias = username
+            if not created:
+                user.profile.alias = username
 
             # Check if the profile picture is still the default
-            if profile_created or profile.image.name == 'profile_images/default.png':
+            if created or profile.image.name == 'profile_images/default.png':
                 if image_url:
                     response = requests.get(image_url['versions']['medium'])
                     if response.status_code == 200:
