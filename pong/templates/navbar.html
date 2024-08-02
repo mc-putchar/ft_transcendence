@@ -1,0 +1,44 @@
+<div class="container">
+	<a class="navbar-brand" href="#/">Transcendence</a>
+	<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	</button>
+	<div class="collapse navbar-collapse" id="navbarNav">
+		<ul class="navbar-nav ms-auto">
+			<li class="nav-item">
+				<a class="nav-link" href="#/background">Background</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#/play">Play Local</a>
+			</li>
+			{% if user.is_authenticated %}
+			<li class="nav-item">
+				<a class="nav-link" href="#/leaderboard">Leaderboard</a>
+			</li>
+			<li class="nav-item dropdown">
+				<a data-mdb-dropdown-init class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdownMenuLink" role="button" aria-expanded="false">
+					{{ user.profile.alias }} |<img src="{{ user.profile.image.url }}" class="rounded-circle" height="24" width="24" loading="lazy" />
+				</a>
+				<ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+					<li>
+						<a class="dropdown-item" href="#/profile">My profile</a>
+					</li>
+					<li>
+						<a class="dropdown-item" href="#/settings">Settings</a>
+					</li>
+					<li>
+						<a class="dropdown-item" href="#/logout">Logout</a>
+					</li>
+				</ul>
+			</li>
+			{% else %}
+			<li class="nav-item">
+				<a class="nav-link" href="#/login">Login</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#/register">Register</a>
+			</li>
+			{% endif %}
+		</ul>
+	</div>
+</div>
