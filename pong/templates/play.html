@@ -1,0 +1,35 @@
+{% load static %}
+<div class="row justify-content-center mb-3">
+    <div class="col-12 text-center">
+        <h3> Play on the same computer with others</h3>
+    </div>
+</div>
+<div class="row align-items-start justify-content-center">
+  <!-- Center-aligned Images -->
+  <div class="row justify-content-center mb-4">
+    <div class="col-auto text-center">
+      <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" style="height: 42px;">
+    </div>
+    <div class="col-auto text-center">
+      <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" style="height: 42px;">
+    </div>
+  </div>
+  <div class="container row">
+    <p class="mb-3 text-center separator">Arcade:</p>
+    <div class="row justify-content-center ">
+        <div class="col-md-4 col-8 text-center">
+            <a class="btn btn-outline-primary w-100 mb-3" href="#/pong-classic">Pong Classic</a>
+        </div>
+    </div>
+    <div class="row justify-content-center separator">
+        <div class="col-md-4 col-8 text-center">
+            <a class="btn btn-outline-primary w-100 mb-3" href="#/pong-3d">Pong 3D</a>
+        </div>
+    </div>
+    <div class="row justify-content-center separator">
+        <div class="col-md-4 col-8 text-center">
+            <a class="btn btn-outline-primary w-100 mb-3" href="#/pong-4p">Pong 4P</a>
+        </div>
+    </div>
+  </div>
+</div>

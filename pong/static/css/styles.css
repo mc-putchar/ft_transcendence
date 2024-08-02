@@ -240,10 +240,10 @@ button:focus {
 
 /* Footer styling */
 .footer {
-  /* stay always at the bottom of the screen */
-  position: absolute;
+  position: fixed;
   text-align: center;
   bottom: 0;
+  left: 0;
   width: 100%;
 }
 
