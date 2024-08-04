@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 
 BUILD_PATH = "static/blockchain/build/"
+CONTRACT_PATH = "blockchain/hardhat/contracts/"
+# BUILD_PATH = "static/blockchain/build/"
 
 def installCompiler(version='0.8.26'):
 	# Install solc version 0.8.26
@@ -25,7 +27,7 @@ def compileSmartContract(filename, compiled_name):
 		installCompiler()
 		solc_version = get_solc_version()
 	print("Compiling contract " + filename)
-	with open("static/blockchain/contracts/" + filename , "r") as file:
+	with open(CONTRACT_PATH + filename , "r") as file:
 		tournament_code = file.read()
 	compiled_sol = compile_standard({
 		"language": "Solidity", # needs capital letter, fails with "solidity"
