@@ -5,7 +5,7 @@ from solcx import compile_standard, install_solc, get_installed_solc_versions, g
 from solcx.exceptions import SolcNotInstalled
 
 BUILD_PATH = "blockchain/static/blockchain/build/"
-CONTRACT_PATH = "blockchain/static/contracts/"
+CONTRACT_PATH = "blockchain/static/blockchain/contracts/"
 PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 
 def compileSmartContract(filename, compiled_name):

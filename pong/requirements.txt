@@ -18,8 +18,7 @@ channels
 daphne
 channels_redis
 pillow
-web3[tester]
+web3
+py-solc-x
 python-dotenv
-eth-utils
-py-evm
 selenium
