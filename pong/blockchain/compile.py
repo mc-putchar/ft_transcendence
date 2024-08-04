@@ -1,11 +1,10 @@
-from solcx import compile_standard, install_solc, get_installed_solc_versions, get_solc_version, set_solc_version
+from solcx import compile_standard, install_solc, get_solc_version, set_solc_version
 from solcx.exceptions import SolcNotInstalled
 import json
 from pathlib import Path
 
 BUILD_PATH = "static/blockchain/build/"
 CONTRACT_PATH = "blockchain/hardhat/contracts/"
-# BUILD_PATH = "static/blockchain/build/"
 
 def installCompiler(version='0.8.26'):
 	# Install solc version 0.8.26

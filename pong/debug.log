@@ -4867,3 +4867,43 @@ INFO 2024-08-04 14:17:15,008 autoreload Watching for file changes with StatReloa
 INFO 2024-08-04 14:17:15,292 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
 INFO 2024-08-04 14:17:15,292 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
 INFO 2024-08-04 14:17:15,293 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-04 14:26:05,013 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 14:26:05,950 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 14:26:06,888 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 14:26:07,429 selector_events Using selector: EpollSelector
+INFO 2024-08-04 14:26:07,561 autoreload Watching for file changes with StatReloader
+INFO 2024-08-04 14:26:07,814 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-04 14:26:07,814 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-04 14:26:07,815 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-04 14:41:10,607 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 14:41:11,543 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 14:41:12,458 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 14:41:12,966 selector_events Using selector: EpollSelector
+INFO 2024-08-04 14:41:13,100 autoreload Watching for file changes with StatReloader
+INFO 2024-08-04 14:41:13,353 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-04 14:41:13,353 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-04 14:41:13,354 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-04 15:02:03,674 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 15:02:04,771 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 15:02:05,717 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 15:02:06,204 selector_events Using selector: EpollSelector
+INFO 2024-08-04 15:02:06,337 autoreload Watching for file changes with StatReloader
+INFO 2024-08-04 15:02:06,622 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-04 15:02:06,622 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-04 15:02:06,623 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-04 15:12:20,655 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 15:12:21,711 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 15:12:22,662 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 15:12:23,210 selector_events Using selector: EpollSelector
+INFO 2024-08-04 15:12:23,348 autoreload Watching for file changes with StatReloader
+INFO 2024-08-04 15:12:23,637 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-04 15:12:23,638 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-04 15:12:23,638 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-04 15:13:36,490 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 15:13:37,490 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 15:13:38,390 selector_events Using selector: EpollSelector
+DEBUG 2024-08-04 15:13:38,885 selector_events Using selector: EpollSelector
+INFO 2024-08-04 15:13:39,019 autoreload Watching for file changes with StatReloader
+INFO 2024-08-04 15:13:39,290 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-04 15:13:39,291 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-04 15:13:39,291 server Listening on TCP address 0.0.0.0:8000
