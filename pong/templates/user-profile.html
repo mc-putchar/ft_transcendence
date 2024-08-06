@@ -1,6 +1,7 @@
 {% load static %}
 {% load custom_filters %}
 {% csrf_token %}
+{% if user.is_authenticated %}
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -12,9 +13,9 @@
                 <div class="card-body text-center">
                     <img src="{{ profilepic }}" class="rounded-circle account-img mb-3" alt="Profile Picture" style="width: 150px; height: auto;">
                     <h3 class="card-title">{{ username }}</h3>
-                    <p class="card-text"><b>Alias:</b> {{ user.alias }}</p>
+                    <p class="card-text"><b>Alias:</b> {{ profile.alias }}</p>
                     <p class="card-text"><b>Status:</b> 
-                        <span class="{% if user.isOnline %}text-success{% else %}text-danger{% endif %}">{{ status }}</span>
+                        <span class="{% if profile.isOnline %}text-success{% else %}text-danger{% endif %}">{{ status }}</span>
                     </p>
                     <p class="card-text"><b>Games played:</b> {{ match_stats.played }}</p>
                     <p class="card-text"><b>Won: <span class="text-success">{{ match_stats.wins }}</span> / Lost: <span class="text-danger">{{ match_stats.losses }}</span></b></p>
@@ -34,7 +35,7 @@
                         {% endif %}
                     {% endif %}
                     
-                    <input type="hidden" id="friend-id" value="{{ user.user }}">
+                    <input type="hidden" id="friend-id" value="{{ profile.user }}">
                     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                 </div>
                 <div class="accordion">
@@ -48,9 +49,9 @@
                     <div id="matchesCollapse" class="accordion-collapse collapse">
                         <div class="accordion-body">
                             <div class="list-group">
-                                {% for match in user.matches_played %}
+                                {% for match in profile.matches_played %}
                                     <div class="list-group-item">
-                                        <p><b>Match Date:</b> {{ match.match.date | format_datetime:"%d-%m-%Y %I:%M" }}</p>
+                                        <p><b>Match Date:</b> {{ match.match.date | format_datetime:"%d-%m-%Y %I:%M" }} UTC</p>
                                         <p><span class="{% if match.winner %}text-success{% else %}text-danger{% endif %}"><b>Scored:</b> {{ match.score }}</span></p>
                                     </div>
                                 {% endfor %}
@@ -67,7 +68,7 @@
                     <div id="tournamentsCollapse" class="accordion-collapse collapse">
                         <div class="accordion-body">
                             <div class="list-group">
-                                {% for t in user.tournaments_played %}
+                                {% for t in profile.tournaments_played %}
                                     <div class="list-group-item">
                                         <p><b>Tournament Name:</b> {{ t.tournament.name }}</p>
                                         <p><b>Tournament Date:</b> {{ t.tournament.start_date }}</p>
@@ -82,3 +83,8 @@
         </div>
     </div>
 </div>
+
+{% else %}
+	<p>Log in required to view this page.</p>
+	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+{% endif %}

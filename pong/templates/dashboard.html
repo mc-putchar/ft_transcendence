@@ -1,3 +1,4 @@
+{% if user.is_authenticated %}
 {% load static %}
 <div class="row justify-content-center">
     <div class="col-md-8">
@@ -35,3 +36,7 @@
         </div>
     </div>
 </div>
+{% else %}
+	<p>Log in required to view this page.</p>
+	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+{% endif %}

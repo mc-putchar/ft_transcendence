@@ -76,12 +76,14 @@ class Blocked(models.Model):
 
 class Tournament(models.Model):
     name = models.CharField(max_length=255, default="super-pong-tournament")
+    creator = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='tournaments_created', null=True)
     start_date = models.DateTimeField(default=timezone.now)
     end_date = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=50, default='open')
     on_blockchain = models.BooleanField(default=False)
     player_limit = models.IntegerField(default=16)
     prize = models.IntegerField(default=0)
-    registration_fee = models.IntegerField(default=0)
+    entry_fee = models.IntegerField(default=0)
     winner = models.ForeignKey(Profile, null=True, blank=True, on_delete=models.SET_NULL, related_name='tournaments_won')
     final_result = models.TextField(blank=True)
 
@@ -92,10 +94,13 @@ class Tournament(models.Model):
         return self.participants.count() >= self.player_limit
 
     def is_over(self):
-        return self.end_date < timezone.now()
+        return self.status == 'closed'
 
     def get_players(self):
         return self.participants.all()
+
+    def player_count(self):
+        return self.participants.count()
 
     def add_player(self, player):
         TournamentPlayer.objects.create(tournament=self, player=player)
@@ -136,6 +141,7 @@ class PlayerMatch(models.Model):
 class TournamentPlayer(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='participants')
     player = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='tournaments')
+    place = models.IntegerField(null=True, blank=True, default=0)
 
     class Meta:
         unique_together = ('tournament', 'player')

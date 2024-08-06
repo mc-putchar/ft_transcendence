@@ -7,7 +7,7 @@ import { startPongGame } from './pong-game.js';
 import { startPong3DGame } from './pong3d.js';
 import { startPong4PGame } from './multi_pong4.js';
 import { Notification } from './notification.js';
-import { getCookie } from './utils.js';
+import { getCookie, getJSON, postJSON, createModal } from './utils.js';
 
 class Router {
 	constructor(navElement, appElement) {
@@ -58,6 +58,8 @@ class Router {
 		const template = hash || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
+		} else if (template.startsWith('tournaments/')) {
+			this.loadTournamentTemplate(template);
 		} else if (template.startsWith('chat')) {
 			const roomName = template.substring(5) || 'lobby';
 			this.loadChat(roomName);
@@ -108,6 +110,7 @@ class Router {
 	}
 
 	async loadTemplate(template) {
+		console.log("Loading template: ", template);
 		try {
 			const accessToken = sessionStorage.getItem('access_token');
 			const response = await fetch(`/templates/${template}`, {
@@ -147,6 +150,73 @@ class Router {
 		} catch (error) {
 			console.error("Error loading user template: ", error);
 			this.displayError("Error loading content");
+		}
+	}
+
+	async loadTournamentTemplate(template) {
+		console.log("Loading tournament template: ", template);
+		if (template.endsWith('join/')) {
+			const tournamentID = template.split('/')[1];
+			this.joinTournament(tournamentID);
+		} else if (template.endsWith('leave/')) {
+			const tournamentID = template.split('/')[1];
+			this.leaveTournament(tournamentID);
+		} else {
+			try {
+				const accessToken = sessionStorage.getItem('access_token') || '';
+				const response = await fetch(`/game/${template}`, {
+					headers: {
+						'X-Requested-With': 'XMLHttpRequest',
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
+						'Authorization': `Bearer ${accessToken || ''}`,
+					}
+				});
+				if (!response.ok) {
+					throw new Error(`Cannot load ${template}: ${response.status}`);
+				}
+				const data = await response.json();
+				const fields = [
+					{ key: 'name', label: 'Name' },
+					{ key: 'player_limit', label: 'Max Players' },
+					{ key: 'status', label: 'Status' },
+				]
+				createModal(data, "tournament-modal", "tournament-modal-content", fields);
+				window.location.hash = '/tournaments';
+			} catch (error) {
+				console.error("Error loading tournament template: ", error);
+				this.displayError("Error loading content");
+			}
+		}
+	}
+
+
+	async joinTournament(tournamentID) {
+		try {
+			const response = await postJSON(`/game/tournaments/${tournamentID}/join/`, this.csrfToken);
+			if (response) {
+				console.log("Joined tournament:", tournamentID);
+				this.loadTemplate(`in-tournament/${tournamentID}`);
+			} else {
+				throw new Error("Failed to join tournament: ", response.status);
+			}
+		} catch (error) {
+			console.error("Error joining tournament: ", error);
+			this.displayError(error.message);
+		}
+	}
+
+	async leaveTournament(tournamentID) {
+		try {
+			const response = await postJSON(`/game/tournaments/${tournamentID}/leave/`, this.csrfToken);
+			if (response) {
+				console.log("Left tournament:", tournamentID);
+				this.loadTemplate('tournaments');
+			} else {
+				throw new Error("Failed to leave tournament: ", response.status);
+			}
+		} catch (error) {
+			console.error("Error leaving tournament: ", error);
+			this.displayError(error.message);
 		}
 	}
 
@@ -230,6 +300,9 @@ class Router {
 			case 'game':
 				this.game.setupGameWebSocket();
 				break;
+			case 'tournaments':
+				this.handleTournamentPage();
+				break;
 			case 'pong-classic':
 				startPongGame();
 				break;
@@ -264,7 +337,7 @@ class Router {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
 					},
 					body: JSON.stringify({ username, email, password, password_confirmation })
 				});
@@ -292,7 +365,7 @@ class Router {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
 					},
 					body: JSON.stringify({ username, password })
 				});
@@ -300,8 +373,9 @@ class Router {
 				if (response.ok) {
 					sessionStorage.setItem('access_token', data.access);
 					sessionStorage.setItem('refresh_token', data.refresh);
-					this.csrfToken = this.getCookie('csrftoken');
+					this.csrfToken = getCookie('csrftoken');
 					this.loadNav();
+					this.loadChat('lobby');
 					window.location.hash = '/home';
 				} else {
 					throw new Error(data.error || 'Login failed');
@@ -321,7 +395,7 @@ class Router {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
 					'Authorization': `Bearer ${accessToken}`
 				},
 				body: JSON.stringify({ refresh: refreshToken })
@@ -357,7 +431,7 @@ class Router {
 					const response = await fetch('/api/change-password/', {
 						method: 'POST',
 						headers: {
-							'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+							'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
 							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
 						},
 						body: formData
@@ -391,7 +465,7 @@ class Router {
 				const response = await fetch('/templates/profile', {
 					method: 'POST',
 					headers: {
-						'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
 						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
 					},
 					body: formData
@@ -410,6 +484,39 @@ class Router {
 		});
 	}
 
+	handleTournamentPage() {
+		document.getElementById('create-tournament').addEventListener('click', (e) => {
+			e.preventDefault();
+			const form = document.getElementById('create-tournament-form');
+			const btn = document.getElementById('create-tournament-btn');
+			form.style.display = form.style.display === 'none' ? 'block' : 'none';
+			btn.style.display = btn.style.display === 'none' ? 'block' : 'none';
+			form.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const formData = new FormData(form);
+				try {
+					const response = await fetch('/game/tournaments/create_tournament_form/', {
+						method: 'POST',
+						headers: {
+							'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
+							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
+						},
+						body: formData
+					});
+					if (response.ok) {
+						console.log("Tournament created successfully");
+						this.loadTemplate('tournaments');
+					} else {
+						throw new Error("Failed to create tournament");
+					}
+				} catch (error) {
+					console.error("Error creating tournament: ", error);
+					this.displayError(error.message);
+				}
+			});
+		});
+	}
+
 	async deleteAccount() {
 		try {
 			const accessToken = sessionStorage.getItem('access_token') || '';
@@ -417,7 +524,7 @@ class Router {
 				method: 'DELETE',
 				headers: {
 					'Authorization': `Bearer ${accessToken}`,
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
 				}
 			});
 			if (response.ok) {
@@ -442,7 +549,7 @@ class Router {
 				headers: {
 					'Content-Type': 'application/json',
 					'Authorization': `Bearer ${accessToken}`,
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
 				}
 			});
 			if (response.ok) {

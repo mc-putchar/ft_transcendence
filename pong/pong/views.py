@@ -11,9 +11,11 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.template import loader
 
-from api.models import Profile, PlayerMatch, Friend, Blocked
+from api.models import Profile, PlayerMatch, Friend, Blocked, Tournament
 from game.serializers import PlayerSerializer
+from game.views import TournamentViewSet
 from .forms import ProfileUpdateForm, UserUpdateForm, ChangePasswordForm
+from game.forms import CreateTournamentForm
 from .auth42 import exchange_code_for_token, get_user_data
 
 from .context_processors import get_user_from_token
@@ -41,6 +43,12 @@ def templates(request, template_name):
         case 'online-game':
             template = loader.get_template('online-game.html')
             context = get_user_info(request, user_data['user'].username)
+        case 'tournaments':
+            logger.info('Tournaments')
+            template = loader.get_template('tournaments.html')
+            context = user_data
+            context['tournaments'] = Tournament.objects.filter(status='open')
+            context['t_form'] = CreateTournamentForm()
         case 'chat':
             template = loader.get_template('chat.html')
             context = user_data
@@ -53,8 +61,10 @@ def templates(request, template_name):
 
 def profiles(request, username):
     context = get_user_info(request, username)
+    user_data = get_user_from_token(request)
+    context['user'] = user_data['user']
     if context:
-        template = loader.get_template('user-profile.html')
+        template = loader.get_template("user-profile.html")
     else:
         template = loader.get_template("404.html")
     return HttpResponse(template.render(context, request=request))
@@ -83,7 +93,7 @@ def get_user_info(request, username):
     serializer = PlayerSerializer(profile)
     context = {
         'username': profile.user.username,
-        'user': serializer.data,
+        'profile': serializer.data,
         'status': status,
         'profilepic': profile.image.url,
         'is_me': is_me,
@@ -119,6 +129,23 @@ def update_profile(request, user_data):
     }
     return context
 
+def in_tournament(request, t_id):
+    user_data = get_user_from_token(request)
+    context = user_data
+    try:
+        tournament = Tournament.objects.get(id=t_id)
+    except Tournament.DoesNotExist:
+        return render(request, '404.html', context)
+    context['tournament'] = tournament
+    if tournament.creator:
+        try:
+            creator = Profile.objects.get(id=tournament.creator.id)
+            context['is_creator'] = creator.user == user_data['user']
+            context['creator'] = creator
+            context['is_joined'] = tournament.participants.filter(id=user_data['user'].profile.id).exists()
+        except Profile.DoesNotExist:
+            creator = None
+    return render(request, 'in-tournament.html', context)
 
 def generate_state():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=16))

@@ -67,10 +67,10 @@ async function postJSON(endpoint, csrftoken, jwt_token = "", json = "") {
 		return data;
 	} else {
 		console.error("Server returned error response");
-		return null;
+		return response;
 	}
-	}
-	
+}
+
 async function getJSON(endpoint, csrftoken, jwt_token = "") {
 	const accessToken = sessionStorage.getItem('access_token') || jwt_token;
 	const response = await fetch(endpoint, {

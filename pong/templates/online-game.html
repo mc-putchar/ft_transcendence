@@ -1,5 +1,6 @@
-<h2>Pong Online</h2>
 {% csrf_token %}
+{% if user.is_authenticated %}
+<h2>Pong Online</h2>
 <p>Logged in as {{ profile.user.username }}
 <p>Also known as {{ profile.alias }}
 <img src="{{ profile.image.url }}" class="rounded-circle account-img" alt="Profile Picture" style="width: 100px; height: 100px;">
@@ -26,3 +27,9 @@
     </div>
   </div>
 </div>
+
+{% else %}
+	<p>Log in required to view this page.</p>
+	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+{% endif %}
+
