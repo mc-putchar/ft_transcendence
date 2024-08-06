@@ -32,7 +32,7 @@ services:
       restart: "always"
 
   redis:
-    image: redis:5
+    image: redis:latest
     restart: "always"
 
 volumes:

@@ -827,7 +827,6 @@ function startPong4PGame() {
 			{
 				console.log("objective left: ", objectives.left);
 				console.log("paddle_left: ", paddle_left.pos_y);
-				debugger;
 			}
 			else
 				console.log("direction = 0");
