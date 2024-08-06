@@ -20,62 +20,62 @@ gainNode.connect(audioContext.destination);
 // ------------------------------------------------------------------------
 // Start (resume) audio context if not started
 function startAudioContext() {
-    if (audioContext.state !== "running") {
-        audioContext.resume();
-        mod.start();
-        modmod.start();
-        osc.start();
-    }
+	if (audioContext.state !== "running") {
+		audioContext.resume();
+		mod.start();
+		modmod.start();
+		osc.start();
+	}
 }
 
 function startOscillator() {
-    startAudioContext();
-    initTestTone();
-    // oscillator.frequency.value = 440.0;
-    // gainNode.gain.exponentialRampToValueAtTime(initialGain, audioContext.currentTime + 0.08);
-    //
-    // setTimeout(() => {
-    //     oscillator.frequency.value = 880.0;
-    //     gainNode.gain.value = initialGain;
-    // }, 200);
-    //
-    // gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
+	startAudioContext();
+	initTestTone();
+	// oscillator.frequency.value = 440.0;
+	// gainNode.gain.exponentialRampToValueAtTime(initialGain, audioContext.currentTime + 0.08);
+	//
+	// setTimeout(() => {
+	//     oscillator.frequency.value = 880.0;
+	//     gainNode.gain.value = initialGain;
+	// }, 200);
+	//
+	// gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
 }
 
 // TODO - abstract melody making into a function to be able to write sequences of notes in a more readable way
 //        for each state, lost game, won game, collided with wall , collided with player, etc.
 
 function gameLostMelody() {
-    startAudioContext();
-    
-    oscillator.frequency.value = 220.0;
-    gainNode.gain.value = initialGain;
+	startAudioContext();
+	
+	oscillator.frequency.value = 220.0;
+	gainNode.gain.value = initialGain;
 
-    setTimeout(() => {
-        oscillator.frequency.value = 110.0;
-        gainNode.gain.value = initialGain;
-    }, 200);
+	setTimeout(() => {
+		oscillator.frequency.value = 110.0;
+		gainNode.gain.value = initialGain;
+	}, 200);
 
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
+	gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
 }
 
 function stopOscillator() {
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
+	gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
 }
 
 
 function playAudioTrack() {
-    const audio = new Audio('/static/audio/track.mp3');
-    audio.play();
-    audio.volume = 0.2;
+	const audio = new Audio('/static/audio/track.mp3');
+	audio.play();
+	audio.volume = 0.2;
 }
 
-export { startOscillator, stopOscillator, playAudioTrack };
+export { startOscillator, stopOscillator};
 
 // ---------------------------------------------------------
 //
 
-let ctx = audioContext;
+let ctx = new (window.AudioContext || window.webkitAudioContext)();
 const osc = ctx.createOscillator();
 const vca = ctx.createGain();
 
@@ -111,21 +111,72 @@ modGain.connect(osc.frequency);
 mainGainNode.connect(ctx.destination);
 
 function initTestTone() {
-    playTone(333,0.1,2220);
+	playTone(333,0.1,2220);
 }
 
-function playTone(freq,modulation,mod_amt) {
-    mod.frequency.value = modulation;
-    modGain.gain.value = mod_amt;
-    osc.frequency.value = freq;
-    
-    vca.gain.exponentialRampToValueAtTime(1, ctx.currentTime + attack);
-   	vca.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + release + sustain);
-    console.log("played tone");
-}
+function playTone(freq, modulation, mod_amt, sus = 0.3) {
+	startAudioContext();
+  
+	mod.frequency.value = modulation;
+	modGain.gain.value = mod_amt;
+	osc.frequency.value = freq;
+  
+	vca.gain.exponentialRampToValueAtTime(1, ctx.currentTime + attack);
+	vca.gain.exponentialRampToValueAtTime(vca.gain.value, ctx.currentTime + sus);
+	vca.gain.exponentialRampToValueAtTime(
+	  0.00001,
+	  ctx.currentTime + release + sus,
+	);
+  }
+
+const analyser = ctx.createAnalyser();
+analyser.fftSize = 512;
+const bufferLength = analyser.frequencyBinCount;
+const dataArray = new Uint8Array(bufferLength);
 
 function playNote() {
 	osc.frequency.value = 80;
 	vca.gain.exponentialRampToValueAtTime(1, ctx.currentTime + attack);
 	vca.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + release + sustain);
 }
+
+// Function to calculate the average amplitude for a given range
+function getAverageAmplitude(start, end) {
+	let sum = 0;
+	for (let i = start; i <= end; i++) {
+	  sum += dataArray[i];
+	}
+	return sum / (end - start + 1);
+  }
+
+// Function to calculate and print smoothed amplitude for 8 bands
+function getAmplitudeBands() {
+	const bands = 10;
+	const bandSize = Math.floor(bufferLength / bands);
+
+
+	let bands_frame = "";
+	let amps = [];
+
+	for (let i = 1; i < bands - 1; i++) {
+	const start = i * bandSize;
+	const end = (i + 1) * bandSize - 1;
+	const averageAmplitude = getAverageAmplitude(start, end);
+	// Apply smoothing
+	// smoothedAmplitudes[i] = (1 - smoothingFactor) * smoothedAmplitudes[i] + smoothingFactor * averageAmplitude;
+		// bands_frame += `${i + 1}: ${smoothedAmplitudes[i].toFixed(2)} `;
+	amps[i] = averageAmplitude.toFixed(2);
+	}
+	return amps;
+}
+
+function getAmps() {
+	// requestAnimationFrame(draw);
+  
+	analyser.getByteFrequencyData(dataArray);
+  
+	// Print smoothed amplitude for each band
+	return getAmplitudeBands();
+  }
+
+export { playAudioTrack, playTone, getAmps };
