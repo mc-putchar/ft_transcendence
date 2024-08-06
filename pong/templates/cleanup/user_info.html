@@ -1,0 +1,50 @@
+{% load static %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card p-2 shadow-sm">
+            <div class="card-body text-center container-background">
+                <h2 class="h4 mb-4">Logged in</h1>
+                    {% if user_data.displayname %} <!-- 42 User -->
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item">User: {{ user_data.login }}</li>
+                        <li class="list-group-item">Email: {{ user_data.email }}</li>
+                        <li class="list-group-item">Alias: {{ user_data.alias }}</li>
+                        <li class="list-group-item">
+                            <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail">
+                        </li>
+                    </ul>
+                    {% elif user_data.login %}      <!-- Regular User -->
+
+                    <div class="card-body text-cente" >
+                        <ul class="list-group list-group-flush mb-4">
+                            <li class="list-group-item">User: {{ user_data.login }}</li>
+                            <li class="list-group-item">Email: {{ user_data.email }}</li>
+                            <li class="list-group-item">Alias: {{ user_data.alias }}</li>
+                            <li class="list-group-item">Status: {{ user_data.status }}</li>
+                            <li class="list-group-item">
+                                <img src="{{ user_data.image }}" alt="Profile Image" class="img-thumbnail" style="width: 20vw; height: auto;">
+                            </li>
+                            <p>Friends:</p>
+                            {% for friend in user_data.friends %}
+                                {% if friend.isOnline %}
+                                    <li class="list-group-item text-success">{{ friend.user.username }}</li>
+                                {% else %}
+                                    <li class="list-group-item text-danger">{{ friend.user.username }}</li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                   </div>
+                    {% endif %}
+                    <div class="container-fluid">
+                        <div class="row">
+                            <a class="btn btn-primary" href="/chat" data-link>Enter Chat</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <img src="{% static 'assets/42Berlin.svg' %}" alt="42 Berlin Logo"
+                                class="img-fluid mt-4">
+                    </div>
+
+            </div>
+        </div>
+    </div>

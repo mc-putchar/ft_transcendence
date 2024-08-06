@@ -6,20 +6,43 @@ import { GameRouter } from './game-router.js';
 import { startPongGame } from './pong-game.js';
 import { startPong3DGame } from './pong3d.js';
 import { startPong4PGame } from './multi_pong4.js';
+import { Notification } from './notification.js';
+import { getCookie } from './utils.js';
 
 class Router {
 	constructor(navElement, appElement) {
 		this.navElement = navElement;
 		this.appElement = appElement;
-		this.csrfToken = this.getCookie('csrftoken');
+		this.chatElement = document.getElementById('chat');
+		this.csrfToken = getCookie('csrftoken');
+
 		this.chat = new ChatRouter(this.csrfToken);
-		this.game = new GameRouter(this.csrfToken);
+		this.game = new GameRouter(this.csrfToken, appElement);
+
 		this.init();
 	}
 
 	init() {
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', () => this.route());
+
+		this.chatElement.addEventListener('challenge', (event) => {
+			console.log("Challenge event received");
+			this.game.setupGameWebSocket(event.detail.gameID);
+		});
+		this.chatElement.addEventListener('notification', (event) => {
+			const notification = new Notification(event.detail.message, event.detail.type, event.detail.img);
+			notification.show();
+			const audio = new Audio('/static/assets/pop-alert.wav');
+			audio.play();
+		});
+		this.appElement.addEventListener('notification', (event) => {
+			const notification = new Notification(event.detail.message, event.detail.type, event.detail.img);
+			notification.show();
+			const audio = new Audio('/static/assets/pop-alert.wav');
+			audio.play();
+		});
+
 		this.loadNav();
 		this.loadCookieConsentFooter();
 		this.loadChat('lobby');
@@ -38,6 +61,15 @@ class Router {
 		} else if (template.startsWith('chat')) {
 			const roomName = template.substring(5) || 'lobby';
 			this.loadChat(roomName);
+		} else if (template.startsWith('game/')) {
+			if (template.startsWith('game/accept/')) {
+				const gameID = template.substring(12);
+				this.game.acceptChallenge(gameID);
+				this.chat.acceptGame();
+			} else if (template.startsWith('game/decline/')) {
+				this.chat.declineGame();
+			}
+			this.game.route(template);
 		} else {
 			this.loadTemplate(template);
 		}
@@ -60,7 +92,7 @@ class Router {
 			const response = await fetch('/templates/navbar', {
 				headers: {
 					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
 					'Authorization': `Bearer ${accessToken}`,
 				}
 			});
@@ -81,7 +113,7 @@ class Router {
 			const response = await fetch(`/templates/${template}`, {
 				headers: {
 					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
 					'Authorization': `Bearer ${accessToken || ''}`,
 				}
 			});
@@ -103,7 +135,7 @@ class Router {
 			const response = await fetch(`/${template}`, {
 				headers: {
 					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
 					'Authorization': `Bearer ${accessToken || ''}`,
 				}
 			});
@@ -127,7 +159,7 @@ class Router {
 			const response = await fetch(`/templates/chat`, {
 				headers: {
 					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
 					'Authorization': `Bearer ${accessToken || ''}`,
 				}
 			});
@@ -135,12 +167,12 @@ class Router {
 				throw new Error(`Cannot load chat: ${response.status}`);
 			}
 			const html = await response.text();
-			const element = document.getElementById('chat');
-			this.animateContent(element, html, () => 
+			this.chatElement.style.display = 'block';
+			this.animateContent(this.chatElement, html, () => 
 				this.chat.setupChatWebSocket(roomName));
 		} catch (error) {
+			this.chatElement.style.display = 'none';
 			console.error("Error loading chat: ", error);
-			this.displayError("Error loading chat");
 		}
 	}
 
@@ -149,7 +181,7 @@ class Router {
 			const response = await fetch('/templates/cookie_consent_footer', {
 				headers: {
 					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
 				}
 			});
 			if (!response.ok) {
@@ -422,21 +454,6 @@ class Router {
 		} catch (error) {
 			console.error("Error anonymizing data: ", error);
 		}
-	}
-
-	getCookie(name) {
-		let cookieValue = null;
-		if (document.cookie && document.cookie !== '') {
-			const cookies = document.cookie.split(';');
-			for (let i = 0; i < cookies.length; i++) {
-				const cookie = cookies[i].trim();
-				if (cookie.substring(0, name.length + 1) === (name + '=')) {
-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-					break;
-				}
-			}
-		}
-		return cookieValue;
 	}
 };
 

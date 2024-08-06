@@ -1,13 +1,19 @@
 import json
 import asyncio
+import jwt
 
-from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.db import database_sync_to_async
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
 
 from api.models import Match, Profile, PlayerMatch
 from .game_manager import game_manager
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PongGameConsumer(AsyncWebsocketConsumer):
 
@@ -24,11 +30,23 @@ class PongGameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.challenger = self.scope["url_route"]["kwargs"]["challenger"]
         self.match_group_name = f"match_{self.challenger}"
-        self.user = self.scope["user"]
-        if not self.user.is_authenticated:
+        self.token = self.scope['query_string'].decode().split('=')[1]
+        try:
+            decoded_token = jwt.decode(self.token, settings.SECRET_KEY, algorithms=["HS256"])
+            self.user = await self.get_user_by_id(decoded_token['user_id'])
+            if not self.user:
+                raise jwt.InvalidTokenError("User not found")
+        except jwt.ExpiredSignatureError:
+            await self.close()
+            return
+        except jwt.InvalidTokenError:
+            await self.close()
+            return
+        except Profile.DoesNotExist:
             await self.close()
             return
 
+        self.username = self.user.username
         await self.channel_layer.group_add(
             self.match_group_name,
             self.channel_name
@@ -58,6 +76,11 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             self.match_group_name,
             self.channel_name
         )
+
+    @database_sync_to_async
+    def get_user_by_id(self, user_id):
+        User = get_user_model()
+        return User.objects.get(id=user_id)
 
     @database_sync_to_async
     def get_profile(self, username):
@@ -91,15 +114,15 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 return
             try:
                 self.match = await self.get_match(match_id)
-                print(f"Match set with ID {match_id}")
+                logger.debug(f"Match set with ID {match_id}")
                 profile = await self.get_profile(player_username)
                 self.players[player] = profile
                 self.connection_player_map[self.channel_name] = player
-                print(f"Registered {player} with username {player_username}")
+                logger.debug(f"Player {player} registered with username {player_username}")
 
                 player_match_exists = await sync_to_async(PlayerMatch.objects.filter(match=self.match, player=profile).exists)()
                 if player_match_exists:
-                    print(f"PlayerMatch entry exists for {player_username} in match {match_id}")
+                    logger.debug(f"PlayerMatch entry exists for {player_username} in match {match_id}")
                     await self.send(text_data=json.dumps({
                         "type": "registration",
                         "message": f"{player} registered successfully",
@@ -107,7 +130,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                     self.game_id = f"{self.match_group_name}@{match_id}"
                     game_manager.reset_game_state(self.game_id, self.score_limit)
                 else:
-                    print(f"Error: PlayerMatch entry does not exist for {player_username} in match {match_id}")
+                    logger.debug(f"PlayerMatch entry does not exist for {player_username} in match {match_id}")
                     await self.send(text_data=json.dumps({
                         "type": "error",
                         "message": "Player cannot be registered for this match",
@@ -116,19 +139,19 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                     del self.connection_player_map[self.channel_name]
 
             except Profile.DoesNotExist:
-                print(f"Error: User Profile '{player_username}' does not exist")
+                logger.debug(f"Error: User Profile '{player_username}' does not exist")
                 await self.send(text_data=json.dumps({
                     "type": "error",
                     "message": "User profile does not exist",
                 }))
             except Match.DoesNotExist:
-                print(f"Error: Match with ID {match_id} does not exist")
+                logger.debug(f"Error: Match with ID {match_id} does not exist")
                 await self.send(text_data=json.dumps({
                     "type": "error",
                     "message": "Match does not exist",
                 }))
             except Exception as e:
-                print(f"Error registering player: {e}")
+                logger.debug(f"Error registering player: {e}")
                 await self.send(text_data=json.dumps({
                     "type": "error",
                     "message": "Error registering player for this match",
@@ -150,7 +173,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 position = data.get("position")
                 direction = data.get("direction")
                 if position is None or direction is None:
-                    print(f"Invalid data for {msg_type}: {data}")
+                    logger.debug(f"Invalid data for {msg_type}: {data}")
                     return
 
             match msg_type:
@@ -172,6 +195,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                         "message": "You are now spectating the match"
                     }))
                 case _:
+                    logger.debug(f"Other message type: {msg_type}")
                     await self.channel_layer.group_send(
                         self.match_group_name,
                         {

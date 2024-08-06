@@ -1,10 +1,13 @@
+"use strict";
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 import { getAmps, playAudioTrack, playTone } from './audio.js';
-import { getJSON, postJSON, GameData } from './game-router.js';
+import { GameData } from './game-router.js';
+import { getJSON, getCookie } from './utils.js';
 
 
 const SCORE_FONT = "../../static/fonts/helvetiker_regular.typeface.json";
@@ -195,8 +198,9 @@ class Player {
 };
 
 class Game {
-	constructor(gameData, rootElement, player1, player2, isChallenger, matchId) {
+	constructor(gameData, gameSocket, rootElement, player1, player2, isChallenger, matchId) {
 		this.gameData = gameData;
+		this.gameSocket = gameSocket;
 		this.matchId = matchId;
 		this.root = rootElement;
 
@@ -212,6 +216,7 @@ class Game {
 		this.root.appendChild(this.fsButton);
 
 		this.canvas = document.createElement('canvas');
+		this.canvas.classList.add("w-100", "h-100");
 		this.canvas.width = window.innerWidth;
 		this.canvas.height = window.innerHeight;
 		this.root.appendChild(this.canvas);
@@ -283,7 +288,7 @@ class Game {
 	send_register_player() {
 		const thisPlayer = this.isChallenger ? "player1" : "player2";
 		const username = this.isChallenger ? this.playerOne.user : this.playerTwo.user;
-		window.gameSocket.send(JSON.stringify({
+		this.gameSocket.send(JSON.stringify({
 			type: 'register',
 			player: thisPlayer,
 			user: username,
@@ -293,7 +298,7 @@ class Game {
 
 	send_ready() {
 		const thisPlayer = this.isChallenger ? "player1" : "player2"
-		window.gameSocket.send(JSON.stringify({
+		this.gameSocket.send(JSON.stringify({
 			type: 'ready',
 			player: thisPlayer,
 		}));
@@ -303,7 +308,7 @@ class Game {
 		const [position, _] = player.position;
 		const direction = player.direction;
 		const msgType = this.isChallenger ? "player1_position" : "player2_position";
-		window.gameSocket.send(JSON.stringify({
+		this.gameSocket.send(JSON.stringify({
 			type: msgType,
 			position: position,
 			direction: direction
@@ -369,9 +374,9 @@ class Game {
 		this.scene.remove(this.ball);
 		this.cam_controls.autoRotate = true;
 		if (this.isChallenger) {
-			this.cam_controls.autoRotateSpeed = -10;
+			this.cam_controls.autoRotateSpeed = -5;
 		} else {
-			this.cam_controls.autoRotateSpeed = 10;
+			this.cam_controls.autoRotateSpeed = 5;
 		}
 	}
 
@@ -532,9 +537,9 @@ class Game {
 	}
 }
 
-function startGame(gameData, player1, player2, isChallenger, matchId) {
-	const nav = document.getElementById('nav');
-	const root = document.getElementById("game-container");
+function startGame(gameData, gameSocket, player1, player2, isChallenger, matchId) {
+	const nav = document.getElementById("nav");
+	const root = document.getElementById("app");
 	root.style = "display: block";
 	root.classList.add("game-container");
 	root.height = window.innerHeight - nav.offsetHeight;
@@ -544,13 +549,15 @@ function startGame(gameData, player1, player2, isChallenger, matchId) {
 	}
 	root.innerText = `${player1.name} vs ${player2.name}\n`;
 	(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
-	const pong = new Game(gameData, root, player1, player2, isChallenger, matchId);
+	const pong = new Game(gameData, gameSocket, root, player1, player2, isChallenger, matchId);
 	pong.loop();
 }
 
-async function initGame(gameData, matchId, playerName, opponentName, isChallenger) {
-	const playerProfile = await getJSON(`/api/profile/${playerName}/`);
-	const opponentProfile = await getJSON(`/api/profile/${opponentName}/`);
+async function initGame(gameData, gameSocket, matchId, playerName, opponentName, isChallenger) {
+	console.log("Starting game", gameData, gameSocket, matchId, playerName, opponentName, isChallenger);
+	const csrftoken = getCookie('csrftoken');
+	const playerProfile = await getJSON(`/api/profiles/user/${playerName}/`, csrftoken)
+	const opponentProfile = await getJSON(`/api/profiles/user/${opponentName}/`, csrftoken);
 	if (playerProfile === null || opponentProfile === null) {
 		console.error("Error fetching player profiles");
 		return;
@@ -570,9 +577,9 @@ async function initGame(gameData, matchId, playerName, opponentName, isChallenge
 	const opponent = new Player(opponentProfile.user.username, opponentProfile.alias, opponentAvatarTexture);
 
 	if (isChallenger)
-		startGame(gameData, player, opponent, isChallenger, matchId);
+		startGame(gameData, gameSocket, player, opponent, isChallenger, matchId);
 	else
-		startGame(gameData, opponent, player, isChallenger, matchId);
+		startGame(gameData, gameSocket, opponent, player, isChallenger, matchId);
 }
 
 

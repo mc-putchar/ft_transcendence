@@ -6,7 +6,7 @@ import {
   handleRegisterForm,
 } from "./views/forms.js";
 
-import { initWS, getFriendsAndBlocked } from "./chat.js";
+import { initWS, getFriendsAndBlocked } from "./chat-old.js";
 import { gameRouter } from "./game-router.js";
 
 // Transition durations in milliseconds
@@ -103,23 +103,17 @@ function router() {
 }
 
 function fetchData(endpoint, renderFunction, callback) {
-  fetch(endpoint, {
-    method: "GET",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then((data) => {
+  try {
+    const { access, refresh } = getJWT();
+    if (!access || !refresh) {
+      throw new Error("No JWT tokens found");
+    }
+  }
+  fetchWithAuth(endpoint)
+    .then(response => response.json())
+    .then(data => {
       document.title = data.title;
-      const newContent = renderFunction
-        ? renderFunction(data)
-        : "<p>Page not found</p>";
+      const newContent = renderFunction ? renderFunction(data) : "<p>Page not found</p>";
 
       const appElement = document.getElementById("app");
       appElement.classList.add("fade-exit");
@@ -132,13 +126,68 @@ function fetchData(endpoint, renderFunction, callback) {
         setTimeout(() => appElement.classList.remove("fade-enter"), fadeInDuration);
 
         if (callback) callback();
-
       }, fadeOutDuration);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error("Error fetching data:", error);
       document.getElementById("app").innerHTML = "<p>Error loading page content.</p>";
     });
+}
+
+
+function getJWT() {
+  return {
+    access: sessionStorage.getItem("access_token"),
+    refresh: sessionStorage.getItem("refresh_token"),
+  };
+}
+
+function getRefreshToken() {
+  return sessionStorage.getItem("refresh_token");
+}
+
+function setJWT(accessToken, refreshToken) {
+  sessionStorage.setItem("access_token", accessToken);
+  sessionStorage.setItem("refresh_token", refreshToken);
+}
+
+function removeJWT() {
+  sessionStorage.removeItem("access_token");
+  sessionStorage.removeItem("refresh_token");
+}
+
+function refreshJWT() {
+  return fetch("/api/token/refresh/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    body: JSON.stringify({ refresh: getRefreshToken() }),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.access) {
+        setJWT(data.access, getRefreshToken());
+        return data.access;
+      } else {
+        throw new Error("Failed to refresh token");
+      }
+    })
+    .catch(error => {
+      console.error("Refresh token error:", error);
+      removeJWT();
+      window.location.href = "/";
+    });
+}
+
+function fetchWithAuth(url, options = {}) {
+  const { access } = getJWT();
+  const headers = {
+    ...options.headers,
+    "Authorization": `Bearer ${access}`,
+  };
+  return fetch(url, { ...options, headers });
 }
 
 function getCookie(name) {
@@ -245,4 +294,4 @@ function chatEventListeners() {
   };
 }
 
-export { csrftoken, router };
+export { csrftoken, router, getJWT, setJWT, removeJWT, fetchWithAuth };

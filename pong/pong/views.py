@@ -38,6 +38,9 @@ def templates(request, template_name):
             template = loader.get_template('leaderboard.html')
             users = Profile.objects.all()
             context = { 'users': users }
+        case 'online-game':
+            template = loader.get_template('online-game.html')
+            context = get_user_info(request, user_data['user'].username)
         case 'chat':
             template = loader.get_template('chat.html')
             context = user_data
@@ -152,21 +155,18 @@ def redirect_view(request):
             user, created = User.objects.get_or_create(
                 username=username, defaults={'email': email})
 
-            if not created:
+            if created:
                 user.profile.alias = username
+                if user.profile.image.name == 'profile_images/default.png':
+                    if image_url:
+                        response = requests.get(image_url['versions']['medium'])
+                        if response.status_code == 200:
+                            image_path = f'profile_images/{username}.png'
+                            with open(f'media/{image_path}', 'wb') as f:
+                                f.write(response.content)
+                            user.profile.image = image_path
+                user.profile.save()
 
-            # Check if the profile picture is still the default
-            if created or profile.image.name == 'profile_images/default.png':
-                if image_url:
-                    response = requests.get(image_url['versions']['medium'])
-                    if response.status_code == 200:
-                        image_path = f'profile_images/{username}.png'
-                        with open(f'media/{image_path}', 'wb') as f:
-                            f.write(response.content)
-                        profile.image = image_path
-
-            profile.save()
-            django_login(request, user)
             return redirect('/')
         else:
             return HttpResponse('No user data returned', status=404)
