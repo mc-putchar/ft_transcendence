@@ -379,7 +379,7 @@ function startPong4PGame() {
 		paddle_right.resize_paddle();
 		paddle_top.resize_paddle();
 		paddle_bottom.resize_paddle();
-		paddles = {left: paddle_left, right: paddle_right, top: paddle_top, bottom: paddle_bottom};
+		paddles = {left: paddle_left, right: paddle_right, top: paddle_top, bottom: paddle_bottom, directions: 0};
 		scores = new make_scores(scores.goals);
 		prev_scores = new make_scores(prev_scores.goals);
 	}
@@ -880,7 +880,7 @@ function startPong4PGame() {
 			for (let key in paddles)
 			{
 				if(key != "directions")
-				paddles[key].init_position(paddles[key].player);
+					paddles[key].init_position(paddles[key].player);
 			}
 			first = false;
 			isGoal = false;
