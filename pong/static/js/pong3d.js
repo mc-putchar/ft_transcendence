@@ -5,6 +5,8 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 import { getAmps, playTone } from './audio.js';
 
+const ACTIVE_AI = true;
+
 const CANVAS_PADDING = 10;
 const BALL_SIZE = 6;
 const ARENA_WIDTH = 300;
@@ -109,6 +111,9 @@ class Ball {
 		this.mesh.getWorldPosition(this.pos);
 		return [this.pos.x, this.pos.z];
 	}
+	get direction() {
+		return [this.dir.x, this.dir.z];
+	}
 	doMove() {
 		this.mesh.translateX(this.dir.x * this.speed);
 		this.mesh.translateZ(this.dir.z * this.speed);
@@ -127,6 +132,7 @@ class Player {
 		this.len = PADDLE_LEN;
 		this.score = 0;
 		this.direction = 0;
+		this.keys_active = 0;
 		this.speed = PADDLE_SPEED;
 
 		this.avatar = new THREE.Mesh(
@@ -161,6 +167,92 @@ class Player {
 		}
 	}
 };
+
+// direction 1 is up
+// X for ARENA HEIGHT
+// Z for ARENA WIDTH
+
+class AI {
+	constructor (player) {
+		this.player = player;
+		this.lastMove = 0;
+		this.objective = ARENA_HEIGHT / 2;
+		this.msc = 21;
+		this.rightEdge = 122;
+		this.rightEdge = 48;
+	}
+	nextCollision(simBall) {
+		this.time = {x : null, z : null};
+		
+		this.endZ = -ARENA_WIDTH / 2 + this.msc;
+		if(simBall.dirZ > 0)
+			this.endZ = ARENA_WIDTH / 2 - this.msc;
+		this.endZ = -ARENA_WIDTH / 2 + this.msc;
+		if(simBall.dirX > 0)
+			this.endX = ARENA_HEIGHT / 2;
+		this.time.x = Math.abs((this.endX - simBall.posX) / simBall.dirX);
+		
+		if(simBall.dirZ > 0)
+			this.time.z = Math.abs((ARENA_WIDTH / 2  - this.msc - simBall.posZ) / simBall.dirZ);
+		if(this.time.x < this.time.z) {
+			this.endZ = this.time.x * simBall.dirZ + simBall.posZ;
+			simBall.dirZ *= - 1;
+		}
+		else {
+			if(simBall.dirZ > 0)
+				this.endZ = ARENA_WIDTH / 2;
+			else
+				this.endZ = - ARENA_WIDTH / 2;
+			this.endX = this.time.z * simBall.dirX + simBall.posX;
+		}
+		simBall.posX = this.endX;
+		simBall.posZ = this.endZ;
+	}
+	setObjective(simBall) {
+		let rounds = 0;
+		while(simBall.posZ < 122 && rounds < 8) {
+			this.nextCollision(simBall);
+			rounds++;
+		}
+		// if(rounds == 8)
+		// 	console.log("rounds: ", rounds);
+		if(simBall.posX > 0)
+			this.objective = simBall.posX - 15;
+		else
+			this.objective = simBall.posX + 15;
+	}
+	stopMove() {
+		if(this.player.direction == 1 && this.player.pos.x >= this.objective) {
+			this.player.direction = 0;
+		}
+		else if(this.player.direction == -1 && this.player.pos.x <= this.objective) {
+			this.player.direction = 0;
+		}
+	}
+	setDirection() {
+		if(this.player.pos.x < this.objective)
+			this.player.direction = 1;
+		else
+			this.player.direction = -1;
+	}
+	executeMove(ball) {
+		if(Date.now() < this.lastMove + 1000)
+			return ;
+		console.log("EXECUTE MOVE BALL");
+		this.lastMove = Date.now();
+		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z};
+		this.setObjective(this.simBall);
+		this.setDirection();
+		console.log("CURR POS: ", this.player.position);
+		console.log("OBJECTIVE: ", this.objective);
+		console.log("DIRECTION: ", this.player.direction);
+		console.log("SimBall: ", this.simBall);
+	}
+	update(ball) {
+		this.stopMove();
+		this.executeMove(ball);
+	}
+}
 
 class Game {
 	constructor(parentElement, scoreLimit) {
@@ -204,7 +296,9 @@ class Game {
 		const ball_mat = new THREE.MeshPhongMaterial({ map: ball_texture });
 		const ball_geometry = new THREE.SphereGeometry( BALL_SIZE, 32, 16 )
 		this.ball = new Ball(ball_geometry, ball_mat);
+		
 		this.ball.place(this.scene, 0, 0);
+		this.saved = {x: this.ball.dir.x, y: this.ball.dir.y};
 
 		const wire_material = new THREE.MeshPhongMaterial({ color: 0x42FF42, wireframe: true });
 		const box_geometry = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2);
@@ -226,9 +320,12 @@ class Game {
 		this.scoreLimit = scoreLimit;
 		this.gameover = false;
 
+		
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 
+		if(ACTIVE_AI == true)
+			this.ai = new AI(this.playerTwo);
 		this.showScore();
 	}
 	toggleFullScreen() {
@@ -265,15 +362,23 @@ class Game {
 		}
 		switch(key.code) {
 			case "ArrowUp":
+				if(this.playerOne.direction != 1)
+					this.playerOne.keys_active++;
 				this.playerOne.direction = 1;
 				break;
 			case "ArrowDown":
+				if(this.playerOne.direction != -1)
+					this.playerOne.keys_active++;
 				this.playerOne.direction = -1;
 				break;
 			case "KeyW":
+				if(this.playerTwo.direction != 1)
+					this.playerTwo.keys_active++;
 				this.playerTwo.direction = 1;
 				break;
 			case "KeyS":
+				if(this.playerTwo.direction != -1)
+					this.playerTwo.keys_active++;
 				this.playerTwo.direction = -1;
 				break;
 			default:
@@ -283,9 +388,13 @@ class Game {
 	keyup(key) {
 		if (this.gameover)	return;
 		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
-			this.playerOne.direction = 0;
+			this.playerOne.keys_active--;
+			if(this.playerOne.keys_active == 0)
+				this.playerOne.direction = 0;
 		} else if (key.code == "KeyW" || key.code == "KeyS") {
-			this.playerTwo.direction = 0;
+			this.playerTwo.keys_active--;
+			if(this.playerTwo.keys_active == 0)
+				this.playerTwo.direction = 0;
 		}
 	}
 	endGame() {
@@ -302,6 +411,15 @@ class Game {
 	}
 	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
+		// console.log(this.playerTwo.position);
+		// if(this.saved.x != this.ball.dir.x || this.saved.y != this.ball.dir.y)
+		// {
+		// 	console.log("BALL POS: ", this.ball.pos);
+		// 	console.log("BALL DIR: ", this.ball.dir);
+		// 	debugger;
+		// 	this.saved = {x: this.ball.dir.x, y: this.ball.dir.y};
+		// }
+		this.ai.update(this.ball);
 		if (!this.gameover) {
 			let now = Date.now();
 			let elapsed = now - this.lastUpdate;
@@ -320,7 +438,6 @@ class Game {
 			this.arena.bottomWalls[i].position.y = (50 - this.amps[i + 1])/-5;
 			if (i === 6) {
 				this.arena.lightbulb1.intensity = this.amps[i + 1] * 50;
-				// console.log(this.arena.lightbulb1.intensity);
 			} else if (i === 5) {
 				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
 			}
@@ -349,6 +466,7 @@ class Game {
 		const [p1x, p1y] = this.playerOne.position;
 		const [p2x, p2y] = this.playerTwo.position;
 		if (ballY < -ARENA_WIDTH / 2 - GOAL_LINE) {
+			console.log("GOAL BALL: ", this.ball);
 			playTone(240, 20, 210, 3);
 			this.last_scored = 2;
 			this.running = false;
@@ -356,7 +474,9 @@ class Game {
 			this.playerTwo.score++;
 			this.scene.remove(this.score);
 			this.showScore();
+			debugger;
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
+			console.log("GOAL BALL X: ", ballX, ", Z: ", ballY);
 			playTone(240, 20, 210, 3);
 			this.last_scored = 1;
 			this.running = false;
@@ -364,9 +484,11 @@ class Game {
 			this.playerOne.score++;
 			this.scene.remove(this.score);
 			this.showScore();
+			debugger;
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
-		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) {
+		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) { // HITS RIGHT PADDLE aka AI PADDLE
+			console.log("HIT PADDLE X: ", ballX, ", Z: ", ballY);
 			playTone(200, 30, 200, 0.6);
 			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(-1 * Math.cos(refAngle));
