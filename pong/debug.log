@@ -1,0 +1,6 @@
+DEBUG 2024-08-07 08:15:48,415 selector_events Using selector: EpollSelector
+DEBUG 2024-08-07 08:15:48,842 selector_events Using selector: EpollSelector
+INFO 2024-08-07 08:15:48,951 autoreload Watching for file changes with StatReloader
+INFO 2024-08-07 08:15:49,202 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-07 08:15:49,202 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-07 08:15:49,203 server Listening on TCP address 0.0.0.0:8000

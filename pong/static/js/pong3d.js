@@ -181,27 +181,30 @@ class proAI {
 	constructor (player) {
 		this.player = player;
 		this.lastMove = 0;
-		this.objective = ARENA_HEIGHT / 2;
+		this.objective = 0;
 		this.msc = 21;
-		this.wait = 0;
 		this.time = {x : null, z : null};
 		this.distance;
 		this.randomMargin = 10;
+		this.wait = 0; // time before it hits left paddle
+		this.timeOfImpact = 0; // time before it hits right paddle
+		this.roundsTillImpact = 0;
 	}
 	nextCollision(simBall) {
 		this.endZ;
-		
+
 		this.endX = - (ARENA_HEIGHT / 2);
 		if(simBall.dirX > 0)
 			this.endX = ARENA_HEIGHT / 2;
 		this.time.x = Math.abs((this.endX - simBall.posX) / simBall.dirX);
-		
+
 		if(simBall.dirZ > 0)
 			this.time.z = Math.abs((ARENA_WIDTH / 2 - simBall.posZ) / simBall.dirZ);
 		
 		if(this.time.x < this.time.z) {
 			this.endZ = this.time.x * simBall.dirZ + simBall.posZ;
 			simBall.dirX *= - 1;
+			this.distance = Math.abs(simBall.posX - this.endX);
 		}
 		else {
 			this.endX = this.time.z * simBall.dirX + simBall.posX;
@@ -209,47 +212,66 @@ class proAI {
 				this.endZ = ARENA_WIDTH / 2;
 			else {
 				this.endZ = - ARENA_WIDTH / 2;
-				simBall.dirZ *= - 1;
 			}
-			
+			simBall.dirZ *= - 1;
 			this.endX = this.time.z * simBall.dirX + simBall.posX;
-			this.distance = this.time.z;
+			this.distance = Math.abs(simBall.posZ - this.endZ);
 		}
-		this.distance = Math.abs(this.endX - simBall.posX) + Math.abs(this.endZ - simBall.posZ);
+		// this.distance = Math.abs(this.endX - simBall.posX) + Math.abs(this.endZ - simBall.posZ);
 		simBall.posX = this.endX;
 		simBall.posZ = this.endZ;
 	}
 	setObjective(simBall) {
 		let rounds = 0;
 		let rand = Math.random();
+		this.timeOfImpact = 0;
 		while(simBall.posZ != ARENA_WIDTH / 2 && rounds < 8) {
 			this.nextCollision(simBall);
+			this.timeOfImpact += this.distance / simBall.speed;
 			rounds++;
 		}
+		this.timeOfImpact += Date.now();
+		this.roundsTillImpact = rounds;
 		this.objective = simBall.posX - this.randomMargin / 2 + this.randomMargin * rand;
 	}
 	setWait(simBall) {
 		this.wait = 0;
 		let rounds = 0;
-		// if(simBall.dirZ > 0) { // hits AI paddle first so then we want to reposition the paddle strategically in anticipation and estimate when ball will hit the left paddle
-
-		// }
-		if(simBall.dirZ < 0) {// we want to know when it will hit the left paddle
+		if(simBall.dirZ > 0) { // hits AI paddle first so then we want to reposition the paddle strategically in anticipation and estimate when ball will hit the left paddle
+			// let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
+			// this.ball.dir.setZ(-1 * Math.cos(refAngle));
+			// this.ball.dir.setX(Math.sin(refAngle));
+			while(simBall.posZ < (ARENA_WIDTH / 2) && rounds < 9) {
+				this.nextCollision(simBall);
+				this.wait += this.distance / simBall.speed;
+				rounds++;
+			}
+			let refAngle = (this.objective - this.player.pos.x) / (PADDLE_LEN / 2) * (Math.PI / 4);
+			simBall.dirZ = -1 * Math.cos(refAngle);
+			simBall.dirX = Math.sin(refAngle);
+			
+			rounds = 0;
 			while(simBall.posZ != - (ARENA_WIDTH / 2) && rounds < 9) {
 				this.nextCollision(simBall);
 				this.wait += this.distance / simBall.speed;
-				console.log("this.distance: ", this.distance);
-				console.log("simBall.speed: ", simBall.speed);
-				console.log("WAIT: ", this.wait);
 				rounds++;
-				// console.log("rounds: ", rounds);
 			}
-			console.log("Rounds : ", rounds);
+			console.log("wait1: ", this.wait);
+			console.log("estimation: ", this.wait + Date.now());
+			
+		}
+		if(simBall.dirZ < 0) { // we want to know when it will hit the left paddle
+			while(simBall.posZ != - (ARENA_WIDTH / 2) && rounds < 9) {
+				this.nextCollision(simBall);
+				this.wait += this.distance / simBall.speed;
+				rounds++;
+			}
 			if(rounds > 5) {
 				this.wait = 0;
 			}
+			console.log("wait2: ", this.wait);
+			console.log("estimation: ", this.wait + Date.now());
 		}
-		// console.log("END");
 	}
 	stopMove() {
 		if(this.player.direction == 1 && this.player.pos.x >= this.objective) {
@@ -266,7 +288,7 @@ class proAI {
 			this.player.direction = -1;
 	}
 	executeMove(ball) {
-		if(Date.now() < this.lastMove + 1000 || Date.now() < this.lastMove + this.wait)
+		if(Date.now() < this.lastMove + 1000 || (Date.now() < this.lastMove + this.wait + 21 / ball.speed))
 			return ;
 		this.lastMove = Date.now();
 		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
@@ -276,6 +298,11 @@ class proAI {
 		this.setWait(this.simBall);
 	}
 	update(ball) {
+		// if(this.timeOfImpact != 0 && this.roundsTillImpact < 3 && Date.now() > this.timeOfImpact + 50 && this.player.direction == 0) {
+		// 	console.log("TRUE timeofimpact: ", this.timeOfImpact);
+		// 	this.objective = 0;
+		// 	this.setDirection();
+		// }
 		this.stopMove();
 		this.executeMove(ball);
 	}
@@ -493,7 +520,6 @@ class Game {
 		const [p1x, p1y] = this.playerOne.position;
 		const [p2x, p2y] = this.playerTwo.position;
 		if (ballY < -ARENA_WIDTH / 2 - GOAL_LINE) {
-			// console.log("GOAL BALL: ", this.ball);
 			playTone(240, 20, 210, 3);
 			this.last_scored = 2;
 			this.running = false;
@@ -503,7 +529,6 @@ class Game {
 			this.showScore();
 			debugger;
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
-			// console.log("GOAL BALL X: ", ballX, ", Z: ", ballY);
 			playTone(240, 20, 210, 3);
 			this.last_scored = 1;
 			this.running = false;
@@ -515,7 +540,8 @@ class Game {
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
 		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) { // HITS RIGHT PADDLE aka AI PADDLE
-			// console.log("HIT PADDLE X: ", ballX, ", Z: ", ballY);
+			console.log("HIT PADDLE X: ", ballX, ", Z: ", ballY);
+			console.log("TIME: ", Date.now());
 			playTone(200, 30, 200, 0.6);
 			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(-1 * Math.cos(refAngle));
@@ -525,6 +551,7 @@ class Game {
 		&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
 		&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
 			console.log("HIT LEFT X: ", ballX, ", Z: ", ballY);
+			console.log("TIME: ", Date.now());
 			playTone(200, 30, 200, 0.6);
 			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(1 * Math.cos(refAngle));
