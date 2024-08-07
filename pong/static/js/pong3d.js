@@ -15,7 +15,7 @@ const SCORE_HEIGHT = 42;
 const GOAL_LINE = 20;
 const NET_WIDTH = 4;
 const NET_HEIGHT = 30;
-const BALL_START_SPEED = 2;
+const BALL_START_SPEED = 2 / 16;
 const PADDLE_SPEED = 5;
 const PADDLE_LEN = 42;
 const PADDLE_WIDTH = 6;
@@ -102,6 +102,7 @@ class Ball {
 		this.pos = new THREE.Vector3();
 		this.dir = new THREE.Vector3();
 		this.speed = 0;
+		this.lastMove = 0;
 	}
 	place(scene, x, z) {
 		this.mesh.position.set(x, BALL_SIZE, z);
@@ -115,8 +116,12 @@ class Ball {
 		return [this.dir.x, this.dir.z];
 	}
 	doMove() {
-		this.mesh.translateX(this.dir.x * this.speed);
-		this.mesh.translateZ(this.dir.z * this.speed);
+		if(this.lastMove == 0 || Date.now() - this.lastMove > 100 || Date.now() - this.lastMove <= 4)
+			this.lastMove = Date.now();
+		this.time = Date.now() - this.lastMove;
+		this.mesh.translateX(this.dir.x * this.speed * this.time);
+		this.mesh.translateZ(this.dir.z * this.speed * this.time);
+		this.lastMove = Date.now();
 	}
 	reset() {
 		this.mesh.position.set(0, BALL_SIZE, 0);
@@ -172,54 +177,79 @@ class Player {
 // X for ARENA HEIGHT
 // Z for ARENA WIDTH
 
-class AI {
+class proAI {
 	constructor (player) {
 		this.player = player;
 		this.lastMove = 0;
 		this.objective = ARENA_HEIGHT / 2;
 		this.msc = 21;
-		this.rightEdge = 122;
-		this.rightEdge = 48;
+		this.wait = 0;
+		this.time = {x : null, z : null};
+		this.distance;
+		this.randomMargin = 10;
 	}
 	nextCollision(simBall) {
-		this.time = {x : null, z : null};
+		this.endZ;
 		
-		this.endZ = -ARENA_WIDTH / 2 + this.msc;
-		if(simBall.dirZ > 0)
-			this.endZ = ARENA_WIDTH / 2 - this.msc;
-		this.endZ = -ARENA_WIDTH / 2 + this.msc;
+		this.endX = - (ARENA_HEIGHT / 2);
 		if(simBall.dirX > 0)
 			this.endX = ARENA_HEIGHT / 2;
 		this.time.x = Math.abs((this.endX - simBall.posX) / simBall.dirX);
 		
 		if(simBall.dirZ > 0)
-			this.time.z = Math.abs((ARENA_WIDTH / 2  - this.msc - simBall.posZ) / simBall.dirZ);
+			this.time.z = Math.abs((ARENA_WIDTH / 2 - simBall.posZ) / simBall.dirZ);
+		
 		if(this.time.x < this.time.z) {
 			this.endZ = this.time.x * simBall.dirZ + simBall.posZ;
-			simBall.dirZ *= - 1;
+			simBall.dirX *= - 1;
 		}
 		else {
+			this.endX = this.time.z * simBall.dirX + simBall.posX;
 			if(simBall.dirZ > 0)
 				this.endZ = ARENA_WIDTH / 2;
-			else
+			else {
 				this.endZ = - ARENA_WIDTH / 2;
+				simBall.dirZ *= - 1;
+			}
+			
 			this.endX = this.time.z * simBall.dirX + simBall.posX;
+			this.distance = this.time.z;
 		}
+		this.distance = Math.abs(this.endX - simBall.posX) + Math.abs(this.endZ - simBall.posZ);
 		simBall.posX = this.endX;
 		simBall.posZ = this.endZ;
 	}
 	setObjective(simBall) {
 		let rounds = 0;
-		while(simBall.posZ < 122 && rounds < 8) {
+		let rand = Math.random();
+		while(simBall.posZ != ARENA_WIDTH / 2 && rounds < 8) {
 			this.nextCollision(simBall);
 			rounds++;
 		}
-		// if(rounds == 8)
-		// 	console.log("rounds: ", rounds);
-		if(simBall.posX > 0)
-			this.objective = simBall.posX - 15;
-		else
-			this.objective = simBall.posX + 15;
+		this.objective = simBall.posX - this.randomMargin / 2 + this.randomMargin * rand;
+	}
+	setWait(simBall) {
+		this.wait = 0;
+		let rounds = 0;
+		// if(simBall.dirZ > 0) { // hits AI paddle first so then we want to reposition the paddle strategically in anticipation and estimate when ball will hit the left paddle
+
+		// }
+		if(simBall.dirZ < 0) {// we want to know when it will hit the left paddle
+			while(simBall.posZ != - (ARENA_WIDTH / 2) && rounds < 9) {
+				this.nextCollision(simBall);
+				this.wait += this.distance / simBall.speed;
+				console.log("this.distance: ", this.distance);
+				console.log("simBall.speed: ", simBall.speed);
+				console.log("WAIT: ", this.wait);
+				rounds++;
+				// console.log("rounds: ", rounds);
+			}
+			console.log("Rounds : ", rounds);
+			if(rounds > 5) {
+				this.wait = 0;
+			}
+		}
+		// console.log("END");
 	}
 	stopMove() {
 		if(this.player.direction == 1 && this.player.pos.x >= this.objective) {
@@ -236,17 +266,14 @@ class AI {
 			this.player.direction = -1;
 	}
 	executeMove(ball) {
-		if(Date.now() < this.lastMove + 1000)
+		if(Date.now() < this.lastMove + 1000 || Date.now() < this.lastMove + this.wait)
 			return ;
-		console.log("EXECUTE MOVE BALL");
 		this.lastMove = Date.now();
-		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z};
+		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
 		this.setObjective(this.simBall);
 		this.setDirection();
-		console.log("CURR POS: ", this.player.position);
-		console.log("OBJECTIVE: ", this.objective);
-		console.log("DIRECTION: ", this.player.direction);
-		console.log("SimBall: ", this.simBall);
+		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
+		this.setWait(this.simBall);
 	}
 	update(ball) {
 		this.stopMove();
@@ -325,7 +352,7 @@ class Game {
 		document.addEventListener("keyup", ev => this.keyup(ev));
 
 		if(ACTIVE_AI == true)
-			this.ai = new AI(this.playerTwo);
+			this.ai = new proAI(this.playerTwo);
 		this.showScore();
 	}
 	toggleFullScreen() {
@@ -466,7 +493,7 @@ class Game {
 		const [p1x, p1y] = this.playerOne.position;
 		const [p2x, p2y] = this.playerTwo.position;
 		if (ballY < -ARENA_WIDTH / 2 - GOAL_LINE) {
-			console.log("GOAL BALL: ", this.ball);
+			// console.log("GOAL BALL: ", this.ball);
 			playTone(240, 20, 210, 3);
 			this.last_scored = 2;
 			this.running = false;
@@ -476,7 +503,7 @@ class Game {
 			this.showScore();
 			debugger;
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
-			console.log("GOAL BALL X: ", ballX, ", Z: ", ballY);
+			// console.log("GOAL BALL X: ", ballX, ", Z: ", ballY);
 			playTone(240, 20, 210, 3);
 			this.last_scored = 1;
 			this.running = false;
@@ -488,20 +515,21 @@ class Game {
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
 		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) { // HITS RIGHT PADDLE aka AI PADDLE
-			console.log("HIT PADDLE X: ", ballX, ", Z: ", ballY);
+			// console.log("HIT PADDLE X: ", ballX, ", Z: ", ballY);
 			playTone(200, 30, 200, 0.6);
 			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(-1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
-			this.ball.speed += 0.1;
+			this.ball.speed += 1 / 64;
 		} else if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
 		&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
+			console.log("HIT LEFT X: ", ballX, ", Z: ", ballY);
 			playTone(200, 30, 200, 0.6);
 			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
-			this.ball.speed += 0.1;
+			this.ball.speed += 1 / 64;
 		}
 	}
 	showScore() {
