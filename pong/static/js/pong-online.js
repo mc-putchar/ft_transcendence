@@ -251,6 +251,7 @@ class Game {
 		this.arena.place(this.scene, -ARENA_HEIGHT / 2, ARENA_HEIGHT / 2);
 
 		this.isChallenger = isChallenger;
+		this.myPlayer = this.isChallenger ? "player1" : "player2";
 		this.playerOne = player1;
 		this.playerTwo = player2;
 		this.playerOne.place(this.scene, 0, -ARENA_WIDTH / 2 + GOAL_LINE);
@@ -271,6 +272,14 @@ class Game {
 		this.intro();
 	}
 
+	destructor() {
+		window.cancelAnimationFrame(this.animRequestId);
+		// stop audio
+		window.removeEventListener("resize", ev => this.resize(ev), true);
+		window.removeEventListener("fullscreenchange", (e) => this.resize(e));
+		location.hash = '/dashboard';
+	}
+
 	intro() {
 		this.cam_controls.autoRotate = true;
 		if (this.isChallenger) {
@@ -286,28 +295,26 @@ class Game {
 	}
 
 	send_register_player() {
-		const thisPlayer = this.isChallenger ? "player1" : "player2";
 		const username = this.isChallenger ? this.playerOne.user : this.playerTwo.user;
 		this.gameSocket.send(JSON.stringify({
 			type: 'register',
-			player: thisPlayer,
+			player: this.myPlayer,
 			user: username,
 			match_id: this.matchId,
 		}));
 	}
 
 	send_ready() {
-		const thisPlayer = this.isChallenger ? "player1" : "player2"
 		this.gameSocket.send(JSON.stringify({
 			type: 'ready',
-			player: thisPlayer,
+			player: this.myPlayer,
 		}));
 	}
 
 	sendPlayerUpdate(player) {
 		const [position, _] = player.position;
 		const direction = player.direction;
-		const msgType = this.isChallenger ? "player1_position" : "player2_position";
+		const msgType = `${this.myPlayer}_position`;
 		this.gameSocket.send(JSON.stringify({
 			type: msgType,
 			position: position,
@@ -378,6 +385,11 @@ class Game {
 		} else {
 			this.cam_controls.autoRotateSpeed = 5;
 		}
+		const iWon = this.isChallenger ? this.playerOne.score > this.playerTwo.score : this.playerTwo.score > this.playerOne.score;
+		if (iWon) {;} // play tone
+		setTimeout(() => {
+			this.destructor();
+		}, 30000);
 	}
 
 	loop() {

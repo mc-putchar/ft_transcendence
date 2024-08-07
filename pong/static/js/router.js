@@ -3,48 +3,60 @@
 import drawBackground from './background.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
+import { TournamentRouter } from './tournament-router.js';
 import { startPongGame } from './pong-game.js';
 import { startPong3DGame } from './pong3d.js';
 import { startPong4PGame } from './multi_pong4.js';
-import { Notification } from './notification.js';
-import { getCookie, getJSON, postJSON, createModal } from './utils.js';
+import { showNotification } from './notification.js';
+import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
+
+const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
+const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
 
 class Router {
-	constructor(navElement, appElement) {
+	constructor(navElement, appElement, chatElement) {
 		this.navElement = navElement;
 		this.appElement = appElement;
-		this.chatElement = document.getElementById('chat');
+		this.chatElement = chatElement;
 		this.csrfToken = getCookie('csrftoken');
+		sessionStorage.setItem('friends', '[]');
+		sessionStorage.setItem('blocked', '[]');
 
-		this.chat = new ChatRouter(this.csrfToken);
-		this.game = new GameRouter(this.csrfToken, appElement);
+		this.chat = new ChatRouter(this.csrfToken, this.chatElement);
+		this.game = new GameRouter(this.csrfToken, this.appElement);
+		this.tournament = new TournamentRouter(this.csrfToken, this.appElement);
 
 		this.init();
 	}
 
 	init() {
+		this.oldHash = window.location.hash;
 		window.addEventListener('load', () => this.route());
-		window.addEventListener('hashchange', () => this.route());
+		window.addEventListener('hashchange', (e) => this.route(e));
 
 		this.chatElement.addEventListener('challenge', (event) => {
-			console.log("Challenge event received");
 			this.game.setupGameWebSocket(event.detail.gameID);
+			const sound = new Audio(CHALLENGE_SOUND);
+			sound.play();
 		});
 		this.chatElement.addEventListener('notification', (event) => {
-			const notification = new Notification(event.detail.message, event.detail.type, event.detail.img);
-			notification.show();
-			const audio = new Audio('/static/assets/pop-alert.wav');
-			audio.play();
+			showNotification(
+				event.detail.message,
+				event.detail.type,
+				event.detail.img,
+				NOTIFICATION_SOUND);
 		});
 		this.appElement.addEventListener('notification', (event) => {
-			const notification = new Notification(event.detail.message, event.detail.type, event.detail.img);
-			notification.show();
-			const audio = new Audio('/static/assets/pop-alert.wav');
-			audio.play();
+			showNotification(
+				event.detail.message,
+				event.detail.type,
+				event.detail.img,
+				NOTIFICATION_SOUND);
 		});
 
 		this.loadNav();
 		this.loadCookieConsentFooter();
+		this.updateFriendsAndBlocks();
 		this.loadChat('lobby');
 		this.route();
 	}
@@ -53,13 +65,17 @@ class Router {
 		this.appElement.innerHTML = `<p>${message}</p><button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>`;
 	}
 
-	route() {
-		const hash = window.location.hash.substring(2);
-		const template = hash || 'home';
+	notifyError(message) {
+		showNotification(message, 'error');
+	}
+
+	async route(e) {
+		this.oldHash = e ? e.oldURL : this.oldHash;
+		const template = window.location.hash.substring(2) || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
 		} else if (template.startsWith('tournaments/')) {
-			this.loadTournamentTemplate(template);
+			this.loadTemplate(await this.tournament.route(template));
 		} else if (template.startsWith('chat')) {
 			const roomName = template.substring(5) || 'lobby';
 			this.loadChat(roomName);
@@ -72,60 +88,53 @@ class Router {
 				this.chat.declineGame();
 			}
 			this.game.route(template);
+		} else if (template.startsWith('addFriend') || template.startsWith('deleteFriend') || template.startsWith('block') || template.startsWith('unblock')) {
+				const action = template.split('/')[0];
+				const id = template.split('/')[1];
+				this.manageFrenemy(action, id);
 		} else {
 			this.loadTemplate(template);
 		}
 	}
 
 	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
-		element.classList.add("fade-exit");
-		setTimeout(() => {
-			element.innerHTML = newContent;
-			element.classList.remove("fade-exit");
-			element.classList.add("fade-enter");
-			setTimeout(() => element.classList.remove("fade-enter"), fadeInDuration);
-			if (callback) callback();
-		}, fadeOutDuration);
+		try {
+			element.classList.add("fade-exit");
+			setTimeout(() => {
+				element.innerHTML = newContent;
+				element.classList.remove("fade-exit");
+				element.classList.add("fade-enter");
+				setTimeout(() => element.classList.remove("fade-enter"), fadeInDuration);
+				if (callback) callback();
+			}, fadeOutDuration);
+		} catch (error) {
+			console.debug("Error animating content: ", error);
+			this.notifyError("Error animating content");
+		}
 	}
 
 	async loadNav() {
 		try {
-			const accessToken = sessionStorage.getItem('access_token') || '';
-			const response = await fetch('/templates/navbar', {
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-					'Authorization': `Bearer ${accessToken}`,
-				}
-			});
-			if (!response.ok) {
+			const response = await getHTML('/templates/navbar', this.csrfToken);
+			if (!response) {
 				throw new Error(`Cannot load nav: ${response.status}`);
 			}
-			const html = await response.text();
-			this.navElement.innerHTML = html;
+			this.navElement.innerHTML = response;
 		} catch (error) {
-			console.error("Error loading nav: ", error);
+			console.debug("Error loading nav: ", error);
 			this.navElement.innerHTML = "<p>Error loading navigation</p>";
 		}
 	}
 
 	async loadTemplate(template) {
-		console.log("Loading template: ", template);
+		console.debug("Loading template: ", template);
 		try {
-			const accessToken = sessionStorage.getItem('access_token');
-			const response = await fetch(`/templates/${template}`, {
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-					'Authorization': `Bearer ${accessToken || ''}`,
-				}
-			});
-			if (!response.ok) {
+			const response = await getHTML(`/templates/${template}`, this.csrfToken);
+			if (!response) {
 				throw new Error(`Cannot load ${template}: ${response.status}`);
 			}
 			const element = this.appElement;
-			const html = await response.text();
-			this.animateContent(element, html, () => this.handlePostLoad(template));
+			this.animateContent(element, response, () => this.handlePostLoad(template));
 		} catch (error) {
 			console.error("Error loading template: ", error);
 			this.displayError("Error loading content");
@@ -134,111 +143,83 @@ class Router {
 
 	async loadProfileTemplate(template) {
 		try {
-			const accessToken = sessionStorage.getItem('access_token') || '';
-			const response = await fetch(`/${template}`, {
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-					'Authorization': `Bearer ${accessToken || ''}`,
-				}
-			});
-			if (!response.ok) {
+			const response = await getHTML(`/${template}`, this.csrfToken);
+			if (!response) {
 				throw new Error(`Cannot load ${template}: ${response.status}`);
 			}
-			const html = await response.text();
-			this.animateContent(this.appElement, html);
+			this.animateContent(this.appElement, response);
 		} catch (error) {
 			console.error("Error loading user template: ", error);
 			this.displayError("Error loading content");
 		}
 	}
 
-	async loadTournamentTemplate(template) {
-		console.log("Loading tournament template: ", template);
-		if (template.endsWith('join/')) {
-			const tournamentID = template.split('/')[1];
-			this.joinTournament(tournamentID);
-		} else if (template.endsWith('leave/')) {
-			const tournamentID = template.split('/')[1];
-			this.leaveTournament(tournamentID);
-		} else {
-			try {
-				const accessToken = sessionStorage.getItem('access_token') || '';
-				const response = await fetch(`/game/${template}`, {
-					headers: {
-						'X-Requested-With': 'XMLHttpRequest',
-						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-						'Authorization': `Bearer ${accessToken || ''}`,
-					}
-				});
-				if (!response.ok) {
-					throw new Error(`Cannot load ${template}: ${response.status}`);
-				}
-				const data = await response.json();
-				const fields = [
-					{ key: 'name', label: 'Name' },
-					{ key: 'player_limit', label: 'Max Players' },
-					{ key: 'status', label: 'Status' },
-				]
-				createModal(data, "tournament-modal", "tournament-modal-content", fields);
-				window.location.hash = '/tournaments';
-			} catch (error) {
-				console.error("Error loading tournament template: ", error);
-				this.displayError("Error loading content");
-			}
+	async manageFrenemy(action, id) {
+		const actions = ['addFriend', 'deleteFriend', 'block', 'unblock'];
+		if (!actions.includes(action)) {
+			console.debug("Invalid action: ", action);
+			this.notifyError("Invalid action. This incident will be reported.");
+			return;
 		}
-	}
-
-
-	async joinTournament(tournamentID) {
+		const endpoints = ['add_friend', 'remove_friend', 'block_user', 'unblock_user'];
+		const endpoint = endpoints[actions.indexOf(action)];
+		const body = JSON.stringify({user_id: id});
 		try {
-			const response = await postJSON(`/game/tournaments/${tournamentID}/join/`, this.csrfToken);
+			const response = await postJSON(`/api/profiles/${endpoint}/`, this.csrfToken, body);
 			if (response) {
-				console.log("Joined tournament:", tournamentID);
-				this.loadTemplate(`in-tournament/${tournamentID}`);
+				console.debug("Frenemy action successful:", action, id);
+				this.updateFriendsAndBlocks();
+				history.back();
 			} else {
-				throw new Error("Failed to join tournament: ", response.status);
+				throw new Error(`Failed to perform action: ${action} with id: ${id}`);
 			}
 		} catch (error) {
-			console.error("Error joining tournament: ", error);
+			console.error("Error performing action: ", error);
 			this.displayError(error.message);
 		}
 	}
 
-	async leaveTournament(tournamentID) {
+	async updateFriendsAndBlocks() {
 		try {
-			const response = await postJSON(`/game/tournaments/${tournamentID}/leave/`, this.csrfToken);
+			const response = await getJSON('/api/profiles/friends/', this.csrfToken);
 			if (response) {
-				console.log("Left tournament:", tournamentID);
-				this.loadTemplate('tournaments');
+				console.log("Updated friends", response);
+				sessionStorage.setItem('friends', JSON.stringify(response));
 			} else {
-				throw new Error("Failed to leave tournament: ", response.status);
+				throw new Error("Failed to update friends");
 			}
 		} catch (error) {
-			console.error("Error leaving tournament: ", error);
+			console.error("Error updating friends: ", error);
+			this.displayError(error.message);
+		}
+		try {
+			const response = await getJSON('/api/profiles/blocked_users/', this.csrfToken);
+			if (response) {
+				console.log("Updated blocked", response);
+				sessionStorage.setItem('blocked', JSON.stringify(response));
+			} else {
+				throw new Error("Failed to update blocked");
+			}
+		} catch (error) {
+			console.error("Error updating blocked: ", error);
 			this.displayError(error.message);
 		}
 	}
 
-	async loadChat(roomName) {
+	async loadChat(roomName='lobby') {
 		try {
 			const accessToken = sessionStorage.getItem('access_token') || '';
 			if (!accessToken) {
-				throw new Error("You need to login to access the chat");
+				console.log("You need to login to access the chat");
+				this.chatElement.style.display = 'none';
+				return;
 			}
-			const response = await fetch(`/templates/chat`, {
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-					'Authorization': `Bearer ${accessToken || ''}`,
-				}
-			});
-			if (!response.ok) {
+			const response = await getHTML(`/templates/chat`, this.csrfToken);
+			if (!response) {
 				throw new Error(`Cannot load chat: ${response.status}`);
 			}
-			const html = await response.text();
 			this.chatElement.style.display = 'block';
-			this.animateContent(this.chatElement, html, () => 
+			this.animateContent(this.chatElement, response, () => 
 				this.chat.setupChatWebSocket(roomName));
 		} catch (error) {
 			this.chatElement.style.display = 'none';
@@ -248,20 +229,15 @@ class Router {
 
 	async loadCookieConsentFooter() {
 		try {
-			const response = await fetch('/templates/cookie_consent_footer', {
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-				}
-			});
-			if (!response.ok) {
+			const response = await getHTML('/templates/cookie_consent_footer', this.csrfToken);
+			if (!response) {
 				throw new Error(`Cannot load cookie consent footer: ${response.status}`);
 			}
-			const html = await response.text();
-			document.getElementById('cookie-consent-footer').innerHTML = html;
+			document.getElementById('cookie-consent-footer').innerHTML = response;
 			this.initCookieConsent();
 		} catch (error) {
 			console.error("Error loading cookie consent footer: ", error);
+			this.notifyError("Error loading cookie consent footer");
 		}
 	}
 
@@ -298,7 +274,7 @@ class Router {
 				this.handleProfilePage();
 				break;
 			case 'game':
-				this.game.setupGameWebSocket();
+				// this.game.setupGameWebSocket();
 				break;
 			case 'tournaments':
 				this.handleTournamentPage();
@@ -328,18 +304,19 @@ class Router {
 	
 			if (password !== password_confirmation) {
 				console.error("Passwords do not match");
-				alert("Passwords do not match");
+				this.notifyError("Passwords do not match");
 				return;
 			}
-	
+
 			try {
+				const body = JSON.stringify({ username, email, password, password_confirmation });
 				const response = await fetch('/api/register/', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 						'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
 					},
-					body: JSON.stringify({ username, email, password, password_confirmation })
+					body: body,
 				});
 				const data = await response.json();
 				if (response.ok) {
@@ -385,26 +362,17 @@ class Router {
 				this.displayError(error.message);
 			}
 		});
+		document.getElementById('username').focus();
 	}
 
 	async logout() {
 		try {
-			const accessToken = sessionStorage.getItem('access_token') || '';
-			const refreshToken = sessionStorage.getItem('refresh_token') || '';
-			const response = await fetch('/api/logout/', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-					'Authorization': `Bearer ${accessToken}`
-				},
-				body: JSON.stringify({ refresh: refreshToken })
-			});
-			if (response.ok) {
+			const body = JSON.stringify({ refresh: sessionStorage.getItem('refresh_token') || '' });
+			const response = await postJSON('/api/logout/', this.csrfToken, body);
+			if (response) {
 				console.log("Logged out");
-				sessionStorage.removeItem('access_token');
-				sessionStorage.removeItem('refresh_token');
 				this.loadNav();
+				this.loadChat();
 				window.location.hash = '/home';
 			} else {
 				throw new Error("Failed to log out");
@@ -413,6 +381,8 @@ class Router {
 			console.error("Error logging out: ", error);
 			this.displayError(error.message);
 		}
+		sessionStorage.clear();
+		this.loadNav();
 	}
 
 	handleProfilePage() {
@@ -449,7 +419,9 @@ class Router {
 		});
 		document.getElementById('anonymize-data').addEventListener('click', (e) => {
 			e.preventDefault();
-			this.handleAnonymization();
+			if (confirm("Are you sure you want to anonymize your data? This action is irreversible.")) {
+				this.handleAnonymization();
+			}
 		});
 		document.getElementById('delete-account').addEventListener('click', (e) => {
 			e.preventDefault();
@@ -472,7 +444,7 @@ class Router {
 				});
 				if (response.ok) {
 					const html = await response.text();
-					this.animateContent(html, () => this.handlePostLoad("profile"));
+					this.animateContent(this.appElement, html, () => this.handlePostLoad("profile"));
 					this.loadNav();
 				} else {
 					throw new Error("Failed to update profile");
@@ -566,7 +538,10 @@ class Router {
 
 document.addEventListener('DOMContentLoaded', () => {
 	drawBackground();
-	const navElement = document.getElementById('nav');
-	const appElement = document.getElementById('app');
-	new Router(navElement, appElement);
 });
+
+const navElement = document.getElementById('nav');
+const appElement = document.getElementById('app');
+const chatElement = document.getElementById('chat');
+
+new Router(navElement, appElement, chatElement);

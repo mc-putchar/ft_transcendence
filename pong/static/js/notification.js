@@ -1,5 +1,7 @@
 "use strict";
 
+const DEFAULT_IMAGE = '/static/assets/42logo.svg';
+
 class Notification {
 	constructor(message, type, img = "") {
 		this.message = message;
@@ -13,7 +15,10 @@ class Notification {
 		toast.classList.add("toast");
 		toast.classList.add("bg-dark");
 		toast.classList.add("border");
-		toast.classList.add("border-success");
+		if (this.type === "error") toast.classList.add("border-danger");
+		else if (this.type === "warning") toast.classList.add("border-warning");
+		else if (this.type === "info") toast.classList.add("border-success");
+		else toast.classList.add("border-info");
 		toast.setAttribute("role", "alert");
 		toast.setAttribute("aria-live", "assertive");
 		toast.setAttribute("aria-atomic", "true");
@@ -47,4 +52,13 @@ class Notification {
 	}
 }
 
-export { Notification };
+function showNotification(message, type, img=DEFAULT_IMAGE, sound=null) {
+	const notification = new Notification(message, type, img);
+	notification.show();
+	if (sound) {
+		const audio = new Audio(sound);
+		audio.play();
+	}
+}
+
+export { Notification, showNotification };

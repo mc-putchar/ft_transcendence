@@ -13,7 +13,7 @@
 			<tr>
 				<th>Tournament</th>
 				<th>Players</th>
-				<th>Join</th>
+				<th>Status</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -26,8 +26,17 @@
 				</td>
 				<td> {{ tournament.participants.count }} / {{ tournament.player_limit }} </td>
 				<td>
-					<button class="btn btn-primary" onclick="location.href='#/tournaments/{{ tournament.id }}/join/'" 
-					{% if tournament.participants.count >= tournament.player_limit %}disabled{% endif %}>Join</button>
+					{% if tournament.status == "open" %}
+						{% if tournament.participants.count < tournament.player_limit %}
+							<button class="btn btn-primary" onclick="location.hash='/in-tournament/{{ tournament.id }}'">Join</button>
+						{% else %}
+							Full
+						{% endif %}
+					{% elif tournament.status == "closed" %}
+						Closed
+					{% elif tournament.status == "started" %}
+						Started
+					{% endif %}
 				</td>
 			</tr>
 			{% endfor %}

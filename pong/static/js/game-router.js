@@ -8,7 +8,7 @@ class GameRouter {
 		this.csrfToken = crsfToken;
 		this.appElement = appElement;
 		this.gameSocket = null;
-		this.username;
+		this.username = "";
 	}
 
 	setupGameWebSocket(gameID) {
@@ -37,7 +37,7 @@ class GameRouter {
 	}
 
 	route(event) {
-		console.log("Routing to game", event);
+		console.debug("Routing to game", event);
 		if (event !== "/game/") {
 			window.location.hash = "/game/";
 		}
@@ -78,13 +78,14 @@ class GameRouter {
 	}
 
 	handleInitialSend(msg) {
-		console.log("Sending initial message");
 		if (this.gameSocket.readyState === WebSocket.OPEN) {
 			this.gameSocket.send(JSON.stringify(msg));
+			if (msg.type === 'decline') {
+				this.gameSocket.close();
+			}
 		} else if (this.gameSocket.readyState === WebSocket.CONNECTING) {
 			this.gameSocket.addEventListener('open', () => {
 				this.gameSocket.send(JSON.stringify(msg));
-				console.log("Sent message after opening socket", msg);
 			});
 		} else {
 			console.error("Game socket not open");
@@ -117,9 +118,8 @@ class GameRouter {
 
 	async createGame() {
 		const response = await postJSON("/game/matches/create_match/", this.csrfToken);
-		if (response !== null) {
-			if (response.hasOwnProperty('match_id'))
-				return response.match_id;
+		if (response && response.hasOwnProperty('match_id')) {
+			return response.match_id;
 		}
 		console.error("Error creating game", response);
 		return null;
@@ -127,8 +127,7 @@ class GameRouter {
 
 	async joinGame(gameID) {
 		const response = await postJSON(`/game/matches/${gameID}/join/`, this.csrfToken);
-		if (response !== null) {
-			if (response.hasOwnProperty('status'))
+		if (response && response.hasOwnProperty('status')) {
 				return response.status;
 		}
 		console.error("Error joining game", response);

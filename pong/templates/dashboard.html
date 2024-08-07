@@ -4,28 +4,28 @@
     <div class="col-md-8">
         <div class="card p-2 shadow-sm">
             <div class="card-body text-center container-background">
-                <h2 class="h4 mb-4">Logged in</h2>
+                <h2 class="h4 mb-4">Dashboard</h2>
                     <div class="card-body text-center" >
                         <ul class="list-group list-group-flush mb-4">
-                            <li class="list-group-item">User: {{ user.login }}</li>
-                            <li class="list-group-item">Alias: {{ user.alias }}</li>
-                            <li class="list-group-item">Status: {{ user.status }}</li>
+                            <li class="list-group-item">User: {{ username }}</li>
+                            <li class="list-group-item">Alias: {{ profile.alias }}</li>
+                            <li class="list-group-item">Status: {{ status }}</li>
                             <li class="list-group-item">
-                                <img src="{{ user.image }}" alt="Profile Image" class="img-thumbnail" style="width: 20vw; height: auto;">
+                                <img src="{{ profile.image }}" alt="Profile Image" class="img-thumbnail" style="width: 120vw; height: auto;">
                             </li>
                             <p>Friends:</p>
-                            {% for friend in user.friends %}
-                                {% if friend.isOnline %}
-                                    <li class="list-group-item text-success">{{ friend.user.username }}</li>
-                                {% else %}
-                                    <li class="list-group-item text-danger">{{ friend.user.username }}</li>
-                                {% endif %}
+                            {% for friend in friends %}
+                                    <li class="list-group-item">
+                                        <button class="btn btn-outline-{% if friend.isOnline %}success{% else %}danger{% endif %} border-info rounded-pill" onclick="location.href='#/profiles/{{ friend.username }}'">
+                                            <img src="{{ friend.profilepic }}" alt="Friend Image" class="img-thumbnail" style="width: 32px; height: 32px;"> {{ friend.username }}
+                                        </button>
+                                    </li>
                             {% endfor %}
                         </ul>
                     </div>
                     <div class="container-fluid">
                         <div class="row">
-                            <a class="btn btn-primary" href="/chat" data-link>Enter Chat</a>
+                            <a class="btn btn-primary" href="#/chat">Enter Chat</a>
                         </div>
                     </div>
                     <div class="row">
@@ -37,6 +37,6 @@
     </div>
 </div>
 {% else %}
-	<p>Log in required to view this page.</p>
-	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+    <p>Log in required to view this page.</p>
+    <button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
 {% endif %}

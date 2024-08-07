@@ -1,20 +1,30 @@
 "use strict";
 
 import { createModal } from './utils.js';
+import { showNotification } from './notification.js';
 
 class ChatRouter {
-	constructor(crsfToken) {
+	constructor(crsfToken, chatElement) {
 		this.csrfToken = crsfToken;
+		this.chatElement = chatElement;
 		this.chatSocket = null;
 	}
 
 	setupChatWebSocket(roomName) {
 		const accessToken = sessionStorage.getItem('access_token') || '';
+		if (!accessToken) {
+			this.showError("No access token found");
+			return;
+		}
+		this.chatLog = document.getElementById('chat-log');
+		if (!this.chatLog) {
+			console.log("Could not find chat log", this.chatLog);
+			return;
+		}
 		this.messageInput = document.querySelector('#chat-message-input');
-		this.username = document.querySelector('#chat-username').textContent.trim();
-		this.chatLog = document.querySelector('#chat-log');
 		this.usersList = document.querySelector('#chat-userlist');
 		this.users = null;
+		this.username = document.getElementById("chat-username").innerText.trim();
 
 		if (this.chatSocket) {
 			this.chatSocket.close();
@@ -25,9 +35,9 @@ class ChatRouter {
 		);
 
 		this.chatSocket.addEventListener('open', () => console.log("Chat socket opened"));
-		this.chatSocket.addEventListener('error', (e) => console.error("Chat websocket error:", e));
+		this.chatSocket.addEventListener('error', (e) => this.showError(`Chat websocket error: ${e}`));
 		this.chatSocket.addEventListener('close', (e) => {
-			if (!e.wasClean) console.error("Chat socket closed unexpectedly:", e);
+			if (!e.wasClean) this.showError(`Chat socket closed unexpectedly: ${e}`);
 			else console.log("Chat socket closed:", e);
 		});
 		this.chatSocket.addEventListener('message', (event) => this.parseMessage(event));
@@ -40,6 +50,10 @@ class ChatRouter {
 		document.querySelector('#chat-message-submit').onclick = () => {
 			this.sendMessage();
 		};
+	}
+
+	showError(message) {
+		showNotification(message, 'error');
 	}
 
 	isCommand(message) {
@@ -68,7 +82,7 @@ class ChatRouter {
 									gameID: data.username,
 								},
 							});
-							document.getElementById("chat").dispatchEvent(challengeEvent);
+							this.chatElement.dispatchEvent(challengeEvent);
 						} else if (challengedUser !== this.username) {
 							this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel');
 						} else {
@@ -79,11 +93,11 @@ class ChatRouter {
 							const fields = [{ key: "message", label: "Message" }];
 							const custom = `
 								<div class="row">
-									<a href="#/game/accept/${data.username}" class="btn btn-success" data-dismiss="modal">Accept</a>
-									<a href="#/game/decline/" class="btn btn-danger" data-dismiss="modal">Decline</a>
+									<button onclick="location.hash='/game/accept/${data.username}'" class="btn btn-success" data-dismiss="modal">Accept</button>
+									<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-dismiss="modal">Decline</button>
 								</div>`;
 							const closeCallback = () => {
-								window.location.hash = '/game/decline/';
+								location.hash = '/game/decline/';
 							};
 
 							createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
@@ -109,10 +123,9 @@ class ChatRouter {
 						detail: {
 							message: `${data.username}: ${msg}`,
 							type: 'Mention',
-							img: '/static/assets/42logo.svg',
 						},
 					});
-					document.getElementById("chat").dispatchEvent(notificationEvent);
+					this.chatElement.dispatchEvent(notificationEvent);
 				}
 				if (data.message.length > 0)
 					this.pushMessage(`${data.username}: ${data.message}`);

@@ -41,16 +41,55 @@
 							</div>
 						{% endfor %}
 					</div>
+				{% if is_joined %}
+					<button id="leave-tournament" class="btn btn-danger" onclick="location.hash='/tournaments/{{ tournament.id }}/leave/'">Leave Tournament</button>
+				{% else %}
+					<button id="join-tournament" class="btn btn-primary" onclick="location.hash='/tournaments/{{ tournament.id }}/join/'" {% if tournament.participants.count >= tournament.player_limit %}disabled{% endif %}>Join Tournament</button>
+				{% endif %}
+			</div>
+			<div class="card-footer bg-dark text-white">
+				<p class="mb-0">Status: {{ tournament.status }}</p>
+			</div>
+			<div class="card-body bg-info text-info">
+				{% if tournament.status == 'closed' %}
+					<p>Tournamenent results: TODO</p>
+				{% elif tournament.status == 'started' %}
+					<p>Bracket: TODO</p>
+				{% else %}
+					<table class="table table-info">
+						<thead>
+							<tr>
+								<th>#</th>
+								<th>Player</th>
+								<th>Score</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for p in participants %}
+								<tr>
+									<td>{{ forloop.counter }}</td>
+									<td>
+										<button class="btn btn-outline-primary border-info rounded-pill" onclick="location.href='#/profiles/{{ p.player.user.username }}'">
+										<img src="{{ p.player.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> | {{ p.player.alias }}
+										</button>
+									</td>
+									<td>{{ p.player.matches_won }}</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				{% endif %}
+				<div class="d-flex justify-content-center">
+					<button id="invite-players" class="btn btn-primary" onclick="location.hash='/tournaments/{{ tournament.id }}/invite/'" disabled>Invite Players</button>
+					{% if is_creator %}
+					<button id="start-tournament" class="btn btn-success" onclick="location.hash='/tournaments/{{ tournament.id }}/start_tournament/'" {% if tournament.participants.count < 2 %}disabled{% endif %}>Start Tournament</button>
+					<button id="delete-tournament" class="btn btn-danger" onclick="location.hash='/tournaments/{{ tournament.id }}/delete_tournament/'">Delete Tournament</button>
+					{% endif %}
 				</div>
-
-	{% if is_creator %}
-		<button id="start-tournament" class="btn btn-success" {% if tournament.participants.count < 2 %}disabled{% endif %}>Start Tournament</button>
-		<button id="delete-tournament" class="btn btn-danger">Delete Tournament</button>
-	{% elif is_joined %}
-		<button id="leave-tournament" class="btn btn-danger">Leave Tournament</button>
-	{% else %}
-		<button id="join-tournament" class="btn btn-primary" {% if tournament.participants.count >= tournament.player_limit %}disabled{% endif %}>Join Tournament</button>
-	{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
 {% else %}
 	<p>Log in required to view this page.</p>
 	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>

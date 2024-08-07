@@ -11,9 +11,8 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.template import loader
 
-from api.models import Profile, PlayerMatch, Friend, Blocked, Tournament
+from api.models import Profile, PlayerMatch, Friend, Blocked, Tournament, TournamentPlayer
 from game.serializers import PlayerSerializer
-from game.views import TournamentViewSet
 from .forms import ProfileUpdateForm, UserUpdateForm, ChangePasswordForm
 from game.forms import CreateTournamentForm
 from .auth42 import exchange_code_for_token, get_user_data
@@ -30,28 +29,33 @@ def templates(request, template_name):
     user_data = get_user_from_token(request)
     context = {}
     match template_name:
-        case 'home' | 'navbar':
+        case 'home' | 'navbar' | 'chat':
             template = loader.get_template(f"{template_name}.html")
             context = user_data
+        case 'dashboard' | 'online-game':
+            template = loader.get_template(f"{template_name}.html")
+            username = user_data['user'].username
+            context = get_user_info(request, username)
         case 'profile':
             template = loader.get_template('profile.html')
             context = update_profile(request, user_data)
         case 'leaderboard':
             template = loader.get_template('leaderboard.html')
             users = Profile.objects.all()
+            users = sorted(users, key=lambda x: x.matches_won(), reverse=True)
+            users = list(map(lambda x: {
+                'username': x.user.username,
+                'alias': x.alias,
+                'profilepic': x.image.url,
+                'matches_won': x.matches_won(),
+            }, users))
             context = { 'users': users }
-        case 'online-game':
-            template = loader.get_template('online-game.html')
-            context = get_user_info(request, user_data['user'].username)
         case 'tournaments':
             logger.info('Tournaments')
             template = loader.get_template('tournaments.html')
             context = user_data
             context['tournaments'] = Tournament.objects.filter(status='open')
             context['t_form'] = CreateTournamentForm()
-        case 'chat':
-            template = loader.get_template('chat.html')
-            context = user_data
         case _:
             try:
                 template = loader.get_template(f"{template_name}.html")
@@ -60,8 +64,8 @@ def templates(request, template_name):
     return HttpResponse(template.render(context, request=request))
 
 def profiles(request, username):
-    context = get_user_info(request, username)
     user_data = get_user_from_token(request)
+    context = get_user_info(request, username)
     context['user'] = user_data['user']
     if context:
         template = loader.get_template("user-profile.html")
@@ -78,11 +82,11 @@ def get_user_info(request, username):
         return None
     status = 'Online' if profile.isOnline else 'Offline'
 
-    is_me = user == profile.user
-    is_friend = False if not is_me else Friend.is_friend(user, profile.user)
-    is_blocked = False if not is_me else Blocked.is_blocked(user, profile.user)
+    is_me = profile.user.id == user.id
+    is_friend = user.profile.is_friend(profile.user)
+    is_blocked = user.profile.is_blocked(profile.user)
 
-    played = PlayerMatch.objects.filter(player=profile)
+    played = PlayerMatch.objects.filter(player=profile).order_by('-match__date')
     wins = played.filter(winner=True).count()
     losses = played.count() - wins
     match_stats = {
@@ -90,17 +94,26 @@ def get_user_info(request, username):
         'wins': wins,
         'losses': losses,
     }
+    friends = profile.get_friends()
+    friends = list(map(lambda x: {
+        'username': x.username,
+        'isOnline': x.profile.isOnline,
+        'profilepic': x.profile.image.url,
+    }, friends))
     serializer = PlayerSerializer(profile)
     context = {
         'username': profile.user.username,
         'profile': serializer.data,
         'status': status,
-        'profilepic': profile.image.url,
         'is_me': is_me,
         'is_friend': is_friend,
         'is_blocked': is_blocked,
+        'friends': friends,
         'match_stats': match_stats,
+        'match_history': played,
+        'tournament_history': TournamentPlayer.objects.filter(player=profile, tournament__status='closed')
     }
+    logger.info(context)
     return context
 
 def update_profile(request, user_data):
@@ -137,12 +150,13 @@ def in_tournament(request, t_id):
     except Tournament.DoesNotExist:
         return render(request, '404.html', context)
     context['tournament'] = tournament
+    context['is_joined'] = tournament.is_player(user_data['user'])
+    context['participants'] = tournament.get_players()
     if tournament.creator:
         try:
             creator = Profile.objects.get(id=tournament.creator.id)
             context['is_creator'] = creator.user == user_data['user']
             context['creator'] = creator
-            context['is_joined'] = tournament.participants.filter(id=user_data['user'].profile.id).exists()
         except Profile.DoesNotExist:
             creator = None
     return render(request, 'in-tournament.html', context)

@@ -48,31 +48,34 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	});
 }
 
-async function postJSON(endpoint, csrftoken, jwt_token = "", json = "") {
-	const accessToken = sessionStorage.getItem('access_token') || jwt_token;
+async function getHTML(endpoint, csrftoken) {
+	const accessToken = sessionStorage.getItem('access_token') || "";
 	const response = await fetch(endpoint, {
-		method: "POST",
+		method: "GET",
 		headers: {
-		"Content-Type": "application/json",
-		"Accept": "application/json",
+		"Content-Type": "text/html",
+		"Accept": "text/html",
 		"X-Requested-With": "XMLHttpRequest",
 		"X-CSRFToken": csrftoken,
 		"Authorization": `Bearer ${accessToken}`,
 		},
-		body: json,
-		credentials: "include",
+		credentials: "include"
 	});
 	if (response.ok) {
-		const data = await response.json();
+		const data = await response.text();
 		return data;
+	} else if (response.status === 401) {
+		if (await refreshToken())
+			return await getHTML(endpoint, csrftoken);
+		return null;
 	} else {
-		console.error("Server returned error response");
-		return response;
+		console.error("Server returned error response", response);
+		return null;
 	}
 }
 
-async function getJSON(endpoint, csrftoken, jwt_token = "") {
-	const accessToken = sessionStorage.getItem('access_token') || jwt_token;
+async function getJSON(endpoint, csrftoken) {
+	const accessToken = sessionStorage.getItem('access_token') || "";
 	const response = await fetch(endpoint, {
 		method: "GET",
 		headers: {
@@ -87,8 +90,74 @@ async function getJSON(endpoint, csrftoken, jwt_token = "") {
 	if (response.ok) {
 		const data = await response.json();
 		return data;
+	} else if (response.status === 401) {
+		if (await refreshToken())
+			return await getJSON(endpoint, csrftoken);
+		return null;
 	} else {
-		console.error("Server returned error response");
+		console.error("Server returned error response", response);
+		return null;
+	}
+}
+
+async function postJSON(endpoint, csrftoken, json = "") {
+	const accessToken = sessionStorage.getItem('access_token') || "";
+	const response = await fetch(endpoint, {
+		method: "POST",
+		headers: {
+		"Content-Type": "application/json",
+		"Accept": "application/json",
+		"X-Requested-With": "XMLHttpRequest",
+		"X-CSRFToken": csrftoken,
+		"Authorization": `Bearer ${accessToken}`,
+		},
+		body: json,
+		credentials: "include",
+	});
+	if (response.ok) {
+		if (response.status === 204 || response.status === 205) {
+			return "ok";
+		}
+		try {
+			const data = await response.json();
+			return data;
+		} catch (e) {
+			console.error("Failed to parse JSON response", response);
+			return null;
+		}
+	} else if (response.status === 401) {
+		await refreshToken();
+		const data = await postJSON(endpoint, csrftoken, json);
+		if (data) return data;
+		return null;
+	} else {
+		console.error("Server returned error response", response);
+		return null;
+	}
+}
+
+async function deleteJSON(endpoint, csrftoken) {
+	const accessToken = sessionStorage.getItem('access_token') || "";
+	const response = await fetch(endpoint, {
+		method: "DELETE",
+		headers: {
+		"Content-Type": "application/json",
+		"Accept": "application/json",
+		"X-Requested-With": "XMLHttpRequest",
+		"X-CSRFToken": csrftoken,
+		"Authorization": `Bearer ${accessToken}`,
+		},
+		credentials: "include"
+	});
+	if (response.ok) {
+		const data = await response.json();
+		return data;
+	} else if (response.status === 401) {
+		if (await refreshToken())
+			return await deleteJSON(endpoint, csrftoken);
+		return null;
+	} else {
+		console.error("Server returned error response", response);
 		return null;
 	}
 }
@@ -108,4 +177,22 @@ function getCookie(name) {
 	return cookieValue;
 }
 
-export { createModal, postJSON, getJSON, getCookie };
+async function refreshToken() {
+	const refreshToken = sessionStorage.getItem('refresh_token') || "";
+	const response = await postJSON(
+		"/api/token/refresh/",
+		getCookie("csrftoken"),
+		JSON.stringify({ refresh: refreshToken })
+	);
+	if (response) {
+		sessionStorage.setItem('access_token', response.access);
+		return true;
+	} else {
+		console.error("Failed to refresh access token");
+		sessionStorage.clear();
+		window.location.hash = "/login";
+		return false;
+	}
+}
+
+export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie };
