@@ -34,8 +34,8 @@ web3 = Web3(HTTPProvider(os.getenv('INFURA_TESTNET')))
 if not web3.is_connected():
 	print("Connected failed")
 	raise ValueError("Web3 connection failed")
-with open("static/blockchain/build/tournament.json") as f:
-	abi = json.load(f)["contracts"]["tournament.sol"]["PongTournament"]["abi"]
+with open("static/blockchain/build/PongTournament.json") as f:
+	abi = json.load(f)["contracts"]["PongTournament.sol"]["PongTournament"]["abi"]
 contractAddress = os.getenv('CONTRACT')
 if contractAddress is None:
 	raise ValueError("CONTRACT environment variable not set")
