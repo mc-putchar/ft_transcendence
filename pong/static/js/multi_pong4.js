@@ -1,6 +1,8 @@
 window.startPong4PGame = startPong4PGame;
 
 let animationID = null;
+let button_up = null;
+let button_down = null;
 
 function startPong4PGame() {
 	
@@ -41,6 +43,7 @@ function startPong4PGame() {
 	let paddle_pace;
 	let	last_touch = "none";
 	let conceder = null;
+	let format;
 
 	// const single_player = false;
 
@@ -50,32 +53,48 @@ function startPong4PGame() {
 		await preSleep(ms);
 	};
 
-	let button_up;
-	let button_down;
+	button_up = document.createElement("button");
+	button_down = document.createElement("button"); // tried putting them both in the same class and using getElementByClassName(), but it somehow doesn't work
+
+	parent.appendChild(button_up);
+	parent.appendChild(button_down);
+
+	button_up.addEventListener("mousedown", button_up_onmousedown);
+	button_down.addEventListener("mousedown", button_down_onmousedown);
+	button_up.addEventListener("mouseup",  button_up_onmouseup);
+	button_down.addEventListener("mouseup", button_down_onmouseup);
+	
+	button_up.className = "Buttons";
+	button_down.className = "Buttons";
+
+	[button_up, button_down].forEach(button => {
+		button.style.backgroundColor = 'rgb(2, 2, 27)';
+		button.style.color = 'white';
+		button.style.cursor = 'pointer';
+		button.style.margin = '5px 0'; // somehow modifying border-width and some other border params doesn't work here, so it's in the css file
+
+		button.style.position = "absolute";
+
+		if(window.innerWidth > parent.style.width * 0.8)
+			button.style.left = "80%";
+		else 
+			button.style.left = "90%";
+
+		button.style.height = "10%";
+		button.style.width = "5%";
+		button.style.fontSize = font_size;
+	});
+
+	button_up.style.top = "45%";
+	button_up.innerText = "UP / RIGHT";
+
+	button_down.style.top = "55%";
+	button_down.innerText = "DOWN / LEFT";
 
 	function init ()
-	{
-		if (button_up && button_down) {
-			button_up.remove();
-			button_down.remove();
-		}
-
-		button_up = document.createElement("button");
-		button_down = document.createElement("button"); // tried putting them both in the same class and using getElementByClassName(), but it somehow doesn't work
-
-		parent.appendChild(button_up);
-		parent.appendChild(button_down);
-
+	{	
 		canvas.style.width = "45%";
 		canvas.style.height = "90%";
-
-   		button_up.className = "Buttons";
-		button_down.className = "Buttons";
-	
-		button_up.addEventListener("mousedown", button_up_onmousedown);
-		button_down.addEventListener("mousedown", button_down_onmousedown);
-		button_up.addEventListener("mouseup",  button_up_onmouseup);
-		button_down.addEventListener("mouseup", button_down_onmouseup);
 
 		parent.style.height = (screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - 10) + "px";
 		parent.style.width = (screen.availWidth - (window.outerWidth - window.innerWidth)) + "px";
@@ -106,105 +125,46 @@ function startPong4PGame() {
 			format = "height";
 		}
 
-		if(window.innerWidth > window.innerHeight) {
-			font_size = canvas.height / 60;
-
-			[button_up, button_down].forEach(button => {
-				button.style.backgroundColor = 'rgb(2, 2, 27)';
-				button.style.color = 'white';
-				button.style.cursor = 'pointer';
-				button.style.margin = '5px 0'; // somehow modifying border-width and some other border params doesn't work here, so it's in the css file
-
-				button.style.position = "absolute";
-
-				if(window.innerWidth > parent.style.width * 0.8)
-					button.style.left = "10%";
-				else 
-					button.style.left = 0;
-
-				button.style.height = "10%";
-				button.style.width = "5%";
-				button.style.fontSize = font_size;
-			});
-
-			button_up.style.top = "45%";
-			button_up.innerText = "UP / RIGHT";
-
-			button_down.style.top = "55%";
-			button_down.innerText = "DOWN / LEFT";
-		}
-		else {
-			font_size = canvas.height / 60;
-
-			[button_up, button_down].forEach(button => {
-				button.style.backgroundColor = 'rgb(2, 2, 27)';
-				button.style.color = 'white';
-				button.style.cursor = 'pointer';
-				button.style.margin = '5px 0';
-		
-				button.style.position = "absolute";
-		
-				if(window.innerHeight > calculatedHeight * 0.85)
-					button.style.bottom = "8%";
-				else 
-					button.style.bottom = 0;
-		
-				button.style.height = "5%";
-				button.style.width = "10%";
-				button.style.fontSize = font_size;
-			});
-		}
 		paddle_pace = Math.abs(canvas.width / 60);
 	}
 
 	init();
-
-	console.log("init called, canvas: ", canvas);
-
-	// FUNCTION constructors
 
 	class make_paddle {
 		constructor (player) {
 		this.player = player,
 		this.width = canvas.width / 75;
 		this.height = canvas.height / 8;
-	
-		this.init_position = function(player)
-		{
-			if(player == "top")
-			{
+
+		this.init_position = function(player) {
+			if(player == "top") {
 				this.pos_x = canvas.width / 2 - this.height / 2;
 				this.pos_y = 0;
 				this.player_color = player_top_colour;
 			}
-			if(player == "bottom")
-			{
+			if(player == "bottom") {
 				this.pos_x = canvas.width / 2 - this.height / 2;
 				this.pos_y = canvas.height - this.width;
 				this.player_color = player_bottom_colour;
 			}
-			if(player == "left")
-			{
+			if(player == "left") {
 				this.pos_x = 0;
 				this.pos_y = canvas.height / 2 - this.height / 2;
 				this.player_color = player_left_colour;
 			}
-			if(player == "right")
-			{
+			if(player == "right") {
 				this.pos_x = canvas.width - this.width;
 				this.pos_y = canvas.height / 2 - this.height / 2;
 				this.player_color = player_right_colour;
 			}
 		}
-		this.resize_paddle = function ()
-		{
+		this.resize_paddle = function () {
 			this.pos_x = this.pos_x * canvas.width / canvas_old_width;
 			this.pos_y = this.pos_y * canvas.height / canvas_old_height;
 			this.height = this.height * canvas.width / canvas_old_width;
 			this.width = this.width * canvas.height / canvas_old_height;
 		}
-		this.draw_paddle = function ()
-		{
+		this.draw_paddle = function () {
 			ctx.fillStyle = this.player_color;
 			ctx.strokeStyle = this.player_color;
 			if(this.player == "top" || this.player == "bottom")
@@ -212,8 +172,7 @@ function startPong4PGame() {
 			if(this.player == "left" || this.player == "right")
 				ctx.fillRect(this.pos_x, this.pos_y, this.width, this.height);
 		}
-		this.delete_paddle = function()
-		{
+		this.delete_paddle = function() {
 			if(this.player == "top" || this.player == "bottom")
 				ctx.clearRect(this.pos_x, this.pos_y, this.height, this.width);
 			if(this.player == "left" || this.player == "right")
@@ -222,17 +181,17 @@ function startPong4PGame() {
 		this.init_position(player);
 		this.draw_paddle();
 	}}
-	
+
 	class make_ball {
 		constructor (previous) {
 		this.min_y = (canvas.width / 4),
-		this.max_y = (canvas.width / 4) * 3
+		this.max_y = (canvas.width / 4) * 3,
 		this.radius = canvas.width / 60
 
 		if(previous == null)
 		{
 			this.pos_x = canvas.height / 2,
-			this.pos_y = Math.random() * ((canvas.width / 4 * 3) - (canvas.width / 4)) + (canvas.width / 4)
+			this.pos_y = Math.random() * ((canvas.width / 4 * 3) - (canvas.width / 4)) + (canvas.width / 4);
 			this.direction = Math.random();
 		}
 		else
@@ -260,8 +219,6 @@ function startPong4PGame() {
 				this.ball_velocity_x = - canvas.width / ball_velocity_div,
 				this.ball_velocity_y = - canvas.height / ball_velocity_div
 			}
-			// this.ball_velocity_y = Math.abs(this.ball_velocity_y);
-			// this.pos_y = canvas.width / 4 * 3;
 		};
 		this.move_ball = function ()
 		{
@@ -892,7 +849,7 @@ function startPong4PGame() {
 			if(right_simple_ai == false)
 				right_direction = 1;
 		}
-		
+
 		function button_down_onmousedown ()
 		{
 			if(bottom_simple_ai == false)
@@ -935,9 +892,7 @@ function startPong4PGame() {
 		}
 
 		window.addEventListener('resize', event => handleResize(event));
-
 		document.addEventListener('keydown', event => key_down(event));
-
 		document.addEventListener('keyup', event => key_up(event));
 
 		gameLoop();
@@ -949,12 +904,17 @@ function stopPong4PGame () {
 		cancelAnimationFrame(animationID);
 	}
 	animationID = null;
-	
 	window.removeEventListener('resize', event => handleResize(event));
-
 	document.removeEventListener('keydown', event => key_down(event));
-
 	document.removeEventListener('keyup', event => key_up(event));
+	// if(button_up) {
+	// 	button_up.removeListener("mousedown", button_up_onmousedown());
+	// 	button_up.removeListener("mouseup",  button_up_onmouseup());
+	// }
+	// if(button_down) {
+	// 	button_down.removeListener("mousedown", button_down_onmousedown());
+	// 	button_down.removeListener("mouseup", button_down_onmouseup());
+	// }
 	return ;
 }
 

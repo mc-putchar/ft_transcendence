@@ -38,6 +38,9 @@ const AVATAR1_IMG = "static/img/avatar.jpg"
 const AVATAR2_IMG = "static/img/avatar-marvin.png"
 const FLOOR_TEX_IMG = "static/img/login-install.jpg"
 
+let button_left = null;
+let button_right = null;
+
 class Arena {
 	constructor() {
 		this.ambient_light = new THREE.AmbientLight(0x882288);
@@ -343,6 +346,17 @@ class Game {
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+		// buttons
+		button_right = document.createElement("button");
+		button_left = document.createElement("button"); 
+		this.parent.appendChild(button_right);
+		this.parent.appendChild(button_left);
+
+		button_right.addEventListener("mousedown", ev => button_right_onmousedown(ev));
+		button_left.addEventListener("mousedown", ev => button_left_onmousedown(ev));
+		button_right.addEventListener("mouseup",  ev => button_right_onmouseup(ev));
+		button_left.addEventListener("mouseup", ev => button_left_onmouseup(ev));
+
 		this.scene = new THREE.Scene();
 		const FOV = 75;
 		const near = 1;
@@ -459,6 +473,18 @@ class Game {
 			if(this.playerTwo.keys_active == 0)
 				this.playerTwo.direction = 0;
 		}
+	}
+	button_right_onmousedown (key) {
+		this.playerOne.dir = 1;
+	}
+	button_left_onmousedown (key) {
+		this.playerOne.dir = -1;
+	}
+	button_right_onmouseup (key){
+		this.playerOne.dir = 0;
+	}
+	button_left_onmouseup (key) {
+		this.playerOne.dir = 0;
 	}
 	endGame() {
 		document.removeEventListener("keydown", ev => this.keydown(ev));
@@ -660,6 +686,10 @@ function stopPong3DGame () {
 	window.removeEventListener("fullscreenchange", (e) => this.resize(e));
 	document.removeEventListener("keydown", ev => this.keydown(ev));
 	document.removeEventListener("keyup", ev => this.keyup(ev));
+	if (button_right && button_left) {
+		button_right.remove();
+		button_left.remove();
+	}
 	return ;
 }
 

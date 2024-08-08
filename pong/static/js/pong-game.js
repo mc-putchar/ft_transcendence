@@ -1,4 +1,3 @@
-
 const CANVAS_PADDING = 10;
 const ARENA_LENGTH = 600;
 const ARENA_HEIGHT = 400;
@@ -121,6 +120,7 @@ class Game {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 		window.addEventListener("resize", ev => this.resize(ev));
+
 	}
 	resize(ev) {
 		this.canvas.width = this.parent.width;
@@ -282,8 +282,8 @@ class Game {
 		}
 	}
 	endGame() {
-		document.removeEventListener("keydown", ev => this.keydown(ev));
-		document.removeEventListener("keyup", ev => this.keyup(ev));
+		// document.removeEventListener("keydown", ev => this.keydown(ev));
+		// document.removeEventListener("keyup", ev => this.keyup(ev));
 		this.gameover = true;
 		this.context.font = "48px serif";
 		if (this.player1.score > this.player2.score) {
