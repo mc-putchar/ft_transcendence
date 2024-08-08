@@ -2,16 +2,11 @@ window.startPong4PGame = startPong4PGame;
 
 function startPong4PGame() {
 
-	const parent_buttons = document.getElementById("app_buttons");
 	const parent = document.getElementById("app");
 	const canvas = document.createElement("canvas");
 
 	const nav = document.getElementById("nav");
 	
-	while (parent_buttons.firstChild) {
-		parent_buttons.removeChild(parent_buttons.firstChild);
-	}
-
 	while (parent.firstChild) {
 		parent.removeChild(parent.firstChild);
 	}
@@ -37,7 +32,7 @@ function startPong4PGame() {
 	const top_boss_ai = false;
 	const bottom_boss_ai = false;
 
-	const ball_velocity_div = 300;
+	const ball_velocity_div = 200;
 
 	let format;
 
@@ -67,8 +62,8 @@ function startPong4PGame() {
 		button_up = document.createElement("button");
 		button_down = document.createElement("button"); // tried putting them both in the same class and using getElementByClassName(), but it somehow doesn't work
 
-		parent_buttons.appendChild(button_up);
-		parent_buttons.appendChild(button_down);
+		canvas.appendChild(button_up);
+		canvas.appendChild(button_down);
 		
 		button_up.className = "Buttons";
 		button_down.className = "Buttons";
@@ -270,8 +265,8 @@ function startPong4PGame() {
 				this.ball_velocity_x = - canvas.width / ball_velocity_div,
 				this.ball_velocity_y = - canvas.height / ball_velocity_div
 			}
-			this.ball_velocity_y = Math.abs(this.ball_velocity_y);
-			this.pos_y = canvas.width / 4 * 3;
+			// this.ball_velocity_y = Math.abs(this.ball_velocity_y);
+			// this.pos_y = canvas.width / 4 * 3;
 		};
 		this.move_ball = function ()
 		{
