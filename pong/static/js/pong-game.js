@@ -104,7 +104,6 @@ class Game {
 		this.parent.appendChild(this.canvas);
 		this.canvas.style.width = "80%";
 		this.canvas.style.height = "100%";
-		console.log("update");
 		this.canvas.width = this.parent.width;
 		this.canvas.height = this.parent.height;
 		this.context = this.canvas.getContext("2d");
@@ -121,7 +120,7 @@ class Game {
 		this.fpsInterval = 1000 / TARGET_FPS;
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
-		window.addEventListener("resize", ev => this.resize(ev))
+		window.addEventListener("resize", ev => this.resize(ev));
 	}
 	resize(ev) {
 		this.canvas.width = this.parent.width;
@@ -313,12 +312,15 @@ function startPongGame() {
 }
 
 function stopPongGame () {
-
 	if(animationID) {
 		console.log("STOPPING Pong");
 		cancelAnimationFrame(animationID);
 	}
 	animationID = null;
+	console.log("update");
+	document.removeEventListener("keydown", ev => this.keydown(ev));
+	document.removeEventListener("keyup", ev => this.keyup(ev));
+	window.removeEventListener("resize", ev => this.resize(ev));
 	return ;
 }
 

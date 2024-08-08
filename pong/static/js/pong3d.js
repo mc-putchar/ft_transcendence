@@ -248,6 +248,7 @@ class proAI {
 	setWait(simBall) {
 		this.wait = 0;
 		let rounds = 0;
+
 		if(simBall.dirZ > 0) { // hits AI paddle first so then we want to reposition the paddle strategically in anticipation and estimate when ball will hit the left paddle
 			while(simBall.posZ < (ARENA_WIDTH / 2) && rounds < 9) {
 				this.nextCollision(simBall);
@@ -312,6 +313,8 @@ class proAI {
 	}
 }
 
+let fsthing = null;
+
 class Game {
 	constructor(parentElement, scoreLimit) {
 		this.parent = parentElement;
@@ -320,6 +323,7 @@ class Game {
 		window.addEventListener("fullscreenchange", (e) => this.resize(e));
 		
 		this.fsButton = document.createElement('div');
+		fsthing = this.fsButton;
 		this.fsButton.id = "fullscreenButton";
 		this.fsButton.style = "font-size: 24px; cursor: pointer; top: 20%; right: 20%;";
 		this.fsButton.classList.add("game-ui", "btn", "bg-transparent", "btn-outline-light");
@@ -647,12 +651,15 @@ function startPong3DGame() {
 }
 
 function stopPong3DGame () {
-
 	if(animationID) {
 		console.log("STOPPING Pong3D");
 		cancelAnimationFrame(animationID);
 	}
 	animationID = null;
+	window.removeEventListener("resize", ev => this.resize(ev), true);
+	window.removeEventListener("fullscreenchange", (e) => this.resize(e));
+	document.removeEventListener("keydown", ev => this.keydown(ev));
+	document.removeEventListener("keyup", ev => this.keyup(ev));
 	return ;
 }
 

@@ -37,8 +37,6 @@ function startPong4PGame() {
 
 	const ball_velocity_div = 200;
 
-	let format;
-
 	let font_size;
 	let paddle_pace;
 	let	last_touch = "none";
@@ -634,7 +632,7 @@ function startPong4PGame() {
 				paddle_right.pos_y = 0;
 		}
 	}
-	
+
 	let ball;
 	let paddle_left = new make_paddle("left");
 	let paddle_right = new make_paddle("right");
@@ -930,21 +928,18 @@ function startPong4PGame() {
 			if(right_simple_ai == false)
 				right_direction = 0;
 		}
-		
-		window.addEventListener('resize', function() {
+
+		function handleResize() {
 			init();
 			init_paddle_scores();
-		});
+		}
 
-		document.addEventListener('keydown', function(event) {
-			key_down(event);
-			return ;
-		});
+		window.addEventListener('resize', event => handleResize(event));
 
-		document.addEventListener('keyup', function(event) {
-			key_up(event);
-			return ;
-		});
+		document.addEventListener('keydown', event => key_down(event));
+
+		document.addEventListener('keyup', event => key_up(event));
+
 		gameLoop();
 }
 
@@ -954,6 +949,12 @@ function stopPong4PGame () {
 		cancelAnimationFrame(animationID);
 	}
 	animationID = null;
+	
+	window.removeEventListener('resize', event => handleResize(event));
+
+	document.removeEventListener('keydown', event => key_down(event));
+
+	document.removeEventListener('keyup', event => key_up(event));
 	return ;
 }
 
