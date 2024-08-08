@@ -5,6 +5,7 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 import { getAmps, playAudioTrack, playTone } from './audio.js';
 
+const ACTIVE_AI = true;
 
 const CANVAS_PADDING = 10;
 const BALL_SIZE = 8;
@@ -14,7 +15,7 @@ const SCORE_HEIGHT = 42;
 const GOAL_LINE = 20;
 const NET_WIDTH = 4;
 const NET_HEIGHT = 30;
-const BALL_START_SPEED = 2;
+const BALL_START_SPEED = 2 / 16;
 const PADDLE_SPEED = 5;
 const PADDLE_LEN = 42;
 const PADDLE_WIDTH = 6;
@@ -104,6 +105,7 @@ class Ball {
 		this.pos = new THREE.Vector3();
 		this.dir = new THREE.Vector3();
 		this.speed = 0;
+		this.lastMove = 0;
 	}
 	place(scene, x, z) {
 		this.mesh.position.set(x, BALL_SIZE, z);
@@ -113,9 +115,16 @@ class Ball {
 		this.mesh.getWorldPosition(this.pos);
 		return [this.pos.x, this.pos.z];
 	}
+	get direction() {
+		return [this.dir.x, this.dir.z];
+	}
 	doMove() {
-		this.mesh.translateX(this.dir.x * this.speed);
-		this.mesh.translateZ(this.dir.z * this.speed);
+		if(this.lastMove == 0 || Date.now() - this.lastMove > 100 || Date.now() - this.lastMove <= 4)
+			this.lastMove = Date.now();
+		this.time = Date.now() - this.lastMove;
+		this.mesh.translateX(this.dir.x * this.speed * this.time);
+		this.mesh.translateZ(this.dir.z * this.speed * this.time);
+		this.lastMove = Date.now();
 	}
 	reset() {
 		this.mesh.position.set(0, BALL_SIZE, 0);
@@ -131,6 +140,7 @@ class Player {
 		this.len = PADDLE_LEN;
 		this.score = 0;
 		this.direction = 0;
+		this.keys_active = 0;
 		this.speed = PADDLE_SPEED;
 
 		this.avatar = new THREE.Mesh(
@@ -165,6 +175,135 @@ class Player {
 		}
 	}
 };
+
+
+// direction 1 is up
+// X for ARENA HEIGHT
+// Z for ARENA WIDTH
+
+class proAI {
+	constructor (player) {
+		this.player = player;
+		this.lastMove = 0;
+		this.objective = 0;
+		this.msc = 21;
+		this.time = {x : null, z : null};
+		this.distance;
+		this.randomMargin = 10;
+		this.wait = 0; // time before it hits left paddle
+		this.timeOfImpact = 0; // time before it hits right paddle
+		this.roundsTillImpact = 0;
+	}
+	nextCollision(simBall) {
+		this.endZ;
+
+		this.endX = - (ARENA_HEIGHT / 2);
+		if(simBall.dirX > 0)
+			this.endX = ARENA_HEIGHT / 2;
+		this.time.x = Math.abs((this.endX - simBall.posX) / simBall.dirX);
+
+		if(simBall.dirZ > 0)
+			this.time.z = Math.abs((ARENA_WIDTH / 2 - simBall.posZ) / simBall.dirZ);
+		
+		if(this.time.x < this.time.z) {
+			this.endZ = this.time.x * simBall.dirZ + simBall.posZ;
+			simBall.dirX *= - 1;
+			this.distance = Math.abs(simBall.posX - this.endX);
+		}
+		else {
+			this.endX = this.time.z * simBall.dirX + simBall.posX;
+			if(simBall.dirZ > 0)
+				this.endZ = ARENA_WIDTH / 2;
+			else {
+				this.endZ = - ARENA_WIDTH / 2;
+			}
+			simBall.dirZ *= - 1;
+			this.endX = this.time.z * simBall.dirX + simBall.posX;
+			this.distance = Math.abs(simBall.posZ - this.endZ);
+		}
+		// this.distance = Math.abs(this.endX - simBall.posX) + Math.abs(this.endZ - simBall.posZ);
+		simBall.posX = this.endX;
+		simBall.posZ = this.endZ;
+	}
+	setObjective(simBall) {
+		let rounds = 0;
+		let rand = Math.random();
+		this.timeOfImpact = 0;
+		while(simBall.posZ != ARENA_WIDTH / 2 && rounds < 8) {
+			this.nextCollision(simBall);
+			this.timeOfImpact += this.distance / simBall.speed;
+			rounds++;
+		}
+		this.timeOfImpact += Date.now();
+		this.roundsTillImpact = rounds;
+		this.objective = simBall.posX - this.randomMargin / 2 + this.randomMargin * rand;
+	}
+	setWait(simBall) {
+		this.wait = 0;
+		let rounds = 0;
+		if(simBall.dirZ > 0) { // hits AI paddle first so then we want to reposition the paddle strategically in anticipation and estimate when ball will hit the left paddle
+			while(simBall.posZ < (ARENA_WIDTH / 2) && rounds < 9) {
+				this.nextCollision(simBall);
+				this.wait += this.distance / simBall.speed;
+				rounds++;
+			}
+			let refAngle = (this.objective - this.player.pos.x) / (PADDLE_LEN / 2) * (Math.PI / 4);
+			simBall.dirZ = -1 * Math.cos(refAngle);
+			simBall.dirX = Math.sin(refAngle);
+			
+			rounds = 0;
+			while(simBall.posZ != - (ARENA_WIDTH / 2) && rounds < 9) {
+				this.nextCollision(simBall);
+				this.wait += this.distance / simBall.speed;
+				rounds++;
+			}
+		}
+		if(simBall.dirZ < 0) { // we want to know when it will hit the left paddle
+			while(simBall.posZ != - (ARENA_WIDTH / 2) && rounds < 9) {
+				this.nextCollision(simBall);
+				this.wait += this.distance / simBall.speed;
+				rounds++;
+			}
+			if(rounds > 5) {
+				this.wait = 0;
+			}
+		}
+	}
+	stopMove() {
+		if(this.player.direction == 1 && this.player.pos.x >= this.objective) {
+			this.player.direction = 0;
+		}
+		else if(this.player.direction == -1 && this.player.pos.x <= this.objective) {
+			this.player.direction = 0;
+		}
+	}
+	setDirection() {
+		if(this.player.pos.x < this.objective)
+			this.player.direction = 1;
+		else
+			this.player.direction = -1;
+	}
+	executeMove(ball) {
+		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
+		this.setObjective(this.simBall);
+		this.setDirection();
+	}
+	update(ball) {
+		if(this.timeOfImpact != 0 && Date.now() > this.timeOfImpact + (ARENA_WIDTH / 2) / ball.speed && this.player.direction == 0) {
+			console.log("TRUE timeofimpact: ", this.timeOfImpact);
+			this.timeOfImpact = 0;
+			this.objective = 0;
+			this.setDirection();
+		}
+		this.stopMove();
+		if(Date.now() < this.lastMove + 1000 || (Date.now() < this.lastMove + this.wait + 4 / ball.speed))
+			return ;
+		this.lastMove = Date.now();
+		this.executeMove(ball);
+		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
+		this.setWait(this.simBall);
+	}
+}
 
 class Game {
 	constructor(parentElement, scoreLimit) {
@@ -209,6 +348,7 @@ class Game {
 		const ball_geometry = new THREE.SphereGeometry( BALL_SIZE, 32, 16 )
 		this.ball = new Ball(ball_geometry, ball_mat);
 		this.ball.place(this.scene, 0, 0);
+		this.saved = {x: this.ball.dir.x, y: this.ball.dir.y};
 
 		const wire_material = new THREE.MeshPhongMaterial({ color: 0x42FF42, wireframe: true });
 		const box_geometry = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2);
@@ -232,7 +372,9 @@ class Game {
 
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
-
+		
+		if(ACTIVE_AI == true)
+			this.ai = new proAI(this.playerTwo);
 		this.showScore();
 		playAudioTrack();
 	}
@@ -270,15 +412,23 @@ class Game {
 		}
 		switch(key.code) {
 			case "ArrowUp":
+				if(this.playerOne.direction != 1)
+					this.playerOne.keys_active++;
 				this.playerOne.direction = 1;
 				break;
 			case "ArrowDown":
+				if(this.playerOne.direction != -1)
+					this.playerOne.keys_active++;
 				this.playerOne.direction = -1;
 				break;
 			case "KeyW":
+				if(this.playerTwo.direction != 1)
+					this.playerTwo.keys_active++;
 				this.playerTwo.direction = 1;
 				break;
 			case "KeyS":
+				if(this.playerTwo.direction != -1)
+					this.playerTwo.keys_active++;
 				this.playerTwo.direction = -1;
 				break;
 			default:
@@ -288,9 +438,13 @@ class Game {
 	keyup(key) {
 		if (this.gameover)	return;
 		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
-			this.playerOne.direction = 0;
+			this.playerOne.keys_active--;
+			if(this.playerOne.keys_active == 0)
+				this.playerOne.direction = 0;
 		} else if (key.code == "KeyW" || key.code == "KeyS") {
-			this.playerTwo.direction = 0;
+			this.playerTwo.keys_active--;
+			if(this.playerTwo.keys_active == 0)
+				this.playerTwo.direction = 0;
 		}
 	}
 	endGame() {
@@ -307,6 +461,7 @@ class Game {
 	}
 	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
+		this.ai.update(this.ball);
 		if (!this.gameover) {
 			let now = Date.now();
 			let elapsed = now - this.lastUpdate;
@@ -376,7 +531,7 @@ class Game {
 			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(-1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
-			this.ball.speed += 0.1;
+			this.ball.speed += 1 / 64;
 		} else if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
 		&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
@@ -384,7 +539,7 @@ class Game {
 			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
-			this.ball.speed += 0.1;
+			this.ball.speed += 1 / 64;
 		}
 	}
 	showScore() {
