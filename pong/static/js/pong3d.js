@@ -7,6 +7,8 @@ import { getAmps, playAudioTrack, playTone } from './audio.js';
 
 const ACTIVE_AI = true;
 
+let animationID = null;
+
 const CANVAS_PADDING = 10;
 const BALL_SIZE = 8;
 const ARENA_WIDTH = 300;
@@ -194,6 +196,11 @@ class proAI {
 		this.timeOfImpact = 0; // time before it hits right paddle
 		this.roundsTillImpact = 0;
 	}
+	resetTimes() {
+		this.wait = 0;
+		this.timeOfImpact = 0;
+		this.roundsTillImpact = 0;
+	}
 	nextCollision(simBall) {
 		this.endZ;
 
@@ -290,14 +297,14 @@ class proAI {
 	}
 	update(ball) {
 		if(this.timeOfImpact != 0 && Date.now() > this.timeOfImpact + (ARENA_WIDTH / 2) / ball.speed && this.player.direction == 0) {
-			console.log("TRUE timeofimpact: ", this.timeOfImpact);
 			this.timeOfImpact = 0;
 			this.objective = 0;
 			this.setDirection();
 		}
 		this.stopMove();
-		if(Date.now() < this.lastMove + 1000 || (Date.now() < this.lastMove + this.wait + 4 / ball.speed))
+		if(Date.now() < this.lastMove + 1000 || (Date.now() < this.lastMove + this.wait + 1 / ball.speed))
 			return ;
+		console.log("TIME : ", Date.now() - this.lastMove);
 		this.lastMove = Date.now();
 		this.executeMove(ball);
 		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
@@ -308,10 +315,10 @@ class proAI {
 class Game {
 	constructor(parentElement, scoreLimit) {
 		this.parent = parentElement;
-
+		
 		window.addEventListener("resize", ev => this.resize(ev), true);
 		window.addEventListener("fullscreenchange", (e) => this.resize(e));
-
+		
 		this.fsButton = document.createElement('div');
 		this.fsButton.id = "fullscreenButton";
 		this.fsButton.style = "font-size: 24px; cursor: pointer; top: 20%; right: 20%;";
@@ -319,8 +326,10 @@ class Game {
 		this.fsButton.innerText = "♐";
 		this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
 		this.parent.appendChild(this.fsButton);
-
+		
 		this.canvas = document.createElement('canvas');
+		this.canvas.style.width = "80%";
+		this.canvas.style.height = "100%";
 		this.canvas.width = window.innerWidth;
 		this.canvas.height = window.innerHeight;
 		this.parent.appendChild(this.canvas);
@@ -460,7 +469,9 @@ class Game {
 		this.cam_controls.autoRotate = true;
 	}
 	loop() {
+		console.log("3d");
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
+		animationID = this.animRequestId;
 		this.ai.update(this.ball);
 		if (!this.gameover) {
 			let now = Date.now();
@@ -516,6 +527,8 @@ class Game {
 			this.playerTwo.score++;
 			this.scene.remove(this.score);
 			this.showScore();
+			if(ACTIVE_AI == true)
+				this.ai.resetTimes();
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
 			playTone(240, 20, 210, 3);
 			this.last_scored = 1;
@@ -524,6 +537,8 @@ class Game {
 			this.playerOne.score++;
 			this.scene.remove(this.score);
 			this.showScore();
+			if(ACTIVE_AI == true)
+				this.ai.resetTimes();
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
 		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) {
@@ -631,4 +646,14 @@ function startPong3DGame() {
 	pong.loop();
 }
 
-export { startPong3DGame };
+function stopPong3DGame () {
+
+	if(animationID) {
+		console.log("STOPPING Pong3D");
+		cancelAnimationFrame(animationID);
+	}
+	animationID = null;
+	return ;
+}
+
+export { startPong3DGame, stopPong3DGame };

@@ -4,14 +4,26 @@ import drawBackground from './background.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
-import { startPongGame } from './pong-game.js';
-import { startPong3DGame } from './pong3d.js';
-import { startPong4PGame } from './multi_pong4.js';
+import { startPongGame, stopPongGame } from './pong-game.js';
+import { startPong3DGame, stopPong3DGame } from './pong3d.js';
+import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
 import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
+
+    function stopAllGames() {
+        // if (this.pongClassicGame) {
+        //     this.pongClassicGame.stop();
+        // }
+        // if (this.pong3DGame) {
+        //     this.pong3DGame.stop();
+        // }
+		stopPongGame();
+		stopPong3DGame();
+		stopPong4PGame();
+    }
 
 class Router {
 	constructor(navElement, appElement, chatElement) {
@@ -219,7 +231,7 @@ class Router {
 				throw new Error(`Cannot load chat: ${response.status}`);
 			}
 			this.chatElement.style.display = 'block';
-			this.animateContent(this.chatElement, response, () => 
+			this.animateContent(this.chatElement, response, () =>
 				this.chat.setupChatWebSocket(roomName));
 		} catch (error) {
 			this.chatElement.style.display = 'none';
@@ -280,12 +292,15 @@ class Router {
 				this.handleTournamentPage();
 				break;
 			case 'pong-classic':
+				stopAllGames();
 				startPongGame();
 				break;
 			case 'pong-3d':
+				stopAllGames();
 				startPong3DGame();
 				break;
 			case 'pong-4p':
+				stopAllGames();
 				startPong4PGame();
 				break;
 			default:

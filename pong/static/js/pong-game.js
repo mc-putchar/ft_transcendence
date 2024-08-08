@@ -19,6 +19,7 @@ const PADDLE_SPEED = 5;
 
 const TARGET_FPS = 120;
 
+let animationID = null;
 
 class Arena {
 	constructor(length, height) {
@@ -101,6 +102,9 @@ class Game {
 		this.parent = parentElement;
 		this.canvas = document.createElement("canvas");
 		this.parent.appendChild(this.canvas);
+		this.canvas.style.width = "80%";
+		this.canvas.style.height = "100%";
+		console.log("update");
 		this.canvas.width = this.parent.width;
 		this.canvas.height = this.parent.height;
 		this.context = this.canvas.getContext("2d");
@@ -133,6 +137,7 @@ class Game {
 			this.ball.vy = 1;
 			this.ball.speed = BALL_START_SPEED;
 			this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
+			animationID = this.animRequestId;
 		}
 		switch(key.code) {
 			case "ArrowUp":
@@ -160,6 +165,8 @@ class Game {
 	}
 	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
+		animationID = this.animRequestId;
+		console.log("2d");
 		if (!this.gameover) {
 			if (this.player1.score === this.scoreLimit
 			|| this.player2.score === this.scoreLimit) {
@@ -305,4 +312,14 @@ function startPongGame() {
 	pong.loop();
 }
 
-export { startPongGame };
+function stopPongGame () {
+
+	if(animationID) {
+		console.log("STOPPING Pong");
+		cancelAnimationFrame(animationID);
+	}
+	animationID = null;
+	return ;
+}
+
+export { startPongGame, stopPongGame };
