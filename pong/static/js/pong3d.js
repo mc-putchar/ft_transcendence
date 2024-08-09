@@ -126,6 +126,10 @@ class Ball {
 		if(this.lastMove == 0 || Date.now() - this.lastMove > 100 || Date.now() - this.lastMove <= 4)
 			this.lastMove = Date.now();
 		this.time = Date.now() - this.lastMove;
+		console.log("incr : ", this.speed * this.time);
+		console.log(this.speed / ARENA_WIDTH);
+		if(this.speed && this.time)
+			debugger ;
 		this.mesh.translateX(this.dir.x * this.speed * this.time);
 		this.mesh.translateZ(this.dir.z * this.speed * this.time);
 		this.lastMove = Date.now();
@@ -560,7 +564,6 @@ class Game {
 		this.cam_controls.update();
 		this.renderer.render(this.scene, this.camera);
 	}
-
 	repositionBall(ballX, ballY, p2y, p1y) {
 		let distance;
 		if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
