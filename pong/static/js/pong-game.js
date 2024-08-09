@@ -1,98 +1,93 @@
-const CANVAS_PADDING = 10;
-const ARENA_LENGTH = 600;
-const ARENA_HEIGHT = 400;
-const GOAL_LINE = 20;
-const NET_COLOR = "gray"
-const NET_WIDTH = 4;
-const NET_HEIGHT = 30;
-const SCORE_COLOR = "green";
-const SCORE_FONT = "42px Orbitron";
-const BALL_COLOR = "green";
-const BALL_START_SPEED = 5;
-const BALL_SIZE = 20;
-const PADDLE_COLOR = "green";
-const EFFECT_COLOR = "greenyellow";
-const PADDLE_HEIGHT = 80;
-const PADDLE_WIDTH = 20;
-const PADDLE_SPEED = 5;
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-const TARGET_FPS = 120;
+import { getAmps, playAudioTrack, playTone } from './audio.js';
+
+const ACTIVE_AI = false;
 
 let animationID = null;
+
+const CANVAS_PADDING = 10;
+const BALL_SIZE = 8;
+const ARENA_WIDTH = 300;
+const ARENA_HEIGHT = 200;
+const ARENA_COLOR = "WHITE";
+const SCORE_HEIGHT = 42;
+const GOAL_LINE = 20;
+const NET_WIDTH = 4;
+const NET_HEIGHT = 30;
+const BALL_START_SPEED = 2 / 12;
+const BALL_INCR_SPEED = 1 / 64;
+const PADDLE_SPEED = 5;
+const PADDLE_LEN = 42;
+const PADDLE_WIDTH = 6;
+const PADDLE_HEIGHT = 6;
+const TARGET_FPS = 120;
+
+const BALL_COLOR = "green";
+const PADDLE_COLOR = "green";
+const EFFECT_COLOR = "greenyellow";
 
 class Arena {
 	constructor(length, height) {
 		this.length = length;
 		this.height = height;
 	}
+	drawArena() {
+		ctx.fillStyle = ARENA_COLOR;
+		ctx.strokeStyle = ARENA_COLOR;
+		ctx.fillRect(-ARENA_WIDTH / 2, ARENA_HEIGHT / 2, ARENA_WIDTH, ARENA_HEIGHT);
+	}
 };
 
 class Player {
-	constructor(side, arenaHeight, arenaWidth) {
+	constructor(side, arenaWidth) {
 		this.side = side;
 		this.color = PADDLE_COLOR;
 		this.colorEffect = EFFECT_COLOR;
-		this.height = PADDLE_HEIGHT;
+		this.len = PADDLE_LEN;
 		this.width = PADDLE_WIDTH;
 		this.score = 0;
-		this.x = (this.side == "left") ? GOAL_LINE : arenaWidth - GOAL_LINE;
-		this.y = (arenaHeight / 2) - (this.height / 2);
+		if(side == "left")
+			this.x = - arenaWidth / 2;
+		else 
+			this.x = arenaWidth / 2;
+		this.y = 0;
 		this.direction = 0;
 		this.speed = PADDLE_SPEED;
 	}
-	doMove(arenaHeight) {
-		if (this.direction) {
-			let move = this.direction * this.speed + this.y;
-			if (move >= 0 && move <= arenaHeight - this.height)
-				this.y = move;
-		}
-	}
-	onHit() {
-		this.color = this.colorEffect;
-		window.setTimeout(() => {
-			this.color = PADDLE_COLOR;
-		}, 50);
+	doMove() {
+		const limit = (ARENA_HEIGHT / 2 - WALL_THICKNESS);
+
 	}
 };
 
 class Ball {
-	constructor(arenaHeight, arenaWidth) {
+	constructor() {
 		this.color = BALL_COLOR;
-		this.height = BALL_SIZE;
-		this.width = BALL_SIZE;
-		this.x = arenaWidth / 2;
-		this.y = arenaHeight / 2;
-		this.speed = 0;
+		this.size = BALL_SIZE;
+		this.pos_x = 0;
+		this.pos_y = 0;
 		this.vx = 0;
 		this.vy = 0;
+		this.speed = BALL_START_SPEED;
 	}
-	doMove(p1x, p1y, p2x, p2y, arenaHeight) {
-		this.y += this.vy * this.speed;
-		if (this.y - (this.height / 2) < 0) {
-			this.y = this.height / 2;
-			this.vy *= -1;
-		} else if (this.y + (this.height / 2) > arenaHeight) {
-			this.y = arenaHeight - (this.height / 2);
-			this.vy *= -1;
-		} else if ((this.y + (this.height / 2) === p1y ||
-			this.y - (this.height / 2) === p1y + PADDLE_HEIGHT) &&
-			this.x - (this.width / 2) <= p1x + PADDLE_WIDTH &&
-			this.x + (this.width / 2) >= p1x) {
-				this.vy *= -1;
-		} else if ((this.y + this.height === p2y ||
-			this.y === p2y + PADDLE_HEIGHT) &&
-			this.x - (this.width / 2) <= p2x + PADDLE_WIDTH &&
-			this.x + (this.width / 2) >= p2x) {
-				this.vy *= -1;
-		}
+	doMove() {
+		if(this.lastMove == 0 || Date.now() - this.lastMove > 100 || Date.now() - this.lastMove <= 4)
+			this.lastMove = Date.now();
+		this.time = Date.now() - this.lastMove;
+		this.y += this.vy * this.speed * this.time;
+		this.x += this.vx * this.speed * this.time;
 	}
-	reset(arenaHeight, arenaWidth) {
+	reset() {
 		this.color = BALL_COLOR;
 		this.speed = 0;
 		this.vx = 0;
 		this.vy = 0;
-		this.x = arenaWidth / 2;
-		this.y = arenaHeight / 2;
+		this.x = 0;
+		this.y = 0;
 	}
 };
 
@@ -120,52 +115,62 @@ class Game {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 		window.addEventListener("resize", ev => this.resize(ev));
-
 	}
-	resize(ev) {
+	resize() {
 		this.canvas.width = this.parent.width;
 		this.canvas.height = this.parent.height;
 	}
 	keydown(key) {
+		if (this.gameover)	return;
 		if (this.running === false) {
 			this.running = true;
 			if (this.last_scored === 1)
-				this.ball.vx = -1;
+				this.ball.dir.z = -1;
 			else
-				this.ball.vx = 1;
-			this.ball.vy = 1;
+				this.ball.dir.z = 1;
+			this.ball.dir.x = 1;
 			this.ball.speed = BALL_START_SPEED;
-			this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
-			animationID = this.animRequestId;
 		}
 		switch(key.code) {
 			case "ArrowUp":
-				this.player1.direction = -1;
+				if(this.playerOne.direction != 1)
+					this.playerOne.keys_active++;
+				this.playerOne.direction = 1;
 				break;
 			case "ArrowDown":
-				this.player1.direction = 1;
+				if(this.playerOne.direction != -1)
+					this.playerOne.keys_active++;
+				this.playerOne.direction = -1;
 				break;
 			case "KeyW":
-				this.player2.direction = -1;
+				if(this.playerTwo.direction != 1)
+					this.playerTwo.keys_active++;
+				this.playerTwo.direction = 1;
 				break;
 			case "KeyS":
-				this.player2.direction = 1;
+				if(this.playerTwo.direction != -1)
+					this.playerTwo.keys_active++;
+				this.playerTwo.direction = -1;
 				break;
 			default:
 				break;
 		}
 	}
 	keyup(key) {
+		if (this.gameover)	return;
 		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
-			this.player1.direction = 0;
+			this.playerOne.keys_active--;
+			if(this.playerOne.keys_active == 0)
+				this.playerOne.direction = 0;
 		} else if (key.code == "KeyW" || key.code == "KeyS") {
-			this.player2.direction = 0;
+			this.playerTwo.keys_active--;
+			if(this.playerTwo.keys_active == 0)
+				this.playerTwo.direction = 0;
 		}
 	}
 	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
-		console.log("2d");
 		if (!this.gameover) {
 			if (this.player1.score === this.scoreLimit
 			|| this.player2.score === this.scoreLimit) {
@@ -182,116 +187,28 @@ class Game {
 	}
 	update() {
 		if (!this.running)	return;
+		this.ball.doMove();
 		this.player1.doMove(this.canvas.height);
 		this.player2.doMove(this.canvas.height);
-		this.ball.doMove(
-			this.player1.x,
-			this.player1.y,
-			this.player2.x,
-			this.player2.y,
-			this.canvas.height
-		);
-
-		this.ball.x += this.ball.vx * this.ball.speed;
-		if (this.ball.x + this.ball.width > this.canvas.width) {
-			// RESET
-			this.player1.score++;
-			this.last_scored = 1;
-			this.running = false;
-			this.ball.reset(this.canvas.height, this.canvas.width);
-		} else if (this.ball.x < 0) {
-			// RESET
-			this.player2.score++;
-			this.last_scored = 2;
-			this.running = false;
-			this.ball.reset(this.canvas.height, this.canvas.width);
-			window.cancelAnimationFrame(this.animRequestId);
-		} else if (this.ball.x + (this.ball.width / 2) >= this.player2.x - (this.player2.width / 2) &&
-			this.ball.y + (this.ball.height / 2) >= this.player2.y &&
-			this.ball.y - (this.ball.height / 2) <= this.player2.y + this.player2.height) {
-				this.ball.vx *= -1;
-				this.ball.speed += 0.1;
-				this.player2.onHit();
-		} else if (this.ball.x - (this.ball.width / 2) <= this.player1.x + (this.player1.width / 2) &&
-			this.ball.y + (this.ball.height / 2) >= this.player1.y &&
-			this.ball.y - (this.ball.height / 2) <= this.player1.y + this.player1.height) {
-				this.ball.vx *= -1;
-				this.ball.speed += 0.1;
-				this.player1.onHit();
-		}
 	}
 	draw() {
-		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-		this.context.strokeStyle = NET_COLOR;
-		this.context.strokeRect(1, 1, this.canvas.width - 1, this.canvas.height - 1);
-		this.context.fillStyle = NET_COLOR;
-		for (let y = 25; y < this.canvas.height - 10; y += 100) {
-			this.context.fillRect(
-				(this.canvas.width / 2) - (NET_WIDTH / 2),
-				y,
-				NET_WIDTH,
-				NET_HEIGHT,
-			);
-		}
-		this.context.fillStyle = SCORE_COLOR;
-		this.context.font = SCORE_FONT;
-		this.context.fillText(
-			this.player1.score,
-			(this.canvas.width / 2) - 120,
-			60,
-		);
-		this.context.fillText(
-			this.player2.score,
-			(this.canvas.width / 2) + 60,
-			60,
-		);
+		// DRAW ARENA
 
-		this.context.fillStyle = this.player1.color;
-		this.context.strokeStyle = "white";
-		this.context.strokeRect(
-			this.player1.x,
-			this.player1.y,
-			this.player1.width,
-			this.player1.height
-		);
-		this.context.fillRect(
-			this.player1.x,
-			this.player1.y,
-			this.player1.width,
-			this.player1.height
-		);
+		// DRAW SCORE SOMEWHERE
 
-		this.context.fillStyle = this.player2.color;
-		this.context.strokeStyle = "white";
-		this.context.strokeRect(
-			this.player2.x,
-			this.player2.y,
-			this.player2.width,
-			this.player2.height
-		);
-		this.context.fillRect(
-			this.player2.x,
-			this.player2.y,
-			this.player2.width,
-			this.player2.height
-		);
-		for (let y = this.ball.y - (this.ball.height / 2); y < this.ball.y + (this.ball.height / 2); y++) {
-			if (y & 1) { this.context.fillStyle = EFFECT_COLOR; }
-			else { this.context.fillStyle = this.ball.color; }
-			this.context.fillRect(this.ball.x - (this.ball.width / 2), y, this.ball.width, 1);
-		}
+		// DRAW PADDLES
+
+		// DRAW BALL
 	}
 	endGame() {
-		// document.removeEventListener("keydown", ev => this.keydown(ev));
-		// document.removeEventListener("keyup", ev => this.keyup(ev));
+		document.removeEventListener("keydown", ev => this.keydown(ev));
+		document.removeEventListener("keyup", ev => this.keyup(ev));
 		this.gameover = true;
 		this.context.font = "48px serif";
 		if (this.player1.score > this.player2.score) {
 			this.context.fillText("Player 1 WINS", 10, 50);
-			console.log("P1 wins");
 		} else {
 			this.context.fillText("Player 2 WINS", 10, 50);
-			console.log("P2 wins");
 		}
 	}
 };
@@ -317,7 +234,6 @@ function stopPongGame () {
 		cancelAnimationFrame(animationID);
 	}
 	animationID = null;
-	console.log("update");
 	document.removeEventListener("keydown", ev => this.keydown(ev));
 	document.removeEventListener("keyup", ev => this.keyup(ev));
 	window.removeEventListener("resize", ev => this.resize(ev));

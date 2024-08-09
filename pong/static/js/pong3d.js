@@ -5,7 +5,7 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 import { getAmps, playAudioTrack, playTone } from './audio.js';
 
-const ACTIVE_AI = true;
+const ACTIVE_AI = false;
 
 let animationID = null;
 
@@ -15,9 +15,8 @@ const ARENA_WIDTH = 300;
 const ARENA_HEIGHT = 200;
 const SCORE_HEIGHT = 42;
 const GOAL_LINE = 20;
-const NET_WIDTH = 4;
-const NET_HEIGHT = 30;
 const BALL_START_SPEED = 2 / 12;
+const BALL_INCR_SPEED = 1 / 64;
 const PADDLE_SPEED = 5;
 const PADDLE_LEN = 42;
 const PADDLE_WIDTH = 6;
@@ -546,7 +545,8 @@ class Game {
 				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
 			}
 		}
-		this.ai.update(this.ball);
+		if(ACTIVE_AI == true)
+			this.ai.update(this.ball);
 		this.draw();
 	}
 	update() {
@@ -561,6 +561,21 @@ class Game {
 		this.renderer.render(this.scene, this.camera);
 	}
 
+	repositionBall(ballX, ballY, p2y, p1y) {
+		let distance;
+		if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
+			&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))) {
+				distance = ballY + BALL_SIZE - p2y - PADDLE_WIDTH / 2 + 0.1;
+				this.ball.pos.x -= Math.abs(this.ball.dir.x * distance);
+				this.ball.pos.z -= Math.abs(this.ball.dir.z * distance);
+		}
+		if(ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
+			&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)){
+				distance = ballY + BALL_SIZE - p1y - PADDLE_WIDTH / 2 + 0.1;
+				this.ball.pos.x += Math.abs(this.ball.dir.x * distance);
+				this.ball.pos.z += Math.abs(this.ball.dir.z * distance);
+		}
+	}
 	checkCollisions() {
 		const [ballX, ballY] = this.ball.position;
 		if (ballX <= -(ARENA_HEIGHT / 2) // any wall collision
@@ -601,7 +616,8 @@ class Game {
 			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(-1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
-			this.ball.speed += 1 / 64;
+			this.ball.speed += BALL_INCR_SPEED;
+			this.repositionBall(ballX, ballY, p2y, p1y);
 		} else if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
 		&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
@@ -612,7 +628,8 @@ class Game {
 			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
-			this.ball.speed += 1 / 64;
+			this.ball.speed += BALL_INCR_SPEED;
+			this.repositionBall(ballX, ballY, p2y, p1y);
 		}
 	}
 	showScore() {
