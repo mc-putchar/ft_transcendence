@@ -3,8 +3,8 @@ from solcx.exceptions import SolcNotInstalled
 import json
 from pathlib import Path
 
-BUILD_PATH = "blockchain/static/blockchain/build/"
-CONTRACT_PATH = "blockchain/static/blockchain/contracts/"
+BUILD_PATH = "static/blockchain/build/"
+CONTRACT_PATH = "blockchain/hardhat/contracts/"
 
 def installCompiler(version='0.8.26'):
 	# Install solc version 0.8.26
@@ -15,6 +15,9 @@ def installCompiler(version='0.8.26'):
 	active_version = get_solc_version()
 	print("Active solc version:", active_version)
 
+# @param filename: string
+# @param contractName: string
+# @return tuple: (abi, bytecode)
 def compileSmartContract(filename, compiled_name):
 	try:
 		solc_version = get_solc_version()
@@ -35,8 +38,19 @@ def compileSmartContract(filename, compiled_name):
 				}
 			}
 		}
-	}, solc_version=get_solc_version())
-	with open(BUILD_PATH + compiled_name, "w") as file:
+	}, solc_version=solc_version)
+	with open("static/blockchain/build/" + compiled_name, "w") as file:
 		json.dump(compiled_sol, file)
 	print("Contract compiled successfully to " + BUILD_PATH + compiled_name)
 	return Path(BUILD_PATH + compiled_name)
+
+def get_contract_metadata(filename="tournament.sol", contractName="PongTournament"):
+	compiled_name = filename.split(".")[0] + ".json"
+	compiled_path = Path(BUILD_PATH + compiled_name)
+	if not compiled_path.exists():
+		compiled_path = compileSmartContract(filename, compiled_name)
+	with open(compiled_path, "r") as file:
+		compiled_sol = json.load(file)
+	abi = compiled_sol["contracts"][filename][contractName]["abi"]
+	bytecode = compiled_sol["contracts"][filename][contractName]["evm"]["bytecode"]["object"]
+	return (abi, bytecode)

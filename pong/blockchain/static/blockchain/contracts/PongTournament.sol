@@ -13,6 +13,11 @@ contract PongTournament {
         _;
     }
 
+	modifier ownerOrSelf (uint256 _hash) {
+		require (msg.sender == owner || msg.sender == players[_hash].addr, "Caller is not the owner");
+		_;
+	}
+
     struct Player {
         uint256 hash;
         uint32 totalScore;
@@ -109,6 +114,10 @@ contract PongTournament {
         player.tournamentWon = 0;
         player.aliasName = _alias;
     }
+
+	function updatePlayerAddress(uint256 _hash, address _addr) public ownerOrSelf(_hash) {
+		players[_hash].addr = _addr;
+	}
 
     function getMatchWinner(uint256 _matchId) public view returns(Player memory) {
         return players[matches[_matchId].winnerID];
