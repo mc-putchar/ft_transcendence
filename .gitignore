@@ -19,3 +19,4 @@ generate.py
 node_modules
 en.subject*
 subject.*
+/pong/blockchain/static/blockchain/contracts/*
