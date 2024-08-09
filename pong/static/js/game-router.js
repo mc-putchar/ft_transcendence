@@ -56,7 +56,7 @@ class GameRouter {
 				const gameID = data.message.split(' ')[1];
 				const result = await this.joinGame(gameID);
 				if (result === null) {
-					gameContainer.innerText = "Error! Game cancelled.";
+					console.error("Error! Game cancelled.");
 					return;
 				}
 				const username = document.getElementById("chat-username").innerText.trim();
@@ -127,11 +127,20 @@ class GameRouter {
 
 	async joinGame(gameID) {
 		const response = await postJSON(`/game/matches/${gameID}/join/`, this.csrfToken);
-		if (response && response.hasOwnProperty('status')) {
-				return response.status;
+		if (response && response.hasOwnProperty('message')) {
+				return response.message;
 		}
 		console.error("Error joining game", response);
 		return null;
+	}
+
+	async startTournamentGame(data) {
+		this.setupGameWebSocket(data.gameID);
+		if (await this.joinGame(data.gameID) == null) {
+			console.error("Error joining game");
+			return;
+		}
+		initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, true);
 	}
 };
 

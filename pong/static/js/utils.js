@@ -25,7 +25,7 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 						<h5 class="modal-title" id="${modalLabelId}">${fields[0].key.split(".").reduce((o, i) => o[i], data)}</h5>
 					</div>
 					<div class="col-12" style="text-align: right; position: absolute; right: 0.2rem; top: 0.2rem;">
-						<button type="button" class="btn btn-secondary" data-dismiss="modal" id="close${modalId}">X</button>
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="close${modalId}">X</button>
 					</div>
 				</div>
 				<div class="modal-body">
@@ -150,6 +150,9 @@ async function deleteJSON(endpoint, csrftoken) {
 		credentials: "include"
 	});
 	if (response.ok) {
+		if (response.status === 204 || response.status === 205) {
+			return "ok";
+		}
 		const data = await response.json();
 		return data;
 	} else if (response.status === 401) {
@@ -178,7 +181,11 @@ function getCookie(name) {
 }
 
 async function refreshToken() {
-	const refreshToken = sessionStorage.getItem('refresh_token') || "";
+	const refreshToken = sessionStorage.getItem('refresh_token');
+	if (!refreshToken) {
+		sessionStorage.clear();
+		return false;
+	}
 	const response = await postJSON(
 		"/api/token/refresh/",
 		getCookie("csrftoken"),

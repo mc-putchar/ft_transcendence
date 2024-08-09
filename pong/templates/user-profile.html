@@ -53,6 +53,21 @@
                                     <div class="list-group-item">
                                         <p><b>Match Date:</b> {{ match.match.date | format_datetime:"%d-%m-%Y %I:%M" }} UTC</p>
                                         <p><span class="{% if match.winner %}text-success{% else %}text-danger{% endif %}"><b>Scored:</b> {{ match.score }}</span></p>
+                                        <p><b>Opponent:</b>
+                                            {% if match.get_opponent %}
+                                            <button class="btn btn-outline-primary border-info rounded-pill" onclick="location.href='#/profiles/{{ match.get_opponent.user.username }}'">
+                                            <img src="{{ match.get_opponent.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> | {{ match.get_opponent.alias }}
+                                            </button></p>
+                                            {% else %}
+                                            <p>Opponent not found</p>
+                                            {% endif %}
+                                        {% if match.tournament %}
+                                        <p><b>Tournament:</b>
+                                            <button class="btn btn-outline-primary border border-info rounded-pill" onclick="location.hash='#/in-tournament/{{ match.tournament.id }}'">
+                                                {{ match.tournament.name }}
+                                            </button>
+                                        </p>
+                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>
@@ -85,6 +100,6 @@
 </div>
 
 {% else %}
-	<p>Log in required to view this page.</p>
-	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+    <p>Log in required to view this page.</p>
+    <button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
 {% endif %}

@@ -22,40 +22,45 @@ from .context_processors import get_user_from_token
 logger = logging.getLogger(__name__)
 
 def index(request):
-    context = { 'user': get_user_from_token(request) }
+    context = get_user_from_token(request)
     return render(request, 'index.html', context)
 
 def templates(request, template_name):
-    user_data = get_user_from_token(request)
     context = {}
     match template_name:
         case 'home' | 'navbar' | 'chat':
             template = loader.get_template(f"{template_name}.html")
-            context = user_data
+            context = get_user_from_token(request)
         case 'dashboard' | 'online-game':
             template = loader.get_template(f"{template_name}.html")
-            username = user_data['user'].username
-            context = get_user_info(request, username)
+            user = get_user_from_token(request)['user']
+            if user:
+                context = get_user_info(request, user.username)
         case 'profile':
             template = loader.get_template('profile.html')
-            context = update_profile(request, user_data)
+            user_data = get_user_from_token(request)
+            if user_data['user']:
+                context = update_profile(request, user_data['user'])
         case 'leaderboard':
             template = loader.get_template('leaderboard.html')
-            users = Profile.objects.all()
-            users = sorted(users, key=lambda x: x.matches_won(), reverse=True)
-            users = list(map(lambda x: {
-                'username': x.user.username,
-                'alias': x.alias,
-                'profilepic': x.image.url,
-                'matches_won': x.matches_won(),
-            }, users))
-            context = { 'users': users }
+            user_data = get_user_from_token(request)
+            if user_data['user']:
+                users = Profile.objects.all()
+                users = sorted(users, key=lambda x: x.matches_won(), reverse=True)
+                users = list(map(lambda x: {
+                    'username': x.user.username,
+                    'alias': x.alias,
+                    'profilepic': x.image.url,
+                    'matches_won': x.matches_won(),
+                }, users))
+                context = { 'users': users }
         case 'tournaments':
-            logger.info('Tournaments')
             template = loader.get_template('tournaments.html')
-            context = user_data
-            context['tournaments'] = Tournament.objects.filter(status='open')
-            context['t_form'] = CreateTournamentForm()
+            user_data = get_user_from_token(request)
+            if user_data['user']:
+                context = user_data
+                context['tournaments'] = Tournament.objects.filter(status='open')
+                context['t_form'] = CreateTournamentForm()
         case _:
             try:
                 template = loader.get_template(f"{template_name}.html")
@@ -64,9 +69,7 @@ def templates(request, template_name):
     return HttpResponse(template.render(context, request=request))
 
 def profiles(request, username):
-    user_data = get_user_from_token(request)
     context = get_user_info(request, username)
-    context['user'] = user_data['user']
     if context:
         template = loader.get_template("user-profile.html")
     else:
@@ -76,6 +79,8 @@ def profiles(request, username):
 def get_user_info(request, username):
     user_data = get_user_from_token(request)
     user = user_data['user']
+    if not user:
+        return None
     try:
         profile = Profile.objects.get(user__username=username)
     except Profile.DoesNotExist:
@@ -102,6 +107,7 @@ def get_user_info(request, username):
     }, friends))
     serializer = PlayerSerializer(profile)
     context = {
+        'user': user,
         'username': profile.user.username,
         'profile': serializer.data,
         'status': status,
@@ -116,8 +122,7 @@ def get_user_info(request, username):
     logger.info(context)
     return context
 
-def update_profile(request, user_data):
-    user = user_data['user']
+def update_profile(request, user):
     if request.method == 'POST':
         u_form = UserUpdateForm(request.POST, instance=user)
         p_form = ProfileUpdateForm(
@@ -145,25 +150,25 @@ def update_profile(request, user_data):
 def in_tournament(request, t_id):
     user_data = get_user_from_token(request)
     context = user_data
-    try:
-        tournament = Tournament.objects.get(id=t_id)
-    except Tournament.DoesNotExist:
-        return render(request, '404.html', context)
-    context['tournament'] = tournament
-    context['is_joined'] = tournament.is_player(user_data['user'])
-    context['participants'] = tournament.get_players()
-    if tournament.creator:
+    if user_data['user']:
         try:
-            creator = Profile.objects.get(id=tournament.creator.id)
-            context['is_creator'] = creator.user == user_data['user']
-            context['creator'] = creator
-        except Profile.DoesNotExist:
-            creator = None
+            tournament = Tournament.objects.get(id=t_id)
+        except Tournament.DoesNotExist:
+            return render(request, '404.html', context)
+        context['tournament'] = tournament
+        context['is_joined'] = tournament.is_player(user_data['user'])
+        context['participants'] = tournament.get_players()
+        if tournament.creator:
+            try:
+                creator = Profile.objects.get(id=tournament.creator.id)
+                context['is_creator'] = creator.user == user_data['user']
+                context['creator'] = creator
+            except Profile.DoesNotExist:
+                creator = None
     return render(request, 'in-tournament.html', context)
 
 def generate_state():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-
 
 def auth42(request):
     state = generate_state()
@@ -172,7 +177,6 @@ def auth42(request):
     redirect_uri = settings.REDIRECT_URI
     auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=public&state={state}"
     return redirect(auth_url)
-
 
 def redirect_view(request):
     code = request.GET.get('code')

@@ -16,7 +16,7 @@
 							<img src="{{ creator.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> |  {{ creator.user.username }}
 						</button>
 					</p>
-					<p><b>Start Date:</b> {{ tournament.start_date }} UTC</p>
+					<p><b>Start Date:</b> {{ tournament.start_date | format_datetime:"%d-%m-%Y %I:%M" }} UTC</p>
 					{% if tournament.status == 'closed' %}
 						<p><b>End Date:</b> {{ tournament.end_date }}</p>
 						<p><b>Place:</b> {{ tournament.place }}</p>
@@ -27,17 +27,17 @@
 					<div class="list-group">
 						{% for match in tournament.matches.all %}
 							<div class="list-group-item">
-								<p><b>Match Date:</b> {{ match.date | format_datetime:"%d-%m-%Y %I:%M" }}</p>
+								<p><b>Match Date:</b> {{ match.date | format_datetime:"%d-%m-%Y %I:%M" }} UTC</p>
 								<p><b>Players:</b> 
-								{% for player in match.players %}
+								{% for player in match.players.all %}
 								{% if player == match.winner %}
-									<p class="text-success"><b>Winner:</b> {{ player }}</p>
+									<span class="text-success"><b>Winner:</b> {{ player.player.alias }}</span>
 								{% else %}
-									<p class="text-danger">{{ player }}</p>
+									<span class="text-danger">[{{ player.player.alias }}]</span>
 								{% endif %}
 								{% endfor %}
 								</p>
-								<p><b>Score:</b> {{ match.score }}</p>
+								<p><b>Score:</b> {% for player, score in match.get_scores.items %} {{ player }}: {{ score }}   {% endfor %} </p>
 							</div>
 						{% endfor %}
 					</div>

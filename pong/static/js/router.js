@@ -30,7 +30,7 @@ class Router {
 	}
 
 	init() {
-		this.oldHash = window.location.hash;
+		// this.oldHash = window.location.hash;
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));
 
@@ -53,12 +53,15 @@ class Router {
 				event.detail.img,
 				NOTIFICATION_SOUND);
 		});
+		this.appElement.addEventListener('game', (event) => {
+			this.game.startTournamentGame(event.detail);
+		});
 
 		this.loadNav();
 		this.loadCookieConsentFooter();
 		this.updateFriendsAndBlocks();
 		this.loadChat('lobby');
-		this.route();
+		// this.route();
 	}
 
 	displayError(message) {
@@ -131,10 +134,9 @@ class Router {
 		try {
 			const response = await getHTML(`/templates/${template}`, this.csrfToken);
 			if (!response) {
-				throw new Error(`Cannot load ${template}: ${response.status}`);
+				throw new Error(`Cannot load ${template}`);
 			}
-			const element = this.appElement;
-			this.animateContent(element, response, () => this.handlePostLoad(template));
+			this.animateContent(this.appElement, response, () => this.handlePostLoad(template));
 		} catch (error) {
 			console.error("Error loading template: ", error);
 			this.displayError("Error loading content");
@@ -145,7 +147,7 @@ class Router {
 		try {
 			const response = await getHTML(`/${template}`, this.csrfToken);
 			if (!response) {
-				throw new Error(`Cannot load ${template}: ${response.status}`);
+				throw new Error(`Cannot load ${template}`);
 			}
 			this.animateContent(this.appElement, response);
 		} catch (error) {
@@ -164,22 +166,19 @@ class Router {
 		const endpoints = ['add_friend', 'remove_friend', 'block_user', 'unblock_user'];
 		const endpoint = endpoints[actions.indexOf(action)];
 		const body = JSON.stringify({user_id: id});
-		try {
-			const response = await postJSON(`/api/profiles/${endpoint}/`, this.csrfToken, body);
-			if (response) {
-				console.debug("Frenemy action successful:", action, id);
-				this.updateFriendsAndBlocks();
-				history.back();
-			} else {
-				throw new Error(`Failed to perform action: ${action} with id: ${id}`);
-			}
-		} catch (error) {
-			console.error("Error performing action: ", error);
-			this.displayError(error.message);
+		if (await postJSON(`/api/profiles/${endpoint}/`, this.csrfToken, body)) {
+			console.debug("Frenemy action successful:", action, id);
+			this.updateFriendsAndBlocks();
+			history.back();
+		} else {
+			console.error(`Failed to perform action: ${action} with id: ${id}`);
+			this.displayError(`Failed to perform action: ${action} with id: ${id}`);
 		}
 	}
 
 	async updateFriendsAndBlocks() {
+		if (!sessionStorage.getItem('access_token'))
+			return;
 		try {
 			const response = await getJSON('/api/profiles/friends/', this.csrfToken);
 			if (response) {
@@ -191,6 +190,7 @@ class Router {
 		} catch (error) {
 			console.error("Error updating friends: ", error);
 			this.displayError(error.message);
+			return;
 		}
 		try {
 			const response = await getJSON('/api/profiles/blocked_users/', this.csrfToken);
@@ -383,10 +383,16 @@ class Router {
 		}
 		sessionStorage.clear();
 		this.loadNav();
+		this.loadChat();
 	}
 
 	handleProfilePage() {
-		document.getElementById('account-administration').addEventListener('click', (e) => {
+		const accAdminBtn = document.getElementById('account-administration');
+		const anonBtn = document.getElementById('anonymize-data');
+		const deleteBtn = document.getElementById('delete-account');
+		const profileForm = document.getElementById('profile-form');
+		if (!accAdminBtn || !anonBtn || !deleteBtn || !profileForm) return;
+		accAdminBtn.addEventListener('click', (e) => {
 			e.preventDefault();
 			const anonBtn = document.getElementById('anonymize-data');
 			const deleteBtn = document.getElementById('delete-account');
@@ -429,7 +435,6 @@ class Router {
 				this.deleteAccount();
 			}
 		});
-		const profileForm = document.getElementById('profile-form');
 		profileForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const formData = new FormData(profileForm);
@@ -457,7 +462,9 @@ class Router {
 	}
 
 	handleTournamentPage() {
-		document.getElementById('create-tournament').addEventListener('click', (e) => {
+		const createTournamentBtn = document.getElementById('create-tournament');
+		if (!createTournamentBtn) return;
+		createTournamentBtn.addEventListener('click', (e) => {
 			e.preventDefault();
 			const form = document.getElementById('create-tournament-form');
 			const btn = document.getElementById('create-tournament-btn');
@@ -504,6 +511,7 @@ class Router {
 				sessionStorage.removeItem('access_token');
 				sessionStorage.removeItem('refresh_token');
 				this.loadNav();
+				this.loadChat();
 				window.location.hash = '/home';
 			} else {
 				throw new Error("Failed to delete account");
@@ -527,6 +535,7 @@ class Router {
 			if (response.ok) {
 				alert("Your data has been anonymized.");
 				this.loadNav();
+				this.loadChat();
 			} else {
 				throw new Error("Failed to anonymize data");
 			}

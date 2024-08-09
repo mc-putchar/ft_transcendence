@@ -130,13 +130,13 @@ class Tournament(models.Model):
         """Returns True if the tournament is closed, False otherwise."""
         return self.status == 'closed'
 
-    def get_players(self):
-        """Returns a QuerySet of players who are participating in the tournament."""
-        return self.participants.all()
-
     def player_count(self):
         """Returns the number of players participating in the tournament."""
         return self.participants.count()
+
+    def get_players(self):
+        """Returns a QuerySet of players who are participating in the tournament."""
+        return self.participants.all()
 
     def add_player(self, player):
         """Adds a player to the tournament."""
@@ -165,8 +165,6 @@ class Tournament(models.Model):
             if not self.is_open():
                 raise ValueError("Tournament is not open")
             with transaction.atomic():
-                self.status = 'started'
-                self.save()
                 players = list(self.get_players())
                 random.shuffle(players)
                 if len(players) < 2:
@@ -174,23 +172,40 @@ class Tournament(models.Model):
                 for i in range(0, len(players), 2):
                     if i + 1 < len(players):
                         match = Match.objects.create(tournament=self)
-                        PlayerMatch.objects.create(match=match, player=players[i])
-                        PlayerMatch.objects.create(match=match, player=players[i + 1])
+                        try:
+                            profile = Profile.objects.get(user=players[i].player.user)
+                            PlayerMatch.objects.create(match=match, player=profile)
+                            profile = Profile.objects.get(user=players[i + 1].player.user)
+                            PlayerMatch.objects.create(match=match, player=profile)
+                        except Profile.DoesNotExist:
+                            logger.error(f"Profile does not exist")
                 self.notify_players()
+                self.status = 'started'
+                self.save()
         except ValueError as e:
             logger.error(f"Failed to start tournament: {e}")
 
     def notify_players(self):
         """Notifies players in the tournament that the tournament has started."""
         channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'tournament_{self.id}',
+            {
+                'type': 'tournament_message',
+                'message': 'start tournament'
+            }
+        )
         matches = self.get_matches()
         for match in matches:
-            logger.info(f"Tournament match {match} scheduled: {match.players.all()}")
+            players = match.get_players()
+            logger.info(f"Tournament match {match} scheduled: {players}")
+            player1 = players[0].player.user
+            player2 = players[1].player.user
             async_to_sync(channel_layer.group_send)(
                 f'tournament_{self.id}',
                 {
                     'type': 'tournament_message',
-                    'message': f'match {match.id} {match.players[0].player.user} vs {match.players[1].player.user}'
+                    'message': f'match {match.id} {player1} vs {player2}'
                 }
             )
 
@@ -201,6 +216,24 @@ class Match(models.Model):
     def __str__(self):
         return f"Match on {self.date}"
 
+    def get_players(self):
+        """Returns a QuerySet of players in the match."""
+        return self.players.all()
+
+    def is_player(self, user):
+        """Returns True if the user is participating in the match, False otherwise."""
+        return self.players.filter(player__user=user).exists()
+
+    def get_winner(self):
+        """Returns the winner of the match."""
+        return self.players.get(winner=True).player.user
+
+    def get_scores(self):
+        """Returns a dictionary of players and their scores in the match."""
+        scores = {}
+        for player in self.players.all():
+            scores[player.player.alias] = player.score
+        return scores
 
 class PlayerMatch(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='players')
@@ -214,6 +247,16 @@ class PlayerMatch(models.Model):
     def __str__(self):
         return f"{self.player} in {self.match} scored {self.score} and {'won' if self.winner else 'lost'} "
 
+    def get_opponent(self):
+        """Returns the opponent of the player in the match."""
+        try:
+            opponent = self.match.players.exclude(player=self.player).first()
+        except PlayerMatch.DoesNotExist:
+            return None
+        if opponent:
+            return opponent.player
+        return None
+
 
 class TournamentPlayer(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='participants')
@@ -224,5 +267,5 @@ class TournamentPlayer(models.Model):
         unique_together = ('tournament', 'player')
 
     def __str__(self):
-        return f"{self.player} in tournament: {self.tournament}"
+        return f"{self.player} placed {self.place} in tournament: {self.tournament}"
 

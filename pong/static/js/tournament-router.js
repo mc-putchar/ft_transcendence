@@ -88,6 +88,15 @@ class TournamentRouter {
 					if (this.username === player1 || this.username === player2) {
 						console.log("Starting match:", matchID);
 						// start game
+						const gameEvent = new CustomEvent('game', {
+							detail: {
+								gameID: matchID,
+								player: (this.username === player1) ? player1 : player2,
+								opponent: (this.username === player1) ? player2 : player1,
+								tournamentID: this.tournamentID,
+							},
+						});
+						this.appElement.dispatchEvent(gameEvent);
 					}
 				case 'start':
 					console.log("Starting tournament");
@@ -98,7 +107,7 @@ class TournamentRouter {
 					break;
 			}
 		} else if (data.hasOwnProperty('message')) {
-			console.log(`Received msg: ${data.message}`);
+			console.log(`Received msg: ${data.message}\ntype: ${data.type}`);
 		} else {
 			console.log("Received data: ", data);
 		}

@@ -10,6 +10,9 @@ from api.models import Match, Profile, PlayerMatch, Tournament, TournamentPlayer
 from .serializers import MatchSerializer, PlayerSerializer, PlayerMatchSerializer, TournamentPlayerSerializer, TournamentSerializer
 from .forms import CreateTournamentForm
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MatchViewSet(viewsets.ModelViewSet):
     """API endpoint for matches."""
@@ -21,7 +24,7 @@ class MatchViewSet(viewsets.ModelViewSet):
     def create_match(self, request):
         """Create a new match."""
         match = Match.objects.create()
-        return Response({'status': 'match created', 'match_id': match.id}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'match created', 'match_id': match.id}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def join(self, request, pk=None):
@@ -29,14 +32,16 @@ class MatchViewSet(viewsets.ModelViewSet):
         match = self.get_object()
         user = request.user
         player_count = PlayerMatch.objects.filter(match=match).count()
+        if match.is_player(user):
+            return Response({'message': 'already joined'}, status=status.HTTP_200_OK)
         if player_count >= 2:
-            return Response({'status': 'match is full'}, status=status.HTTP_400_BAD_REQUEST)
-        player, created = Profile.objects.get_or_create(user=user)
-        if not PlayerMatch.objects.filter(match=match, player=player).exists():
-            PlayerMatch.objects.create(match=match, player=player, score=0)
-            return Response({'status': 'joined match'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'status': 'already joined'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'match is full'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            player = Profile.objects.get(user=user)
+        except Profile.DoesNotExist:
+            return Response({'message': 'player does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        PlayerMatch.objects.create(match=match, player=player, score=0)
+        return Response({'message': 'joined match'}, status=status.HTTP_200_OK)
 
 class PlayerViewSet(viewsets.ModelViewSet):
     """API endpoint for players."""
@@ -81,13 +86,13 @@ class TournamentViewSet(viewsets.ModelViewSet):
                 try:
                     creator = Profile.objects.get(user=request.user)
                 except Profile.DoesNotExist:
-                    return Response({'status': 'player does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'message': 'player does not exist'}, status=status.HTTP_400_BAD_REQUEST)
                 tournament = form.save(commit=False)
                 tournament.creator = creator
                 tournament.save()
-                return Response({'status': 'tournament created', 'tournament_id': tournament.id}, status=status.HTTP_201_CREATED)
+                return Response({'message': 'tournament created', 'tournament_id': tournament.id}, status=status.HTTP_201_CREATED)
             else:
-                return Response({'status': 'form invalid'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'form invalid'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             form = CreateTournamentForm()
             tournaments = self.open_tournaments(request)
@@ -103,9 +108,9 @@ class TournamentViewSet(viewsets.ModelViewSet):
         """Delete a tournament."""
         tournament = self.get_object()
         if tournament.creator != request.user.profile:
-            return Response({'status': 'only the tournament creator can delete the tournament'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'only the tournament creator can delete the tournament'}, status=status.HTTP_403_FORBIDDEN)
         tournament.delete()
-        return Response({'status': 'tournament deleted'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'tournament deleted'}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'])
     def join(self, request, pk=None):
@@ -114,16 +119,16 @@ class TournamentViewSet(viewsets.ModelViewSet):
         user = request.user
         player_count = TournamentPlayer.objects.filter(tournament=tournament).count()
         if player_count >= tournament.player_limit:
-            return Response({'status': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             player = Profile.objects.get(user=user)
         except Profile.DoesNotExist:
-            return Response({'status': 'player does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'player does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         if not TournamentPlayer.objects.filter(tournament=tournament, player=player).exists():
             tournament.add_player(player)
-            return Response({'status': 'joined tournament'}, status=status.HTTP_200_OK)
+            return Response({'message': 'joined tournament'}, status=status.HTTP_200_OK)
         else:
-            return Response({'status': 'already joined'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'already joined'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def leave(self, request, pk=None):
@@ -133,12 +138,12 @@ class TournamentViewSet(viewsets.ModelViewSet):
         try:
             player = Profile.objects.get(user=user)
         except Profile.DoesNotExist:
-            return Response({'status': 'player does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'player does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         if TournamentPlayer.objects.filter(tournament=tournament, player=player).exists():
             tournament.remove_player(player)
-            return Response({'status': 'left tournament'}, status=status.HTTP_200_OK)
+            return Response({'message': 'left tournament'}, status=status.HTTP_200_OK)
         else:
-            return Response({'status': 'not in tournament'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'not in tournament'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
     def open_tournaments(self, request):
@@ -160,13 +165,13 @@ class TournamentViewSet(viewsets.ModelViewSet):
         """Start a tournament."""
         tournament = self.get_object()
         if tournament.creator != request.user.profile:
-            return Response({'status': 'only the tournament creator can start the tournament'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'only the tournament creator can start the tournament'}, status=status.HTTP_403_FORBIDDEN)
         if tournament.status != 'open':
-            return Response({'status': 'tournament is not open'}, status=status.HTTP_400_BAD_REQUEST)
-        if tournament.is_full():
-            return Response({'status': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
-        if tournament.get_players().count() < 2:
-            return Response({'status': 'tournament needs at least 2 players'}, status=status.HTTP_400_BAD_REQUEST)
+            logger.error("Tournament is not open")
+            return Response({'message': 'tournament is not open'}, status=status.HTTP_400_BAD_REQUEST)
+        if tournament.player_count() < 2:
+            logger.error("Tournament needs at least 2 players")
+            return Response({'message': 'tournament needs at least 2 players'}, status=status.HTTP_400_BAD_REQUEST)
         tournament.start()
-        return Response({'status': 'tournament started'}, status=status.HTTP_200_OK)
+        return Response({'message': 'tournament started'}, status=status.HTTP_200_OK)
 

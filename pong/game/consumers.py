@@ -99,6 +99,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             player = data["player"]
             player_username = data["user"]
             match_id = data["match_id"]
+            if not player or not player_username or not match_id:
+                raise Exception("Missing registration data")
         except Exception as e:
             await self.send(text_data=json.dumps({
                 "type": "error",
@@ -106,7 +108,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             }))
         else:
             if player_username != self.user.username:
-                print(f"Username mismatch: {player_username} != {self.user.username}")
+                logger.warn(f"Username mismatch: {player_username} != {self.user.username}")
                 await self.send(text_data=json.dumps({
                     "type": "error",
                     "message": "Username not recognized",
@@ -121,22 +123,16 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 logger.debug(f"Player {player} registered with username {player_username}")
 
                 player_match_exists = await sync_to_async(PlayerMatch.objects.filter(match=self.match, player=profile).exists)()
-                if player_match_exists:
-                    logger.debug(f"PlayerMatch entry exists for {player_username} in match {match_id}")
-                    await self.send(text_data=json.dumps({
-                        "type": "registration",
-                        "message": f"{player} registered successfully",
-                    }))
-                    self.game_id = f"{self.match_group_name}@{match_id}"
-                    game_manager.reset_game_state(self.game_id, self.score_limit)
-                else:
-                    logger.debug(f"PlayerMatch entry does not exist for {player_username} in match {match_id}")
-                    await self.send(text_data=json.dumps({
-                        "type": "error",
-                        "message": "Player cannot be registered for this match",
-                    }))
-                    del self.players[player]
-                    del self.connection_player_map[self.channel_name]
+                if not player_match_exists:
+                    raise Exception("PlayerMatch entry does not exist")
+                logger.debug(f"PlayerMatch entry found for {player_username} in match {match_id}")
+                await self.send(text_data=json.dumps({
+                    "type": "registration",
+                    "message": f"{player} registered successfully",
+                }))
+                self.game_id = f"{self.match_group_name}@{match_id}"
+                game_manager.reset_game_state(self.game_id, self.score_limit)
+                return
 
             except Profile.DoesNotExist:
                 logger.debug(f"Error: User Profile '{player_username}' does not exist")
@@ -154,12 +150,12 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 logger.debug(f"Error registering player: {e}")
                 await self.send(text_data=json.dumps({
                     "type": "error",
-                    "message": "Error registering player for this match",
+                    "message": "Player could not be registered for this match",
                 }))
-                if player in self.players:
-                    del self.players[player]
-                if self.channel_name in self.connection_player_map:
-                    del self.connection_player_map[self.channel_name]
+            if player in self.players:
+                del self.players[player]
+            if self.channel_name in self.connection_player_map:
+                del self.connection_player_map[self.channel_name]
 
     async def receive(self, text_data):
         if self.gameover:
@@ -169,6 +165,10 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             msg_type = data.get("type")
             player = self.connection_player_map.get(self.channel_name)
 
+        except Exception as e:
+            logger.error(f"Error in consumer receive: {e}\nData: {text_data}")
+
+        else:
             if msg_type in ["player1_position", "player2_position"]:
                 position = data.get("position")
                 direction = data.get("direction")
@@ -203,8 +203,6 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                             "message": data["message"]
                         }
                     )
-        except Exception as e:
-            print(f"Error in consumer receive: {e}\nData: {text_data}")
 
     async def echo_message(self, event):
         message = event["message"]
@@ -237,7 +235,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 await self.send_game_state()
                 await asyncio.sleep(0.016)
             except Exception as e:
-                print(f"Error in game update loop: {e}")
+                logger.error(f"Error in game update loop: {e}")
 
     async def save_match_results(self, game_state):
         try:
@@ -245,16 +243,16 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 
             player1 = self.players.get("player1")
             player2 = self.players.get("player2")
-            print(f"Saving match results")
+            logger.info(f"Saving match results")
             if player1:
                 await update_player_match(self.match, player1, p1_score, p1_score > p2_score)
             elif player2:
                 await update_player_match(self.match, player2, p2_score, p2_score > p1_score)
             else:
-                print("Error saving match results: Player is not registered.")
+                logger.warn("Error saving match results: Player is not registered.")
 
         except Exception as e:
-            print(f"Error saving match results: {e}")
+            logger.error(f"Error saving match results: {e}")
 
     async def handle_forfeit(self, forfeiting_player):
         try:
@@ -267,11 +265,11 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             elif loser:
                 await update_player_match(self.match, loser, 0, False)
             else:
-                print(f"Error handling forfeit: No player registered")
-            print("Match forfeited")
+                logger.warn(f"Error handling forfeit: No player registered")
+            logger.info("Match forfeited")
 
         except Exception as e:
-            print(f"Error handling forfeit: {e}")
+            logger.error(f"Error handling forfeit: {e}")
 
     async def send_game_state(self):
         game_state = game_manager.get_game_state(self.game_id)
@@ -345,7 +343,7 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
             msg_type = data.get("type")
 
         except Exception as e:
-            print(f"Error in consumer receive: {e}\nData: {text_data}")
+            logger.error(f"Error in consumer receive: {e}\nData: {text_data}")
             return
 
         match msg_type:
@@ -366,5 +364,6 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
         message = event['message']
 
         await self.send(text_data=json.dumps({
+            'type': 'tournament_message',
             'message': message
         }))
