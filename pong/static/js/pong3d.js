@@ -308,7 +308,6 @@ class proAI {
 		this.stopMove();
 		if(Date.now() < this.lastMove + 1000 || (Date.now() < this.lastMove + this.wait + 1 / ball.speed))
 			return ;
-		console.log("TIME : ", Date.now() - this.lastMove);
 		this.lastMove = Date.now();
 		this.executeMove(ball);
 		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
@@ -335,8 +334,6 @@ class Game {
 		this.parent.appendChild(this.fsButton);
 		
 		this.canvas = document.createElement('canvas');
-		this.canvas.style.width = "80%";
-		this.canvas.style.height = "100%";
 		this.canvas.width = window.innerWidth;
 		this.canvas.height = window.innerHeight;
 		this.parent.appendChild(this.canvas);
@@ -348,14 +345,14 @@ class Game {
 
 		// buttons
 		button_right = document.createElement("button");
-		button_left = document.createElement("button"); 
+		button_left = document.createElement("button");
 		this.parent.appendChild(button_right);
 		this.parent.appendChild(button_left);
+		
+		button_right.className = "Buttons";
+		button_left.className = "Buttons";
 
-		button_right.addEventListener("mousedown", ev => button_right_onmousedown(ev));
-		button_left.addEventListener("mousedown", ev => button_left_onmousedown(ev));
-		button_right.addEventListener("mouseup",  ev => button_right_onmouseup(ev));
-		button_left.addEventListener("mouseup", ev => button_left_onmouseup(ev));
+		this.updateButton();
 
 		this.scene = new THREE.Scene();
 		const FOV = 75;
@@ -399,11 +396,35 @@ class Game {
 
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
-		
+		button_right.addEventListener("mousedown", () => this.button_right_onmousedown());
+		button_left.addEventListener("mousedown", () => this.button_left_onmousedown());
+		button_right.addEventListener("mouseup", () => this.button_right_onmouseup());
+		button_left.addEventListener("mouseup", () => this.button_left_onmouseup());
+
 		if(ACTIVE_AI == true)
 			this.ai = new proAI(this.playerTwo);
 		this.showScore();
 		playAudioTrack();
+	}
+	updateButton () {
+		[button_right, button_left].forEach(button => {
+			button.style.backgroundColor = 'rgb(2, 2, 27)';
+			button.style.color = 'white';
+			button.style.cursor = 'pointer';
+			button.style.margin = '5px 0';
+
+			button.style.position = "absolute";
+
+			button.style.left = "47.5%";
+			button.style.height = "10%";
+			button.style.width = "5%";
+			});
+
+		button_right.style.top = "45%";
+		button_right.innerText = "LEFT / UP";
+
+		button_left.style.top = "55%";
+		button_left.innerText = "RIGHT / DOWN";
 	}
 	toggleFullScreen() {
 		if (this.renderer.domElement.requestFullscreen) {
@@ -424,6 +445,7 @@ class Game {
 			this.renderer.setSize(width, height, false);
 			this.camera.aspect = width / height;
 			this.camera.updateProjectionMatrix();
+			this.updateButton();	
 		}
 	}
 	keydown(key) {
@@ -474,17 +496,17 @@ class Game {
 				this.playerTwo.direction = 0;
 		}
 	}
-	button_right_onmousedown (key) {
-		this.playerOne.dir = 1;
+	button_right_onmousedown () {
+		this.playerOne.direction = 1;
 	}
-	button_left_onmousedown (key) {
-		this.playerOne.dir = -1;
+	button_left_onmousedown () {
+		this.playerOne.direction = -1;
 	}
-	button_right_onmouseup (key){
-		this.playerOne.dir = 0;
+	button_right_onmouseup () {
+		this.playerOne.direction = 0;
 	}
-	button_left_onmouseup (key) {
-		this.playerOne.dir = 0;
+	button_left_onmouseup () {
+		this.playerOne.direction = 0;
 	}
 	endGame() {
 		document.removeEventListener("keydown", ev => this.keydown(ev));
@@ -499,10 +521,8 @@ class Game {
 		this.cam_controls.autoRotate = true;
 	}
 	loop() {
-		console.log("3d");
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
-		this.ai.update(this.ball);
 		if (!this.gameover) {
 			let now = Date.now();
 			let elapsed = now - this.lastUpdate;
@@ -526,6 +546,7 @@ class Game {
 				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
 			}
 		}
+		this.ai.update(this.ball);
 		this.draw();
 	}
 	update() {
@@ -539,9 +560,10 @@ class Game {
 		this.cam_controls.update();
 		this.renderer.render(this.scene, this.camera);
 	}
+
 	checkCollisions() {
 		const [ballX, ballY] = this.ball.position;
-		if (ballX <= -(ARENA_HEIGHT / 2)
+		if (ballX <= -(ARENA_HEIGHT / 2) // any wall collision
 		|| ballX >= (ARENA_HEIGHT / 2)) {
 			playTone(180, 40, 140);
 			this.ball.dir.x *= (-1.1);
@@ -572,6 +594,9 @@ class Game {
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
 		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) {
+			if(ballY > p2y + PADDLE_WIDTH) {
+				return ;
+			}
 			playTone(200, 30, 200, 0.6);
 			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(-1 * Math.cos(refAngle));
@@ -580,6 +605,9 @@ class Game {
 		} else if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
 		&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
+			if(ballY < p1y - PADDLE_WIDTH) {
+				return ;
+			}
 			playTone(200, 30, 200, 0.6);
 			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(1 * Math.cos(refAngle));
@@ -590,7 +618,7 @@ class Game {
 	showScore() {
 		this.scene.remove(this.score);
 		this.loader.load(SCORE_FONT, font => {
-			const textGeo = new TextGeometry(
+			const textGeo = new TextGeometry (
 					this.playerOne.score + ' : ' + this.playerTwo.score, {
 					font: font,
 					size: 80,
