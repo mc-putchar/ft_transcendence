@@ -7,19 +7,21 @@ describe("PongTournament", function() {
 	const player1Hash = 0;
 	const player2Name = "bar";
 	const player2Hash = 1;
-
+	
 	before(async function() {
 		[owner, player1, player2] = await ethers.getSigners();
 		hardhatTournament = await ethers.deployContract("PongTournament");
 	});
-
+	
 	describe("Deployment", function() {
 		it("Should record deployer's address", async function() {
 			expect(await hardhatTournament.owner()).to.equal(owner.address);
 		});
 	});
-
+	
 	describe("Player Management", function() {
+		const newAddr = "0x1111111111111111111111111111111111111111"
+		
 		it("Should allow anyone to add players", async function() {
 			await hardhatTournament.connect(player1).addPlayer(player1Hash, player1Name);
 			await hardhatTournament.connect(player2).addPlayer(player2Hash, player2Name);
@@ -29,6 +31,25 @@ describe("PongTournament", function() {
 
 		it("Should deny duplicate players", async function() {
 			await expect(hardhatTournament.addPlayer(player1Hash, player1Name)).to.be.revertedWith("Player already exists");
+		});
+
+		it("Should allow owner to update player address", async function() {
+			await hardhatTournament.connect(owner).updatePlayerAddress(player1Hash, player1.address);
+			const playerToUpdate = await hardhatTournament.players(player1Hash)
+			expect(await playerToUpdate.addr).to.equal(player1.address);
+		});
+		
+		it ("Should allow a player to update their own address", async function() {
+			await hardhatTournament.connect(owner).updatePlayerAddress(player2Hash, player2.address)
+			await hardhatTournament.connect(player2).updatePlayerAddress(player2Hash, newAddr);
+			const playerToUpdate = await hardhatTournament.players(player2Hash);
+			expect(await playerToUpdate.addr).to.equal(newAddr);
+		});
+
+		it ("Should not allow a player to update another player's address", async function() {
+			await expect(
+				hardhatTournament.connect(player1).updatePlayerAddress(player2Hash, player2.address)
+			).to.be.revertedWith("Caller is not the owner");
 		});
 	});
 

@@ -20,3 +20,5 @@ node_modules
 en.subject*
 subject.*
 /pong/blockchain/static/blockchain/contracts/*
+/pong/blockchain/hardhat/artifacts/
+/pong/blockchain/hardhat/cache/
