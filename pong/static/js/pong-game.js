@@ -253,7 +253,6 @@ class Game {
 	}
 	onTouchEndLeft(event) {
 		console.log("Touch end event triggered on left.");
-		if(event.touches.length == 1)
 			this.player1.direction = 0;
 	}
 	onTouchStartRight(event) {
@@ -263,7 +262,6 @@ class Game {
 	}
 	onTouchEndRight(event) {
 		console.log("Touch end event triggered on right.");
-		if(event.touches.length == 1)
 			this.player1.direction = 0;
 	}
 

@@ -430,6 +430,7 @@ class Game {
         this.touch_left.addEventListener("touchend", event => this.onTouchEndLeft(event), false);
         this.touch_right.addEventListener("touchstart", event => this.onTouchStartRight(event), false);
         this.touch_right.addEventListener("touchend", event => this.onTouchEndRight(event), false);
+		this.canvas.addEventListener("", event => this.onTouchCanvas(event), false);
     }
 	onTouchStartLeft(event) {
 		console.log("Touch start event triggered on left.");
@@ -602,9 +603,17 @@ class Game {
 		this.ball.doMove();
 		this.checkCollisions();
 	}
+	onTouchCanvas(event) {
+		if(event == null)
+			return;
+		console.log("TOUCH CANVAS");
+		if(event.touches.length > 1) {
+			this.cam_controls.update();
+			this.renderer.render(this.scene, this.camera);
+		}
+	}
 	draw() {
-		this.cam_controls.update();
-		this.renderer.render(this.scene, this.camera);
+		this.onTouchCanvas(null);
 	}
 	repositionBall(ballX, ballY, p2y, p1y) {
 		let distance;
