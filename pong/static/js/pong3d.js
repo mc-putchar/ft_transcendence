@@ -126,10 +126,6 @@ class Ball {
 		if(this.lastMove == 0 || Date.now() - this.lastMove > 100 || Date.now() - this.lastMove <= 4)
 			this.lastMove = Date.now();
 		this.time = Date.now() - this.lastMove;
-		console.log("incr : ", this.speed * this.time);
-		console.log(this.speed / ARENA_WIDTH);
-		if(this.speed && this.time)
-			debugger ;
 		this.mesh.translateX(this.dir.x * this.speed * this.time);
 		this.mesh.translateZ(this.dir.z * this.speed * this.time);
 		this.lastMove = Date.now();
@@ -141,7 +137,8 @@ class Ball {
 };
 
 class Player {
-	constructor(paddle_geo, paddle_mat, avatar_tex) {
+	constructor(paddle_geo, paddle_mat, avatar_tex, _side) {
+		this.side = _side;
 		this.mesh = new THREE.Mesh(paddle_geo, paddle_mat);
 		this.mesh.castShadow = true;
 		this.pos = new THREE.Vector3();
@@ -181,6 +178,18 @@ class Player {
 				this.mesh.translateX(move);
 			}
 		}
+	}
+	reset() {
+		// const wire_material = new THREE.MeshPhongMaterial({ color: 0x42FF42, wireframe: true });
+		// const box_geometry = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2);
+		// const avatar1_texture = new THREE.TextureLoader().load(AVATAR1_IMG);
+		// const avatar2_texture = new THREE.TextureLoader().load(AVATAR2_IMG);
+		
+		// console.log("ewr");
+		// if(this.side == "left")
+		// 	this.place(wire_material, box_geometry, avatar1_texture);
+		// else if(this.side == "right")
+		// 	this.place(wire_material, box_geometry, avatar2_texture);
 	}
 };
 
@@ -418,7 +427,7 @@ class Game {
 
 			button.style.position = "absolute";
 
-			button.style.left = "47.5%";
+			button.style.left = "80%";
 			button.style.height = "10%";
 			button.style.width = "5%";
 			});
@@ -566,19 +575,26 @@ class Game {
 	}
 	repositionBall(ballX, ballY, p2y, p1y) {
 		let distance;
-		if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
-			&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))) {
-				distance = ballY + BALL_SIZE - p2y - PADDLE_WIDTH / 2 + 0.1;
-				this.ball.pos.x -= Math.abs(this.ball.dir.x * distance);
-				this.ball.pos.z -= Math.abs(this.ball.dir.z * distance);
+		
+		if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)){
+
+			distance = (ballY + BALL_SIZE) - (p2y - (PADDLE_WIDTH / 2));
+			console.log("LEFT collision distance: ", distance);
+	
+			this.ball.pos.x -= this.ball.dir.x * distance;
+			this.ball.pos.z -= this.ball.dir.z * distance;
 		}
-		if(ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
-			&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)){
-				distance = ballY + BALL_SIZE - p1y - PADDLE_WIDTH / 2 + 0.1;
-				this.ball.pos.x += Math.abs(this.ball.dir.x * distance);
-				this.ball.pos.z += Math.abs(this.ball.dir.z * distance);
+	
+		if(ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)){
+
+			distance = (p1y + (PADDLE_WIDTH / 2)) - (ballY - BALL_SIZE);
+			console.log("RIGHT collision distance: ", distance);
+	
+			this.ball.pos.x += this.ball.dir.x * distance;
+			this.ball.pos.z += this.ball.dir.z * distance;
 		}
 	}
+	
 	checkCollisions() {
 		const [ballX, ballY] = this.ball.position;
 		if (ballX <= -(ARENA_HEIGHT / 2) // any wall collision
@@ -593,20 +609,24 @@ class Game {
 			playTone(240, 20, 210, 3);
 			this.last_scored = 2;
 			this.running = false;
-			this.ball.reset();
 			this.playerTwo.score++;
 			this.scene.remove(this.score);
 			this.showScore();
+			this.ball.reset();
+			// this.playerOne.reset();
+			// this.playerTwo.reset();
 			if(ACTIVE_AI == true)
 				this.ai.resetTimes();
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
 			playTone(240, 20, 210, 3);
 			this.last_scored = 1;
 			this.running = false;
-			this.ball.reset();
 			this.playerOne.score++;
 			this.scene.remove(this.score);
 			this.showScore();
+			this.ball.reset();
+			// this.playerOne.reset();
+			// this.playerTwo.reset();
 			if(ACTIVE_AI == true)
 				this.ai.resetTimes();
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
@@ -620,7 +640,7 @@ class Game {
 			this.ball.dir.setZ(-1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
 			this.ball.speed += BALL_INCR_SPEED;
-			this.repositionBall(ballX, ballY, p2y, p1y);
+			// this.repositionBall(ballX, ballY, p2y, p1y);
 		} else if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
 		&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
@@ -632,7 +652,7 @@ class Game {
 			this.ball.dir.setZ(1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
 			this.ball.speed += BALL_INCR_SPEED;
-			this.repositionBall(ballX, ballY, p2y, p1y);
+			// this.repositionBall(ballX, ballY, p2y, p1y);
 		}
 	}
 	showScore() {
