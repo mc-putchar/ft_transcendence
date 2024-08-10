@@ -48,6 +48,43 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	});
 }
 
+function createCmdPopover(element = "body") {
+	const chatInput = document.querySelector("#chat-message-input");
+	const commands = {
+		"/pm": "Send a private message to a user",
+		"/duel": "Challenge a user to a duel",
+		"/help": "List all available commands",
+	};
+
+	chatInput.setAttribute("data-bs-toggle", "popover");
+	chatInput.setAttribute("data-bs-trigger", "manual");
+
+	const popoverContent = Object.entries(commands)
+		.map(([cmd, desc]) => `<strong>${cmd}</strong>    ${desc}`)
+		.join("<br>");
+
+	const popover = new bootstrap.Popover(chatInput, {
+		content: popoverContent,
+		html: true,
+		placement: "auto",
+		container: element,
+	});
+
+	chatInput.addEventListener("keyup", (event) => {
+		if (event.key === "/") {
+			popover.show();
+		} else if (event.key === "@") {
+			//replace popover content 
+			popover.update();
+			popoverContent = "List of users";
+			popover.show();
+		} else {          // avoid hiding popover when shift key is released
+			if (event.key === "Shift") return;
+			popover.hide();
+		}
+	});
+}
+
 async function getHTML(endpoint, csrftoken) {
 	const accessToken = sessionStorage.getItem('access_token') || "";
 	const response = await fetch(endpoint, {
@@ -219,4 +256,4 @@ function popupCenter(url, title, w, h) {
 	return authWindow;
 }
 
-export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter };
+export { createModal, createCmdPopover, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter };

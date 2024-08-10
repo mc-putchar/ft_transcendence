@@ -1,6 +1,6 @@
 "use strict";
 
-import { createModal, getJSON } from './utils.js';
+import { createModal, createCmdPopover, getJSON } from './utils.js';
 import { showNotification } from './notification.js';
 
 class ChatRouter {
@@ -43,6 +43,7 @@ class ChatRouter {
 		this.chatSocket.addEventListener('message', (event) => this.parseMessage(event));
 
 		document.querySelector('#chat-message-input').onkeypress = (e) => {
+			createCmdPopover("#collapseChat");
 			if (e.keyCode === 13) {
 				this.sendMessage();
 			}
