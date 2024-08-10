@@ -5,7 +5,7 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 import { getAmps, playAudioTrack, playTone } from './audio.js';
 
-const ACTIVE_AI = false;
+const ACTIVE_AI = true;
 
 let animationID = null;
 
@@ -435,22 +435,20 @@ class Game {
 	onTouchStartLeft(event) {
 		console.log("Touch start event triggered on left.");
 		if(event.touches.length == 1)
-			this.player1.direction = -1; // -1 goes up
+			this.playerOne.direction = 1;
 	}
 	onTouchEndLeft(event) {
 		console.log("Touch end event triggered on left.");
-		if(event.touches.length == 1)
-			this.player1.direction = 0;
+		this.playerOne.direction = 0;
 	}
 	onTouchStartRight(event) {
 		console.log("Touch start event triggered on right.");
 		if(event.touches.length == 1)
-			this.player1.direction = 1;
+			this.playerOne.direction = -1;
 	}
 	onTouchEndRight(event) {
 		console.log("Touch end event triggered on right.");
-		if(event.touches.length == 1)
-			this.player1.direction = 0;
+		this.playerOne.direction = 0;
 	}
 	updateButton () {
 		[button_right, button_left].forEach(button => {
@@ -604,16 +602,17 @@ class Game {
 		this.checkCollisions();
 	}
 	onTouchCanvas(event) {
-		if(event == null)
-			return;
-		console.log("TOUCH CANVAS");
-		if(event.touches.length > 1) {
-			this.cam_controls.update();
-			this.renderer.render(this.scene, this.camera);
-		}
+		// if(event == null)
+		// 	return;
+		// console.log("TOUCH CANVAS");
+		// if(event.touches.length > 1) {
+		// 	this.cam_controls.update();
+		// 	this.renderer.render(this.scene, this.camera);
+		// }
 	}
 	draw() {
-		this.onTouchCanvas(null);
+		this.cam_controls.update();
+		this.renderer.render(this.scene, this.camera);
 	}
 	repositionBall(ballX, ballY, p2y, p1y) {
 		let distance;
@@ -622,7 +621,6 @@ class Game {
 
 			distance = (ballY + BALL_SIZE) - (p2y - (PADDLE_WIDTH / 2));
 			console.log("LEFT collision distance: ", distance);
-	
 			this.ball.pos.x -= this.ball.dir.x * distance;
 			this.ball.pos.z -= this.ball.dir.z * distance;
 		}
@@ -631,7 +629,6 @@ class Game {
 
 			distance = (p1y + (PADDLE_WIDTH / 2)) - (ballY - BALL_SIZE);
 			console.log("RIGHT collision distance: ", distance);
-	
 			this.ball.pos.x += this.ball.dir.x * distance;
 			this.ball.pos.z += this.ball.dir.z * distance;
 		}
