@@ -431,6 +431,26 @@ class Game {
         this.touch_right.addEventListener("touchstart", event => this.onTouchStartRight(event), false);
         this.touch_right.addEventListener("touchend", event => this.onTouchEndRight(event), false);
     }
+	onTouchStartLeft(event) {
+		console.log("Touch start event triggered on left.");
+		if(event.touches.length == 1)
+			this.player1.direction = -1; // -1 goes up
+	}
+	onTouchEndLeft(event) {
+		console.log("Touch end event triggered on left.");
+		if(event.touches.length == 1)
+			this.player1.direction = 0;
+	}
+	onTouchStartRight(event) {
+		console.log("Touch start event triggered on right.");
+		if(event.touches.length == 1)
+			this.player1.direction = 1;
+	}
+	onTouchEndRight(event) {
+		console.log("Touch end event triggered on right.");
+		if(event.touches.length == 1)
+			this.player1.direction = 0;
+	}
 	updateButton () {
 		[button_right, button_left].forEach(button => {
 			button.style.backgroundColor = 'rgb(2, 2, 27)';

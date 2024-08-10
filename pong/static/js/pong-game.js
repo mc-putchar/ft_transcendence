@@ -221,47 +221,51 @@ class Game {
 		this.setupTouchControls();
 	}
 	setupTouchControls() {
-        this.touch_left = document.createElement("div");
-        this.touch_left.id = "touch-left";
-        this.touch_right = document.createElement("div");
-        this.touch_right.id = "touch-right";
-        this.parent.appendChild(this.touch_left);
-        this.parent.appendChild(this.touch_right);
-        
-        this.touch_left.style.display = "block";
-        this.touch_left.style.width = "50%";
-        this.touch_left.style.height = "100%";
-        this.touch_left.style.position = "absolute";
-        this.touch_left.style.left = "0"; 
+		this.touch_left = document.createElement("div");
+		this.touch_left.id = "touch-left";
+		this.touch_right = document.createElement("div");
+		this.touch_right.id = "touch-right";
+		this.parent.appendChild(this.touch_left);
+		this.parent.appendChild(this.touch_right);
+		
+		this.touch_left.style.display = "block";
+		this.touch_left.style.width = "50%";
+		this.touch_left.style.height = "100%";
+		this.touch_left.style.position = "absolute";
+		this.touch_left.style.left = "0"; 
 
-        this.touch_right.style.display = "block";
-        this.touch_right.style.width = "50%";
-        this.touch_right.style.height = "100%";
-        this.touch_right.style.position = "absolute";
-        this.touch_right.style.right = "0";
+		this.touch_right.style.display = "block";
+		this.touch_right.style.width = "50%";
+		this.touch_right.style.height = "100%";
+		this.touch_right.style.position = "absolute";
+		this.touch_right.style.right = "0";
 
-        this.touch_left.addEventListener("touchstart", event => this.onTouchStartLeft(event), false);
-        this.touch_left.addEventListener("touchend", event => this.onTouchEndLeft(event), false);
-        this.touch_right.addEventListener("touchstart", event => this.onTouchStartRight(event), false);
-        this.touch_right.addEventListener("touchend", event => this.onTouchEndRight(event), false);
-    }
+		this.touch_left.addEventListener("touchstart", event => this.onTouchStartLeft(event), false);
+		this.touch_left.addEventListener("touchend", event => this.onTouchEndLeft(event), false);
+		this.touch_right.addEventListener("touchstart", event => this.onTouchStartRight(event), false);
+		this.touch_right.addEventListener("touchend", event => this.onTouchEndRight(event), false);
+	}
 
 	onTouchStartLeft(event) {
-        console.log("Touch start event triggered on left.");
-		this.player1.direction = -1; // -1 goes up
-    }
-    onTouchEndLeft(event) {
-        console.log("Touch end event triggered on left.");
-		this.player1.direction = 0;
-    }
-    onTouchStartRight(event) {
-        console.log("Touch start event triggered on right.");
-		this.player1.direction = 1;
+		console.log("Touch start event triggered on left.");
+		if(event.touches.length == 1)
+			this.player1.direction = -1; // -1 goes up
 	}
-    onTouchEndRight(event) {
-        console.log("Touch end event triggered on right.");
-		this.player1.direction = 0;
-    }
+	onTouchEndLeft(event) {
+		console.log("Touch end event triggered on left.");
+		if(event.touches.length == 1)
+			this.player1.direction = 0;
+	}
+	onTouchStartRight(event) {
+		console.log("Touch start event triggered on right.");
+		if(event.touches.length == 1)
+			this.player1.direction = 1;
+	}
+	onTouchEndRight(event) {
+		console.log("Touch end event triggered on right.");
+		if(event.touches.length == 1)
+			this.player1.direction = 0;
+	}
 
 	onResize() {
 		if (resizeTimeout) clearTimeout(resizeTimeout);
