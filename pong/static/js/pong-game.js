@@ -21,7 +21,7 @@ const PADDLE_SPEED = 5;
 const PADDLE_LEN = 42;
 const PADDLE_WIDTH = 6;
 const TARGET_FPS = 120;
-const WALL_THICKNESS = 10;
+// const WALL_THICKNESS = 10;
 
 const BALL_COLOR = "red";
 const PADDLE_COLOR = "green";
