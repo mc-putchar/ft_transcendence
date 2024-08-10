@@ -217,7 +217,52 @@ class Game {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 		window.addEventListener("resize", ev => this.onResize(ev));
+
+		this.setupTouchControls();
 	}
+	setupTouchControls() {
+        this.touch_left = document.createElement("div");
+        this.touch_left.id = "touch-left";
+        this.touch_right = document.createElement("div");
+        this.touch_right.id = "touch-right";
+        this.parent.appendChild(this.touch_left);
+        this.parent.appendChild(this.touch_right);
+        
+        this.touch_left.style.display = "block";
+        this.touch_left.style.width = "50%";
+        this.touch_left.style.height = "100%";
+        this.touch_left.style.position = "absolute";
+        this.touch_left.style.left = "0"; 
+
+        this.touch_right.style.display = "block";
+        this.touch_right.style.width = "50%";
+        this.touch_right.style.height = "100%";
+        this.touch_right.style.position = "absolute";
+        this.touch_right.style.right = "0";
+
+        this.touch_left.addEventListener("touchstart", event => this.onTouchStartLeft(event), false);
+        this.touch_left.addEventListener("touchend", event => this.onTouchEndLeft(event), false);
+        this.touch_right.addEventListener("touchstart", event => this.onTouchStartRight(event), false);
+        this.touch_right.addEventListener("touchend", event => this.onTouchEndRight(event), false);
+    }
+
+	onTouchStartLeft(event) {
+        console.log("Touch start event triggered on left.");
+		this.player1.direction = -1; // -1 goes up
+    }
+    onTouchEndLeft(event) {
+        console.log("Touch end event triggered on left.");
+		this.player1.direction = 0;
+    }
+    onTouchStartRight(event) {
+        console.log("Touch start event triggered on right.");
+		this.player1.direction = 1;
+	}
+    onTouchEndRight(event) {
+        console.log("Touch end event triggered on right.");
+		this.player1.direction = 0;
+    }
+
 	onResize() {
 		if (resizeTimeout) clearTimeout(resizeTimeout);
 		resizeTimeout = setTimeout(() => {
@@ -237,19 +282,16 @@ class Game {
 					this.player1.keys_active++;
 				this.player1.direction = -1; // -1 goes up
 				break;
-			
 			case "KeyS":
 				if(this.player1.direction != 1)
 					this.player1.keys_active++;
 				this.player1.direction = 1;
 				break;
-
 			case "ArrowUp":
 				if(this.player2.direction != -1)
 					this.player2.keys_active++;
 				this.player2.direction = -1;
 				break;
-				
 			case "ArrowDown":
 				if(this.player2.direction != 1)
 					this.player2.keys_active++;
@@ -262,11 +304,13 @@ class Game {
 	keyup(key) {
 		if (this.gameover)	return;
 		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
-			this.player2.keys_active--;
+			if(this.player2.keys_active > 0)
+				this.player2.keys_active--;
 			if(this.player2.keys_active == 0)
 				this.player2.direction = 0;
 		} else if (key.code == "KeyW" || key.code == "KeyS") {
-			this.player1.keys_active--;
+			if(this.player1.keys_active > 0)
+				this.player1.keys_active--;
 			if(this.player1.keys_active == 0)
 				this.player1.direction = 0;
 		}
@@ -382,9 +426,11 @@ function startPongGame() {
 
 	parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
 	parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
+
 	while (parent.firstChild) {
 		parent.removeChild(parent.lastChild);
 	}
+
 	const pong = new Game(parent, 11);
 	pong.loop();
 }

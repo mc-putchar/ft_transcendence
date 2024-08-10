@@ -179,20 +179,7 @@ class Player {
 			}
 		}
 	}
-	reset() {
-		// const wire_material = new THREE.MeshPhongMaterial({ color: 0x42FF42, wireframe: true });
-		// const box_geometry = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2);
-		// const avatar1_texture = new THREE.TextureLoader().load(AVATAR1_IMG);
-		// const avatar2_texture = new THREE.TextureLoader().load(AVATAR2_IMG);
-		
-		// console.log("ewr");
-		// if(this.side == "left")
-		// 	this.place(wire_material, box_geometry, avatar1_texture);
-		// else if(this.side == "right")
-		// 	this.place(wire_material, box_geometry, avatar2_texture);
-	}
 };
-
 
 // direction 1 is up
 // X for ARENA HEIGHT
@@ -417,7 +404,33 @@ class Game {
 			this.ai = new proAI(this.playerTwo);
 		this.showScore();
 		playAudioTrack();
+		this.setupTouchControls();
 	}
+	setupTouchControls() {
+        this.touch_left = document.createElement("div");
+        this.touch_left.id = "touch-left";
+        this.touch_right = document.createElement("div");
+        this.touch_right.id = "touch-right";
+        this.parent.appendChild(this.touch_left);
+        this.parent.appendChild(this.touch_right);
+        
+        this.touch_left.style.display = "block";
+        this.touch_left.style.width = "50%";
+        this.touch_left.style.height = "100%";
+        this.touch_left.style.position = "absolute";
+        this.touch_left.style.left = "0"; 
+
+        this.touch_right.style.display = "block";
+        this.touch_right.style.width = "50%";
+        this.touch_right.style.height = "100%";
+        this.touch_right.style.position = "absolute";
+        this.touch_right.style.right = "0";
+
+        this.touch_left.addEventListener("touchstart", event => this.onTouchStartLeft(event), false);
+        this.touch_left.addEventListener("touchend", event => this.onTouchEndLeft(event), false);
+        this.touch_right.addEventListener("touchstart", event => this.onTouchStartRight(event), false);
+        this.touch_right.addEventListener("touchend", event => this.onTouchEndRight(event), false);
+    }
 	updateButton () {
 		[button_right, button_left].forEach(button => {
 			button.style.backgroundColor = 'rgb(2, 2, 27)';
