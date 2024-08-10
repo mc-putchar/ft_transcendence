@@ -13,7 +13,7 @@ class ChatRouter {
 	setupChatWebSocket(roomName) {
 		const accessToken = sessionStorage.getItem('access_token') || '';
 		if (!accessToken) {
-			this.showError("No access token found");
+			// this.showError("No access token found");
 			return;
 		}
 		this.chatLog = document.getElementById('chat-log');
@@ -93,8 +93,8 @@ class ChatRouter {
 							const fields = [{ key: "message", label: "Message" }];
 							const custom = `
 								<div class="row">
-									<button onclick="location.hash='/game/accept/${data.username}'" class="btn btn-success" data-dismiss="modal">Accept</button>
-									<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-dismiss="modal">Decline</button>
+									<button onclick="location.hash='/game/accept/${data.username}'" class="btn btn-success" data-bs-dismiss="modal">Accept</button>
+									<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-bs-dismiss="modal">Decline</button>
 								</div>`;
 							const closeCallback = () => {
 								location.hash = '/game/decline/';

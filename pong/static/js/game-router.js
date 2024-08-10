@@ -14,6 +14,7 @@ class GameRouter {
 	setupGameWebSocket(gameID) {
 		const accessToken = sessionStorage.getItem('access_token') || '';
 		this.gameID = gameID;
+		this.gameData = new GameData();
 
 		if (this.gameSocket) {
 			console.log("Closing existing game socket");
@@ -26,7 +27,6 @@ class GameRouter {
 
 		this.gameSocket.addEventListener('open', () => {
 			console.log("Game socket opened");
-			this.gameData = new GameData();
 		});
 		this.gameSocket.addEventListener('error', (e) => console.error("Game websocket error:", e));
 		this.gameSocket.addEventListener('close', (e) => {

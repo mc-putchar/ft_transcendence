@@ -1,22 +1,23 @@
-import json
 import logging
 import random
 import string
-
 import requests
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files.images import ImageFile
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template import loader
 
-from api.models import Profile, PlayerMatch, Friend, Blocked, Tournament, TournamentPlayer
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from api.models import Profile, PlayerMatch, Tournament, TournamentPlayer
 from game.serializers import PlayerSerializer
 from .forms import ProfileUpdateForm, UserUpdateForm, ChangePasswordForm
 from game.forms import CreateTournamentForm
-from .auth42 import exchange_code_for_token, get_user_data
 
+from .auth42 import exchange_code_for_token, get_user_data
 from .context_processors import get_user_from_token
 
 logger = logging.getLogger(__name__)
@@ -119,7 +120,7 @@ def get_user_info(request, username):
         'match_history': played,
         'tournament_history': TournamentPlayer.objects.filter(player=profile, tournament__status='closed')
     }
-    logger.info(context)
+    # logger.info(context)
     return context
 
 def update_profile(request, user):
@@ -184,35 +185,55 @@ def redirect_view(request):
     session_state = request.session.get('oauth_state')
 
     if state != session_state:
+        logger.warn(f"Invalid state parameter: {state} != {session_state}")
         return HttpResponse('Invalid state parameter', status=400)
 
     redirect_uri = settings.REDIRECT_URI
     access_token = exchange_code_for_token(code, redirect_uri)
 
     if access_token:
-        request.session['access_token'] = access_token
         user_data = get_user_data(access_token)
         if user_data:
-            request.session['user_data'] = user_data
             username = user_data.get('login')
             email = user_data.get('email')
             image_url = user_data.get('image')
-            user, created = User.objects.get_or_create(
-                username=username, defaults={'email': email})
+            forty_two_id = user_data.get('id')
 
-            if created:
-                user.profile.alias = username
-                if user.profile.image.name == 'profile_images/default.png':
-                    if image_url:
+            try:
+                profile = Profile.objects.get(forty_two_id=forty_two_id)
+                user = profile.user
+            except Profile.DoesNotExist:
+                user, created = User.objects.get_or_create(
+                    username=username, defaults={'email': email})
+
+                if created:
+                    user.set_unusable_password()
+                    profile = user.profile
+                    profile.forty_two_id = forty_two_id
+                    profile.alias = username
+                    if profile.image.name == 'profile_images/default.png' and image_url:
                         response = requests.get(image_url['versions']['medium'])
                         if response.status_code == 200:
                             image_path = f'profile_images/{username}.png'
                             with open(f'media/{image_path}', 'wb') as f:
                                 f.write(response.content)
-                            user.profile.image = image_path
-                user.profile.save()
+                            profile.image = image_path
+                    profile.save()
+                else:
+                    # TODO: handle username collision
+                    return HttpResponse('Username collision', status=400)
 
-            return redirect('/')
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+            context = {
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'is_popup': request.COOKIES.get('is_popup') == 'true',
+            }
+            response = render(request, 'oauth_callback.html', context)
+            response.delete_cookie('is_popup')
+            return response
         else:
             return HttpResponse('No user data returned', status=404)
     else:

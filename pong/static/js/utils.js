@@ -202,4 +202,21 @@ async function refreshToken() {
 	}
 }
 
-export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie };
+function popupCenter(url, title, w, h) {
+	const features = `toolbar=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${(window.innerHeight-h)/2}, left=${(window.innerWidth-w)/2}`;
+	sessionStorage.setItem('is_popup', 'true');
+	const authWindow = window.open(url, title, features);
+
+	if (authWindow) {
+		const popupInterval = setInterval(() => {
+			if (authWindow.closed) {
+				clearInterval(popupInterval);
+				console.log("Popup closed by user");
+				sessionStorage.removeItem('is_popup');
+			}
+		}, 500);
+	}
+	return authWindow;
+}
+
+export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter };

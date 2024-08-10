@@ -8,7 +8,7 @@ import { startPongGame } from './pong-game.js';
 import { startPong3DGame } from './pong3d.js';
 import { startPong4PGame } from './multi_pong4.js';
 import { showNotification } from './notification.js';
-import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
+import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
@@ -56,6 +56,9 @@ class Router {
 		this.appElement.addEventListener('game', (event) => {
 			this.game.startTournamentGame(event.detail);
 		});
+		this.appElement.addEventListener('update', (event) => {
+			this.route();
+		});
 
 		this.loadNav();
 		this.loadCookieConsentFooter();
@@ -72,10 +75,42 @@ class Router {
 		showNotification(message, 'error');
 	}
 
+	reload() {
+		this.loadNav();
+		this.loadChat();
+		this.updateFriendsAndBlocks();
+		this.route();
+	}
+
 	async route(e) {
 		this.oldHash = e ? e.oldURL : this.oldHash;
 		const template = window.location.hash.substring(2) || 'home';
-		if (template.startsWith('profiles/')) {
+		if (template.startsWith('auth42')) {
+			const authPopup = popupCenter('/auth42', '42Auth', 420, 420);
+
+			if (authPopup) {
+				const authListener = (event) => {
+					if (event.origin !== window.location.origin) return;
+					const { access, refresh } = event.data;
+					if (access && refresh) {
+						sessionStorage.setItem('access_token', access);
+						sessionStorage.setItem('refresh_token', refresh);
+						this.reload();
+					} else {
+						console.error("Received invalid tokens.");
+					}
+					window.removeEventListener('message', authListener, false);
+					sessionStorage.removeItem('is_popup');
+					window.location.hash = '/home';
+				};
+
+				window.addEventListener('message', authListener, false);
+				authPopup.focus();
+			} else {
+				this.notifyError("Failed to open 42Auth popup");
+			}
+			location.hash = this.oldHash;
+		} else if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
 		} else if (template.startsWith('tournaments/')) {
 			this.loadTemplate(await this.tournament.route(template));
