@@ -275,6 +275,7 @@ class Game {
 	destructor() {
 		window.cancelAnimationFrame(this.animRequestId);
 		// stop audio
+		stopAudioTrack();
 		window.removeEventListener("resize", ev => this.resize(ev), true);
 		window.removeEventListener("fullscreenchange", (e) => this.resize(e));
 		location.hash = '/dashboard';

@@ -1,8 +1,8 @@
 {% if user.is_authenticated %}
 {% load static %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card p-2 shadow-sm">
+    <div class="col-12">
+        <div class="card p-2 shadow-sm style="width: 100%;">
             <div class="card-body text-center container-background">
                 <h2 class="h4 mb-4">Dashboard</h2>
                     <div class="card-body text-center" >
@@ -11,7 +11,7 @@
                             <li class="list-group-item">Alias: {{ profile.alias }}</li>
                             <li class="list-group-item">Status: {{ status }}</li>
                             <li class="list-group-item">
-                                <img src="{{ profile.image }}" alt="Profile Image" class="img-thumbnail" style="width: 120vw; height: auto;">
+                                <img src="{{ profile.image }}" alt="Profile Image" class="img-thumbnail" style="width-max: 90vw ; height: auto;">
                             </li>
                             <p>Friends:</p>
                             {% for friend in friends %}

@@ -68,7 +68,6 @@ class ChatRouter {
 		}
 
 		if (data.hasOwnProperty('message')) {
-			console.log(`Received msg: ${data.message}`);
 			if (this.isCommand(data.message)) {
 				const command = data.message.split(' ')[0];
 				switch (command) {
@@ -194,12 +193,25 @@ class ChatRouter {
 						customContent,
 					);
 				};
+				
 				this.usersList.appendChild(userBtn);
 			});
 		}
 	}
 
+	isBlockedUser(username) {
+	    const blockedUsers = sessionStorage.getItem('blocked') || [];
+			return blockedUsers.includes(username);
+	}
+
 	pushMessage(message, type = 'message') {
+		
+		const senderUsername = message.split(':')[0].trim();
+
+		if (this.isBlockedUser(senderUsername)) {
+				return; // Do not show the message if the user is blocked
+		}
+
 		switch (type) {
 			case 'duel':
 				this.chatLog.value += `${message}\n`;
@@ -244,7 +256,6 @@ class ChatRouter {
 			message: message,
 			username: this.username,
 		};
-		console.log(`Sending message: ${data.message}`);
 		this.chatSocket.send(JSON.stringify(data));
 	}
 
