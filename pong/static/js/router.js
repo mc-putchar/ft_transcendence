@@ -69,7 +69,7 @@ class Router {
 			this.game.startTournamentGame(event.detail);
 		});
 		this.appElement.addEventListener('update', (event) => {
-			this.route();
+			// this.route();
 		});
 
 		this.loadNav();

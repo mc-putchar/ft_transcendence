@@ -18,14 +18,16 @@ class TournamentRouter {
 	}
 
 	setupTournamentWebSocket(tournamentID) {
+		if (this.tournamentSocket) {
+			// console.log("Closing existing tournament socket");
+			// this.tournamentSocket.close();
+			console.log("Tournament socket already exists");
+			return;
+		}
 		const accessToken = sessionStorage.getItem('access_token');
 		this.username = document.getElementById("chat-username").innerText.trim();
 		console.log("Tournament Username:", this.username);
 
-		if (this.tournamentSocket) {
-			console.log("Closing existing tournament socket");
-			this.tournamentSocket.close();
-		}
 		this.tournamentSocket = new WebSocket(
 			`wss://${window.location.host}/ws/tournament/${tournamentID}/?token=${accessToken}`
 		);
@@ -126,8 +128,10 @@ class TournamentRouter {
 	async joinTournament(tournamentID) {
 		const response = await postJSON(`/game/tournaments/${tournamentID}/join/`, this.csrfToken);
 		if (response) {
-			this.setupTournamentWebSocket(tournamentID);
-			console.log("Joined tournament:", tournamentID);
+			if (response.message !== "already joined") {
+				this.setupTournamentWebSocket(tournamentID);
+				console.log("Joined tournament:", tournamentID);
+			}
 			return tournamentID;
 		}
 		console.debug("Failed to join tournament");
