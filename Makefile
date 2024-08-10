@@ -64,7 +64,7 @@ testlogin: # Selenium tests
 
 migrate: # Make and run DB migrations
 	$(DC) -f $(SRC) stop
-	$(DC) -f $(SRC) run --rm django python manage.py makemigrations $(APPS)
+	$(DC) -f $(SRC) run --build --rm django python manage.py makemigrations $(APPS)
 	$(DC) -f $(SRC) run --rm django python manage.py migrate
 	$(DC) -f $(SRC) stop
 
