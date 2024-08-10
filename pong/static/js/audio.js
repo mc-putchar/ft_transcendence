@@ -17,16 +17,23 @@ function startAudioContext() {
     osc.start();
   }
 }
-function playAudioTrack() {
-  const audio = new Audio("/static/assets/music.mp3");
-  const trackSource = ctx.createMediaElementSource(audio);
-  
-  // Connect the track source to the main gain node
-  trackSource.connect(mainGainNode);
+const audioTrack = new Audio("/static/assets/music.mp3");
 
-  audio.play();
-  audio.volume = 0.4;
-  audio.loop = true;
+const trackSource = ctx.createMediaElementSource(audioTrack);
+
+function playAudioTrack() {
+  
+  trackSource.connect(mainGainNode);
+  audioTrack.play();
+  audioTrack.volume = 0.4;
+  audioTrack.loop = true;
+}
+
+function stopAudioTrack() {
+  
+  if(audioTrack.paused) {
+    audioTrack.stop();
+  }
 }
 // ---------------------------------------------------------
 
@@ -151,4 +158,4 @@ function getAmps() {
 
 // draw();
 
-export { playAudioTrack, playTone, getAmps };
+export { playAudioTrack, stopAudioTrack, playTone, getAmps };
