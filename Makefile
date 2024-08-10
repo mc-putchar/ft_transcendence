@@ -3,7 +3,7 @@ TITLE := "42Berlin Spectacular Transcendence"
 
 AUTHORS := "ccattano, helauren, mcutura, tfregni"
 
-APPS := pong chat api game
+APPS := pong chat api game blockchain
 DB_USER := ft_user
 DB_DATABASE := db_transcendence
 
@@ -85,6 +85,8 @@ schema: # Output OpenAPI3 Schema into pong/schema.yml
 
 tests: # Run automated tests
 	$(DC) -f $(SRC) start
+	@echo "Testing smart contract"
+	@docker exec -it ft_transcendence-blockchain-1 sh -c "npx hardhat test" 
 	$(DC) -f $(SRC) run --rm django python manage.py test
 	$(DC) -f $(SRC) stop
 
