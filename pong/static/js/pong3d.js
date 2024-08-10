@@ -5,7 +5,7 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 import { getAmps, playAudioTrack, playTone } from './audio.js';
 
-const ACTIVE_AI = false;
+const ACTIVE_AI = true;
 
 let animationID = null;
 
@@ -179,20 +179,7 @@ class Player {
 			}
 		}
 	}
-	reset() {
-		// const wire_material = new THREE.MeshPhongMaterial({ color: 0x42FF42, wireframe: true });
-		// const box_geometry = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2);
-		// const avatar1_texture = new THREE.TextureLoader().load(AVATAR1_IMG);
-		// const avatar2_texture = new THREE.TextureLoader().load(AVATAR2_IMG);
-		
-		// console.log("ewr");
-		// if(this.side == "left")
-		// 	this.place(wire_material, box_geometry, avatar1_texture);
-		// else if(this.side == "right")
-		// 	this.place(wire_material, box_geometry, avatar2_texture);
-	}
 };
-
 
 // direction 1 is up
 // X for ARENA HEIGHT
@@ -381,6 +368,11 @@ class Game {
 			ONE: null,
 			TWO: 	THREE.TOUCH.ROTATE
 		}
+
+		this.cam_controls.touches = {
+			ONE: null,
+			TWO: 	THREE.TOUCH.ROTATE
+		}
 		this.loader = new FontLoader();
 
 		const ball_texture = new THREE.TextureLoader().load(BALL_TEX_IMG);
@@ -421,7 +413,38 @@ class Game {
 			this.ai = new proAI(this.playerTwo);
 		this.showScore();
 		playAudioTrack();
+		this.setupTouchControls();
 	}
+	setupTouchControls() {
+		console.log("setting it up");
+        this.canvas.addEventListener("touchstart", event => this.onTouchCanvas(event), false);
+        this.canvas.addEventListener("touchend", event => this.endOfTouchCanvas(event), false);
+    }
+	onTouchCanvas(event) {
+		event.preventDefault();
+
+		console.log("Touch start event Canvas.");
+		
+		if (event.touches.length == 1) {
+			console.log("ONE TOUCH");
+			const touch = event.touches[0];
+			
+			const rect = this.canvas.getBoundingClientRect();
+
+			const x = touch.clientX - rect.left;
+			const y = touch.clientY - rect.top;
+
+			if(x <= this.canvas.width / 2)
+				this.playerOne.direction = 1;
+			else
+				this.playerOne.direction = -1;
+		}
+	}
+	endOfTouchCanvas(event) {
+		console.log("Touch end event Canvas.");
+		this.playerOne.direction = 0;
+	}
+
 	updateButton () {
 		[button_right, button_left].forEach(button => {
 			button.style.backgroundColor = 'rgb(2, 2, 27)';
@@ -573,6 +596,15 @@ class Game {
 		this.ball.doMove();
 		this.checkCollisions();
 	}
+	onTouchCanvas(event) {
+		// if(event == null)
+		// 	return;
+		// console.log("TOUCH CANVAS");
+		// if(event.touches.length > 1) {
+		// 	this.cam_controls.update();
+		// 	this.renderer.render(this.scene, this.camera);
+		// }
+	}
 	draw() {
 		this.cam_controls.update();
 		this.renderer.render(this.scene, this.camera);
@@ -584,7 +616,6 @@ class Game {
 
 			distance = (ballY + BALL_SIZE) - (p2y - (PADDLE_WIDTH / 2));
 			console.log("LEFT collision distance: ", distance);
-	
 			this.ball.pos.x -= this.ball.dir.x * distance;
 			this.ball.pos.z -= this.ball.dir.z * distance;
 		}
@@ -593,7 +624,6 @@ class Game {
 
 			distance = (p1y + (PADDLE_WIDTH / 2)) - (ballY - BALL_SIZE);
 			console.log("RIGHT collision distance: ", distance);
-	
 			this.ball.pos.x += this.ball.dir.x * distance;
 			this.ball.pos.z += this.ball.dir.z * distance;
 		}

@@ -76,6 +76,7 @@ canvas {
   display: block;
   align-content: center;
   background-color: black;
+  pointer-events: auto;
 }
 
 #fullscreenButton {
@@ -112,6 +113,7 @@ canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
+  pointer-events: auto;
   /* justify-content: center; */
 }
 
