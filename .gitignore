@@ -9,3 +9,4 @@ migrations
 staticfiles
 subject.*
 *.log
+cloudflared/config.yml

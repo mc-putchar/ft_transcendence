@@ -16,7 +16,7 @@ console = Console()
 
 def send_post_request(url, data, headers, cookies):
 	try:
-		response = requests.post(url, data=data, headers=headers, cookies=cookies, verify=not DEBUG)
+		response = requests.post(url, data=data, headers=headers, cookies=cookies)
 		response.raise_for_status()
 		console.print(f'Success! Response from {url}:')
 		console.print(response.text)
@@ -27,7 +27,7 @@ def send_post_request(url, data, headers, cookies):
 
 def get_csrf_token(url):
 	try:
-		response = requests.get(url, verify=not DEBUG)
+		response = requests.get(url)
 		response.raise_for_status()
 		csrf_token = response.cookies.get('csrftoken')
 		if not csrf_token:
@@ -42,7 +42,7 @@ def obtain_jwt_token(base_url, username, password):
 	url = f"https://{base_url}{LOGIN_ROUTE}"
 	data = {'username': username, 'password': password}
 	try:
-		response = requests.post(url, data=data, verify=False)
+		response = requests.post(url, data=data)
 		response.raise_for_status()
 		jwt_token = response.json().get('access')
 		if not jwt_token:
@@ -78,9 +78,7 @@ async def receive_message(websocket):
 
 async def connect_websocket(base_url, csrf_token, jwt_token):
 	ws_url = f"wss://{base_url}/ws/chat/lobby/?token={jwt_token}"
-	ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-	ssl_context.check_hostname = False
-	ssl_context.verify_mode = ssl.CERT_NONE
+	ssl_context = ssl.create_default_context()
 
 	headers = {
 		'Referer': ws_url,
@@ -93,7 +91,6 @@ async def connect_websocket(base_url, csrf_token, jwt_token):
 		async with websockets.connect(
 			ws_url,
 			ssl=ssl_context,
-			extra_headers=headers,
 		) as websocket:
 			console.print('Connected to WebSocket server.')
 			await send_message(websocket, 'Hello, WebSocket server!', 'transcendCLI')
@@ -104,7 +101,7 @@ async def connect_websocket(base_url, csrf_token, jwt_token):
 		console.print(f'WebSocket error: {e}', style='red')
 
 @click.command()
-@click.option('--base-url', default='localhost:4243', help='The base URL for the server. Default is localhost:4243.')
+@click.option('--base-url', default='wow.transcend42.online', help='The base URL for the server. Default is wow.transcend42.online.')
 @click.option('--username', prompt='Username', help='The username for authentication.')
 @click.option('--password', prompt=True, hide_input=True, help='The password for authentication.')
 @click.version_option("0.0.1", prog_name="transcendAPI")
@@ -117,7 +114,6 @@ def login(base_url, username, password):
 	jwt_token = obtain_jwt_token(base_url, username, password)
 	if jwt_token:
 		console.print(f'Logged in as [bold cyan]{username}[/bold cyan]. :thumbs_up:')
-		console.print(f'JWT token: [green]{jwt_token}[/green]', style='purple')
 		asyncio.run(connect_websocket(base_url, csrf_token, jwt_token))
 	else:
 		console.print("Unable to obtain JWT token.", style='red')
