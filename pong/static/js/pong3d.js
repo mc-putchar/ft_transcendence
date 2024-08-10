@@ -377,6 +377,10 @@ class Game {
 		this.camera.lookAt(0, 0, 0);
 
 		this.cam_controls = new OrbitControls(this.camera, this.renderer.domElement);
+		this.cam_controls.touches = {
+			ONE: null,
+			TWO: 	THREE.TOUCH.ROTATE
+		}
 		this.loader = new FontLoader();
 
 		const ball_texture = new THREE.TextureLoader().load(BALL_TEX_IMG);

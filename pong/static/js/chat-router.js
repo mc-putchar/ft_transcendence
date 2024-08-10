@@ -145,9 +145,12 @@ class ChatRouter {
 				userBtn.className = 'btn btn-dark btn-outline-success btn-sm';
 				userBtn.textContent = user;
 				userBtn.onclick = () => {
-					this.messageInput.value += `@${user} `;
-					this.messageInput.focus();
+				// 	this.messageInput.value += `@${user} `;
+				// 	this.messageInput.focus();
+				// TODO back add viewing user profile on click
+				
 				};
+				
 				this.usersList.appendChild(userBtn);
 			});
 		}
