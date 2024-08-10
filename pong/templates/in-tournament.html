@@ -23,28 +23,12 @@
 						<p><b>Winner:</b> {{ tournament.winner }}</p>
 					{% endif %}
 					<p><b>Participants:</b> {{ tournament.participants.count }} / {{ tournament.player_limit }}</p>
-					<p><b>Matches:</b></p>
-					<div class="list-group">
-						{% for match in tournament.matches.all %}
-							<div class="list-group-item">
-								<p><b>Match Date:</b> {{ match.date | format_datetime:"%d-%m-%Y %I:%M" }} UTC</p>
-								<p><b>Players:</b> 
-								{% for player in match.players.all %}
-								{% if player == match.winner %}
-									<span class="text-success"><b>Winner:</b> {{ player.player.alias }}</span>
-								{% else %}
-									<span class="text-danger">[{{ player.player.alias }}]</span>
-								{% endif %}
-								{% endfor %}
-								</p>
-								<p><b>Score:</b> {% for player, score in match.get_scores.items %} {{ player }}: {{ score }}   {% endfor %} </p>
-							</div>
-						{% endfor %}
-					</div>
-				{% if is_joined %}
-					<button id="leave-tournament" class="btn btn-danger" onclick="location.hash='/tournaments/{{ tournament.id }}/leave/'">Leave Tournament</button>
-				{% else %}
-					<button id="join-tournament" class="btn btn-primary" onclick="location.hash='/tournaments/{{ tournament.id }}/join/'" {% if tournament.participants.count >= tournament.player_limit %}disabled{% endif %}>Join Tournament</button>
+				{% if tournament.status == 'open' %}
+					{% if is_joined %}
+						<button id="leave-tournament" class="btn btn-danger" onclick="location.hash='/tournaments/{{ tournament.id }}/leave/'">Leave Tournament</button>
+					{% else %}
+						<button id="join-tournament" class="btn btn-primary" onclick="location.hash='/tournaments/{{ tournament.id }}/join/'" {% if tournament.participants.count >= tournament.player_limit %}disabled{% endif %}>Join Tournament</button>
+					{% endif %}
 				{% endif %}
 			</div>
 			<div class="card-footer bg-dark text-white">
@@ -54,7 +38,26 @@
 				{% if tournament.status == 'closed' %}
 					<p>Tournamenent results: TODO</p>
 				{% elif tournament.status == 'started' %}
-					<p>Bracket: TODO</p>
+					<p><b>Matches:</b></p>
+					<div class="list-group">
+						{% for match in tournament.matches.all %}
+							<div class="list-group-item">
+								<p><b>Match Date:</b> {{ match.date | format_datetime:"%d-%m-%Y %I:%M" }} UTC</p>
+								<p><b>Players:</b> 
+								{% for player in match.players.all %}
+								
+									<span class="text-{% if player == match.winner %}success{% else %}danger{% endif %}">
+										<button class="btn btn-outline-{% if player == match.winner %}success{% else %}danger{% endif %} border-info rounded-pill" onclick="location.href='#/profiles/{{ player.player.user.username }}'">
+											<img src="{{ player.player.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> |  {{ player.player.user.username }}
+										</button>
+									</span>
+								{% endfor %}
+
+								</p>
+								<p><b>Score:</b> {% for player, score in match.get_scores.items %} {{ player }}: {{ score }}   {% endfor %} </p>
+							</div>
+						{% endfor %}
+					</div>
 				{% else %}
 					<table class="table table-info">
 						<thead>
@@ -79,6 +82,7 @@
 						</tbody>
 					</table>
 				{% endif %}
+				{% if tournament.status == 'open' %}
 				<div class="d-flex justify-content-center">
 					<button id="invite-players" class="btn btn-primary" onclick="location.hash='/tournaments/{{ tournament.id }}/invite/'" disabled>Invite Players</button>
 					{% if is_creator %}
@@ -86,6 +90,7 @@
 					<button id="delete-tournament" class="btn btn-danger" onclick="location.hash='/tournaments/{{ tournament.id }}/delete_tournament/'">Delete Tournament</button>
 					{% endif %}
 				</div>
+				{% endif %}
 			</div>
 		</div>
 	</div>

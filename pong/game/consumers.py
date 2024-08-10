@@ -132,6 +132,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 }))
                 self.game_id = f"{self.match_group_name}@{match_id}"
                 game_manager.reset_game_state(self.game_id, self.score_limit)
+                self.timeout_task = asyncio.create_task(self.countdown_to_start())
                 return
 
             except Profile.DoesNotExist:
@@ -211,6 +212,14 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             "message": message
         }))
 
+    async def countdown_to_start(self):
+        await asyncio.sleep(30)
+        if not self.gameover:
+            game_state = game_manager.get_game_state(self.game_id)
+            if not game_state or game_state["status"] == "starting":
+                winner = self.username
+                await self.win_by_timeout(winner)
+
     async def game_update_loop(self):
         while True:
             try:
@@ -253,6 +262,19 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 
         except Exception as e:
             logger.error(f"Error saving match results: {e}")
+
+    async def win_by_timeout(self, winner):
+        try:
+            loser = self.match.get_players().exclude(username=winner.username).first()
+            await update_player_match(self.match, winner, self.score_limit, True)
+            await update_player_match(self.match, loser, 0, False)
+            logger.info("Match won by timeout")
+
+        except Exception as e:
+            logger.error(f"Error handling win by timeout: {e}")
+
+        self.gameover = True
+        self.timeout_task.cancel()
 
     async def handle_forfeit(self, forfeiting_player):
         try:

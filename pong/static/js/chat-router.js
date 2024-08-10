@@ -1,6 +1,6 @@
 "use strict";
 
-import { createModal } from './utils.js';
+import { createModal, getJSON } from './utils.js';
 import { showNotification } from './notification.js';
 
 class ChatRouter {
@@ -144,9 +144,55 @@ class ChatRouter {
 				const userBtn = document.createElement('button');
 				userBtn.className = 'btn btn-dark btn-outline-success btn-sm';
 				userBtn.textContent = user;
-				userBtn.onclick = () => {
-					this.messageInput.value += `@${user} `;
-					this.messageInput.focus();
+				userBtn.onclick = async () => {
+					// this.messageInput.value += `@${user} `;
+					// this.messageInput.focus();
+					const data = await getJSON(`/api/profiles/user/${user}/`, this.csrfToken);
+					if (!data) {
+						this.showError("Error loading user profile");
+						return;
+					}
+					const fields = [
+						{ key: "user.username", label: "User" },
+						{ key: "alias", label: "Alias" },
+					];
+					const imageUrl = data.image.startsWith("http://")
+					? data.image.replace("http://", "https://")
+					: data.image;
+
+					const isMe = (user === this.username);
+					const isFriend = sessionStorage.getItem('friends').includes(user);
+					const isBlocked = sessionStorage.getItem('blocked').includes(user);
+					let frenemyButtons = '';
+					if (isMe) {
+						frenemyButtons = '<a class="btn btn-primary" href="#/profile">Edit Profile</a>';
+					} else {
+						frenemyButtons = `${isFriend ?
+							'<a class="btn btn-danger" href="#/deleteFriend/' + data.user['id'] + '/">Remove Friend</a>'
+							: '<a class="btn btn-success" href="#/addFriend/' + data.user['id'] + '/">Add Friend</a>'}`;
+						frenemyButtons += `${isBlocked ? 
+							'<a class="btn btn-success" href="#/unblock/' + data.user['id'] + '/">Unblock</a>'
+							: '<a class="btn btn-danger" href="#/block/' + data.user['id'] + '/">Block</a>'}`;
+					}
+					const customContent = `<div class="img-container">
+						<img src="${imageUrl}" alt="Profile Image" class="rounded-circle border border-3 border-success account-img mb-3" style="width: 150px; height: auto;">
+						</div>
+						<div class="container-fluid">
+						<div class="row">
+						<div class="col-6">
+						${frenemyButtons}
+						</div>
+						</div>
+						<div class="bio">
+						<button><a href="/users/${user}/" class="btn btn-primary" data-link>View Profile</a></button>
+						</div>`;
+					createModal(
+						data,
+						"ProfileModal",
+						"ProfileModalLabel",
+						fields,
+						customContent,
+					);
 				};
 				this.usersList.appendChild(userBtn);
 			});

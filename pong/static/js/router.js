@@ -441,7 +441,16 @@ class Router {
 		const anonBtn = document.getElementById('anonymize-data');
 		const deleteBtn = document.getElementById('delete-account');
 		const profileForm = document.getElementById('profile-form');
-		if (!accAdminBtn || !anonBtn || !deleteBtn || !profileForm) return;
+		const blockchainBtn = document.getElementById('blockchain-optin');
+		if (!accAdminBtn || !anonBtn || !deleteBtn || !profileForm || !blockchainBtn) return;
+		blockchainBtn.addEventListener('click', async (e) => {
+			const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
+			if (response) {
+				this.animateContent(this.appElement, response);
+			} else {
+				this.notifyError("Failed to opt-in to blockchain");
+			}
+		});
 		accAdminBtn.addEventListener('click', (e) => {
 			e.preventDefault();
 			const anonBtn = document.getElementById('anonymize-data');
