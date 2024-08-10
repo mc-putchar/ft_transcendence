@@ -1,9 +1,8 @@
-{% csrf_token %}
 {% if user.is_authenticated %}
 <h2>Pong Online</h2>
-<p>Logged in as {{ profile.user.username }}
+<p>Logged in as {{ username }}
 <p>Also known as {{ profile.alias }}
-<img src="{{ profile.image.url }}" class="rounded-circle account-img" alt="Profile Picture" style="width: 100px; height: 100px;">
+<img src="{{ profile.image }}" class="rounded-circle account-img" alt="Profile Picture" style="width: 100px; height: 100px;">
 <p class="card-text"><b>Games played:</b> {{ match_stats.played }}</p>
 <p class="card-text"><b>Won: <span class="text-success">{{ match_stats.wins }}</span> / Lost: <span class="text-danger">{{ match_stats.losses }}</span></b></p>
 

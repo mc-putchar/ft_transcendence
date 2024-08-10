@@ -4,7 +4,9 @@ CFCONFIG=cloudflared/config.yml
 
 if ! command -v lolcat &> /dev/null
 then
-	lolcat=cat
+	lolcat() {
+		cat $1
+	}
 fi
 
 clear
@@ -44,7 +46,7 @@ announce "Welcome to the $NAME setup wizard."
 announce "Follow my wise guidance and thou shalt be rewarded with $NAME "
 announce "Answer my questions truthfully or face the dire consequences."
 announce "Let us begin."
-read -p "Enter now, if you accept the challenge."
+read -p "Enter now if you accept the challenge."
 
 next_chapter "First, we must know the unknown."
 sleep 2
@@ -54,7 +56,7 @@ announce "To reach your farflung domain, we must build a magnificent tunnel."
 sleep 2
 prompt "Cloudflare tunnel token: " CLOUDFLARE_TUNNEL_TOKEN
 prompt "Tunnel ID: " TUNNEL_ID
-announce "With the power of Cloudflare, we shall tunnel to $DOMAIN."
+announce "With the power of Cloudflare, we shall travel to $DOMAIN."
 sleep 2
 
 next_chapter "Next, you must keep the records straight."
@@ -63,7 +65,7 @@ prompt "Database name: " POSTGRES_DB
 prompt "Database user: " POSTGRES_USER
 #TODO: Auto generate strong password with openssl instead of asking user
 prompt "Database password: " POSTGRES_PASSWORD
-announce "With this, we shall build a grand postgres of data."
+announce "With this, we shall build a grandiose postgres of data."
 sleep 2
 
 next_chapter "Beware, the realm beyond the firewall is treacherous."
@@ -78,14 +80,14 @@ sleep 2
 next_chapter "Fortunes have no worth without friends to share them with."
 announce "Oh, auth! If you can summon it, the whole network will be yours."
 sleep 2
-prompt "What will be the OAuth client id: " CLIENT_ID
+prompt "What will be thy OAuth client id: " CLIENT_ID
 prompt "What will it be, its secret key: " CLIENT_SECRET
 REDIRECT_URI="https://$DOMAIN/redirect"
 announce "Thus, the lost 42 souls shall be guided to $REDIRECT_URI to find their way."
 sleep 2
 
 next_chapter "The final step is to forge the chains that will bind the realm."
-announce "You must own the key to the blockchain kingdom."
+announce "You must own the key to the hardhat kingdom."
 sleep 2
 prompt "Set the blockchain key: " HARDHAT_PRIVATE_KEY
 sleep 2
@@ -95,8 +97,6 @@ sed -i "s/<TUNNEL-ID>/$TUNNEL_ID/g" $CFCONFIG
 sed -i "s/<DOMAIN>/$DOMAIN/g" $CFCONFIG
 
 echo "DOMAIN=$DOMAIN" > .env
-echo "CLOUDFLARE_TUNNEL_TOKEN=$CLOUDFLARE_TUNNEL_TOKEN" >> .env
-echo "TUNNEL_ID=$TUNNEL_ID" >> .env
 echo "POSTGRES_DB=$POSTGRES_DB" >> .env
 echo "POSTGRES_USER=$POSTGRES_USER" >> .env
 echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> .env
