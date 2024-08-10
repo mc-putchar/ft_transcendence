@@ -326,12 +326,22 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
             self.tournament_group_name,
             self.channel_name
         )
-        await self.send(text_data=json.dumps({
+        await self.channel_layer.group_send(
+            self.tournament_group_name,
+            {
                 "type": "connection",
-                "message": f"Joined tournament: {self.tournament_id}",
-        }))
+                "message": f"connected {self.username}"
+            }
+        )
 
     async def disconnect(self, close_code):
+        await self.channel_layer.group_send(
+            self.tournament_group_name,
+            {
+                "type": "connection",
+                "message": f"disconnected {self.username}"
+            }
+        )
         await self.channel_layer.group_discard(
             self.tournament_group_name,
             self.channel_name
@@ -352,13 +362,14 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
                     self.player_ready = True
             case _:
                 logger.debug(f"Other message type: {msg_type}")
-                await self.channel_layer.group_send(
-                    self.match_group_name,
-                    {
-                        "type": "echo_message",
-                        "message": data["message"]
-                    }
-                )
+                if data.has_key("message"):
+                    await self.channel_layer.group_send(
+                        self.tournament_group_name,
+                        {
+                            "type": "echo_message",
+                            "message": data["message"]
+                        }
+                    )
 
     async def tournament_message(self, event):
         message = event['message']
@@ -366,4 +377,19 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'type': 'tournament_message',
             'message': message
+        }))
+
+    async def connection(self, event):
+        message = event['message']
+
+        await self.send(text_data=json.dumps({
+            'type': 'connection',
+            'message': message
+        }))
+
+    async def echo_message(self, event):
+        message = event["message"]
+
+        await self.send(text_data=json.dumps({
+            "message": message
         }))

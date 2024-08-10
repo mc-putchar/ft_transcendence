@@ -106,6 +106,16 @@ class TournamentRouter {
 					console.log("Unknown action");
 					break;
 			}
+		} else if (data.type === 'connection') {
+			console.debug(`Received connection message: ${data.message}`);
+			const action = data.message.split(' ')[0];
+			const username = data.message.split(' ')[1];
+			if (action === 'connected') {
+				console.log(`${username} joined the tournament`);
+			} else if (action === 'disconnected') {
+				console.log(`${username} left the tournament`);
+			}
+			this.appElement.dispatchEvent(new CustomEvent('update', {}));
 		} else if (data.hasOwnProperty('message')) {
 			console.log(`Received msg: ${data.message}\ntype: ${data.type}`);
 		} else {

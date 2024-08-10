@@ -552,7 +552,6 @@ class Game {
 function startGame(gameData, gameSocket, player1, player2, isChallenger, matchId) {
 	const nav = document.getElementById("nav");
 	const root = document.getElementById("app");
-	root.style = "display: block";
 	root.classList.add("game-container");
 	root.height = window.innerHeight - nav.offsetHeight;
 	root.width = window.innerWidth - CANVAS_PADDING;
