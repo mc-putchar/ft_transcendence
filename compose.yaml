@@ -39,9 +39,6 @@ services:
     volumes:
     - "${PWD}/pong/static:/usr/share/caddy/static:ro"
     - "${PWD}/pong/media:/usr/share/caddy/media:rw"
-    ports:
-      - "8080:80"
-      - "4243:443"
     networks:
       - transcendeNet
     depends_on:
@@ -97,8 +94,6 @@ services:
       - CLIENT_SECRET
       - REDIRECT_URI
       - HARDHAT_PRIVATE_KEY
-      - DJANGO_ALLOWED_HOSTS
-      - DJANGO_TRUSTED_ORIGINS
       - DEBUG
     networks:
       - transcendeNet

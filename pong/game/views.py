@@ -118,17 +118,17 @@ class TournamentViewSet(viewsets.ModelViewSet):
         tournament = self.get_object()
         user = request.user
         player_count = TournamentPlayer.objects.filter(tournament=tournament).count()
-        if player_count >= tournament.player_limit:
-            return Response({'message': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             player = Profile.objects.get(user=user)
         except Profile.DoesNotExist:
             return Response({'message': 'player does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         if not TournamentPlayer.objects.filter(tournament=tournament, player=player).exists():
+            if player_count >= tournament.player_limit:
+                return Response({'message': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
             tournament.add_player(player)
             return Response({'message': 'joined tournament'}, status=status.HTTP_200_OK)
         else:
-            return Response({'message': 'already joined'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'already joined'}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def leave(self, request, pk=None):
@@ -143,7 +143,7 @@ class TournamentViewSet(viewsets.ModelViewSet):
             tournament.remove_player(player)
             return Response({'message': 'left tournament'}, status=status.HTTP_200_OK)
         else:
-            return Response({'message': 'not in tournament'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'not in tournament'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'])
     def open_tournaments(self, request):
