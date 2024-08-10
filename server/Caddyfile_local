@@ -1,0 +1,14 @@
+{$DOMAIN} {
+	encode zstd gzip
+	handle_path /static/* {
+		root * /usr/share/caddy/static
+		file_server
+	}
+	handle_path /media/* {
+		root * /usr/share/caddy/media
+		file_server
+	}
+	handle {
+		reverse_proxy django:8000
+	}
+}

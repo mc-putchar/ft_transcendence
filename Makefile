@@ -19,6 +19,8 @@ else
 	SRC := compose.yaml
 endif
 
+local: SRC := local_compose.yml
+
 # Colors
 COLOUR_END := \033[0m
 COLOUR_GREEN := \033[32m
@@ -28,7 +30,7 @@ COLOUR_MAGB := \033[1;35m
 COLOUR_CYN := \033[36m
 COLOUR_CYNB := \033[1;36m
 
-.PHONY: up down start stop re debug migrate collect clean schema tests
+.PHONY: up down start stop re debug local migrate collect clean schema tests
 
 up: .env # Beam me up Scotty
 	@echo "Building and starting containers, with $(COLOUR_CYNB)$(DC)$(COLOUR_END) and $(COLOUR_MAGB)$(SRC)$(COLOUR_END)"
@@ -54,8 +56,9 @@ clitest:
 
 debug: # DEBUG MODE
 	@echo 'using $(DC) and $(SRC)'
-	# docker-compose -f docker-compose.yml --profile debug up --build
-	$(DC) -f $(SRC) --profile debug up --build 
+	$(DC) -f $(SRC) --profile debug up --build
+
+local: up
 
 testlogin: # Selenium tests
 	# docker exec ft_transcendence-django-1 python test_selenium.py
