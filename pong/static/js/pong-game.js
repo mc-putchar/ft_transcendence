@@ -170,9 +170,14 @@ class Ball {
 
 class Scores {
 	constructor (arenaWidth, arenaHeight, startX, startY) {
+		this.hasScored = {goal: false, scorer: "none"};
 		this.goals = {left : 0, right : 0}
 		this.pos_y = arenaHeight / 2;
 		this.pos_x = {left: arenaWidth / 2 - arenaWidth / 8, right: arenaWidth / 2 + arenaWidth / 8};
+		this.arenaWidth = arenaWidth;
+		this.arenaHeight = arenaHeight;
+		this.startX = startX;
+		this.startY = startY;
 	}
 	updateScore(scorer) {
 		if(scorer == "left")
@@ -186,6 +191,76 @@ class Scores {
 			let font_size = arenaHeight / 20;
 			ctx.font = `${font_size}px Orbitron`;
 			ctx.fillText (this.goals[key], start_x + this.pos_x[key], start_y + this.pos_y + font_size / 2, 100);
+		}
+	}
+	drawPrevScore(ctx) {
+		for (let key in this.goals) {
+			ctx.fillStyle = SCORE_COLOR;
+			let font_size = this.arenaHeight / 20;
+			ctx.font = `${font_size}px Orbitron`;
+			if(key == this.hasScored.scorer) {
+				this.prevScore = this.goals[key] -1;
+				ctx.font = `${font_size}px Orbitron`;
+				ctx.fillText (this.prevScore, this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
+			}
+			else {
+				ctx.font = `${font_size}px Orbitron`;
+				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
+			}
+		}
+		}
+	drawGolazo(ctx) {
+		for (let key in this.goals) {
+			ctx.fillStyle = SCORE_COLOR;
+			let font_size = this.arenaHeight / 20;
+			ctx.font = `${font_size}px Orbitron`;
+			let text = "Golazo " + this.hasScored.scorer;
+			let textSize = ctx.measureText(text);
+			ctx.fillText (text, this.startX + this.arenaWidth / 2 - textSize.width / 2, this.arenaHeight / 3 + font_size / 2);
+		}
+	}
+	drawBigPrevScore(ctx) {
+		for (let key in this.goals) {
+			ctx.fillStyle = SCORE_COLOR;
+			let font_size = this.arenaHeight / 20;
+			ctx.font = `${font_size}px Orbitron`;
+			if(key == this.hasScored.scorer) {
+				this.prevScore = this.goals[key] -1;
+				ctx.font = `${font_size * 1.5}px Orbitron`;
+				ctx.fillText (this.prevScore, this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
+			}
+			else {
+				ctx.font = `${font_size}px Orbitron`;
+				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
+			}
+		}
+	}
+	drawBigCurrScore(ctx) {
+		for (let key in this.goals) {
+			ctx.fillStyle = SCORE_COLOR;
+			let font_size = this.arenaHeight / 20;
+			ctx.font = `${font_size}px Orbitron`;
+			if(key == this.hasScored.scorer) {
+				ctx.font = `${font_size * 1.5}px Orbitron`;
+				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
+			}
+			else {
+				ctx.font = `${font_size}px Orbitron`;
+				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
+			}
+		}
+	}
+}
+
+class Animation {
+	constructor() {
+		this.times = {first: 0, second: 0, third: 0};
+	}
+	setTimeStamps() {
+		this.times = {first: 800, second: 1800, third: 2800};
+		let now = Date.now();
+		for (let key in this.times) {
+			this.times[key] += now;
 		}
 	}
 }
@@ -207,10 +282,9 @@ class Game {
 		this.player2 = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.ball = new Ball(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.score = new Scores(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		this.goalazo = {goal: false, scorer: "none"};
+		this.animation = new Animation();
 		this.scoreLimit = scoreLimit;
 		this.gameover = false;
-		this.scorer = 0;
 		this.animRequestId = 0;
 		this.lastUpdate = Date.now();
 		this.fpsInterval = 1000 / TARGET_FPS;
@@ -247,21 +321,21 @@ class Game {
 	}
 
 	onTouchStartLeft(event) {
-		console.log("Touch start event triggered on left.");
+		// console.log("Touch start event triggered on left.");
 		if(event.touches.length == 1)
 			this.player1.direction = -1; // -1 goes up
 	}
 	onTouchEndLeft(event) {
-		console.log("Touch end event triggered on left.");
+		// console.log("Touch end event triggered on left.");
 			this.player1.direction = 0;
 	}
 	onTouchStartRight(event) {
-		console.log("Touch start event triggered on right.");
+		// console.log("Touch start event triggered on right.");
 		if(event.touches.length == 1)
 			this.player1.direction = 1;
 	}
 	onTouchEndRight(event) {
-		console.log("Touch end event triggered on right.");
+		// console.log("Touch end event triggered on right.");
 			this.player1.direction = 0;
 	}
 
@@ -317,11 +391,37 @@ class Game {
 				this.player1.direction = 0;
 		}
 	}
-	loop () {
-		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+	loop() {
 		let now = Date.now();
-		this.update();
-		this.draw();
+		if(now < this.animation.times.third) {
+			// console.log("now: ", now);
+			// console.log("Times.third: ", this.animation.times.third);
+			// console.log("ball: ",this.ball.position);
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			if(this.animation.times.first != null && now < this.animation.times.first) {
+				this.score.drawGolazo(this.context);
+				this.score.drawPrevScore(this.context);
+			}
+			else if(this.animation.times.second != null && now < this.animation.times.second) {
+				this.score.drawGolazo(this.context);
+				this.score.drawBigPrevScore(this.context);
+			}
+			else if(this.animation.times.third != null && now < this.animation.times.third) {
+				this.score.drawGolazo(this.context);
+				this.score.drawBigCurrScore(this.context);
+			}
+			this.arena.drawArena(this.context);
+			this.player1.drawPaddle(this.context);
+			this.player2.drawPaddle(this.context);
+		}
+		else {
+			this.score.hasScored.scorer = "none";
+			this.score.hasScored.goal = false;
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			this.update();
+			this.draw();
+		}
+		// console.log("here2");
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
 	}
@@ -368,7 +468,6 @@ class Game {
 					this.ball.speed_up();
 			}
 		}
-
 		if(this.ball.x + this.ball.radius >= this.player2.x - this.player2.width / 2) {
 			if(this.ball.x > this.player2.x + this.player2.width)
 				return;
@@ -383,12 +482,12 @@ class Game {
 	}
 	checkGoal(arenaWidth, arenaHeight, arenaStartX, arenaStartY) {
 		if (this.ball.x < arenaStartX - this.player1.goalLine) {
-			this.goalazo.goal = true;
-			this.goalazo.scorer = "right";
+			this.score.hasScored.goal = true;
+			this.score.hasScored.scorer = "right";
 		}
 		else if (this.ball.x > arenaStartX + arenaWidth + this.player2.goalLine) {
-			this.goalazo.goal = true;
-			this.goalazo.scorer = "left";
+			this.score.hasScored.goal = true;
+			this.score.hasScored.scorer = "left";
 		}
 	}
 	resetPositions () {
@@ -400,10 +499,10 @@ class Game {
 		let hit = false;
 		hit = this.wallCollision(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY, hit);
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		if(this.goalazo.goal == true) {
+		if(this.score.hasScored.goal == true) {
+			this.animation.setTimeStamps();
 			this.resetPositions();
-			this.score.updateScore(this.goalazo.scorer);
-			this.goalazo.goal = false;
+			this.score.updateScore(this.score.hasScored.scorer);
 			return ;
 		}
 		this.paddleCollision();

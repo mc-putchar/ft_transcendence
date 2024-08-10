@@ -364,6 +364,11 @@ class Game {
 		this.camera.lookAt(0, 0, 0);
 
 		this.cam_controls = new OrbitControls(this.camera, this.renderer.domElement);
+		this.cam_controls.touches = {
+			ONE: null,
+			TWO: 	THREE.TOUCH.ROTATE
+		}
+
 		this.loader = new FontLoader();
 
 		const ball_texture = new THREE.TextureLoader().load(BALL_TEX_IMG);
@@ -407,49 +412,35 @@ class Game {
 		this.setupTouchControls();
 	}
 	setupTouchControls() {
-        this.touch_left = document.createElement("div");
-        this.touch_left.id = "touch-left";
-        this.touch_right = document.createElement("div");
-        this.touch_right.id = "touch-right";
-        this.parent.appendChild(this.touch_left);
-        this.parent.appendChild(this.touch_right);
-        
-        this.touch_left.style.display = "block";
-        this.touch_left.style.width = "50%";
-        this.touch_left.style.height = "100%";
-        this.touch_left.style.position = "absolute";
-        this.touch_left.style.left = "0"; 
-
-        this.touch_right.style.display = "block";
-        this.touch_right.style.width = "50%";
-        this.touch_right.style.height = "100%";
-        this.touch_right.style.position = "absolute";
-        this.touch_right.style.right = "0";
-
-        this.touch_left.addEventListener("touchstart", event => this.onTouchStartLeft(event), false);
-        this.touch_left.addEventListener("touchend", event => this.onTouchEndLeft(event), false);
-        this.touch_right.addEventListener("touchstart", event => this.onTouchStartRight(event), false);
-        this.touch_right.addEventListener("touchend", event => this.onTouchEndRight(event), false);
-		this.canvas.addEventListener("", event => this.onTouchCanvas(event), false);
+		console.log("setting it up");
+        this.canvas.addEventListener("touchstart", event => this.onTouchCanvas(event), false);
+        this.canvas.addEventListener("touchend", event => this.endOfTouchCanvas(event), false);
     }
-	onTouchStartLeft(event) {
-		console.log("Touch start event triggered on left.");
-		if(event.touches.length == 1)
-			this.playerOne.direction = 1;
+	onTouchCanvas(event) {
+		event.preventDefault();
+
+		console.log("Touch start event Canvas.");
+		
+		if (event.touches.length == 1) {
+			console.log("ONE TOUCH");
+			const touch = event.touches[0];
+			
+			const rect = this.canvas.getBoundingClientRect();
+
+			const x = touch.clientX - rect.left;
+			const y = touch.clientY - rect.top;
+
+			if(x <= this.canvas.width / 2)
+				this.playerOne.direction = 1;
+			else
+				this.playerOne.direction = -1;
+		}
 	}
-	onTouchEndLeft(event) {
-		console.log("Touch end event triggered on left.");
+	endOfTouchCanvas(event) {
+		console.log("Touch end event Canvas.");
 		this.playerOne.direction = 0;
 	}
-	onTouchStartRight(event) {
-		console.log("Touch start event triggered on right.");
-		if(event.touches.length == 1)
-			this.playerOne.direction = -1;
-	}
-	onTouchEndRight(event) {
-		console.log("Touch end event triggered on right.");
-		this.playerOne.direction = 0;
-	}
+
 	updateButton () {
 		[button_right, button_left].forEach(button => {
 			button.style.backgroundColor = 'rgb(2, 2, 27)';
