@@ -5,6 +5,15 @@ networks:
     driver: bridge
 
 services:
+  blockchain:
+    image: trufflesuite/ganache
+    environment:
+      - INFURA_TESTNET
+    networks:
+      - transcendeNet
+    ports:
+      - "8545:8545"
+    restart: unless-stopped
   db:
     image: postgres:16.3-alpine3.20
     environment:

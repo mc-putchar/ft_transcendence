@@ -20,6 +20,16 @@ services:
       - ./cloudflared:/etc/cloudflared
     restart: unless-stopped
 
+  blockchain:
+    image: blockchain
+    build:
+      context: "${PWD}/pong/blockchain"
+    environment:
+      - INFURA_TESTNET
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
   server:
     build:
       context: "${PWD}/server"
@@ -69,7 +79,11 @@ services:
   django:
     build:
       context: "${PWD}/pong"
-    command: python manage.py runserver 0.0.0.0:8000
+    command: sh -c "
+      python blockchain/deploy.py &&
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000"
     volumes:
       - "${PWD}/pong:/code:rw"
     environment:
@@ -77,9 +91,12 @@ services:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
       - DJANGO_SECRET_KEY
+      - DJANGO_ALLOWED_HOSTS
+      - DJANGO_TRUSTED_ORIGINS
       - CLIENT_ID
       - CLIENT_SECRET
       - REDIRECT_URI
+      - HARDHAT_PRIVATE_KEY
       - DJANGO_ALLOWED_HOSTS
       - DJANGO_TRUSTED_ORIGINS
       - DEBUG
