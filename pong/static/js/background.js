@@ -1,5 +1,8 @@
 function drawBackground() {
-	const canvas = document.getElementById("background-canvas");
+	const background = document.getElementById("background");
+	const canvas = document.createElement("canvas");
+	canvas.id = "background-canvas";
+	background.appendChild(canvas);
 	const ctx = canvas.getContext("2d");
 
 	// Set canvas size

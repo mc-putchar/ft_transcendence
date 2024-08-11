@@ -1,4 +1,5 @@
 {% load static %}
+{% csrf_token %}
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
@@ -17,29 +18,30 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 
     <!-- ThreeJS -->
-    <script type="importmap" defer>
+    <script type="importmap">
         {
           "imports": {
-            "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+            "three": "https://unpkg.com/three@0.167.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.167.0/examples/jsm/"
           }
         }
     </script>
-
-    <!-- Our Router JS -->
-    <script type="module" src="{% static 'js/router.js' %}"></script>
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark border border-success rounded-pill bg-transparent sticky-top" id="nav"></nav>
+    <nav class="navbar navbar-expand-lg navbar-dark border-bottom border-success bg-transparent sticky-top" id="nav"></nav>
+    <!-- Notifications -->
+    <div id="notifications"></div>
+    <!-- Chat -->
+    <section id="chat"></section>
     <!-- Main Content -->
-    <main id="app" class="container mt-5"></main>
+    <main id="app" class="container-fluid"></main>
     <!-- Cookie Footer -->
     <div id="cookie-consent-footer"></div>
-    <!-- Background Canvas -->
-    <canvas id="background-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></canvas>
+    <!-- Background -->
+    <section id="background"></section>
     <!-- Footer -->
-    <footer class="footer border border-success rounded-pill mt-auto py-1 bg-dark text-white text-center" id="footer">
+    <footer id="footer" class="footer border border-success rounded-pill mt-auto py-1 bg-dark text-white text-center">
         <div class="container">
             <span class="text-muted">🄯 2024 42Berlin Spectacular Transcendence</span> | 
             <a href="#/privacy-policy">Privacy Policy</a>
@@ -47,6 +49,8 @@
     </footer>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Our Router JS -->
+    <script type="module" src="{% static 'js/router.js' %}"></script>
 </body>
 </html>
 

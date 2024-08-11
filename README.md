@@ -14,10 +14,14 @@
 
 ### _Martin_:
 
-  - [ ] Implement tournament creation (local and online)
-  - [ ] Rework Pong Classic
+  - [ ] Tournament system continued
   - [ ] Improve predictive client side rendering
+  - [ ] Configure server WAF
+  - [ ] Resolve 42auth username conflict
+  - [ ] Timely JWT token refresh
+  - [ ] General matchmaking (not only direct challenges)
   - [ ] TranscendCLI
+  - [ ] Maybe setup email verification (for password reset and maybe optional 2FA)
 
 
 ## _Basics_:
@@ -34,19 +38,8 @@
       the tournament, but it must clearly display who is playing against whom and the
       order of the players.
 
-    - *`registration system`* is required: at the start of a tournament, each player
-      must input their alias name. The aliases will be reset when a new tournament
-      begin
-
     - *`matchmaking`* system: the tournament system organize the
       matchmaking of the participants, and announce the next fight.
-
-  * _III.4 Security_
-    - Any password stored in your database, if applicable, must be **_hashed_**.
-
-    - Your website must be protected against **_SQL injections/XSS._**
-
-    - ***HTTPS***
 
   - [x] The project must be written in Django.
   - [x] The project must use PostgreSQL as a database.
@@ -70,18 +63,20 @@
 0.5 - Support of all devices            1
 1   - Standard User managment           1
 1   - Blockchain                        1
-1   - Remote Player Management          1
-1   - Server-Side Pong Game with API    1
+1   - Remote Players                    1
 1   - Live Chat                         1
-```
-      required 7 ,     current total  = 11
+0.5 - Server-Side Rendering
+0.5 - GDPR compliance                   1
+1   - Server-Side Pong Game with API    1
+1   - AI Opponent                       1
 ```
 
-1   - AI Opponent					1
+      required 7 ,     current total  = 13
+
+```
 1   - Additional Game				1
-1   - Designing the Backend as		1
-	  Microservices.
-
+1   - CLI Pong						1
+1   - JWT and 2FA					1
 ```
 <br>
 

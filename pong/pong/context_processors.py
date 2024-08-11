@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.request import Request
 
 def get_user_from_token(request):
     user = None

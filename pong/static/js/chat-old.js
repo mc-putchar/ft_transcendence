@@ -1,4 +1,4 @@
-import { csrftoken } from "./main.js";
+import { csrftoken, getJWT } from "./router-old.js";
 import { startWebSocket } from "./game-router.js";
 
 let friends = [];
@@ -23,8 +23,9 @@ export function initWS(roomName) {
     console.log("socket close for new one socket closed");
   }
 
+  const token_query = getJWT() ? `?token=${getJWT()}` : "";
   const chatSocket = new WebSocket(
-    wsProtocol + window.location.host + "/ws/chat/" + roomName + "/",
+    wsProtocol + window.location.host + "/ws/chat/" + roomName + "/" + token_query,
   );
 
   const username = document.querySelector("#chat-username").textContent.trim();

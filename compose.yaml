@@ -11,6 +11,15 @@ configs:
     file: "${PWD}/server/Caddyfile"
 
 services:
+  cloudflared:
+    image: cloudflare/cloudflared:2024.8.2
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - transcendeNet
+    volumes:
+      - ./cloudflared:/etc/cloudflared
+    restart: unless-stopped
+
   blockchain:
     build:
       context: "${PWD}/pong/blockchain"
@@ -19,22 +28,19 @@ services:
     restart: unless-stopped
     
   server:
-    image: caddy:2.8.4-alpine
+    build:
+      context: "${PWD}/server"
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
-    environment:
-      - DOMAIN
-      - ACME_AGREE="true"
     volumes:
-    - "${PWD}/pong/static:/usr/share/caddy/static:rw"
+    - "${PWD}/pong/static:/usr/share/caddy/static:ro"
     - "${PWD}/pong/media:/usr/share/caddy/media:rw"
-    ports:
-      - "8080:80"
-      - "4243:443"
     networks:
       - transcendeNet
     depends_on:
+      cloudflared:
+        condition: service_started
       django:
         condition: service_started
       db:
@@ -83,8 +89,7 @@ services:
       - CLIENT_SECRET
       - REDIRECT_URI
       - HARDHAT_PRIVATE_KEY
-    expose:
-      - 8000
+      - DEBUG
     networks:
       - transcendeNet
     depends_on:

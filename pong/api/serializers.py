@@ -5,14 +5,14 @@ from .models import Profile, Friend, Blocked
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email']
+        fields = ['id', 'username']
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
     class Meta:
         model = Profile
-        fields = ['user', 'alias', 'isOnline', 'image']
+        fields = ['user', 'alias', 'isOnline', 'image', 'friends', 'blocked_users']
         depth = 1
 
     def update(self, instance, validated_data):
@@ -24,20 +24,20 @@ class ProfileSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 class FriendSerializer(serializers.ModelSerializer):
-    users = UserSerializer(many=True, read_only=True)
-    current_user = UserSerializer(read_only=True)
+    from_user = UserSerializer(read_only=True)
+    to_user = UserSerializer()
 
     class Meta:
         model = Friend
-        fields = ['current_user', 'users']
+        fields = ['id', 'from_user', 'to_user', 'created']
 
 class BlockedSerializer(serializers.ModelSerializer):
-    users = UserSerializer(many=True, read_only=True)
-    annoyed_user = UserSerializer(read_only=True)
+    blocker = UserSerializer(read_only=True)
+    blocked = UserSerializer()
 
     class Meta:
         model = Blocked
-        fields = ['annoyed_user', 'users']
+        fields = ['id', 'blocker', 'blocked', 'created']
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
