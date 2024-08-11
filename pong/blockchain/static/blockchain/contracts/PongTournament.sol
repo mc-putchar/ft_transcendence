@@ -115,6 +115,17 @@ contract PongTournament {
         player.aliasName = _alias;
     }
 
+    function addPlayer(uint256 _hash, string calldata _alias, address _address) public {
+        require(!playerExists[_hash], "Player already exists");
+        Player storage player = players[_hash];
+        playerExists[_hash] = true;
+        player.totalScore = 0;
+        player.matchWon = 0;
+        player.tournamentWon = 0;
+        player.aliasName = _alias;
+        player.addr = _address;
+    }
+
 	function updatePlayerAddress(uint256 _hash, address _addr) public ownerOrSelf(_hash) {
 		players[_hash].addr = _addr;
 	}

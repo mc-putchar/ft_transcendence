@@ -12,14 +12,12 @@ configs:
 
 services:
   blockchain:
-    image: blockchain
     build:
       context: "${PWD}/pong/blockchain"
-    environment:
-      - INFURA_TESTNET
     networks:
       - transcendeNet
     restart: unless-stopped
+    
   server:
     image: caddy:2.8.4-alpine
     configs:
@@ -71,8 +69,6 @@ services:
       context: "${PWD}/pong"
     command: sh -c "
       python blockchain/deploy.py &&
-      python manage.py makemigrations &&
-      python manage.py migrate &&
       python manage.py runserver 0.0.0.0:8000"
     volumes:
       - "${PWD}/pong:/code:rw"

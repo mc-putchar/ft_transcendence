@@ -2,14 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("PongTournament", function() {
-	let owner, player1, player2, hardhatTournament;
+	let owner, player1account, player2account, hardhatTournament;
 	const player1Name = "foo";
 	const player1Hash = 0;
 	const player2Name = "bar";
 	const player2Hash = 1;
 	
 	before(async function() {
-		[owner, player1, player2] = await ethers.getSigners();
+		[owner, player1account, player2account] = await ethers.getSigners();
 		hardhatTournament = await ethers.deployContract("PongTournament");
 	});
 	
@@ -23,32 +23,36 @@ describe("PongTournament", function() {
 		const newAddr = "0x1111111111111111111111111111111111111111"
 		
 		it("Should allow anyone to add players", async function() {
-			await hardhatTournament.connect(player1).addPlayer(player1Hash, player1Name);
-			await hardhatTournament.connect(player2).addPlayer(player2Hash, player2Name);
+			await hardhatTournament.connect(player1account).addPlayer(player1Hash, player1Name);
 			expect(await hardhatTournament.getPlayerName(player1Hash)).to.equal(player1Name);
-			expect(await hardhatTournament.getPlayerName(player2Hash)).to.equal(player2Name);
 		});
+        
+        it("Should allow to add a player with address too", async function() {
+            await hardhatTournament.connect(player2account)["addPlayer(uint256, string, address)"](player2Hash, player2Name, player2account.address);
+            player2 = await hardhatTournament.players(player2Hash);
+            expect(player2.addr).to.equal(player2account.address);       
+        });
 
 		it("Should deny duplicate players", async function() {
 			await expect(hardhatTournament.addPlayer(player1Hash, player1Name)).to.be.revertedWith("Player already exists");
 		});
 
 		it("Should allow owner to update player address", async function() {
-			await hardhatTournament.connect(owner).updatePlayerAddress(player1Hash, player1.address);
+			await hardhatTournament.connect(owner).updatePlayerAddress(player1Hash, player1account.address);
 			const playerToUpdate = await hardhatTournament.players(player1Hash)
-			expect(await playerToUpdate.addr).to.equal(player1.address);
+			expect(await playerToUpdate.addr).to.equal(player1account.address);
 		});
 		
 		it ("Should allow a player to update their own address", async function() {
-			await hardhatTournament.connect(owner).updatePlayerAddress(player2Hash, player2.address)
-			await hardhatTournament.connect(player2).updatePlayerAddress(player2Hash, newAddr);
+			await hardhatTournament.connect(owner).updatePlayerAddress(player2Hash, player2account.address)
+			await hardhatTournament.connect(player2account).updatePlayerAddress(player2Hash, newAddr);
 			const playerToUpdate = await hardhatTournament.players(player2Hash);
 			expect(await playerToUpdate.addr).to.equal(newAddr);
 		});
 
 		it ("Should not allow a player to update another player's address", async function() {
 			await expect(
-				hardhatTournament.connect(player1).updatePlayerAddress(player2Hash, player2.address)
+				hardhatTournament.connect(player1account).updatePlayerAddress(player2Hash, player2account.address)
 			).to.be.revertedWith("Caller is not the owner");
 		});
 	});
@@ -61,7 +65,7 @@ describe("PongTournament", function() {
 			expect(await hardhatTournament.getMatchWinnerName(0)).to.equal(player1Name);
 		});
 		it("Should deny non-owner to add a match", async function() {
-			await expect(hardhatTournament.connect(player1).addMatch(1, 0, players, score, players[0])).to.be.revertedWith("Caller is not the owner");
+			await expect(hardhatTournament.connect(player1account).addMatch(1, 0, players, score, players[0])).to.be.revertedWith("Caller is not the owner");
 		});
 		it("Should deny duplicate matches", async function() {
 			await expect(hardhatTournament.addMatch(0, 0, players, score, players[0])).to.be.revertedWith("Match already exists");
@@ -84,7 +88,7 @@ describe("PongTournament", function() {
 			expect(await hardhatTournament.getTournamentWinnerName(0)).to.equal(player1Name);
 		});
 		it("Should deny non-owner to create a tournament", async function() {
-			await expect(hardhatTournament.connect(player1).createTournament(1, 0)).to.be.revertedWith("Caller is not the owner");
+			await expect(hardhatTournament.connect(player1account).createTournament(1, 0)).to.be.revertedWith("Caller is not the owner");
 		});
 	});
 });
