@@ -1,0 +1,854 @@
+DEBUG 2024-08-10 08:45:56,208 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 08:45:56,898 selector_events Using selector: EpollSelector
+INFO 2024-08-10 08:45:57,029 autoreload Watching for file changes with StatReloader
+INFO 2024-08-10 08:45:57,500 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-10 08:45:57,500 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-10 08:45:57,500 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-10 08:55:02,553 http_protocol HTTP b'GET' request for ['172.18.0.5', 55678]
+ERROR 2024-08-10 08:55:02,555 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 08:55:02,585 log Bad Request: /
+DEBUG 2024-08-10 08:55:02,586 http_protocol HTTP 400 response started for ['172.18.0.5', 55678]
+DEBUG 2024-08-10 08:55:02,586 http_protocol HTTP close for ['172.18.0.5', 55678]
+DEBUG 2024-08-10 08:55:02,586 http_protocol HTTP response complete for ['172.18.0.5', 55678]
+WARNING 2024-08-10 08:55:02,586 runserver HTTP GET / 400 [0.03, 172.18.0.5:55678]
+DEBUG 2024-08-10 08:55:04,795 http_protocol HTTP b'GET' request for ['172.18.0.5', 55678]
+ERROR 2024-08-10 08:55:04,797 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 08:55:04,807 log Bad Request: /favicon.ico
+DEBUG 2024-08-10 08:55:04,807 http_protocol HTTP 400 response started for ['172.18.0.5', 55678]
+DEBUG 2024-08-10 08:55:04,807 http_protocol HTTP close for ['172.18.0.5', 55678]
+DEBUG 2024-08-10 08:55:04,807 http_protocol HTTP response complete for ['172.18.0.5', 55678]
+WARNING 2024-08-10 08:55:04,807 runserver HTTP GET /favicon.ico 400 [0.01, 172.18.0.5:55678]
+DEBUG 2024-08-10 08:55:30,752 http_protocol HTTP b'GET' request for ['172.18.0.5', 55678]
+ERROR 2024-08-10 08:55:30,753 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 08:55:30,763 log Bad Request: /
+DEBUG 2024-08-10 08:55:30,764 http_protocol HTTP 400 response started for ['172.18.0.5', 55678]
+DEBUG 2024-08-10 08:55:30,764 http_protocol HTTP close for ['172.18.0.5', 55678]
+DEBUG 2024-08-10 08:55:30,764 http_protocol HTTP response complete for ['172.18.0.5', 55678]
+WARNING 2024-08-10 08:55:30,764 runserver HTTP GET / 400 [0.01, 172.18.0.5:55678]
+DEBUG 2024-08-10 08:55:33,045 http_protocol HTTP b'GET' request for ['172.18.0.5', 55678]
+ERROR 2024-08-10 08:55:33,046 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 08:55:33,055 log Bad Request: /favicon.ico
+DEBUG 2024-08-10 08:55:33,055 http_protocol HTTP 400 response started for ['172.18.0.5', 55678]
+DEBUG 2024-08-10 08:55:33,055 http_protocol HTTP close for ['172.18.0.5', 55678]
+DEBUG 2024-08-10 08:55:33,055 http_protocol HTTP response complete for ['172.18.0.5', 55678]
+WARNING 2024-08-10 08:55:33,055 runserver HTTP GET /favicon.ico 400 [0.01, 172.18.0.5:55678]
+DEBUG 2024-08-10 09:03:44,024 http_protocol HTTP b'GET' request for ['172.18.0.5', 38048]
+ERROR 2024-08-10 09:03:44,027 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 09:03:44,036 log Bad Request: /
+DEBUG 2024-08-10 09:03:44,037 http_protocol HTTP 400 response started for ['172.18.0.5', 38048]
+DEBUG 2024-08-10 09:03:44,037 http_protocol HTTP close for ['172.18.0.5', 38048]
+DEBUG 2024-08-10 09:03:44,037 http_protocol HTTP response complete for ['172.18.0.5', 38048]
+WARNING 2024-08-10 09:03:44,037 runserver HTTP GET / 400 [0.01, 172.18.0.5:38048]
+DEBUG 2024-08-10 09:03:46,257 http_protocol HTTP b'GET' request for ['172.18.0.5', 38048]
+ERROR 2024-08-10 09:03:46,259 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 09:03:46,269 log Bad Request: /favicon.ico
+DEBUG 2024-08-10 09:03:46,270 http_protocol HTTP 400 response started for ['172.18.0.5', 38048]
+DEBUG 2024-08-10 09:03:46,270 http_protocol HTTP close for ['172.18.0.5', 38048]
+DEBUG 2024-08-10 09:03:46,270 http_protocol HTTP response complete for ['172.18.0.5', 38048]
+WARNING 2024-08-10 09:03:46,270 runserver HTTP GET /favicon.ico 400 [0.01, 172.18.0.5:38048]
+DEBUG 2024-08-10 09:03:48,986 http_protocol HTTP b'GET' request for ['172.18.0.5', 38048]
+ERROR 2024-08-10 09:03:48,989 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 09:03:49,003 log Bad Request: /
+DEBUG 2024-08-10 09:03:49,003 http_protocol HTTP 400 response started for ['172.18.0.5', 38048]
+DEBUG 2024-08-10 09:03:49,003 http_protocol HTTP close for ['172.18.0.5', 38048]
+DEBUG 2024-08-10 09:03:49,004 http_protocol HTTP response complete for ['172.18.0.5', 38048]
+WARNING 2024-08-10 09:03:49,004 runserver HTTP GET / 400 [0.02, 172.18.0.5:38048]
+DEBUG 2024-08-10 09:03:51,382 http_protocol HTTP b'GET' request for ['172.18.0.5', 38048]
+ERROR 2024-08-10 09:03:51,383 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 09:03:51,393 log Bad Request: /favicon.ico
+DEBUG 2024-08-10 09:03:51,394 http_protocol HTTP 400 response started for ['172.18.0.5', 38048]
+DEBUG 2024-08-10 09:03:51,395 http_protocol HTTP close for ['172.18.0.5', 38048]
+DEBUG 2024-08-10 09:03:51,395 http_protocol HTTP response complete for ['172.18.0.5', 38048]
+WARNING 2024-08-10 09:03:51,395 runserver HTTP GET /favicon.ico 400 [0.01, 172.18.0.5:38048]
+DEBUG 2024-08-10 09:06:19,580 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 09:06:20,265 selector_events Using selector: EpollSelector
+INFO 2024-08-10 09:06:20,390 autoreload Watching for file changes with StatReloader
+INFO 2024-08-10 09:06:20,723 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-10 09:06:20,724 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-10 09:06:20,724 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-10 09:06:53,650 http_protocol HTTP b'GET' request for ['172.18.0.5', 59106]
+ERROR 2024-08-10 09:06:53,652 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 09:06:53,679 log Bad Request: /
+DEBUG 2024-08-10 09:06:53,679 http_protocol HTTP 400 response started for ['172.18.0.5', 59106]
+DEBUG 2024-08-10 09:06:53,679 http_protocol HTTP close for ['172.18.0.5', 59106]
+DEBUG 2024-08-10 09:06:53,679 http_protocol HTTP response complete for ['172.18.0.5', 59106]
+WARNING 2024-08-10 09:06:53,680 runserver HTTP GET / 400 [0.03, 172.18.0.5:59106]
+DEBUG 2024-08-10 09:06:56,335 http_protocol HTTP b'GET' request for ['172.18.0.5', 59106]
+ERROR 2024-08-10 09:06:56,337 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 09:06:56,348 log Bad Request: /favicon.ico
+DEBUG 2024-08-10 09:06:56,348 http_protocol HTTP 400 response started for ['172.18.0.5', 59106]
+DEBUG 2024-08-10 09:06:56,349 http_protocol HTTP close for ['172.18.0.5', 59106]
+DEBUG 2024-08-10 09:06:56,349 http_protocol HTTP response complete for ['172.18.0.5', 59106]
+WARNING 2024-08-10 09:06:56,349 runserver HTTP GET /favicon.ico 400 [0.01, 172.18.0.5:59106]
+DEBUG 2024-08-10 09:07:18,488 http_protocol HTTP b'GET' request for ['172.18.0.5', 59106]
+ERROR 2024-08-10 09:07:18,490 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 09:07:18,502 log Bad Request: /
+DEBUG 2024-08-10 09:07:18,503 http_protocol HTTP 400 response started for ['172.18.0.5', 59106]
+DEBUG 2024-08-10 09:07:18,503 http_protocol HTTP close for ['172.18.0.5', 59106]
+DEBUG 2024-08-10 09:07:18,503 http_protocol HTTP response complete for ['172.18.0.5', 59106]
+WARNING 2024-08-10 09:07:18,503 runserver HTTP GET / 400 [0.01, 172.18.0.5:59106]
+DEBUG 2024-08-10 09:07:20,844 http_protocol HTTP b'GET' request for ['172.18.0.5', 59106]
+ERROR 2024-08-10 09:07:20,846 exception Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '[2003:d4:7732:9701:c618:1cfd:3162:5899]:8080'. You may need to add '[2003:d4:7732:9701:c618:1cfd:3162:5899]' to ALLOWED_HOSTS.
+WARNING 2024-08-10 09:07:20,863 log Bad Request: /favicon.ico
+DEBUG 2024-08-10 09:07:20,864 http_protocol HTTP 400 response started for ['172.18.0.5', 59106]
+DEBUG 2024-08-10 09:07:20,864 http_protocol HTTP close for ['172.18.0.5', 59106]
+DEBUG 2024-08-10 09:07:20,864 http_protocol HTTP response complete for ['172.18.0.5', 59106]
+WARNING 2024-08-10 09:07:20,865 runserver HTTP GET /favicon.ico 400 [0.02, 172.18.0.5:59106]
+DEBUG 2024-08-10 09:17:46,379 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 09:17:47,011 selector_events Using selector: EpollSelector
+INFO 2024-08-10 09:17:47,141 autoreload Watching for file changes with StatReloader
+INFO 2024-08-10 09:17:47,410 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-10 09:17:47,410 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-10 09:17:47,411 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-10 09:24:18,372 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 09:24:18,996 selector_events Using selector: EpollSelector
+INFO 2024-08-10 09:24:19,123 autoreload Watching for file changes with StatReloader
+INFO 2024-08-10 09:24:19,472 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-10 09:24:19,472 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-10 09:24:19,473 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-10 09:28:48,867 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 09:28:49,524 selector_events Using selector: EpollSelector
+INFO 2024-08-10 09:28:49,650 autoreload Watching for file changes with StatReloader
+INFO 2024-08-10 09:28:50,062 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-10 09:28:50,062 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-10 09:28:50,062 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-10 09:31:14,994 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 09:31:15,661 selector_events Using selector: EpollSelector
+INFO 2024-08-10 09:31:15,792 autoreload Watching for file changes with StatReloader
+INFO 2024-08-10 09:31:16,160 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-10 09:31:16,160 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-10 09:31:16,161 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-10 10:01:10,256 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 10:01:10,866 selector_events Using selector: EpollSelector
+INFO 2024-08-10 10:01:10,998 autoreload Watching for file changes with StatReloader
+INFO 2024-08-10 10:01:11,271 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-10 10:01:11,272 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-10 10:01:11,272 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-10 10:04:25,017 http_protocol HTTP b'GET' request for ['172.18.0.6', 43748]
+ERROR 2024-08-10 10:04:25,019 exception Invalid HTTP_HOST header: 'localhost:8080'. You may need to add 'localhost' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'localhost:8080'. You may need to add 'localhost' to ALLOWED_HOSTS.
+WARNING 2024-08-10 10:04:25,050 log Bad Request: /
+DEBUG 2024-08-10 10:04:25,050 http_protocol HTTP 400 response started for ['172.18.0.6', 43748]
+DEBUG 2024-08-10 10:04:25,051 http_protocol HTTP close for ['172.18.0.6', 43748]
+DEBUG 2024-08-10 10:04:25,051 http_protocol HTTP response complete for ['172.18.0.6', 43748]
+WARNING 2024-08-10 10:04:25,051 runserver HTTP GET / 400 [0.03, 172.18.0.6:43748]
+DEBUG 2024-08-10 10:04:27,970 http_protocol HTTP b'GET' request for ['172.18.0.6', 43748]
+ERROR 2024-08-10 10:04:27,972 exception Invalid HTTP_HOST header: 'localhost:8080'. You may need to add 'localhost' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'localhost:8080'. You may need to add 'localhost' to ALLOWED_HOSTS.
+WARNING 2024-08-10 10:04:27,983 log Bad Request: /favicon.ico
+DEBUG 2024-08-10 10:04:27,983 http_protocol HTTP 400 response started for ['172.18.0.6', 43748]
+DEBUG 2024-08-10 10:04:27,984 http_protocol HTTP close for ['172.18.0.6', 43748]
+DEBUG 2024-08-10 10:04:27,984 http_protocol HTTP response complete for ['172.18.0.6', 43748]
+WARNING 2024-08-10 10:04:27,984 runserver HTTP GET /favicon.ico 400 [0.01, 172.18.0.6:43748]
+DEBUG 2024-08-10 10:05:24,016 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 10:05:24,642 selector_events Using selector: EpollSelector
+INFO 2024-08-10 10:05:24,775 autoreload Watching for file changes with StatReloader
+INFO 2024-08-10 10:05:25,087 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-10 10:05:25,088 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-10 10:05:25,088 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-10 10:05:32,381 http_protocol HTTP b'GET' request for ['172.18.0.6', 48344]
+ERROR 2024-08-10 10:05:32,385 exception Invalid HTTP_HOST header: 'localhost:8080'. You may need to add 'localhost' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'localhost:8080'. You may need to add 'localhost' to ALLOWED_HOSTS.
+WARNING 2024-08-10 10:05:32,421 log Bad Request: /
+DEBUG 2024-08-10 10:05:32,421 http_protocol HTTP 400 response started for ['172.18.0.6', 48344]
+DEBUG 2024-08-10 10:05:32,421 http_protocol HTTP close for ['172.18.0.6', 48344]
+DEBUG 2024-08-10 10:05:32,421 http_protocol HTTP response complete for ['172.18.0.6', 48344]
+WARNING 2024-08-10 10:05:32,421 runserver HTTP GET / 400 [0.04, 172.18.0.6:48344]
+DEBUG 2024-08-10 10:05:35,248 http_protocol HTTP b'GET' request for ['172.18.0.6', 48344]
+ERROR 2024-08-10 10:05:35,249 exception Invalid HTTP_HOST header: 'localhost:8080'. You may need to add 'localhost' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/utils/deprecation.py", line 146, in __acall__
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'localhost:8080'. You may need to add 'localhost' to ALLOWED_HOSTS.
+WARNING 2024-08-10 10:05:35,263 log Bad Request: /favicon.ico
+DEBUG 2024-08-10 10:05:35,264 http_protocol HTTP 400 response started for ['172.18.0.6', 48344]
+DEBUG 2024-08-10 10:05:35,264 http_protocol HTTP close for ['172.18.0.6', 48344]
+DEBUG 2024-08-10 10:05:35,264 http_protocol HTTP response complete for ['172.18.0.6', 48344]
+WARNING 2024-08-10 10:05:35,265 runserver HTTP GET /favicon.ico 400 [0.02, 172.18.0.6:48344]
+DEBUG 2024-08-10 10:07:37,592 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 10:07:38,250 selector_events Using selector: EpollSelector
+INFO 2024-08-10 10:07:38,387 autoreload Watching for file changes with StatReloader
+INFO 2024-08-10 10:07:38,774 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-10 10:07:38,775 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-10 10:07:38,775 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-10 10:07:48,450 http_protocol HTTP b'GET' request for ['172.18.0.6', 34512]
+DEBUG 2024-08-10 10:07:48,473 http_protocol HTTP 200 response started for ['172.18.0.6', 34512]
+DEBUG 2024-08-10 10:07:48,473 http_protocol HTTP close for ['172.18.0.6', 34512]
+DEBUG 2024-08-10 10:07:48,473 http_protocol HTTP response complete for ['172.18.0.6', 34512]
+INFO 2024-08-10 10:07:48,474 runserver HTTP GET / 200 [0.02, 172.18.0.6:34512]
+DEBUG 2024-08-10 10:07:51,753 http_protocol HTTP b'GET' request for ['172.18.0.6', 34512]
+DEBUG 2024-08-10 10:07:51,755 http_protocol HTTP b'GET' request for ['172.18.0.6', 34662]
+DEBUG 2024-08-10 10:07:51,763 http_protocol HTTP 200 response started for ['172.18.0.6', 34512]
+DEBUG 2024-08-10 10:07:51,763 http_protocol HTTP close for ['172.18.0.6', 34512]
+DEBUG 2024-08-10 10:07:51,763 http_protocol HTTP response complete for ['172.18.0.6', 34512]
+INFO 2024-08-10 10:07:51,763 runserver HTTP GET /templates/navbar 200 [0.01, 172.18.0.6:34512]
+DEBUG 2024-08-10 10:07:51,763 http_protocol HTTP 200 response started for ['172.18.0.6', 34662]
+DEBUG 2024-08-10 10:07:51,764 http_protocol HTTP close for ['172.18.0.6', 34662]
+DEBUG 2024-08-10 10:07:51,764 http_protocol HTTP response complete for ['172.18.0.6', 34662]
+INFO 2024-08-10 10:07:51,764 runserver HTTP GET /templates/cookie_consent_footer 200 [0.01, 172.18.0.6:34662]
+DEBUG 2024-08-10 10:07:51,894 http_protocol HTTP b'GET' request for ['172.18.0.6', 34662]
+DEBUG 2024-08-10 10:07:51,905 http_protocol HTTP 200 response started for ['172.18.0.6', 34662]
+DEBUG 2024-08-10 10:07:51,905 http_protocol HTTP close for ['172.18.0.6', 34662]
+DEBUG 2024-08-10 10:07:51,908 http_protocol HTTP response complete for ['172.18.0.6', 34662]
+INFO 2024-08-10 10:07:51,908 runserver HTTP GET /templates/home 200 [0.01, 172.18.0.6:34662]
+DEBUG 2024-08-10 10:07:51,914 http_protocol HTTP b'GET' request for ['172.18.0.6', 34662]
+WARNING 2024-08-10 10:07:51,920 log Not Found: /favicon.ico
+DEBUG 2024-08-10 10:07:51,921 http_protocol HTTP 404 response started for ['172.18.0.6', 34662]
+DEBUG 2024-08-10 10:07:51,921 http_protocol HTTP close for ['172.18.0.6', 34662]
+DEBUG 2024-08-10 10:07:51,921 http_protocol HTTP response complete for ['172.18.0.6', 34662]
+WARNING 2024-08-10 10:07:51,921 runserver HTTP GET /favicon.ico 404 [0.01, 172.18.0.6:34662]
+DEBUG 2024-08-10 20:32:00,390 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:32:01,215 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:32:03,070 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:32:03,596 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:32:05,369 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:32:06,052 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:51:38,400 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:51:39,185 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:51:40,961 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:51:41,472 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:51:43,180 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:51:43,689 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:51:45,614 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:51:46,127 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:51:48,433 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:51:48,940 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:53:21,119 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:53:21,749 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:53:23,344 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:53:23,850 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:53:25,507 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:53:26,015 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:53:28,002 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:53:28,518 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:53:30,819 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:53:31,333 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:53:34,520 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:53:35,056 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:53:39,812 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:53:40,363 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:53:48,285 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:53:48,793 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:54:03,151 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:54:03,661 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:57:40,071 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:57:40,738 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:57:42,491 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:57:42,993 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:57:44,623 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:57:45,125 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 20:57:47,058 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 20:57:47,578 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:41:28,075 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:41:28,809 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:41:30,495 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:41:30,996 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:41:32,653 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:41:33,163 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:41:35,035 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:41:35,542 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:41:37,854 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:41:38,360 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:41:41,445 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:41:41,958 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:42:22,032 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:42:22,662 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:43:20,039 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:43:20,562 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:43:40,154 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:43:40,890 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:43:42,560 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:43:43,065 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:43:44,728 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:43:45,273 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:43:47,147 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:43:47,667 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:46:57,578 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:46:58,273 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:46:59,894 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:47:00,399 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:47:02,050 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:47:02,562 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:47:04,449 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:47:04,956 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:47:07,213 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:47:07,715 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:47:10,778 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:47:11,280 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:47:15,953 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:47:16,457 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:47:24,357 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:47:24,861 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:49:10,612 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:49:11,181 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:54:52,386 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:54:53,014 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:55:55,182 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:55:55,680 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:56:14,296 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:56:14,838 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:56:17,305 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:56:17,801 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:57:05,804 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:57:06,485 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:57:08,109 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:57:08,605 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:57:10,453 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:57:10,991 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:58:20,996 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:58:21,618 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 21:59:36,045 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 21:59:36,586 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:12:49,755 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:12:50,437 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:12:52,143 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:12:52,634 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:12:54,255 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:12:54,746 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:12:56,643 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:12:57,191 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:13:27,680 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:13:28,235 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:16:50,845 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:16:51,585 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:16:53,232 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:16:53,725 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:16:55,379 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:16:55,877 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:16:57,707 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:16:58,199 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:17:00,483 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:17:01,001 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:17:04,148 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:17:04,657 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:17:09,347 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:17:09,876 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:17:17,836 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:17:18,340 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:17:32,762 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:17:33,267 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:18:00,437 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:18:00,935 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:18:53,637 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:18:54,149 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:19:15,027 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:15,586 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:19:17,269 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:17,800 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:19:18,946 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:19,556 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:20,073 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:19:22,000 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:22,494 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:19:24,712 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:25,203 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:19:28,249 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:28,748 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:19:33,434 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:33,928 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:19:41,781 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:42,311 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:19:56,720 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:19:57,238 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:20:06,937 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:07,561 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:20:09,434 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:09,977 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:20:11,154 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:11,736 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:12,227 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:20:14,138 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:14,632 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:20:16,973 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:17,465 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:20:20,533 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:21,030 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:20:25,682 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:26,174 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:20:34,023 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:34,528 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:20:48,848 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:20:49,367 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:21:16,460 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:21:16,954 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:22:09,632 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:22:10,128 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:23:17,621 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:23:18,176 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:23:47,302 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:23:47,795 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:26:03,538 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:26:04,089 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:27:21,119 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:27:21,668 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:27:48,115 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:27:48,614 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:28:50,890 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:28:51,499 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:28:52,733 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:28:53,188 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:28:55,642 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:28:56,136 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:28:57,312 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:28:57,752 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:28:59,430 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:28:59,927 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:29:01,141 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:29:01,644 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:29:19,219 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:29:19,777 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-10 22:29:22,067 selector_events Using selector: EpollSelector
+DEBUG 2024-08-10 22:29:22,564 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+DEBUG 2024-08-11 09:20:42,732 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:20:45,040 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:20:47,305 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:20:49,768 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:20:52,671 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:20:56,404 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:21:01,798 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:29:11,020 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:29:13,419 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:29:15,731 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:29:18,328 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:29:21,213 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:29:24,963 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:29:30,327 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:29:38,882 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:29:53,963 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:30:21,665 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:31:15,037 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:32:17,185 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:33:19,322 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:34:21,505 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:35:23,616 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:36:25,809 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:37:28,020 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:38:30,163 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:39:32,319 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:40:34,471 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:41:36,584 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:42:38,736 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:43:40,914 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:44:43,055 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:45:45,210 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:46:47,371 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:47:49,521 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:48:51,678 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:49:53,796 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:50:55,902 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:52:15,864 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:58:21,043 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:58:21,603 selector_events Using selector: EpollSelector
+INFO 2024-08-11 09:58:21,743 autoreload Watching for file changes with StatReloader
+INFO 2024-08-11 09:58:22,056 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-11 09:58:22,057 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-11 09:58:22,057 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-11 09:59:15,778 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:59:18,082 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:59:20,353 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 09:59:22,831 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 10:04:02,709 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 10:04:03,351 selector_events Using selector: EpollSelector
+INFO 2024-08-11 10:04:03,498 autoreload Watching for file changes with StatReloader
+DEBUG 2024-08-11 10:04:03,911 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+INFO 2024-08-11 10:04:04,568 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-11 10:04:04,569 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-11 10:04:04,569 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-11 10:35:14,384 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 10:35:14,984 selector_events Using selector: EpollSelector
+INFO 2024-08-11 10:35:15,126 autoreload Watching for file changes with StatReloader
+DEBUG 2024-08-11 10:35:15,496 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+INFO 2024-08-11 10:35:16,092 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-11 10:35:16,092 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-11 10:35:16,093 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-11 10:37:33,107 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 10:37:33,720 selector_events Using selector: EpollSelector
+INFO 2024-08-11 10:37:33,860 autoreload Watching for file changes with StatReloader
+DEBUG 2024-08-11 10:37:34,228 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+INFO 2024-08-11 10:37:34,836 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-11 10:37:34,836 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-11 10:37:34,837 server Listening on TCP address 0.0.0.0:8000
+DEBUG 2024-08-11 10:39:41,744 selector_events Using selector: EpollSelector
+DEBUG 2024-08-11 10:39:42,364 selector_events Using selector: EpollSelector
+INFO 2024-08-11 10:39:42,502 autoreload Watching for file changes with StatReloader
+DEBUG 2024-08-11 10:39:42,883 codec Consider installing rusty-rlp to improve pyrlp performance with a rust basedbackend. Not currently functional for Python 3.11
+INFO 2024-08-11 10:39:43,509 server HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-08-11 10:39:43,509 server Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-08-11 10:39:43,510 server Listening on TCP address 0.0.0.0:8000
