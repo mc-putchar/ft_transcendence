@@ -87,6 +87,8 @@ class TournamentViewSet(viewsets.ModelViewSet):
                     creator = Profile.objects.get(user=request.user)
                 except Profile.DoesNotExist:
                     return Response({'message': 'player does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+                if Tournament.objects.filter(creator=creator, status='open').exists():
+                    return Response({'message': 'player already has an open tournament'}, status=status.HTTP_400_BAD_REQUEST)
                 tournament = form.save(commit=False)
                 tournament.creator = creator
                 tournament.save()
@@ -175,3 +177,22 @@ class TournamentViewSet(viewsets.ModelViewSet):
         tournament.start()
         return Response({'message': 'tournament started'}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'])
+    def next_round(self, request, pk=None):
+        """Advance to the next round of a tournament."""
+        tournament = self.get_object()
+        if tournament.creator != request.user.profile:
+            return Response({'message': 'only the tournament creator can advance to the next round'}, status=status.HTTP_403_FORBIDDEN)
+        if tournament.status != 'started':
+            return Response({'message': 'tournament is not started'}, status=status.HTTP_400_BAD_REQUEST)
+        if tournament.next_round():
+            if tournament.status == 'closed':
+                return Response({'message': 'tournament finished'}, status=status.HTTP_200_OK)
+            return Response({'message': 'next round started'}, status=status.HTTP_200_OK)
+        return Response({'message': 'current round not completed'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def current_round(self, request, pk=None):
+        """Get the current round of a tournament."""
+        tournament = self.get_object()
+        return Response({'current_round': tournament.current_round}, status=status.HTTP_200_OK)

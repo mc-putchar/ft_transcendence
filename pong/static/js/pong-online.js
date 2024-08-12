@@ -207,6 +207,8 @@ class Game {
 		window.addEventListener("resize", ev => this.resize(ev), true);
 		window.addEventListener("fullscreenchange", (e) => this.resize(e));
 
+		window.addEventListener("onhashchange", () => this.destructor());
+
 		this.fsButton = document.createElement('div');
 		this.fsButton.id = "fullscreenButton";
 		this.fsButton.style = "font-size: 24px; cursor: pointer; top: 20%; right: 20%;";

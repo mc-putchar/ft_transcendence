@@ -79,6 +79,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         if hasattr(self, "game_task"):
             self.game_task.cancel()
+        if hasattr(self, "timeout_task"):
+            self.timeout_task.cancel()
         if self.channel_name in self.connection_player_map:
             disconnected_player = self.connection_player_map.pop(self.channel_name)
             if disconnected_player and not self.gameover:
@@ -231,6 +233,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                     await asyncio.sleep(1)
                     continue
 
+                if hasattr(self, "timeout_task") and game_state["status"] == "starting":
+                    self.timeout_task.cancel()
                 if game_state["status"] == "finished":
                     await self.send_game_state()
                     self.gameover = True

@@ -64,15 +64,14 @@ debug: # DEBUG MODE
 	@echo -e 'using $(DC) and $(SRC)'
 	$(DC) -f $(SRC) --profile debug up --build
 
-swapmode: .env # Swap online/local mode (requires restart)
+swapmode: .env stop # Swap online/local mode (requires restart)
 	$(shell \
-	if [[ -f .env_local ]]; then \
-		{ mv -f .env .env_deploy; mv -f .env_local .env; } \
-	elif [[ -f .env_deploy ]]; then \
+	if [[ -f .env_deploy ]]; then \
 		{ mv -f .env .env_local; mv -f .env_deploy .env; } \
+	elif [[ -f .env_local ]]; then \
+		{ mv -f .env .env_deploy; mv -f .env_local .env; } \
 	fi )
 	$(info Mode swapped.)
-
 
 clitest: # CLI test
 	cd transcendCLI && source .venv/bin/activate && python $(CLI)

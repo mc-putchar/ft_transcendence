@@ -86,19 +86,21 @@ class TournamentRouter {
 				case 'match':
 					const matchID = message.split(' ')[1];
 					const player1 = message.split(' ')[2];
-					const player2 = message.split(' ')[4];
-					if (this.username === player1 || this.username === player2) {
-						console.log("Starting match:", matchID);
-						// start game
-						const gameEvent = new CustomEvent('game', {
-							detail: {
-								gameID: matchID,
-								player: (this.username === player1) ? player1 : player2,
-								opponent: (this.username === player1) ? player2 : player1,
-								tournamentID: this.tournamentID,
-							},
-						});
-						this.appElement.dispatchEvent(gameEvent);
+					if (message.split(' ')[3] === 'vs') {
+						const player2 = message.split(' ')[4];
+						if (this.username === player1 || this.username === player2) {
+							console.log("Starting match:", matchID);
+							// start game
+							const gameEvent = new CustomEvent('game', {
+								detail: {
+									gameID: matchID,
+									player: (this.username === player1) ? player1 : player2,
+									opponent: (this.username === player1) ? player2 : player1,
+									tournamentID: this.tournamentID,
+								},
+							});
+							this.appElement.dispatchEvent(gameEvent);
+						}
 					}
 				case 'start':
 					console.log("Starting tournament");

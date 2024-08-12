@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema
@@ -14,72 +14,111 @@ from drf_spectacular.utils import extend_schema
 from .models import Profile, Friend, Blocked
 from .serializers import UserSerializer, ProfileSerializer, FriendSerializer, BlockedSerializer, RegisterSerializer
 
-class RegisterView(generics.CreateAPIView):
-    """Register a new user."""
-    queryset = User.objects.all()
-    permission_classes = [AllowAny]
-    serializer_class = RegisterSerializer
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@extend_schema(
+    summary="Logout the user and blacklist the refresh token.",
+    parameters=[
+        {
+            "name": "refresh",
+            "required": True,
+            "in": "body",
+            "schema": {"type": "string"},
+            "description": "The refresh token to blacklist and log out the user."
+        }
+    ],
+    responses={204: None, 400: None}
+)
+def logout(self, request):
+    """Logout the user and blacklist the refresh token."""
+    try:
+        refresh_token = request.data["refresh"]
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response(status=status.HTTP_205_RESET_CONTENT)
+    except Exception as e:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
-class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@extend_schema(
+    summary="Change the user's password.",
+    parameters=[
+        {
+            "name": "old_password",
+            "required": True,
+            "in": "body",
+            "schema": {"type": "string"},
+            "description": "The user's current password."
+        },
+        {
+            "name": "new_password",
+            "required": True,
+            "in": "body",
+            "schema": {"type": "string"},
+            "description": "The user's new password."
+        }
+    ],
+    responses={200: None, 400: None}
+)
+def change_password(self, request):
+    """Change the user's password."""
+    user = request.user
+    old_password = request.data.get('old_password')
+    new_password = request.data.get('new_password')
 
-    def post(self, request):
-        """Logout the user and blacklist the refresh token."""
-        try:
-            refresh_token = request.data["refresh"]
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-            return Response(status=status.HTTP_205_RESET_CONTENT)
-        except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+    if not user.check_password(old_password):
+        return Response({"old_password": "Wrong password."}, status=status.HTTP_400_BAD_REQUEST)
 
-class ChangePasswordView(APIView):
-    permission_classes = [IsAuthenticated]
+    try:
+        validate_password(new_password, user=user)
+    except ValidationError as e:
+        return Response({"new_password": e.messages}, status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request, *args, **kwargs):
-        """Change the user's password."""
-        user = request.user
-        old_password = request.data.get('old_password')
-        new_password = request.data.get('new_password')
+    user.set_password(new_password)
+    user.save()
+    return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
-        if not user.check_password(old_password):
-            return Response({"old_password": "Wrong password."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            validate_password(new_password, user=user)
-        except ValidationError as e:
-            return Response({"new_password": e.messages}, status=status.HTTP_400_BAD_REQUEST)
-
-        user.set_password(new_password)
-        user.save()
-        return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@extend_schema(
+    summary="Anonymize the user's data.",
+    responses={200: None}
+)
+def anonymize_user(self, request):
+    """Anonymize the user's data."""
+    user = request.user
+    hashed_value = str(hash({user.username, user.id}))
+    user.username = f"marvin_{hashed_value}"
+    user.email = ""
+    user.profile.alias = f"marvin"
+    user.profile.image = 'profile_images/default.png'
+    user.profile.friends.clear()
+    user.profile.blocked_users.clear()
+    user.profile.forty_two_id = ''
+    user.profile.blockchain_address = ''
+    user.save()
+    return JsonResponse({"message": "Your data has been anonymized."}, status=200)
 
 class DeleteAccountView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
 
+    @extend_schema(
+        summary="Delete the user's account.",
+        responses={204: None}
+    )
     def delete(self, request, *args, **kwargs):
         """Delete the user's account."""
         user = request.user
         user.delete()
         return Response({"detail": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
-class AnonymizeUserView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        """Anonymize the user's data."""
-        user = request.user
-        hashed_value = hash({user.username, user.id})
-        user.username = f"marvin_{hashed_value}"
-        user.email = ""
-        user.profile.alias = f"marvin"
-        user.profile.image = 'profile_images/default.png'
-        user.profile.friends.clear()
-        user.profile.blocked_users.clear()
-        user.profile.forty_two_id = ''
-        user.profile.blockchain_address = ''
-        user.save()
-        return JsonResponse({"message": "Your data has been anonymized."}, status=200)
+class RegisterView(generics.CreateAPIView):
+    """Register a new user."""
+    queryset = User.objects.all()
+    permission_classes = [AllowAny]
+    serializer_class = RegisterSerializer
 
 class OnlineUsersView(generics.ListAPIView):
     serializer_class = ProfileSerializer
@@ -91,6 +130,7 @@ class OnlineUsersView(generics.ListAPIView):
 
 class ProfileViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
+    serializer_class = ProfileSerializer
 
     @action(detail=False, methods=['post'])
     def add_friend(self, request):

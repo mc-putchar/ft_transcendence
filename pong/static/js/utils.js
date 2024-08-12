@@ -5,10 +5,10 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	modal.tabIndex = "-1";
 	modal.role = "dialog";
 	modal.ariaHidden = "false";
+	modal.id = modalId;
 
 	modal.classList.add("modal");
-	modal.classList.add("fade");
-	modal.id = modalId;
+	// modal.classList.add("fade");
 	// modal.dataset.bsBackdrop = "static";
 	// modal.dataset.bsKeyboard = "false";
 	modal.style.display = "block";
@@ -121,7 +121,6 @@ async function getJSON(endpoint, csrftoken) {
 	const response = await fetch(endpoint, {
 		method: "GET",
 		headers: {
-		"Content-Type": "application/json",
 		"Accept": "application/json",
 		"X-Requested-With": "XMLHttpRequest",
 		"X-CSRFToken": csrftoken,

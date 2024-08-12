@@ -632,9 +632,9 @@ class Router {
 	}
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-	drawBackground();
-});
+// document.addEventListener('DOMContentLoaded', () => {
+// 	drawBackground();
+// });
 
 const navElement = document.getElementById('nav');
 const appElement = document.getElementById('app');

@@ -73,6 +73,7 @@ class ChatRouter {
 				const command = data.message.split(' ')[0];
 				switch (command) {
 					case '/duel':
+						this.handleDuelRequest(data);
 						break;
 					case '/pm':
 						const recipient = data.message.split(' ')[1];
@@ -135,7 +136,7 @@ class ChatRouter {
 					let btnTemplate = '<button type="button" data-bs-dismiss="modal" class="btn btn-"';
 					let frenemyButtons = '';
 					if (isMe) {
-						frenemyButtons = template + 'primary" onclick="location.hash=\'#/profile\'">Edit Profile</button>';
+						frenemyButtons = btnTemplate + 'primary" onclick="location.hash=\'#/profile\'">Edit Profile</button>';
 					} else {
 						frenemyButtons = `${isFriend ?
 							btnTemplate + 'danger" onclick="location.hash=\'#/removeFriend/' + data.user['id'] + '/\'">Remove Friend</button>'

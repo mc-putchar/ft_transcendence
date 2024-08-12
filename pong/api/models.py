@@ -112,6 +112,7 @@ class Tournament(models.Model):
     entry_fee = models.IntegerField(default=0)
     winner = models.ForeignKey(Profile, null=True, blank=True, on_delete=models.SET_NULL, related_name='tournaments_won')
     final_result = models.TextField(blank=True)
+    round = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -142,11 +143,13 @@ class Tournament(models.Model):
 
     def add_player(self, player):
         """Adds a player to the tournament."""
-        TournamentPlayer.objects.create(tournament=self, player=player)
+        if self.is_open():
+            TournamentPlayer.objects.create(tournament=self, player=player)
 
     def remove_player(self, player):
         """Removes a player from the tournament."""
-        TournamentPlayer.objects.get(tournament=self, player=player).delete()
+        if self.is_open():
+            TournamentPlayer.objects.get(tournament=self, player=player).delete()
 
     def is_player(self, user):
         """Returns True if the user is participating in the tournament, False otherwise."""
@@ -171,9 +174,10 @@ class Tournament(models.Model):
                 random.shuffle(players)
                 if len(players) < 2:
                     raise ValueError("Not enough players to start the tournament")
+                self.round = 1
                 for i in range(0, len(players), 2):
                     if i + 1 < len(players):
-                        match = Match.objects.create(tournament=self)
+                        match = Match.objects.create(tournament=self, tournament_round=self.round)
                         try:
                             profile = Profile.objects.get(user=players[i].player.user)
                             PlayerMatch.objects.create(match=match, player=profile)
@@ -181,8 +185,28 @@ class Tournament(models.Model):
                             PlayerMatch.objects.create(match=match, player=profile)
                         except Profile.DoesNotExist:
                             logger.error(f"Profile does not exist")
+                            PlayerMatch.objects.create(match=match, player=None)
+                if len(players) & 1:
+                    match = Match.objects.create(tournament=self, tournament_round=self.round)
+                    try:
+                        profile = Profile.objects.get(user=players[-1].player.user)
+                        PlayerMatch.objects.create(match=match, player=profile, winner=True)
+                    except Profile.DoesNotExist:
+                        logger.error(f"Profile does not exist")
+                        Match.objects.delete(match)
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f'tournament_{self.id}',
+                    {
+                        'type': 'tournament_message',
+                        'message': 'start tournament'
+                    }
+                )
                 self.notify_players()
                 self.status = 'started'
+                for player in players:
+                    player.place = len(players) // 2 + 1
+                    player.save()
                 self.save()
         except ValueError as e:
             logger.error(f"Failed to start tournament: {e}")
@@ -194,25 +218,113 @@ class Tournament(models.Model):
             f'tournament_{self.id}',
             {
                 'type': 'tournament_message',
-                'message': 'start tournament'
+                'message': f'round {self.round}'
             }
         )
-        matches = self.get_matches()
+        matches = self.get_matches().filter(tournament_round=self.round).all()
         for match in matches:
-            players = match.get_players()
+            players = match.get_players().filter(player__isnull=False).all()
             logger.info(f"Tournament match {match} scheduled: {players}")
-            player1 = players[0].player.user
-            player2 = players[1].player.user
+            try:
+                player1 = players[0].player.user
+                player2 = players[1].player.user
+            except IndexError:
+                if players[0]:
+                    player1 = players[0].player.user
+                    player1.winner = True
+                    player1.save()
+                message = f"match {match.id} {player1} bye"
+            else:
+                message = f"match {match.id} {player1} vs {player2}"
             async_to_sync(channel_layer.group_send)(
                 f'tournament_{self.id}',
                 {
                     'type': 'tournament_message',
-                    'message': f'match {match.id} {player1} vs {player2}'
+                    'message': message
                 }
             )
 
+    def validate_round(self):
+        """Validates the current round of the tournament."""
+        matches = self.get_matches()
+        for match in matches:
+            if not match.get_winner():
+                return False
+        return True
+
+    def update_round(self, matches, winners):
+        """Updates the results of the tournament round."""
+        self.round += 1
+        current_place = len(winners) // 2 + 1
+        for winner in winners:
+            try:
+                player = TournamentPlayer.objects.get(tournament=self, player=winner)
+                player.place = current_place
+                player.save()
+            except TournamentPlayer.DoesNotExist:
+                logger.error(f"Player does not exist")
+                continue
+
+    def next_round(self):
+        """Starts the next round of the tournament."""
+        try:
+            if not self.is_started():
+                raise ValueError("Tournament is not started")
+            if not self.validate_round():
+                raise ValueError("Current round is not complete")
+            with transaction.atomic():
+                matches = self.get_matches().filter(tournament_round=self.round).all()
+                players = []
+                for match in matches:
+                    try:
+                        players.append(match.get_winner().profile)
+                    except AttributeError:
+                        continue
+                self.update_round(matches, players)
+                if len(players) < 2:
+                    self.end_tournament(players[0])
+                    return True
+
+                random.shuffle(players)
+                for i in range(0, len(players), 2):
+                    if i + 1 < len(players):
+                        match = Match.objects.create(tournament=self, tournament_round=self.round)
+                        try:
+                            profile = Profile.objects.get(user=players[i].user)
+                            PlayerMatch.objects.create(match=match, player=profile)
+                            profile = Profile.objects.get(user=players[i + 1].user)
+                            PlayerMatch.objects.create(match=match, player=profile)
+                        except Profile.DoesNotExist:
+                            logger.error(f"Profile does not exist")
+                            continue
+                self.notify_players()
+        except ValueError as e:
+            logger.error(f"Failed to start next round: {e}")
+            return False
+
+    def end_tournament(self, winner):
+        """Ends the tournament and determines the winner."""
+        try:
+            if not self.is_started():
+                raise ValueError("Tournament is not started")
+            with transaction.atomic():
+                if winner:
+                    player = TournamentPlayer.objects.get(tournament=self, player=winner)
+                    player.place = 1
+                    player.save()
+                self.winner = winner
+                self.status = 'closed'
+                self.end_date = timezone.now()
+                self.save()
+        except ValueError as e:
+            logger.error(f"Failed to end tournament: {e}")
+        except TournamentPlayer.DoesNotExist:
+            logger.error(f"Player does not exist")
+
+
 class Match(models.Model):
     tournament = models.ForeignKey(Tournament, null=True, blank=True, on_delete=models.CASCADE, related_name='matches')
+    tournament_round = models.IntegerField(default=1)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -228,7 +340,11 @@ class Match(models.Model):
 
     def get_winner(self):
         """Returns the winner of the match."""
-        return self.players.get(winner=True).player.user
+        try:
+            winner =  self.players.get(winner=True).player
+        except PlayerMatch.DoesNotExist:
+            return None
+        return winner.user
 
     def get_scores(self):
         """Returns a dictionary of players and their scores in the match."""
@@ -239,7 +355,7 @@ class Match(models.Model):
 
 class PlayerMatch(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='players')
-    player = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='matches')
+    player = models.ForeignKey(Profile, on_delete=models.SET_NULL, related_name='matches', null=True)
     score = models.IntegerField(default=0)
     winner = models.BooleanField(default=False)
 
@@ -263,7 +379,7 @@ class PlayerMatch(models.Model):
 class TournamentPlayer(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='participants')
     player = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='tournaments')
-    place = models.IntegerField(null=True, blank=True, default=0)
+    place = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ('tournament', 'player')
