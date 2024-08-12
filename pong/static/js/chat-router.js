@@ -73,35 +73,6 @@ class ChatRouter {
 				const command = data.message.split(' ')[0];
 				switch (command) {
 					case '/duel':
-						const challengedUser = data.message.split(' ')[1];
-						if (data.username === this.username) {
-							this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel');
-							// start game websocket
-							const challengeEvent = new CustomEvent('challenge', {
-								detail: {
-									gameID: data.username,
-								},
-							});
-							this.chatElement.dispatchEvent(challengeEvent);
-						} else if (challengedUser !== this.username) {
-							this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel');
-						} else {
-							this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel');
-							const modalData = {
-								message: `Challenged by ${data.username}`,
-							};
-							const fields = [{ key: "message", label: "Message" }];
-							const custom = `
-								<div class="row">
-									<button onclick="location.hash='/game/accept/${data.username}'" class="btn btn-success" data-bs-dismiss="modal">Accept</button>
-									<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-bs-dismiss="modal">Decline</button>
-								</div>`;
-							const closeCallback = () => {
-								location.hash = '/game/decline/';
-							};
-
-							createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
-						}
 						break;
 					case '/pm':
 						const recipient = data.message.split(' ')[1];
@@ -145,16 +116,14 @@ class ChatRouter {
 				userBtn.className = 'btn btn-dark btn-outline-success btn-sm';
 				userBtn.textContent = user;
 				userBtn.onclick = async () => {
-					// this.messageInput.value += `@${user} `;
-					// this.messageInput.focus();
 					const data = await getJSON(`/api/profiles/user/${user}/`, this.csrfToken);
 					if (!data) {
 						this.showError("Error loading user profile");
 						return;
 					}
 					const fields = [
-						{ key: "user.username", label: "User" },
-						{ key: "alias", label: "Alias" },
+						{ key: "user.username", label: "<b>User: </b>" },
+						{ key: "alias", label: "<b>Alias: </b>" },
 					];
 					const imageUrl = data.image.startsWith("http://")
 					? data.image.replace("http://", "https://")
@@ -163,29 +132,33 @@ class ChatRouter {
 					const isMe = (user === this.username);
 					const isFriend = sessionStorage.getItem('friends').includes(user);
 					const isBlocked = sessionStorage.getItem('blocked').includes(user);
+					let btnTemplate = '<button type="button" data-bs-dismiss="modal" class="btn btn-"';
 					let frenemyButtons = '';
 					if (isMe) {
-						frenemyButtons = '<a class="btn btn-primary" href="#/profile">Edit Profile</a>';
+						frenemyButtons = template + 'primary" onclick="location.hash=\'#/profile\'">Edit Profile</button>';
 					} else {
 						frenemyButtons = `${isFriend ?
-							'<a class="btn btn-danger" href="#/deleteFriend/' + data.user['id'] + '/">Remove Friend</a>'
-							: '<a class="btn btn-success" href="#/addFriend/' + data.user['id'] + '/">Add Friend</a>'}`;
+							btnTemplate + 'danger" onclick="location.hash=\'#/removeFriend/' + data.user['id'] + '/\'">Remove Friend</button>'
+							: btnTemplate + 'success" onclick="location.hash=\'#/addFriend/' + data.user['id'] + '/\'">Add Friend</button>'}`;
 						frenemyButtons += `${isBlocked ? 
-							'<a class="btn btn-success" href="#/unblock/' + data.user['id'] + '/">Unblock</a>'
-							: '<a class="btn btn-danger" href="#/block/' + data.user['id'] + '/">Block</a>'}`;
+							btnTemplate + 'success" onclick="location.hash=\'#/unblock/' + data.user['id'] + '/\'">Unblock</button>'
+							: btnTemplate + 'danger" onclick="location.hash=\'#/block/' + data.user['id'] + '/\'">Block</button>'}`;
+						frenemyButtons += btnTemplate + 'warning" onclick="location.hash=\'#/duel/' + data.user['id'] + '/\'">Challenge to Duel</button>';
 					}
-					const customContent = `<div class="img-container">
+					const customContent = `
+					<div class="img-container">
 						<img src="${imageUrl}" alt="Profile Image" class="rounded-circle border border-3 border-success account-img mb-3" style="width: 150px; height: auto;">
-						</div>
-						<div class="container-fluid">
+					</div>
+					<div class="container-fluid">
 						<div class="row">
-						<div class="col-6">
-						${frenemyButtons}
-						</div>
+							<div class="col-6">
+								${frenemyButtons}
+							</div>
 						</div>
 						<div class="bio">
-						<button><a href="/users/${user}/" class="btn btn-primary" data-link>View Profile</a></button>
-						</div>`;
+							${btnTemplate}primary onclick="location.hash='#/profiles/${user}'">View Profile</button>
+						</div>
+					</div>`;
 					createModal(
 						data,
 						"ProfileModal",
@@ -201,16 +174,15 @@ class ChatRouter {
 	}
 
 	isBlockedUser(username) {
-	    const blockedUsers = sessionStorage.getItem('blocked') || [];
-			return blockedUsers.includes(username);
+		const blockedUsers = sessionStorage.getItem('blocked') || [];
+		return blockedUsers.includes(username);
 	}
 
 	pushMessage(message, type = 'message') {
-		
 		const senderUsername = message.split(':')[0].trim();
 
 		if (this.isBlockedUser(senderUsername)) {
-				return; // Do not show the message if the user is blocked
+			return; // Do not show the message if the user is blocked
 		}
 
 		switch (type) {
@@ -232,14 +204,47 @@ class ChatRouter {
 		}
 	}
 
-	acceptGame() {
-		const message = `${this.username} has accepted the challenge!`;
-		this.pushMessage(message, 'duel');
+	handleDuelRequest(data) {
+		const challengedUser = data.message.split(' ')[1];
+		if (this.users.includes(challengedUser)) {
+			if (data.username === this.username) {
+				this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel');
+				// start game websocket
+				const challengeEvent = new CustomEvent('challenge', {
+					detail: {
+						gameID: data.username,
+					},
+				});
+				this.chatElement.dispatchEvent(challengeEvent);
+			} else if (challengedUser !== this.username) {
+				this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel');
+			} else {
+				this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel');
+				const modalData = {
+					message: `Challenged by ${data.username}`,
+				};
+				const fields = [{ key: "message", label: "Message" }];
+				const custom = `
+					<div class="row">
+						<button onclick="location.hash='/game/accept/${data.username}'" class="btn btn-success" data-bs-dismiss="modal">Accept</button>
+						<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-bs-dismiss="modal">Decline</button>
+					</div>`;
+				const closeCallback = () => {
+					location.hash = '/game/decline/';
+				};
+
+				createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
+			}
+		}
 	}
 
-	declineGame() {
-		const message = `${this.username} has declined the challenge!`;
-		this.pushMessage(message, 'duel');
+	sendDuelResponse(response) {
+		const data = {
+			message: `${this.username} has ${response} the challenge!`,
+			username: this.username,
+			type: 'announcement',
+		};
+		this.chatSocket.send(JSON.stringify(data));
 	}
 
 	getMention(message) {

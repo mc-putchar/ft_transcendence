@@ -54,7 +54,7 @@ class ChangePasswordView(APIView):
         user.save()
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
-class DeleteAccountView(APIView):
+class DeleteAccountView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
@@ -69,10 +69,15 @@ class AnonymizeUserView(APIView):
     def post(self, request):
         """Anonymize the user's data."""
         user = request.user
-        user.username = f"marvin#{user.id}"
-        user.profile.alias = f"marvin#{user.id}"
+        hashed_value = hash({user.username, user.id})
+        user.username = f"marvin_{hashed_value}"
         user.email = ""
+        user.profile.alias = f"marvin"
         user.profile.image = 'profile_images/default.png'
+        user.profile.friends.clear()
+        user.profile.blocked_users.clear()
+        user.profile.forty_two_id = ''
+        user.profile.blockchain_address = ''
         user.save()
         return JsonResponse({"message": "Your data has been anonymized."}, status=200)
 

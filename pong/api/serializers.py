@@ -7,6 +7,22 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username']
 
+class FriendSerializer(serializers.ModelSerializer):
+    from_user = UserSerializer(read_only=True)
+    to_user = UserSerializer()
+
+    class Meta:
+        model = Friend
+        fields = ['from_user', 'to_user']
+
+class BlockedSerializer(serializers.ModelSerializer):
+    blocker = UserSerializer(read_only=True)
+    blocked = UserSerializer()
+
+    class Meta:
+        model = Blocked
+        fields = ['blocker', 'blocked']
+
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
@@ -22,22 +38,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             if user_serializer.is_valid():
                 user_serializer.save()
         return super().update(instance, validated_data)
-
-class FriendSerializer(serializers.ModelSerializer):
-    from_user = UserSerializer(read_only=True)
-    to_user = UserSerializer()
-
-    class Meta:
-        model = Friend
-        fields = ['id', 'from_user', 'to_user', 'created']
-
-class BlockedSerializer(serializers.ModelSerializer):
-    blocker = UserSerializer(read_only=True)
-    blocked = UserSerializer()
-
-    class Meta:
-        model = Blocked
-        fields = ['id', 'blocker', 'blocked', 'created']
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

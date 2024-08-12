@@ -133,9 +133,11 @@ class Router {
 			if (template.startsWith('game/accept/')) {
 				const gameID = template.substring(12);
 				this.game.acceptChallenge(gameID);
-				this.chat.acceptGame();
+				// this.chat.acceptGame();
+				this.chat.sendDuelResponse('accepted');
 			} else if (template.startsWith('game/decline/')) {
-				this.chat.declineGame();
+				// this.chat.declineGame();
+				this.chat.sendDuelResponse('declined');
 			}
 			this.game.route(template);
 		} else if (template.startsWith('addFriend') || template.startsWith('deleteFriend') || template.startsWith('block') || template.startsWith('unblock')) {
@@ -468,8 +470,8 @@ class Router {
 		const deleteBtn = document.getElementById('delete-account');
 		const profileForm = document.getElementById('profile-form');
 		const blockchainBtn = document.getElementById('blockchain-optin');
-		if (!accAdminBtn || !anonBtn || !deleteBtn || !profileForm || !blockchainBtn) return;
-		blockchainBtn.addEventListener('click', async (e) => {
+		if (!accAdminBtn || !anonBtn || !deleteBtn || !profileForm) return;
+		blockchainBtn?.addEventListener('click', async (e) => {
 			const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
 			if (response) {
 				this.animateContent(this.appElement, response);

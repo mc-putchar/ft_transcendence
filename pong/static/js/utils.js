@@ -6,8 +6,11 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	modal.role = "dialog";
 	modal.ariaHidden = "false";
 
-	modal.className = "modal";
+	modal.classList.add("modal");
+	modal.classList.add("fade");
 	modal.id = modalId;
+	// modal.dataset.bsBackdrop = "static";
+	// modal.dataset.bsKeyboard = "false";
 	modal.style.display = "block";
 	modal.style.zIndex = "1000";
 
@@ -18,7 +21,7 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	});
 
 	modal.innerHTML = `
-		<div class="modal-dialog" role="document">
+		<div class="modal-dialog modal-dialog-centered" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
 					<div class="col-12">
@@ -30,6 +33,8 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 				</div>
 				<div class="modal-body">
 					${modalBodyContent}
+				</div>
+				<div class="modal-footer">
 					${customContent}
 				</div>
 			</div>

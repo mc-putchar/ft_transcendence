@@ -21,7 +21,7 @@ class Profile(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.alias:
-            self.alias = f'marvin#{self.user.id}'
+            self.alias = f'marvin_{self.user.id}'
         super().save(*args, **kwargs)
 
     def __str__(self):
