@@ -1,0 +1,48 @@
+{% if user.is_authenticated %}
+<h1>Tournaments</h1>
+	<button id="create-tournament" class="btn btn-primary">Create Tournament</button>
+	<form id="create-tournament-form" class="form" method="POST" enctype="multipart/form-data" action="/game/tournaments/create_tournament_form/" style="display: none;">
+		{{ t_form.as_p }}
+		<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+		<button id="create-tournament-btn" class="btn btn-primary" type="submit" style="display: none;">Create</button>
+	</form>
+
+	<h2>Open Tournaments</h2>
+	<table class="table table-info">
+		<thead>
+			<tr>
+				<th>Tournament</th>
+				<th>Players</th>
+				<th>Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for tournament in tournaments %}
+			<tr>
+				<td>
+					<button class="btn btn-outline-primary border border-info rounded-pill" onclick="location.href='#/in-tournament/{{ tournament.id }}'">
+					{{ tournament.name }}
+					</button>
+				</td>
+				<td> {{ tournament.participants.count }} / {{ tournament.player_limit }} </td>
+				<td>
+					{% if tournament.status == "open" %}
+						{% if tournament.participants.count < tournament.player_limit %}
+							<button class="btn btn-primary" onclick="location.hash='/in-tournament/{{ tournament.id }}'">Join</button>
+						{% else %}
+							Full
+						{% endif %}
+					{% elif tournament.status == "closed" %}
+						Closed
+					{% elif tournament.status == "started" %}
+						Started
+					{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% else %}
+	<p>Log in required to view this page.</p>
+	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+{% endif %}

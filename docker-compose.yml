@@ -5,6 +5,15 @@ networks:
     driver: bridge
 
 services:
+  blockchain:
+    image: trufflesuite/ganache
+    environment:
+      - INFURA_TESTNET
+    networks:
+      - transcendeNet
+    ports:
+      - "8545:8545"
+    restart: unless-stopped
   db:
     image: postgres:16.3-alpine3.20
     environment:
@@ -33,7 +42,7 @@ services:
       context: "${PWD}/pong"
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - "${PWD}/pong:/code:ro"
+      - "${PWD}/pong:/code:rw"
     environment:
       - POSTGRES_DB
       - POSTGRES_USER
@@ -52,3 +61,30 @@ services:
       redis:
         condition: service_started
     restart: unless-stopped
+
+  selenium:
+    image: selenium/standalone-chrome:latest
+    volumes:
+      - /dev/shm:/dev/shm
+    networks:
+      - transcendeNet
+    ports:
+      - "4444:4444"
+      - "5900:5900"  # VNC port
+    restart: unless-stopped
+    profiles:
+      - debug
+
+  novnc:
+    image: javanile/novnc
+    environment:
+      - REMOTE_HOST=localhost
+      - REMOTE_PORT=5901
+    ports:
+      - 8081:8081
+    links:
+      - selenium
+    profiles:
+      - debug
+    networks:
+      - transcendeNet

@@ -1,29 +1,41 @@
+
+{% if user.is_authenticated %}
 {% load static %}
-{% csrf_token %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card p-2 shadow-sm">
+<h2>Profile</h2>
+<div class="fluid">
+<h3> {{ username }} </h3>
+<img id="profile-image" src="{{ profilepic }}" class="rounded-circle account-img" alt="Profile Picture" style="width: 100px; height: auto;">
+</div>
+<div class="col-md-18">
+    <div class="row mt-12">
+        <div class="card p-12 shadow-sm">
             <div class="card-body text-center container-background">
-                <button class="btn btn-dark" onclick="history.back()">Go Back</button>
                 <div class="container-fluid">
-                    <div class="card-body text-center" >
-                        <ul class="list-group list-group-flush mb-4">
-                            <li class="list-group-item list-group-item-dark"><b>User:</b> {{ user.user.username }}</li>
-                            <li class="list-group-item list-group-item-dark"><b>Email:</b> {{ user.user.email }}</li>
-                            <li class="list-group-item list-group-item-dark"><b>Alias:</b> {{ user.alias }}</li>
-                            <li class="list-group-item list-group-item-dark"><b>Status:</b>
-                                {% if user.isOnline %}
-                                    <span class="text-success">{{ status }}</span>
-                                {% else %}
-                                    <span class="text-danger">{{ status }}</span>
-                                {% endif %}
-                            </li>
-                            <li class="list-group-item list-group-item-dark">
-                                <img src="{{ profilepic }}" class="rounded-circle account-img" alt="Profile Picture" style="width: 100px; height: auto;">
-                            </li>
-                        </ul>
-                   </div>
+                    {% csrf_token %}
+                    <form class="form" id="profile-form" method="POST" enctype="multipart/form-data">
+                        {{ u_form.as_p }}
+                        {{ p_form.as_p }}
+
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <button class="btn btn-primary" type="submit">Update</button>
+                    </form>
+                    {% if user.profile.blockchain_opted_in %}
+                        <button id="blockchain-optin" class="btn btn-primary">Blockchain Opt-In</button>
+                    {% endif %}
+                    <button id="account-administration" class="btn btn-warning">Account Administration</button>
+                    <form class="form" id="password-form" method="POST" style="display: none;">
+                        {{ cp_form.as_p }}
+                        <button class="btn btn-primary" type="submit">Change Password</button>
+                    </form>
+                    <button id="anonymize-data" class="btn btn-warning" style="display: none;">Anonymize Data</button>
+                    <button id="delete-account" class="btn btn-danger" style="display: none;">Delete Account</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+{% else %}
+	<p>Log in required to view this page.</p>
+	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+{% endif %}

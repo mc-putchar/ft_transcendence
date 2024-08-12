@@ -1,4 +1,4 @@
-{$DOMAIN} {
+localhost {
 	encode zstd gzip
 	handle_path /static/* {
 		root * /usr/share/caddy/static

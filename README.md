@@ -1,82 +1,88 @@
-## _Ft_Transcendence_
+# _ft_transcendence_
 
-### _Basics_:
-  - Everything must be launched with a single command line to run an autonomous
-    container provided by Docker . Example : docker-compose up --build
+[badges]
 
-  * _III.3 Game_
-    - *`tournament`*. This tournament will consist of multiple players who
-      can take turns playing against each other. You have flexibility in how you implement
-      the tournament, but it must clearly display who is playing against whom and the
-      order of the players.
+> This project is about doing something you’ve never done before.
+> Remind yourself the beginning of your journey in computer science.
+> Look at you now. Time to shine!  
+<p style='text-align: center;'> -- en.subject.pdf (v.15) </p>
 
-    - *`registration system`* is required: at the start of a tournament, each player
-      must input their alias name. The aliases will be reset when a new tournament
-      begin
+[IMAGE_PLACEHOLDER]
 
-    - *`matchmaking`* system: the tournament system organize the
-      matchmaking o**f the participants, and announce the next fight.
+# _Description_:
+Free open-source web platform, mainly for playing Pong games and tournaments.  
+Inspired by the classic Pong game of the 70s, infused with modern features and technologies.  
 
-  * _III.4 Security_
-    - Any password stored in your database, if applicable, must be **_hashed_**.
+# _Setup_:
+  - Everything is launched with a single command line to run
+	```bash
+	$ make 
+	```
+  - Follow the Setup Wizard to configure the project for your instance.  
+  Required information:
+	- valid Django secret key
+	- valid PostgreSQL information
+	- OAuth 42 client id and secret (if you want to use 42 OAuth)
+	- Hardhat network URL (if you want to use blockchain features)
+	- registered domain name, cloudflare tunnel token and tunnel id (if you want to deploy online)
 
-    - Your website must be protected against **_SQL injections/XSS._**
+  - Alteratively, provide own .env file according to the .env.template
 
-    - ***HTTPS***
+  - Explore additional options with `make help`
 
-  - [x] The project must be written in Django.
-  - [x] The project must use PostgreSQL as a database.
-  - [x] The project must use Bootstrap for the frontend.
-  - [x] The project must use advanced 3D techniques.
-  - [x] The project must support multiple players.
-  - [x] The project must use remote authentication (42 OAuth).
-  - [x] The project must support additional browser support.
-  - [x] The project must support all devices.
-  - [x] The project must use vanilla JavaScript for the frontend.
+# _Features_:
+## _Live Chat_
+  - Chat with other online users in real time
+  - Send private messages to other users with `/pm <username> <message>`
+  - Make mentions with `@<username>` (only works if at the beginning of a message)
+  - Use commands with `/<command> <args>`
+  - Command `/duel <username>` to challenge another online user to a Pong duel
 
-### _Points:_
-```python
-1   - Django			        1
+## _Pong Game_
+### Local
+  - Play Pong on a local computer against another player or AI opponent
+  - Different variants of Pong available:
+	- 2D Pong
+	- 3D Pong
+	- 4 Player Pong
+
+### Online
+  - Play Pong online against other users
+
+## _Tournaments_
+  - Join or create tournaments to compete against other players
+
+## _Blockchain_
+  - Use blockchain to store tournament results (Opt-in feature)
+
+# _Points:_
+
+```
+1   - Django                            1
 0.5 - Bootstrap
-0.5 - Postgres	                        1
-1   - Advance 3d Techniques             1
+0.5 - Postgres                          1
+1   - Advanced 3D Techniques            1
 1   - Multiple players                  1
 1   - remote authentication 42 Oauth    1
-0.5 - Additional browser suppor
-0.5 - Support of all devices		1
-1   - Standart User managment		1
+0.5 - Additional browser support
+0.5 - Support of all devices            1
+1   - Standard User managment           1
 1   - Blockchain                        1
+1   - Remote Players                    1
+1   - Live Chat                         1
+0.5 - Server-Side Rendering
+0.5 - GDPR compliance                   1
+1   - Server-Side Pong Game with API    1
+1   - AI Opponent                       1
 ```
-      required 7 ,     current total  = 8
-```python
 
-1   - Remote Player Management		1
-1   - AI Opponent			1
-1   - Additional Game			1
-1   - Live Chat				1
-1   - Designing the Backend as		1
-	  Microservices.
+      required 7 ,     current total  = 13
 
-1  - Server-Side Pong Game		1
+potential extras:
+
 ```
-<br>
-
-### _Live Chat_.
-
-You have to create a chat for your users in this module:
-
-◦ The user should be able to send direct messages to other users. [X]
-
-◦ The user should be able to _block_ other users. This way, they will _see_ no more
-  messages from the account they blocked.
-
-◦ The user should be able to _invite_ other users to play a Pong game through the
-  chat interface.
-
-◦ The tournament system should be able to warn users expected for the next
-  game.
-    - *_IN THE CHAT??_*
-
-◦ The user should be able to access other players profiles through the chat in-
-terface.
+1   - Additional Game				1
+1   - CLI Pong						1
+1   - JWT and 2FA					1
+```
 

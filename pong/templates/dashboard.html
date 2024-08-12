@@ -1,0 +1,42 @@
+{% if user.is_authenticated %}
+{% load static %}
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div class="card p-2 shadow-sm style="width: 100%;">
+            <div class="card-body text-center container-background">
+                <h2 class="h4 mb-4">Dashboard</h2>
+                    <div class="card-body text-center" >
+                        <ul class="list-group list-group-flush mb-4">
+                            <li class="list-group-item">User: {{ username }}</li>
+                            <li class="list-group-item">Alias: {{ profile.alias }}</li>
+                            <li class="list-group-item">Status: {{ status }}</li>
+                            <li class="list-group-item">
+                                <img src="{{ profile.image }}" alt="Profile Image" class="img-thumbnail" style="width-max: 90vw ; height: auto;">
+                            </li>
+                            <p>Friends:</p>
+                            {% for friend in friends %}
+                                    <li class="list-group-item">
+                                        <button class="btn btn-outline-{% if friend.isOnline %}success{% else %}danger{% endif %} border-info rounded-pill" onclick="location.href='#/profiles/{{ friend.username }}'">
+                                            <img src="{{ friend.profilepic }}" alt="Friend Image" class="img-thumbnail" style="width: 32px; height: 32px;"> {{ friend.username }}
+                                        </button>
+                                    </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="container-fluid">
+                        <div class="row">
+                            <a class="btn btn-primary" href="#/chat">Enter Chat</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <img src="{% static 'assets/42Berlin.svg' %}" alt="42 Berlin Logo"
+                                class="img-fluid mt-4">
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+    <p>Log in required to view this page.</p>
+    <button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+{% endif %}

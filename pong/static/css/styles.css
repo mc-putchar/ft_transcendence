@@ -36,66 +36,6 @@
   font-family: "Orbitron", system-ui;
 }
 
-html,
-body {
-  padding: 0;
-  margin: 0;
-}
-
-canvas {
-  margin-bottom: 30px;
-  margin-top: auto;
-  width: 90%;
-  display: flex;
-  align-content: center;
-  background-color: black;
-}
-
-.helptext {
-  font-size: 10;
-  font-family: "Lucida Sans";
-}
-
-.userlist {
-  flex-direction: column;
-  border: 1px solid rgba(222, 222, 222, 100);
-  border-radius: 2px;
-  display: block;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  width: 100%;
-}
-
-.user-label {
-  border: 1px solid rgba(222, 222, 222, 0.8);
-  border-radius: 2px;
-  display: block;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  width: 100%;
-}
-
-.separator {
-  margin-top: 55px;
-}
-
-.user-label:hover {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-  gradient: linear-gradient(90deg, #000000 0%, #000000 100%);
-}
-/* Make the app take the full width and till the bottom of the page */
-.app {
-  margin-top: 12vh;
-  display: block;
-  flex-direction: column;
-  min-height: 100vh;
-  min-width: 100vw;
-  height: 100%;
-  width: 100%;
-}
-
 a,
 p,
 h1,
@@ -104,6 +44,7 @@ h3,
 h4,
 h5,
 h6,
+li,
 Buttons,
 label,
 input,
@@ -116,53 +57,140 @@ img {
   -ms-user-select: none;
 }
 
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: #000000;
+  color: #569347;
+}
+
+canvas {
+  margin-bottom: 30px;
+  margin-top: auto;
+  width: 80%;
+  height: 100%;
+  display: block;
+  align-content: center;
+  background-color: black;
+  pointer-events: auto;
+}
+
+#fullscreenButton {
+  text-align: left;
+  cursor: pointer;
+  font-size: 32px;
+}
+
+.helptext {
+  font-size: 10;
+  font-family: "Lucida Sans";
+}
+
+.separator {
+  margin-top: 55px;
+}
+
+#nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 200;
+}
+
+#app {
+  position: relative;
+  top: 5%;
+  margin-top: 5rem;
+  margin-bottom: 5rem;
+  z-index: 99;
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  /* justify-content: center; */
+}
+
+#chat {
+  position: fixed;
+  top: 5%;
+  right: 5%;
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  height: 100%;
+}
+
+#game-container {
+  position: relative;
+  display: block;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  z-index: 99;
+}
+
+#game-ui {
+  position: relative;
+  top: 10%;
+  right: 5%;
+  z-index: 100;
+}
+
+#footer {
+  position: fixed;
+  text-align: center;
+  font-size: smaller;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  z-index: 100;
+}
+
+
+#notifications {
+  position: fixed;
+  top: 5%;
+  left: 5%;
+  margin: 10px;
+  z-index: 1000;
+}
+
+#background {
+  position: absolute;
+  top: 5%;
+  left: 0;
+  width: 100%;
+  height: 90%;
+  z-index: -1;
+}
+
+#profile-picture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 10px;
+}
+
+
+textarea {
+  resize: none;
+}
+
 /* 4player */
 .Buttons {
   border-style: solid;
   border-color: rgb(10, 10, 92);
 }
 
-/* Define the fade-in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Define the fade-out animation */
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Apply the animation to .fade-enter */
-.fade-enter {
-  opacity: 0;
-  animation: fadeIn 0.7s forwards;
-}
-
-/* Apply the animation to .fade-exit */
-.fade-exit {
-  opacity: 1;
-  animation: fadeOut 0.3s forwards;
-}
-
 .modal {
   animation: all fadeIn 0.3s ease;
-
-}
-
-html,
-body {
-  padding: 0;
-  margin: 0;
 }
 
 .userlist {
@@ -186,55 +214,13 @@ body {
   width: 100%;
 }
 
-.separator {
-    margin-top: 55px;
-}
-
 .user-label:hover {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
   gradient: linear-gradient(90deg, #000000 0%, #000000 100%);
 }
 
-
-/* Make the app take the full width and till the bottom of the page */
-.app {
-  margin-top: 12vh;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  min-width: 100vw;
-}
-
-a,
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-button,
-label,
-li,
-title,
-input,
-select,
-textarea,
-img {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f4f8; /* Light background color */
-  color: #222; /* Dark text color */
-  text-align: center;
-  margin: 0;
-  padding: 0;
-  height: 100%;
+.card {
+    width: 100%;
 }
 
 /* Header styling */
@@ -242,7 +228,6 @@ h1 {
   color: #007bff; /* Primary color */
   margin-bottom: 10px;
 }
-
 
 h2 {
   color: #0056b3; /* Slightly darker primary color */
@@ -312,15 +297,6 @@ button:focus {
   }
 }
 
-/* Footer styling */
-.footer {
-  /* stay always at the bottom of the screen */
-  position: absolute;
-  text-align: center;
-  bottom: 0;
-  width: 100%;
-}
-
 .mp3-hover:hover {
   -webkit-transition: all 200ms ease-in;
   -webkit-transform: scale(1.1);
@@ -337,12 +313,6 @@ img.mp3-hover:hover {
   z-index: 2;
 }
 
-#chat-input {
-  width: 100%;
-  padding: 10px;
-  margin-top: 20px;
-}
-
 .popover-body {
   /* position: relative; */
   /* border: 1px solid #d1d1d1; */
@@ -353,7 +323,7 @@ img.mp3-hover:hover {
   font-family: "Lucida Sans";
 }
 
-chat-userlist {
+.chat-userlist {
   display: flex;
   flex-direction: column;
   margin-top: 20px;
@@ -369,46 +339,24 @@ chat-userlist {
   flex: 1;
   margin-bottom: 15px;
   overflow-y: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 #chat-message-input {
   width: 100%;
 }
 
+#chat-input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 20px;
+}
+ 
 #room-name {
   margin-top: 15px;
-}
-
-/* Define the fade-in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Define the fade-out animation */
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Apply the animation to .fade-enter */
-.fade-enter {
-  opacity: 0;
-  animation: fadeIn 0.7s forwards;
-}
-
-/* Apply the animation to .fade-exit */
-.fade-exit {
-  opacity: 1;
-  animation: fadeOut 0.3s forwards;
 }
 
 .navbar.navbar-default {
@@ -466,3 +414,8 @@ chat-userlist {
 .form-check-label {
   margin-bottom: 0; /* Remove margin from label */
 }
+
+.overlay {
+  background-color: rgba(0, 0, 0, 0.75);
+}
+

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>OAuth Callback</title>
+	<script type="text/javascript">
+		(function() {
+			const accessToken = "{{ access_token }}";
+			const refreshToken = "{{ refresh_token }}";
+			const isPopup = sessionStorage.getItem('is_popup') === 'true';
+
+			function sendMessageToOpener() {
+				console.log("window.opener:", window.opener);
+				console.log("window.opener.closed:", window.opener ? window.opener.closed : "No opener");
+				if (window.opener && !window.opener.closed) {
+					try {
+						window.opener.postMessage({
+							access: accessToken,
+							refresh: refreshToken
+						}, window.location.origin);
+						window.close();
+					} catch (e) {
+						console.error("Error communicating with parent window:", e);
+						alert("Unable to communicate with the parent window.");
+					}
+				} else {
+					alert("Unable to communicate with the parent window.");
+				}
+			}
+
+			if (isPopup || window.opener) {
+				console.log("Popup mode detected. Sending message shortly...");
+				setTimeout(sendMessageToOpener, 500);
+			} else {
+				console.log("Not in popup mode, storing tokens in sessionStorage");
+				sessionStorage.setItem('access_token', accessToken);
+				sessionStorage.setItem('refresh_token', refreshToken);
+				window.location.href = '/';
+			}
+		}) ();
+	</script>
+</head>
+<body>
+	<p>Logging you in...</p>
+</body>
+</html>

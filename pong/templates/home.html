@@ -1,0 +1,13 @@
+{% if user.is_authenticated %}
+<h1>Welcome, {{ user.username }}!</h1>
+<p>Here you can access the features of the application:</p>
+<ul>
+  <li><a href="#/online-game" class="btn btn-primary">Play Online Game</a></li>
+  <li><a href="#/chat" class="btn btn-secondary">Chat</a></li>
+  <li><a href="#/logout" class="btn btn-danger">Logout</a></li>
+</ul>
+{% else %}
+<h1>Welcome to Transcendence</h1>
+<p><a href="#/play" class="btn btn-secondary">Play Local</a></p>
+<p>Please <a href="#/login" class="btn btn-outline-primary">Login</a> or <a href="#/register" class="btn btn-outline-secondary">Register</a> to access online features.</p>
+{% endif %}

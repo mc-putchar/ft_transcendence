@@ -1,0 +1,30 @@
+{% if user.is_authenticated %}
+<h1>Leaderboard</h1>
+<table class="table table-info">
+	<thead>
+		<tr>
+			<th>Rank</th>
+			<th>Username</th>
+			<th>Alias</th>
+			<th>Score</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for user in users %}
+		<tr>
+			<td>{{ forloop.counter }}</td>
+			<td>
+				<button class="btn btn-outline-primary border-info rounded-pill" onclick="location.href='#/profiles/{{ user.username }}'">
+				<img src="{{ user.profilepic }}" class="rounded-circle" height="22" width="22" loading="lazy" /> | {{ user.username }}
+				</button>
+			</td>
+			<td>{{ user.alias }}</td>
+			<td>{{ user.matches_won }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% else %}
+	<p>Log in required to view this page.</p>
+	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+{% endif %}

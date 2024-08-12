@@ -1,0 +1,13 @@
+{% if user.is_authenticated %}
+<div class="container">
+	<div class="row">
+		<div class="col-md-6 offset-md-3 text-center">
+			<h1 class="display-4">Logout</h1>
+			<p class="lead">Logging you out... Bye!</p>
+		</div>
+	</div>
+</div>
+{% else %}
+	<p>Log in required to view this page.</p>
+	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+{% endif %}
