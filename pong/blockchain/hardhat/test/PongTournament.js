@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers, hardhatArguments } = require("hardhat");
 
 describe("PongTournament", function() {
 	let owner, player1account, player2account, hardhatTournament;
@@ -59,10 +59,19 @@ describe("PongTournament", function() {
 
 	describe("Match Management", function() {
 		let players = [player1Hash, player2Hash];
-		let score = [10, 8];
+		let score = [8, 10];
 		it("Should allow owner to add a match", async function() {
-			await hardhatTournament.connect(owner).addMatch(0, 0, players, score, players[0]);
-			expect(await hardhatTournament.getMatchWinnerName(0)).to.equal(player1Name);
+			await hardhatTournament.connect(owner).addMatch(0, 0, players, score, players[1]);
+			expect(await hardhatTournament.getMatchWinnerName(0)).to.equal(player2Name);
+		});
+		it ("Should retrieve the players of a match given the id", async function() {
+			matchPlayers = await hardhatTournament.getMatchPlayers(0);
+			expect(await hardhatTournament.getPlayerName(matchPlayers[0])).to.be.equal(player1Name);
+			expect(await hardhatTournament.getPlayerName(matchPlayers[1])).to.be.equal(player2Name);
+		});
+		it("Should retrieve a match score", async function() {
+			matchScore = await hardhatTournament.getMatchScore(0);
+			expect(matchScore).to.be.deep.equal(score);
 		});
 		it("Should deny non-owner to add a match", async function() {
 			await expect(hardhatTournament.connect(player1account).addMatch(1, 0, players, score, players[0])).to.be.revertedWith("Caller is not the owner");

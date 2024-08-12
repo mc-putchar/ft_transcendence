@@ -151,6 +151,10 @@ contract PongTournament {
         return players[winner].aliasName; 
     }
 
+	function getMatchPlayers(uint256 _id) public view returns(uint256[] memory) {
+		return matches[_id].players;
+	}
+
     function getTournamentWinnerName(uint256 _id) public view returns(string memory) {
         uint256 winner = tournaments[_id].winnerID;
         return players[winner].aliasName;
