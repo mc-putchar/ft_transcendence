@@ -2,10 +2,11 @@ import click
 import requests
 from requests.exceptions import RequestException
 from rich.console import Console
+import json
 import asyncio
 import websockets
 import ssl
-import json
+import certifi
 
 DEBUG = True
 
@@ -14,7 +15,18 @@ LOGIN_ROUTE = '/api/login/'
 
 console = Console()
 
-def send_post_request(url, data, headers, cookies):
+def send_get_request(url, headers, cookies):
+	try:
+		response = requests.get(url, headers=headers, cookies=cookies)
+		response.raise_for_status()
+		console.print(f'Success! Response from {url}:')
+		console.print(response.text)
+	except (RequestException, KeyError, ValueError) as e:
+		console.print(f'An error occurred: {e}', style='red')
+		return None
+	return response
+
+def send_post_request(url, headers, cookies, data=''):
 	try:
 		response = requests.post(url, data=data, headers=headers, cookies=cookies)
 		response.raise_for_status()
@@ -76,9 +88,8 @@ async def receive_message(websocket):
 		except json.JSONDecodeError as e:
 			console.print(f'Error decoding JSON: {e}', style='red')
 
-async def connect_websocket(base_url, csrf_token, jwt_token):
-	ws_url = f"wss://{base_url}/ws/chat/lobby/?token={jwt_token}"
-	ssl_context = ssl.create_default_context()
+async def connect_websocket(url, csrf_token, jwt_token):
+	ws_url = f"wss://{url}"
 
 	headers = {
 		'Referer': ws_url,
@@ -89,16 +100,27 @@ async def connect_websocket(base_url, csrf_token, jwt_token):
 	console.print('Connecting to WebSocket server...', style='green')
 	try:
 		async with websockets.connect(
-			ws_url,
-			ssl=ssl_context,
+			extra_headers=headers,
+			origin="*",
+			uri = ws_url
 		) as websocket:
 			console.print('Connected to WebSocket server.')
-			await send_message(websocket, 'Hello, WebSocket server!', 'transcendCLI')
 			await receive_message(websocket)
+			await send_message(websocket, 'Hello, WebSocket server!', 'transcendCLI')
 	except websockets.exceptions.InvalidStatusCode as e:
 		console.print(f'WebSocket connection failed: {e}', style='red')
 	except Exception as e:
 		console.print(f'WebSocket error: {e}', style='red')
+
+def get_my_profile(base_url, jwt_token, cookies):
+	url = f"https://{base_url}/api/profiles/me/"
+	headers = {
+		'Authorization': f"Bearer {jwt_token}",
+	}
+	response = send_get_request(url, headers, cookies)
+	if response:
+		console.print(response.json(), style='green')
+
 
 @click.command()
 @click.option('--base-url', default='wow.transcend42.online', help='The base URL for the server. Default is wow.transcend42.online.')
@@ -110,13 +132,20 @@ def login(base_url, username, password):
 	csrf_token, cookies = get_csrf_token(login_url)
 	if not csrf_token:
 		return
-
 	jwt_token = obtain_jwt_token(base_url, username, password)
-	if jwt_token:
-		console.print(f'Logged in as [bold cyan]{username}[/bold cyan]. :thumbs_up:')
-		asyncio.run(connect_websocket(base_url, csrf_token, jwt_token))
-	else:
+
+	if not jwt_token:
 		console.print("Unable to obtain JWT token.", style='red')
+		return
+
+	get_my_profile(base_url, jwt_token, cookies)
+
+	console.print(f'Logged in as [bold cyan]{username}[/bold cyan]. :thumbs_up:')
+	asyncio.run(connect_websocket(f'{base_url}/ws/chat/lobby/?token={jwt_token}', csrf_token, jwt_token))
+	asyncio.run(connect_websocket(f'{base_url}/ws/tournament/4/', csrf_token, jwt_token))
 
 if __name__ == '__main__':
+	console.print('Welcome to transcendCLI!', style='bold green')
+	console.print('Please log in to continue.', style='bold green')
+
 	login()

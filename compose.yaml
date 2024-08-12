@@ -56,7 +56,7 @@ services:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
     volumes:
-      - "${PWD}/postgres_data:/var/lib/postgresql/data:rw"
+      - "dbdata:/var/lib/postgresql/data"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 5s
@@ -97,3 +97,6 @@ services:
       redis:
         condition: service_started
     restart: unless-stopped
+
+volumes:
+  dbdata:
