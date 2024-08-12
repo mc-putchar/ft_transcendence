@@ -61,10 +61,10 @@
                                             {% else %}
                                             <p>Opponent not found</p>
                                             {% endif %}
-                                        {% if match.tournament %}
+                                        {% if match.match.tournament %}
                                         <p><b>Tournament:</b>
-                                            <button class="btn btn-outline-primary border border-info rounded-pill" onclick="location.hash='#/in-tournament/{{ match.tournament.id }}'">
-                                                {{ match.tournament.name }}
+                                            <button class="btn btn-outline-primary border border-info rounded-pill" onclick="location.hash='#/in-tournament/{{ match.match.tournament.id }}'">
+                                                {{ match.match.tournament.name }}
                                             </button>
                                         </p>
                                         {% endif %}
@@ -86,8 +86,8 @@
                                 {% for t in tournament_history %}
                                     <div class="list-group-item">
                                         <p><b>Tournament Name:</b> {{ t.tournament.name }}</p>
-                                        <p><b>Tournament Date:</b> {{ t.tournament.start_date }}</p>
-                                        <p><b>Place:</b> {{ t.tournament.place }}</p>
+                                        <p><b>Concluded:</b> {{ t.tournament.end_date | format_datetime:"%d-%m-%Y %I:%M" }} UTC</p>
+                                        <p><b>Place:</b> {{ t.place }}</p>
                                     </div>
                                 {% endfor %}
                             </div>

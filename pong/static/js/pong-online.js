@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-import { getAmps, playAudioTrack, playTone } from './audio.js';
+import { getAmps, playAudioTrack, playTone, stopAudioTrack } from './audio.js';
 import { GameData } from './game-router.js';
 import { getJSON, getCookie } from './utils.js';
 

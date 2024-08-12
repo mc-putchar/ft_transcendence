@@ -3,6 +3,9 @@ import time
 import json
 import redis
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GameManager:
     def __init__(self, host='redis', port=6379, db=0):
@@ -130,10 +133,10 @@ class GameManager:
     def score_update(self, game_state):
         if game_state['player1_score'] >= game_state['score_limit'] or game_state['player2_score'] >= game_state['score_limit']:
             game_state['status'] = 'finished'
-            print("game finished")
+            logger.info("game finished")
         else:
             game_state['status'] = 'paused'
-        print(f"Goal at x:{game_state['ball_position']['x']} y:{game_state['ball_position']['y']}")
+        logger.info(f"Goal at x:{game_state['ball_position']['x']} y:{game_state['ball_position']['y']}")
         game_state['ball_position'] = {'x': 0, 'y': 0}
         game_state['ball_direction'] = {'dx': 0, 'dy': 0}
         game_state['player1_ready'] = False
@@ -159,6 +162,7 @@ class GameManager:
         elif player == 'player2':
             game_status['player2_ready'] = True
         if game_status['player1_ready'] and game_status['player2_ready']:
+            logger.info("Both players ready")
             time.sleep(1)
             game_status['ball_direction'] = {'dx': 1 if self.flip else -1, 'dy': 1 if self.prev_score else -1}
             game_status['ball_position'] = {'x': 0, 'y': 0}

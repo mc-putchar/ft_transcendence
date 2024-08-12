@@ -141,7 +141,7 @@ class GameRouter {
 			console.error("Error joining game");
 			return;
 		}
-		initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, true);
+		initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
 	}
 };
 

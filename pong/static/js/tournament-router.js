@@ -57,6 +57,9 @@ class TournamentRouter {
 		} else if (event.endsWith('delete_tournament/')) {
 			this.tournamentID = event.split('/')[1];
 			this.deleteTournament(this.tournamentID);
+		} else if (event.endsWith('next_round/')) {
+			this.tournamentID = event.split('/')[1];
+			this.nextRound(this.tournamentID);
 		} else {
 			const data = await getJSON(`/game/${event}`, this.csrfToken);
 			if (data) {
@@ -89,14 +92,16 @@ class TournamentRouter {
 					if (message.split(' ')[3] === 'vs') {
 						const player2 = message.split(' ')[4];
 						if (this.username === player1 || this.username === player2) {
+							const isChallenger = (this.username === player1);
 							console.log("Starting match:", matchID);
 							// start game
 							const gameEvent = new CustomEvent('game', {
 								detail: {
-									gameID: matchID,
-									player: (this.username === player1) ? player1 : player2,
-									opponent: (this.username === player1) ? player2 : player1,
 									tournamentID: this.tournamentID,
+									gameID: matchID,
+									isChallenger: isChallenger,
+									player: isChallenger ? player1 : player2,
+									opponent: isChallenger ? player2 : player1,
 								},
 							});
 							this.appElement.dispatchEvent(gameEvent);
@@ -171,6 +176,16 @@ class TournamentRouter {
 			this.showError("Failed to delete tournament");
 		}
 		this.tournamentSocket?.close();
+	}
+
+	async nextRound(tournamentID) {
+		const response = await postJSON(`/game/tournaments/${tournamentID}/next_round/`, this.csrfToken);
+		if (response) {
+			console.log("Next round:", tournamentID);
+		} else {
+			console.debug("Failed to start next round");
+			this.showError("Failed to start next round");
+		}
 	}
 
 	closeWebSocket() {

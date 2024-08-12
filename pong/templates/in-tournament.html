@@ -20,7 +20,6 @@
 					{% if tournament.status == 'closed' %}
 						<p><b>End Date:</b> {{ tournament.end_date }}</p>
 						<p><b>Place:</b> {{ tournament.place }}</p>
-						<p><b>Winner:</b> {{ tournament.winner }}</p>
 					{% endif %}
 					<p><b>Participants:</b> {{ tournament.participants.count }} / {{ tournament.player_limit }}</p>
 				{% if tournament.status == 'open' %}
@@ -36,8 +35,13 @@
 			</div>
 			<div class="card-body bg-info text-info">
 				{% if tournament.status == 'closed' %}
-					<p>Tournamenent results: TODO</p>
-				{% elif tournament.status == 'started' %}
+					<p><b>Winner:</b>
+						<button class="btn btn-warning btn-outline-primary border-info rounded-pill" onclick="location.href='#/profiles/{{ tournament.winner.user.username }}'">
+							<img src="{{ tournament.winner.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> |  {{ tournament.winner.user.username }}
+						</button>
+					</p>
+				{% endif %}
+				{% if tournament.status == 'started' or tournament.status == 'closed' %}
 					<p><b>Matches:</b></p>
 					<div class="list-group">
 						{% for match in tournament.matches.all %}
@@ -46,8 +50,8 @@
 								<p><b>Players:</b> 
 								{% for player in match.players.all %}
 								
-									<span class="text-{% if player == match.winner %}success{% else %}danger{% endif %}">
-										<button class="btn btn-outline-{% if player == match.winner %}success{% else %}danger{% endif %} border-info rounded-pill" onclick="location.href='#/profiles/{{ player.player.user.username }}'">
+									<span class="text-{% if player.winner %}success{% else %}danger{% endif %}">
+										<button class="btn btn-outline-{% if player.winner %}success{% else %}danger{% endif %} border-info rounded-pill" onclick="location.href='#/profiles/{{ player.player.user.username }}'">
 											<img src="{{ player.player.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> |  {{ player.player.user.username }}
 										</button>
 									</span>
@@ -89,6 +93,10 @@
 					<button id="start-tournament" class="btn btn-success" onclick="location.hash='/tournaments/{{ tournament.id }}/start_tournament/'" {% if tournament.participants.count < 2 %}disabled{% endif %}>Start Tournament</button>
 					<button id="delete-tournament" class="btn btn-danger" onclick="location.hash='/tournaments/{{ tournament.id }}/delete_tournament/'">Delete Tournament</button>
 					{% endif %}
+				</div>
+				{% elif tournament.status == 'started' and is_creator %}
+				<div class="d-flex justify-content-center">
+					<button id="progress-tournament" class="btn btn-success" onclick="location.hash='/tournaments/{{ tournament.id }}/next_round/'">Next Round</button>
 				</div>
 				{% endif %}
 			</div>
