@@ -1,0 +1,7 @@
+{% if user.is_authenticated %}
+{% load static %}
+<p>{{ message }}</p>
+{% else %}
+    <p>Log in required to view this page.</p>
+    <button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+{% endif %}

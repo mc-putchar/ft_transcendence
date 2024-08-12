@@ -12,14 +12,15 @@ class GameRouter {
 	}
 
 	setupGameWebSocket(gameID) {
+		if (this.gameSocket) {
+			console.log("Game socket already exists");
+			// this.gameSocket.close();
+			return;
+		}
 		const accessToken = sessionStorage.getItem('access_token') || '';
 		this.gameID = gameID;
 		this.gameData = new GameData();
 
-		if (this.gameSocket) {
-			console.log("Closing existing game socket");
-			this.gameSocket.close();
-		}
 		this.gameSocket = new WebSocket(
 			`wss://${window.location.host}/ws/game/${gameID}/?token=${accessToken}`
 		);

@@ -60,7 +60,7 @@ def templates(request, template_name):
             user_data = get_user_from_token(request)
             if user_data['user']:
                 context = user_data
-                context['tournaments'] = Tournament.objects.filter(status='open')
+                context['tournaments'] = Tournament.objects.all()
                 context['t_form'] = CreateTournamentForm()
         case _:
             try:

@@ -19,6 +19,9 @@
                         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                         <button class="btn btn-primary" type="submit">Update</button>
                     </form>
+                    {% if user.profile.blockchain_opted_in %}
+                        <button id="blockchain-optin" class="btn btn-primary">Blockchain Opt-In</button>
+                    {% endif %}
                     <button id="account-administration" class="btn btn-warning">Account Administration</button>
                     <form class="form" id="password-form" method="POST" style="display: none;">
                         {{ cp_form.as_p }}

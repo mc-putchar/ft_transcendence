@@ -40,7 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }, { once: true });
       });
     });
-  }
+    });
+}
 
   // Use MutationObserver to detect new modals
   const observer = new MutationObserver((mutationsList) => {

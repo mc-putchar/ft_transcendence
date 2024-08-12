@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'api',
-	'blockchain',
+    'blockchain',
     'chat',
     'game',
     'pong',

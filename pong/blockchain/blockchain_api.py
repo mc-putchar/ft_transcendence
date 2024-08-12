@@ -1,29 +1,60 @@
-import environ
 import os
 import json
 from pathlib import Path 
 from web3 import Web3, HTTPProvider
 import hashlib
-from compile import BUILD_PATH, compileSmartContract
+from .compile import BUILD_PATH, compileSmartContract
+from .models import Chain
 
+import logging
 
-class PongBlockchain:
-	def __init__(self, blockchain_url:str):
+logger = logging.getLogger(__name__)
+
+class Singleton(type):
+	_instances = {}
+	def __call__(cls, *args, **kwargs):
+		if cls not in cls._instances:
+			cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+		return cls._instances[cls]
+
+class PongBlockchain(metaclass=Singleton):
+	def __init__(self, blockchain_url:str = 'http://blockchain:8545'):
 		"""
 		@brief Initializes the PongBlockchain class.
 		@param blockchain_url: The URL of the blockchain to connect to.
 		@example "http://blockchain:8545" for the dockerized blockchain.
 		@example "https://sepolia.infura.io/v3/<API_KEY>" for the Infura testnet.
 		"""
+
 		self.web3 = Web3(HTTPProvider(blockchain_url))
 		self.params = {
 			'gas': 25000000,
 			'gasPrice': self.web3.to_wei('50', 'gwei')
 		}
-	
+
+		# try:
+		# 	chain = Chain.objects.first()
+		# 	if chain:
+		# 		self.address = chain.address
+		# 		return
+		# except Exception as e:
+		# 	logger.error(e)
+
+		self.deploy()
+		# Chain.create(address=self.address)
+
 	###################
 	# CLASS UTILITIES #
 	###################
+	def deploy(self):
+		logger.info("Connected") if self.is_connected() else logger.info("Connection failed")
+		account = self.web3.eth.accounts[0]
+		hardhat_private_key = os.getenv('HARDHAT_PRIVATE_KEY')
+		if not hardhat_private_key:
+			raise ValueError("HARDHAT_PRIVATE_KEY environment variable not set")
+		self.deploy_contract(account, hardhat_private_key, "PongTournament.sol")
+		logger.info(f"Contract deployed at address: {self.address}")
+
 	def build_params(self, additional_params: dict):
 		params = self.params.copy()
 		params.update(additional_params)
@@ -137,12 +168,12 @@ def hash_player(data: list) -> int:
 
 
 # BLOCKCHAIN_URL = "http://0.0.0.0:8545"
-BLOCKCHAIN_URL = "http://blockchain:8545"
+# BLOCKCHAIN_URL = "http://blockchain:8545"
 
-if BLOCKCHAIN_URL == "http://0.0.0.0:8545": # to test locally without django
-	BASE_DIR = Path(__file__).resolve().parent.parent.parent
-	env = environ.Env()
-	environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+# if BLOCKCHAIN_URL == "http://0.0.0.0:8545": # to test locally without django
+# 	BASE_DIR = Path(__file__).resolve().parent.parent.parent
+# 	env = environ.Env()
+# 	environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # CONTRACT = ""
 # blockchain = PongBlockchain("http://0.0.0.0:8545")
 # private_key = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"

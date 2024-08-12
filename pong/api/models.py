@@ -17,6 +17,7 @@ class Profile(models.Model):
     friends = models.ManyToManyField('self', through='Friend', symmetrical=False, related_name='friend_profiles', default=None, blank=True)
     blocked_users = models.ManyToManyField('self', through='Blocked', symmetrical=False, related_name='blocked_profiles', default=None, blank=True)
     forty_two_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    blockchain_address = models.CharField(max_length=42, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.alias:

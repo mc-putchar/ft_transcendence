@@ -57,7 +57,7 @@ services:
       - "${PWD}/postgres_data:/var/lib/postgresql/data:rw"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
     networks:
@@ -74,7 +74,6 @@ services:
     build:
       context: "${PWD}/pong"
     command: sh -c "
-      python blockchain/deploy.py &&
       python manage.py runserver 0.0.0.0:8000"
     volumes:
       - "${PWD}/pong:/code:rw"

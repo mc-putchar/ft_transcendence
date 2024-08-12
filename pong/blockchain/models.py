@@ -1,3 +1,5 @@
 from django.db import models
 
-# Create your models here.
+
+class Chain(models.Model):
+	address = models.CharField(max_length=255)

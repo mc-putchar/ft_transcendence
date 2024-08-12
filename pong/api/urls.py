@@ -15,6 +15,7 @@ urlpatterns = [
     path('login/', TokenObtainPairView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('blockchain/', include('blockchain.urls')),
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('delete-account/', DeleteAccountView.as_view(), name='delete_account'),
     path('anonymize/', AnonymizeUserView.as_view(), name='anonymize_user'),

@@ -170,6 +170,32 @@ class Router {
 				throw new Error(`Cannot load nav: ${response.status}`);
 			}
 			this.navElement.innerHTML = response;
+
+			var navbarCollapse = document.querySelector('#navbarNav');
+   			 if (navbarCollapse) {
+   			     var collapse = new bootstrap.Collapse(navbarCollapse);
+  
+   			     // Hide the navbar when a link inside it is clicked
+   			     var navbarLinks = document.querySelectorAll('.navbar-collapse a');
+   			     navbarLinks.forEach(function (link) {
+   			         link.addEventListener('click', function () {
+   			             collapse.hide();
+   			         });
+   			     });
+  
+   			     // Hide the navbar when clicking outside of it
+   			     document.addEventListener('click', function (event) {
+   			         var isClickInside = navbarCollapse.contains(event.target);
+   			         var isToggle = event.target.classList.contains('navbar-toggler');
+   			         
+   			         if (!isClickInside && !isToggle) {
+   			             console.log('click outside');
+   			             collapse.hide();
+   			         }
+   			     });
+   			 } else {
+   			     console.error("Navbar collapse element not found.");
+   			 }
 		} catch (error) {
 			console.debug("Error loading nav: ", error);
 			this.navElement.innerHTML = "<p>Error loading navigation</p>";
@@ -441,7 +467,16 @@ class Router {
 		const anonBtn = document.getElementById('anonymize-data');
 		const deleteBtn = document.getElementById('delete-account');
 		const profileForm = document.getElementById('profile-form');
-		if (!accAdminBtn || !anonBtn || !deleteBtn || !profileForm) return;
+		const blockchainBtn = document.getElementById('blockchain-optin');
+		if (!accAdminBtn || !anonBtn || !deleteBtn || !profileForm || !blockchainBtn) return;
+		blockchainBtn.addEventListener('click', async (e) => {
+			const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
+			if (response) {
+				this.animateContent(this.appElement, response);
+			} else {
+				this.notifyError("Failed to opt-in to blockchain");
+			}
+		});
 		accAdminBtn.addEventListener('click', (e) => {
 			e.preventDefault();
 			const anonBtn = document.getElementById('anonymize-data');
