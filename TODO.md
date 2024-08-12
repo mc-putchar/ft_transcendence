@@ -19,7 +19,7 @@
 		- [ ] no unhandled errors or warnings
 		- [x] single command line launch (make)
 		- [ ] Docker runtime files must be located in /goinfre or /sgoinfre
-		- [ ] no “bind-mount volumes” between the host and the container if non-root UIDs are used in the container
+		- [x] no “bind-mount volumes” between the host and the container if non-root UIDs are used in the container
 		- [ ] Game:
 			- [x] remote players (+ 42 OAuth)
 			- [ ] tournament system
@@ -80,10 +80,10 @@
 		- [ ] mandatory:
 			- [x] tournament history
 			- [x] create, join, leave, start, delete tournaments
-			- [ ] try harder to make players show up for the match
+			- [x] try harder to make players show up for the match
 			- [ ] websocket updates
-			- [ ] tournament round progressions
-			- [ ] tournament finalization
+			- [x] tournament round progressions
+			- [x] tournament finalization
 		- [ ] ? customizations
 
 	- [ ] swag:
@@ -97,7 +97,7 @@
 
 ### Security:
 	- [x] JWT auth
-	- [ ] refresh tokens
+	- [x] refresh tokens
 	- [ ] input validation
 	- [ ] rate limiting
 	- [ ] ? make websockets cooperate with WAF
@@ -122,7 +122,7 @@
 	- [ ] dead code elimination
 	- [ ] THREE.js loading optimization
 	- [ ] image compression and optimization
-	- [ ] lazy loading
+	- [x] lazy loading
 	- [ ] ? web/service workers
 	- [ ] ? http/2
 	- [ ] ? http/3  (what is this?)
