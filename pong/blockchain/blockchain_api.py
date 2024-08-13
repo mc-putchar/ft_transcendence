@@ -18,7 +18,8 @@ class Singleton(type):
 		return cls._instances[cls]
 
 class PongBlockchain(metaclass=Singleton):
-	def __init__(self, blockchain_url:str = 'http://blockchain:8545'):
+	is_deployed = False
+	def __init__(self, blockchain_url:str='http://blockchain:8545'):
 		"""
 		@brief Initializes the PongBlockchain class.
 		@param blockchain_url: The URL of the blockchain to connect to.
@@ -31,20 +32,20 @@ class PongBlockchain(metaclass=Singleton):
 			'gas': 25000000,
 			'gasPrice': self.web3.to_wei('50', 'gwei')
 		}
-
-		self.deploy()
+		self.accounts = self.web3.eth.accounts
 
 	###################
 	# CLASS UTILITIES #
 	###################
 	def deploy(self):
 		logger.info("Connected") if self.is_connected() else logger.info("Connection failed")
-		account = self.web3.eth.accounts[0]
+		account = self.accounts[0]
 		hardhat_private_key = os.getenv('HARDHAT_PRIVATE_KEY')
 		if not hardhat_private_key:
 			raise ValueError("HARDHAT_PRIVATE_KEY environment variable not set")
 		self.deploy_contract(account, hardhat_private_key, "PongTournament.sol")
 		logger.info(f"Contract deployed at address: {self.address}")
+		return self.address
 
 	def build_params(self, additional_params: dict):
 		params = self.params.copy()
@@ -97,6 +98,7 @@ class PongBlockchain(metaclass=Singleton):
 			raise ValueError("Transaction failed")
 		self.address = tx_receipt['contractAddress']
 		self.contract = self.web3.eth.contract(abi=abi, address=self.address)
+		self.is_deployed = True
 		return self.contract
 	
 	def addPlayerSimple(self, sender: str, private_key: str, hash: int, alias: str):

@@ -16,8 +16,8 @@ def optin(request):
 		return render(request, 'blockchain-optin.html', {'message': 'User already opted in'})
 	else:
 		chain = PongBlockchain()
-		sender = chain.web3.eth.accounts[0]
-		status = chain.addPlayer(sender, os.getenv('HARDHAT_PRIVATE_KEY'), hash_player([user.email, user.id]), user.username)
+		sender = chain.accounts[0]
+		status = chain.addPlayerSimple(sender, os.getenv('HARDHAT_PRIVATE_KEY'), hash_player([user.email, user.id]), user.username)
 		if status['status'] == 1:
 			return render(request, 'blockchain-optin.html', {'message': 'Opted in successfully'})
 		else:
