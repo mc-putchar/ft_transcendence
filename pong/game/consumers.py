@@ -43,6 +43,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         self.gameover = False
         self.score_limit = 11
         self.game_id = None
+        self.update_interval = 1 / 10  # 10 updates per second
 
     async def connect(self):
         self.challenger = self.scope["url_route"]["kwargs"]["challenger"]
@@ -76,11 +77,14 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         }))
         self.game_task = asyncio.create_task(self.game_update_loop())
 
-    async def disconnect(self, close_code):
+    def cancel_tasks(self):
         if hasattr(self, "game_task"):
             self.game_task.cancel()
         if hasattr(self, "timeout_task"):
             self.timeout_task.cancel()
+
+    async def disconnect(self, close_code):
+        self.cancel_tasks()
         if self.channel_name in self.connection_player_map:
             disconnected_player = self.connection_player_map.pop(self.channel_name)
             if disconnected_player and not self.gameover:
@@ -233,8 +237,6 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                     await asyncio.sleep(1)
                     continue
 
-                if hasattr(self, "timeout_task") and game_state["status"] == "starting":
-                    self.timeout_task.cancel()
                 if game_state["status"] == "finished":
                     await self.send_game_state()
                     self.gameover = True
@@ -245,8 +247,9 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                     self.gameover = True
                     await self.handle_forfeit(game_state["forfeiting_player"])
                     break
+
                 await self.send_game_state()
-                await asyncio.sleep(0.016)
+                await asyncio.sleep(self.update_interval)
             except Exception as e:
                 logger.error(f"Error in game update loop: {e}")
 
@@ -266,6 +269,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 
         except Exception as e:
             logger.error(f"Error saving match results: {e}")
+        self.cancel_tasks()
 
     async def win_by_timeout(self, winner):
         try:
@@ -278,7 +282,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             logger.error(f"Error handling win by timeout: {e}")
 
         self.gameover = True
-        self.timeout_task.cancel()
+        self.cancel_tasks()
 
     async def handle_forfeit(self, forfeiting_player):
         try:
@@ -296,6 +300,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 
         except Exception as e:
             logger.error(f"Error handling forfeit: {e}")
+        self.cancel_tasks()
 
     async def send_game_state(self):
         game_state = game_manager.get_game_state(self.game_id)

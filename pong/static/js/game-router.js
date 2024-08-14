@@ -136,7 +136,7 @@ class GameRouter {
 	}
 
 	async startTournamentGame(data) {
-		this.setupGameWebSocket(data.gameID);
+		this.setupGameWebSocket(`${data.tournamentID}#${data.gameID}#${data.player}`);
 		if (await this.joinGame(data.gameID) == null) {
 			console.error("Error joining game");
 			return;

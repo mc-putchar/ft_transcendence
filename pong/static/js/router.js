@@ -75,11 +75,14 @@ class Router {
 				event.detail.img,
 				NOTIFICATION_SOUND);
 		});
+		this.appElement.addEventListener('update', (event) => {
+			// this.route();
+		});
 		this.appElement.addEventListener('game', (event) => {
 			this.game.startTournamentGame(event.detail);
 		});
-		this.appElement.addEventListener('update', (event) => {
-			// this.route();
+		this.appElement.addEventListener('announcement', (event) => {
+			this.chat.sendAnnouncement(event.detail);
 		});
 
 		this.loadNav();

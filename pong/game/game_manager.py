@@ -19,7 +19,7 @@ class GameManager:
         self.ball_size = 8
         self.flip = False
         self.prev_score = False
-        self.update_interval = 1 / 60  # 60 updates per second
+        self.update_interval = 1 / 30  # 30 updates per second
         self.lock = asyncio.Lock()
         self.update_tasks = {}
 
@@ -77,15 +77,19 @@ class GameManager:
         if not game_state:
             return
 
-        game_state['player1_position'] += (game_state['player1_direction'] * self.paddle_speed)
-        game_state['player2_position'] += (game_state['player2_direction'] * self.paddle_speed)
+        timestamp = time.time()
+        timedelta = timestamp - game_state['timestamp']
+        game_state['timestamp'] = timestamp
+
+        game_state['player1_position'] += (game_state['player1_direction'] * self.paddle_speed * timedelta)
+        game_state['player2_position'] += (game_state['player2_direction'] * self.paddle_speed * timedelta)
 
         game_state['player1_position'] = max(-self.arena_height, min(self.arena_height, game_state['player1_position']))
         game_state['player2_position'] = max(-self.arena_height, min(self.arena_height, game_state['player2_position']))
 
         if game_state['status'] == 'running':
-            game_state['ball_position']['x'] += round(game_state['ball_direction']['dx'] * game_state['ball_speed'])
-            game_state['ball_position']['y'] += round(game_state['ball_direction']['dy'] * game_state['ball_speed'])
+            game_state['ball_position']['x'] += round(game_state['ball_direction']['dx'] * game_state['ball_speed'] * timedelta)
+            game_state['ball_position']['y'] += round(game_state['ball_direction']['dy'] * game_state['ball_speed'] * timedelta)
 
             # Wall collisions
             if (game_state['ball_position']['x'] <= -self.arena_height + self.ball_size

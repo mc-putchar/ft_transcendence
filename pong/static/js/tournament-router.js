@@ -120,6 +120,13 @@ class TournamentRouter {
 			const action = data.message.split(' ')[0];
 			const username = data.message.split(' ')[1];
 			if (action === 'connected') {
+				const event = new CustomEvent('announcement', {
+					detail: {
+						origin: 'tournament',
+						message: `${username} joined the tournament`,
+					},
+				});
+				this.appElement.dispatchEvent(event);
 				console.log(`${username} joined the tournament`);
 			} else if (action === 'disconnected') {
 				console.log(`${username} left the tournament`);
