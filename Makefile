@@ -88,10 +88,11 @@ migrate: # Make and run DB migrations
 	$(DC) -f $(SRC) stop
 
 clean: # DROP database and create a new one
-	$(DC) -f $(SRC) start db
-	$(DC) -f $(SRC) exec db dropdb -U ${POSTGRES_USER} ${POSTGRES_DB}
-	$(DC) -f $(SRC) exec db createdb -U ${POSTGRES_USER} ${POSTGRES_DB}
-	$(DC) -f $(SRC) stop db
+	docker volume rm $(NAME)_dbdata
+# $(DC) -f $(SRC) start db
+# $(DC) -f $(SRC) exec db dropdb -U ${POSTGRES_USER} ${POSTGRES_DB}
+# $(DC) -f $(SRC) exec db createdb -U ${POSTGRES_USER} ${POSTGRES_DB}
+# $(DC) -f $(SRC) stop db
 
 collect: # Collect static files to be served
 	$(DC) -f $(SRC) run --rm --no-deps django python manage.py collectstatic --noinput --clear
