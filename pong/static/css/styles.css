@@ -45,10 +45,11 @@ h4,
 h5,
 h6,
 li,
-Buttons,
+button,
 label,
 input,
 select,
+span,
 textarea,
 img {
   user-select: none;
@@ -69,7 +70,6 @@ body {
 }
 
 canvas {
-  margin-bottom: 30px;
   margin-top: auto;
   width: 80%;
   height: 100%;
@@ -146,10 +146,10 @@ canvas {
 #footer {
   position: fixed;
   text-align: center;
-  font-size: smaller;
+  font-size: x-small;
   bottom: 0;
-  left: 10%;
-  width: 80%;
+  left: 0;
+  width: 100%;
   z-index: 100;
 }
 

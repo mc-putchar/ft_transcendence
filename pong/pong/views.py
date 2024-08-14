@@ -30,20 +30,16 @@ def templates(request, template_name):
     context = {}
     match template_name:
         case 'home' | 'navbar' | 'chat':
-            template = loader.get_template(f"{template_name}.html")
             context = get_user_from_token(request)
         case 'dashboard' | 'online-game':
-            template = loader.get_template(f"{template_name}.html")
             user = get_user_from_token(request)['user']
             if user:
                 context = get_user_info(request, user.username)
         case 'profile':
-            template = loader.get_template('profile.html')
             user_data = get_user_from_token(request)
             if user_data['user']:
                 context = update_profile(request, user_data['user'])
-        case 'leaderboard':
-            template = loader.get_template('leaderboard.html')
+        case 'scoreboard':
             user_data = get_user_from_token(request)
             if user_data['user']:
                 users = Profile.objects.all()
@@ -56,17 +52,15 @@ def templates(request, template_name):
                 }, users))
                 context = { 'users': users }
         case 'tournaments':
-            template = loader.get_template('tournaments.html')
             user_data = get_user_from_token(request)
             if user_data['user']:
                 context = user_data
                 context['tournaments'] = Tournament.objects.all()
                 context['t_form'] = CreateTournamentForm()
-        case _:
-            try:
-                template = loader.get_template(f"{template_name}.html")
-            except:
-                template = loader.get_template("404.html")
+    try:
+        template = loader.get_template(f"{template_name}.html")
+    except:
+        template = loader.get_template("404.html")
     return HttpResponse(template.render(context, request=request))
 
 def profiles(request, username):

@@ -1,6 +1,5 @@
 "use strict";
 
-import drawBackground from './background.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
@@ -46,6 +45,17 @@ class Router {
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));
 
+		// Enable Bootstrap stuff
+		let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+		let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+			return new bootstrap.Tooltip(tooltipTriggerEl)
+		});
+		let popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+		let popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+			return new bootstrap.Popover(popoverTriggerEl)
+		});
+
+		// Register listeners for custom events
 		this.chatElement.addEventListener('challenge', (event) => {
 			this.game.setupGameWebSocket(event.detail.gameID);
 			const sound = new Audio(CHALLENGE_SOUND);
@@ -440,7 +450,6 @@ class Router {
 				this.displayError(error.message);
 			}
 		});
-		document.getElementById('username').focus();
 	}
 
 	async logout() {
@@ -633,7 +642,6 @@ class Router {
 };
 
 // document.addEventListener('DOMContentLoaded', () => {
-// 	drawBackground();
 // });
 
 const navElement = document.getElementById('nav');

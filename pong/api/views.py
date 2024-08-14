@@ -29,7 +29,7 @@ from .serializers import UserSerializer, ProfileSerializer, FriendSerializer, Bl
     ],
     responses={204: None, 400: None}
 )
-def logout(self, request):
+def logout(request):
     """Logout the user and blacklist the refresh token."""
     try:
         refresh_token = request.data["refresh"]
@@ -61,7 +61,7 @@ def logout(self, request):
     ],
     responses={200: None, 400: None}
 )
-def change_password(self, request):
+def change_password(request):
     """Change the user's password."""
     user = request.user
     old_password = request.data.get('old_password')
@@ -85,7 +85,7 @@ def change_password(self, request):
     summary="Anonymize the user's data.",
     responses={200: None}
 )
-def anonymize_user(self, request):
+def anonymize_user(request):
     """Anonymize the user's data."""
     user = request.user
     hashed_value = str(hash({user.username, user.id}))
