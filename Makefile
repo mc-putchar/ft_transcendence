@@ -87,12 +87,9 @@ migrate: # Make and run DB migrations
 	$(DC) -f $(SRC) run --rm django python manage.py migrate
 	$(DC) -f $(SRC) stop
 
-clean: # DROP database and create a new one
+clean: # DROP database volume and recreate a new one (Warning: all database data will be irreversibly lost! Consider making backup)
+	$(MAKE) down
 	docker volume rm $(NAME)_dbdata
-# $(DC) -f $(SRC) start db
-# $(DC) -f $(SRC) exec db dropdb -U ${POSTGRES_USER} ${POSTGRES_DB}
-# $(DC) -f $(SRC) exec db createdb -U ${POSTGRES_USER} ${POSTGRES_DB}
-# $(DC) -f $(SRC) stop db
 
 collect: # Collect static files to be served
 	$(DC) -f $(SRC) run --rm --no-deps django python manage.py collectstatic --noinput --clear
@@ -100,6 +97,9 @@ collect: # Collect static files to be served
 schema: # Output OpenAPI3 Schema into pong/schema.yml
 	$(DC) -f $(SRC) run --rm --no-deps django python manage.py spectacular --validate --color --file schema.yml
 	lolcat -a pong/schema.yml || cat pong/schema.yml
+
+newkey: # Generate a new secret key for Django
+	$(DC) -f $(SRC) run --rm --no-deps django python manage.py shell -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 
 tests: # Run automated tests
 	$(DC) -f $(SRC) start
