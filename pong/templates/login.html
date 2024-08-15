@@ -4,7 +4,7 @@
 
 {% else %}
 {% load static %}
-<a href="/auth42" class="btn btn-secondary mt-2">Authenticate with <img src="{% static 'assets/42logo.svg' %}" alt="Logo" style="height: 40px;"></a>
+<button onclick='location.href="/auth42"' class="btn btn-secondary mt-2">Authenticate with <img src="{% static 'assets/42logo.svg' %}" alt="Logo" style="height: 40px;"></button>
 <form id="login-form" method="post" action="#/login/" class="form-group mb-2">
 {% csrf_token %}
   <div class="align-items-center">
@@ -18,7 +18,8 @@
   </div>
   
   <input type="hidden" name="next" value="">
-  <button type="submit" class="btn btn-primary my-2">Login</button><a href="#/register" class="btn btn-info my-2 float-end">Register</a>
+  <button type="submit" class="btn btn-primary my-2">Login</button>
+  <button type="button" onclick='location.hash="/register"' class="btn btn-info my-2 float-end">Register</button>
 </form>
 WIP <a href="#/reset-password">Forgotten Password?</a>
 <!-- <a href="#/auth42" class="btn btn-secondary mt-2">Authenticate with 42 (popup test)</a> -->

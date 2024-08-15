@@ -41,7 +41,7 @@ class Router {
 	}
 
 	init() {
-		// this.oldHash = window.location.hash;
+		this.oldHash = window.location.hash;
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));
 
@@ -89,7 +89,8 @@ class Router {
 		this.loadCookieConsentFooter();
 		this.updateFriendsAndBlocks();
 		this.loadChat('lobby');
-		// this.route();
+		if (this.oldHash)
+			this.route(this.oldHash);
 	}
 
 	displayError(message) {
@@ -101,9 +102,9 @@ class Router {
 	}
 
 	reload() {
+		this.updateFriendsAndBlocks();
 		this.loadNav();
 		this.loadChat();
-		this.updateFriendsAndBlocks();
 		this.route();
 	}
 
@@ -122,7 +123,7 @@ class Router {
 						sessionStorage.setItem('refresh_token', refresh);
 						this.reload();
 					} else {
-						console.error("Received invalid tokens.");
+						this.notifyError("Received invalid tokens.");
 					}
 					window.removeEventListener('message', authListener, false);
 					sessionStorage.removeItem('is_popup');
@@ -164,6 +165,7 @@ class Router {
 
 	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
 		try {
+			element.innerHTML = '<div class="spinner-border text-success"></div>';
 			element.classList.add("fade-exit");
 			setTimeout(() => {
 				element.innerHTML = newContent;
@@ -209,7 +211,7 @@ class Router {
    			         }
    			     });
    			 } else {
-   			     console.error("Navbar collapse element not found.");
+				this.notifyError("Navbar collapse element not found.");
    			 }
 		} catch (error) {
 			console.debug("Error loading nav: ", error);
@@ -226,7 +228,6 @@ class Router {
 			}
 			this.animateContent(this.appElement, response, () => this.handlePostLoad(template));
 		} catch (error) {
-			console.error("Error loading template: ", error);
 			this.displayError("Error loading content");
 		}
 	}
@@ -239,7 +240,6 @@ class Router {
 			}
 			this.animateContent(this.appElement, response);
 		} catch (error) {
-			console.error("Error loading user template: ", error);
 			this.displayError("Error loading content");
 		}
 	}
@@ -259,7 +259,7 @@ class Router {
 			this.updateFriendsAndBlocks();
 			history.back();
 		} else {
-			console.error(`Failed to perform action: ${action} with id: ${id}`);
+			this.notifyError(`Failed to perform action: ${action} with id: ${id}`);
 			this.displayError(`Failed to perform action: ${action} with id: ${id}`);
 		}
 	}
@@ -276,7 +276,6 @@ class Router {
 				throw new Error("Failed to update friends");
 			}
 		} catch (error) {
-			console.error("Error updating friends: ", error);
 			this.displayError(error.message);
 			return;
 		}
@@ -289,7 +288,6 @@ class Router {
 				throw new Error("Failed to update blocked");
 			}
 		} catch (error) {
-			console.error("Error updating blocked: ", error);
 			this.displayError(error.message);
 		}
 	}
@@ -311,7 +309,7 @@ class Router {
 				this.chat.setupChatWebSocket(roomName));
 		} catch (error) {
 			this.chatElement.style.display = 'none';
-			console.error("Error loading chat: ", error);
+			this.notifyError("Error loading chat: ", error);
 		}
 	}
 
@@ -324,7 +322,6 @@ class Router {
 			document.getElementById('cookie-consent-footer').innerHTML = response;
 			this.initCookieConsent();
 		} catch (error) {
-			console.error("Error loading cookie consent footer: ", error);
 			this.notifyError("Error loading cookie consent footer");
 		}
 	}
@@ -394,7 +391,6 @@ class Router {
 			const password_confirmation = document.getElementById('password_confirmation').value;
 	
 			if (password !== password_confirmation) {
-				console.error("Passwords do not match");
 				this.notifyError("Passwords do not match");
 				return;
 			}
@@ -416,7 +412,6 @@ class Router {
 					throw new Error(data.detail || 'Registration failed');
 				}
 			} catch (error) {
-				console.error("Error registering user: ", error);
 				this.displayError(error.message);
 			}
 		});
@@ -449,7 +444,6 @@ class Router {
 					throw new Error(data.error || 'Login failed');
 				}
 			} catch (error) {
-				console.error("Error logging in user: ", error);
 				this.displayError(error.message);
 			}
 		});
@@ -468,12 +462,13 @@ class Router {
 				throw new Error("Failed to log out");
 			}
 		} catch (error) {
-			console.error("Error logging out: ", error);
 			this.displayError(error.message);
 		}
 		sessionStorage.clear();
-		this.loadNav();
-		this.loadChat();
+		this.chat.chatSocket?.close();
+		this.game.gameSocket?.close();
+		this.tournament.tournamentSocket?.close();
+		this.reload();
 	}
 
 	handleProfilePage() {
@@ -517,7 +512,6 @@ class Router {
 						throw new Error("Failed to change password");
 					}
 				} catch (error) {
-					console.error("Error changing password: ", error);
 					this.displayError(error.message);
 				}
 			});
@@ -554,7 +548,6 @@ class Router {
 					throw new Error("Failed to update profile");
 				}
 			} catch (error) {
-				console.error("Error updating profile: ", error);
 				this.displayError(error.message);
 			}
 		});
@@ -588,7 +581,6 @@ class Router {
 						throw new Error("Failed to create tournament");
 					}
 				} catch (error) {
-					console.error("Error creating tournament: ", error);
 					this.displayError(error.message);
 				}
 			});
@@ -609,14 +601,16 @@ class Router {
 				alert("Your account has been deleted.");
 				sessionStorage.removeItem('access_token');
 				sessionStorage.removeItem('refresh_token');
-				this.loadNav();
-				this.loadChat();
-				window.location.hash = '/home';
+				this.chat.chatSocket?.close();
+				this.game.gameSocket?.close();
+				this.tournament.tournamentSocket?.close();
+				this.reload();
+				window.location.hash = '/';
 			} else {
 				throw new Error("Failed to delete account");
 			}
 		} catch (error) {
-			console.error("Error deleting account: ", error);
+			this.notifyError(`Error deleting account: ${error}`);
 		}
 	}
 
@@ -639,7 +633,7 @@ class Router {
 				throw new Error("Failed to anonymize data");
 			}
 		} catch (error) {
-			console.error("Error anonymizing data: ", error);
+			this.notifyError(`Error anonymizing data: ${error}`);
 		}
 	}
 };

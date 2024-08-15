@@ -67,8 +67,34 @@ class ProfileUpdateForm(forms.ModelForm):
         fields = ['alias', 'image']
         widgets = {
             'alias': forms.TextInput(attrs={'class': 'form-control'}),
-           'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        image = cleaned_data.get("image")
+        if image and image.size > 2*1024*1024:
+            raise forms.ValidationError(
+                "Image file is too large ( > 2mb )")
+        return cleaned_data
+
+class UsernameCollisionForm(forms.Form):
+    username = forms.CharField(label='Username', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}), required=True)
+
+    class Meta:
+        model = User
+        fields = ['username']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        username = cleaned_data.get("username")
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError(
+                "Username already exists")
+        return cleaned_data
+
+    def is_valid(self):
+        return super().is_valid()
 
 class ChangePasswordForm(forms.Form):
     old_password = forms.CharField(label='Old Password', max_length=100, widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=True)

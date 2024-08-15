@@ -88,15 +88,13 @@ def change_password(request):
 def anonymize_user(request):
     """Anonymize the user's data."""
     user = request.user
-    hashed_value = str(hash({user.username, user.id}))
+    hashed_value = str(hash(f"{user.username}{user.id}") % 1234567)
     user.username = f"marvin_{hashed_value}"
     user.email = ""
     user.profile.alias = f"marvin"
     user.profile.image = 'profile_images/default.png'
-    user.profile.friends.clear()
-    user.profile.blocked_users.clear()
-    user.profile.forty_two_id = ''
-    user.profile.blockchain_address = ''
+    # user.profile.forty_two_id = '' # Issue: if deleted, the user can't log in again
+    # user.profile.blockchain_address = '' # Maybe shouldn't be deleted
     user.save()
     return JsonResponse({"message": "Your data has been anonymized."}, status=200)
 
@@ -111,6 +109,9 @@ class DeleteAccountView(generics.DestroyAPIView):
     def delete(self, request, *args, **kwargs):
         """Delete the user's account."""
         user = request.user
+        profile = user.profile
+        profile.image.delete()
+        profile.delete()
         user.delete()
         return Response({"detail": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 

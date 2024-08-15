@@ -40,7 +40,7 @@
 			- [ ] sound preferences
 			- [ ] default Pong client variant (2D/3D/any other)
 		- [ ] user settings:
-			- [ ] on change of profile picture, delete old one if not default
+			- [x] on change of profile picture, overwrite old one if not default
 			- [ ] change email
 			- [ ] validate user email
 				- [ ] password recovery
@@ -48,7 +48,7 @@
 			- [ ] change password
 			- [x] anonymize account (ensure no personal data is stored)
 			- [ ] delete account (adjust cascading in db on delete)
-			- [ ] resolve 42 acount username conflict
+			- [x] resolve 42 acount username conflict
 			- [ ] connect 42 account (after conventional registration)
 			- [ ] ? display blockchain user address? status? (after optin)
 		- [ ] custom paddle texture:
@@ -137,6 +137,7 @@
 	- [ ] ? prepare for webassembly (footuristic)
 
 ### CI/CD:
+	- [x] statusrobot monitor
 	- [ ] github actions:
 		- [ ] testing
 		- [ ] deployment
