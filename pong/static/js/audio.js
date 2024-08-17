@@ -158,4 +158,4 @@ function getAmps() {
 
 // draw();
 
-export { playAudioTrack, stopAudioTrack, playTone, getAmps };
+export { startAudioContext, playAudioTrack, stopAudioTrack, playTone, getAmps };

@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth.models import User
 
 class LoginForm(forms.Form):
-    username = forms.CharField(label='Username', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}), required=True)
+    username = forms.CharField(label='Username', max_length=16, widget=forms.TextInput(attrs={'class': 'form-control'}), required=True)
     password = forms.CharField(label='Password', max_length=100, widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=True)
     
     class Meta:
@@ -42,6 +42,10 @@ class RegisterForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        username = cleaned_data.get("username")
+        if len(username) > 16:
+            raise forms.ValidationError(
+                "Username is too long")
         password = cleaned_data.get("password")
         confirm_password = cleaned_data.get("confirm_password")
 
@@ -79,7 +83,7 @@ class ProfileUpdateForm(forms.ModelForm):
         return cleaned_data
 
 class UsernameCollisionForm(forms.Form):
-    username = forms.CharField(label='Username', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}), required=True)
+    username = forms.CharField(label='Username', max_length=16, widget=forms.TextInput(attrs={'class': 'form-control'}), required=True)
 
     class Meta:
         model = User
