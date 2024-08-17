@@ -2,7 +2,7 @@
 
 import { getJSON, postJSON } from "./utils.js";
 import { initGame } from "./pong-online.js";
-import { ClientClassic } from "./client-classic.js";
+// import { ClientClassic } from "./client-classic.js";
 
 class GameRouter {
 	constructor (csrfToken, appElement) {
