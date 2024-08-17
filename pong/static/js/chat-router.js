@@ -186,27 +186,7 @@ class ChatRouter {
 			return; // Do not show the message if the user is blocked
 		}
 		
-		switch (type) {
-			case 'duel':
-				// this.chatLog.value += `${message}\n`;
-				this.insertChatMessage(message, this.chatLog);
-				// this.chatLog.scrollTop = this.chatLog.scrollHeight;
-				break;
-			case 'pm':
-				// this.chatLog.value += `${message}\n`;
-				// this.chatLog.scrollTop = this.chatLog.scrollHeight;
-				this.insertChatMessage(message, this.chatLog);
-				break;
-			case 'system':
-				// this.chatLog.value += `${sender}:: ${message}\n`;
-				// this.chatLog.scrollTop = this.chatLog.scrollHeight;
-				this.insertChatMessage(`${sender}:: ${message}`, this.chatLog);
-				break;
-			default:
-				// this.chatLog.value += `${message}\n`;
-				// this.chatLog.scrollTop = this.chatLog.scrollHeight;
-			  this.insertChatMessage(message, this.chatLog);
-		}
+		this.insertChatMessage(message, this.chatLog, type);
 
 		this.chatLog.scrollTop = this.chatLog.scrollHeight;
 	}
@@ -250,7 +230,7 @@ class ChatRouter {
 		}
 	}
 
-	sendDuelResponse(response) {
+	sendDuelResponse(response) {	
 		const data = {
 			message: `${this.username} has ${response} the challenge!`,
 			username: this.username,
@@ -281,15 +261,34 @@ class ChatRouter {
 		this.chatSocket.close();
 	}
 
-	insertChatMessage(message, parent) { 
+	insertChatMessage(message, parent, type) { 
 		const card = document.createElement('div');
 		card.className = 'card chat-card my-1';
 		card.style += 'max-height:inherit;';
-		const cardBody = document.createElement('textarea');
-		cardBody.className = 'card chat-card';
-		cardBody.value = message;
+		const cardBody = document.createElement('p');
+		cardBody.innerText = message;
+		cardBody.className = 'chat-message';
+
+
+		switch (type) {
+			case 'duel':
+				cardBody.classList.add('text-primary');
+				break;
+			case 'pm':
+				cardBody.classList.add('text-warning');
+				break;
+			case 'system':
+				cardBody.classList.add('text-secondary');
+				break;
+			default:
+				cardBody.classList.add('text-success');
+				break;
+		}
+
 		card.appendChild(cardBody);
 		parent.appendChild(card);
+		// set focus to the message input
+		document.querySelector('#chat-message-input').focus();
 	}
 };
 
