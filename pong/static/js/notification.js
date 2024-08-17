@@ -58,6 +58,7 @@ function showNotification(message, type, img=DEFAULT_IMAGE, sound=null) {
 	notification.show();
 	if (sound) {
 		const audio = new Audio(sound);
+		audio.volume = 0.5;
 		audio.play();
 	}
 }

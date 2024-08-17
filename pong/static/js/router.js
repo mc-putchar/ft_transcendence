@@ -119,7 +119,8 @@ class Router {
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
 		} else if (template.startsWith('tournaments/')) {
-			this.loadTemplate(await this.tournament.route(template));
+			const next = await this.tournament.route(template);
+			setTimeout(() => window.location.hash = next ?? this.oldHash, 100);
 		} else if (template.startsWith('chat')) {
 			const roomName = template.substring(5) || 'lobby';
 			this.loadChat(roomName);
