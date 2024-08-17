@@ -8,6 +8,8 @@ import { startPong3DGame, stopPong3DGame } from './pong3d.js';
 import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
 import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
+import { ClassicGame } from './classic-online.js';
+import { ClientClassic } from './client-classic.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
@@ -44,6 +46,8 @@ class Router {
 		this.oldHash = window.location.hash;
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));
+		// PERFORMANCE MONITOR
+		(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
 		// Enable Bootstrap stuff
 		let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -59,6 +63,7 @@ class Router {
 		this.chatElement.addEventListener('challenge', (event) => {
 			this.game.setupGameWebSocket(event.detail.gameID);
 			const sound = new Audio(CHALLENGE_SOUND);
+			sound.volume = 0.5;
 			sound.play();
 		});
 		this.chatElement.addEventListener('notification', (event) => {
@@ -94,7 +99,8 @@ class Router {
 	}
 
 	displayError(message) {
-		this.appElement.innerHTML = `<p>${message}</p><button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>`;
+		this.appElement.innerHTML = `<p id='error-message'></p><button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>`;
+		document.getElementById('error-message').innerText = message;
 	}
 
 	notifyError(message) {
@@ -105,38 +111,14 @@ class Router {
 		this.updateFriendsAndBlocks();
 		this.loadNav();
 		this.loadChat();
-		this.route();
+		window.location.hash = '/';
+		// this.route();
 	}
 
 	async route(e) {
-		this.oldHash = e ? e.oldURL : this.oldHash;
+		this.oldHash = this.oldHash ?? window.location.hash;
 		const template = window.location.hash.substring(2) || 'home';
-		if (template.startsWith('auth42')) {
-			const authPopup = popupCenter('/auth42', '42Auth', 420, 420);
-
-			if (authPopup) {
-				const authListener = (event) => {
-					if (event.origin !== window.location.origin) return;
-					const { access, refresh } = event.data;
-					if (access && refresh) {
-						sessionStorage.setItem('access_token', access);
-						sessionStorage.setItem('refresh_token', refresh);
-						this.reload();
-					} else {
-						this.notifyError("Received invalid tokens.");
-					}
-					window.removeEventListener('message', authListener, false);
-					sessionStorage.removeItem('is_popup');
-					window.location.hash = '/home';
-				};
-
-				window.addEventListener('message', authListener, false);
-				authPopup.focus();
-			} else {
-				this.notifyError("Failed to open 42Auth popup");
-			}
-			location.hash = this.oldHash;
-		} else if (template.startsWith('profiles/')) {
+		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
 		} else if (template.startsWith('tournaments/')) {
 			this.loadTemplate(await this.tournament.route(template));
@@ -153,11 +135,13 @@ class Router {
 				// this.chat.declineGame();
 				this.chat.sendDuelResponse('declined');
 			}
+			setTimeout(() => window.location.hash = this.oldHash, 100);
 			this.game.route(template);
 		} else if (template.startsWith('addFriend') || template.startsWith('deleteFriend') || template.startsWith('block') || template.startsWith('unblock')) {
-				const action = template.split('/')[0];
-				const id = template.split('/')[1];
-				this.manageFrenemy(action, id);
+			const action = template.split('/')[0];
+			const id = template.split('/')[1];
+			this.manageFrenemy(action, id);
+			setTimeout(() => window.location.hash = this.oldHash, 100);
 		} else {
 			this.loadTemplate(template);
 		}
@@ -206,7 +190,7 @@ class Router {
    			         var isToggle = event.target.classList.contains('navbar-toggler');
    			         
    			         if (!isClickInside && !isToggle) {
-   			             console.log('click outside');
+   			            //  console.log('click outside');
    			             collapse.hide();
    			         }
    			     });
@@ -257,7 +241,6 @@ class Router {
 		if (await postJSON(`/api/profiles/${endpoint}/`, this.csrfToken, body)) {
 			console.debug("Frenemy action successful:", action, id);
 			this.updateFriendsAndBlocks();
-			history.back();
 		} else {
 			this.notifyError(`Failed to perform action: ${action} with id: ${id}`);
 			this.displayError(`Failed to perform action: ${action} with id: ${id}`);
@@ -419,6 +402,7 @@ class Router {
 
 	handleLoginForm() {
 		const form = document.getElementById('login-form');
+		if (!form) return;
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const username = document.getElementById('username').value;
@@ -455,9 +439,6 @@ class Router {
 			const response = await postJSON('/api/logout/', this.csrfToken, body);
 			if (response) {
 				console.log("Logged out");
-				this.loadNav();
-				this.loadChat();
-				window.location.hash = '/home';
 			} else {
 				throw new Error("Failed to log out");
 			}
@@ -569,15 +550,16 @@ class Router {
 					const response = await fetch('/game/tournaments/create_tournament_form/', {
 						method: 'POST',
 						headers: {
+							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`,
 							'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
 						},
 						body: formData
 					});
 					if (response.ok) {
-						console.log("Tournament created successfully");
+						console.log("Tournament created successfully", response);
 						this.loadTemplate('tournaments');
 					} else {
+						console.log("Failed to create tournament", response);
 						throw new Error("Failed to create tournament");
 					}
 				} catch (error) {
@@ -605,7 +587,6 @@ class Router {
 				this.game.gameSocket?.close();
 				this.tournament.tournamentSocket?.close();
 				this.reload();
-				window.location.hash = '/';
 			} else {
 				throw new Error("Failed to delete account");
 			}
