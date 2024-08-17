@@ -107,34 +107,39 @@ class ChatRouter {
 		}
 	}
 
-	updateUserList(users) {
+	async updateUserList(users) {
 		if (this.users !== users) {
 			this.users = users;
 
 			this.usersList.innerHTML = '';
-			this.users.forEach((user) => {
+			await this.users.forEach(async (user) => {
 				const userBtn = document.createElement('button');
-				userBtn.className = 'btn btn-dark btn-outline-success btn-sm';
-				userBtn.textContent = user;
+				userBtn.className = 'btn btn-dark btn-outline-success btn-sm rounded-circle';
+				const data = await getJSON(`/api/profiles/user/${user}/`, this.csrfToken);
+				if (!data) {
+					this.showError("Error loading user profile");
+					return;
+				}
+
+				const imageUrl = data.image.startsWith("http://")
+				? data.image.replace("http://", "https://")
+				: data.image;
+				
+				userBtn.innerHTML = `<img src="${imageUrl}" alt="Profile Image" class="rounded-circle img-thumbnail" title="${user}" height="2vh" loading="lazy">`;
+				
 				userBtn.onclick = async () => {
-					const data = await getJSON(`/api/profiles/user/${user}/`, this.csrfToken);
-					if (!data) {
-						this.showError("Error loading user profile");
-						return;
-					}
 					const fields = [
 						{ key: "user.username", label: "<b>User: </b>" },
 						{ key: "alias", label: "<b>Alias: </b>" },
 					];
-					const imageUrl = data.image.startsWith("http://")
-					? data.image.replace("http://", "https://")
-					: data.image;
 
 					const isMe = (user === this.username);
 					const isFriend = sessionStorage.getItem('friends').includes(user);
 					const isBlocked = sessionStorage.getItem('blocked').includes(user);
-					let btnTemplate = '<button type="button" data-bs-dismiss="modal" class="btn btn-"';
+					
+					let btnTemplate = `'<button type="button" data-bs-dismiss="modal" class="btn btn-"'`;
 					let frenemyButtons = '';
+					
 					if (isMe) {
 						frenemyButtons = btnTemplate + 'primary" onclick="location.hash=\'#/profile\'">Edit Profile</button>';
 					} else {

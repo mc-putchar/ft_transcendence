@@ -58,6 +58,10 @@ img {
   -ms-user-select: none;
 }
 
+img {
+  z-index: 999;
+}
+
 html,
 body {
   padding: 0;
