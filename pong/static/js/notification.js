@@ -30,9 +30,10 @@ class Notification {
 				</button>
 			</div>
 			<div class="toast-body">
-				${this.message}
+				<textarea id="notification-msg" class="form-control" rows="3" readonly></textarea>
 			</div>
 		`;
+		toast.querySelector("#notification-msg").value = this.message;
 		root.appendChild(toast);
 
 		const options = {

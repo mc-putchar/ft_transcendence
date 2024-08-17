@@ -8,8 +8,6 @@ import { startPong3DGame, stopPong3DGame } from './pong3d.js';
 import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
 import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
-import { ClassicGame } from './classic-online.js';
-import { ClientClassic } from './client-classic.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
