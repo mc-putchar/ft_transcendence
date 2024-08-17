@@ -8,7 +8,7 @@
 > Look at you now. Time to shine!  
 <p style='text-align: center;'> -- en.subject.pdf (v.15) </p>
 
-[IMAGE_PLACEHOLDER]
+![IMAGE_PLACEHOLDER](pong/static/img/jinja-dashboard.png)
 
 # _Description_:
 Free open-source web platform, mainly for playing Pong games and tournaments.  
@@ -21,7 +21,7 @@ Inspired by the classic Pong game of the 70s, infused with modern features and t
 	```
   - Follow the Setup Wizard to configure the project for your instance.  
   Required information:
-	- valid Django secret key
+	- valid Django secret key (generate new one with `make newkey` )
 	- valid PostgreSQL information
 	- OAuth 42 client id and secret (if you want to use 42 OAuth)
 	- Hardhat network URL (if you want to use blockchain features)
@@ -29,7 +29,10 @@ Inspired by the classic Pong game of the 70s, infused with modern features and t
 
   - Alteratively, provide own .env file according to the .env.template
 
-  - Explore additional options with `make help`
+  - Explore additional options with 
+	```bash
+	make help
+	```
 
 # _Features_:
 ## _Live Chat_

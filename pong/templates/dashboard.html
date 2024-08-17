@@ -13,7 +13,7 @@
                         <img src="{{ profile.image }}" class="rounded border border-3 border-info account-img img-fluid mx-auto" alt="Profile Picture" >
                     </div>
                     <div class="col-4 mt-4">
-                        <div class="card text-center" >
+                        <div class="card-body text-center" >
                             <h3 class="card-title">{{ username }}</h3>
                             <span class="badge bg-{% if profile.isOnline %}success{% else %}danger{% endif %}">{{ status }}</span>
                             <p class="card-text"><b>Alias:</b> {{ profile.alias }}</p>
