@@ -9,7 +9,6 @@ networks:
 configs:
   caddyfile:
     file: "${PWD}/server/Caddyfile${DEPLOY:+_deploy}"
-    file: "${PWD}/server/Caddyfile${DEPLOY:+_deploy}"
 
 services:
   cloudflared:
@@ -68,8 +67,6 @@ services:
       - DEBUG
     networks:
       - transcendeNet
-    ports:
-      - "127.0.0.1:4243:443"
     depends_on:
       db:
         condition: service_healthy
