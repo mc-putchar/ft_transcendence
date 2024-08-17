@@ -48,14 +48,14 @@ class Router {
 		(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
 		// Enable Bootstrap stuff
-		let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-		let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-			return new bootstrap.Tooltip(tooltipTriggerEl)
-		});
-		let popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-		let popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-			return new bootstrap.Popover(popoverTriggerEl)
-		});
+		// let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+		// let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+		// 	return new bootstrap.Tooltip(tooltipTriggerEl)
+		// });
+		// let popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+		// let popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+		// 	return new bootstrap.Popover(popoverTriggerEl)
+		// });
 
 		// Register listeners for custom events
 		this.chatElement.addEventListener('challenge', (event) => {
@@ -97,7 +97,7 @@ class Router {
 	}
 
 	displayError(message) {
-		this.appElement.innerHTML = `<p id='error-message'></p><button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>`;
+		this.appElement.innerHTML = `<p id='error-message'></p><button class="btn btn-primary btn-sm" onclick="history.back()">Go Back</button>`;
 		document.getElementById('error-message').innerText = message;
 	}
 
@@ -124,6 +124,7 @@ class Router {
 		} else if (template.startsWith('chat')) {
 			const roomName = template.substring(5) || 'lobby';
 			this.loadChat(roomName);
+			setTimeout(() => window.location.hash = this.oldHash, 100);
 		} else if (template.startsWith('game/')) {
 			if (template.startsWith('game/accept/')) {
 				const gameID = template.substring(12);

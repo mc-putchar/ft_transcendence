@@ -276,6 +276,7 @@ class Game {
 	}
 
 	destructor() {
+		this.gameSocket.close();
 		window.cancelAnimationFrame(this.animRequestId);
 		// stop audio
 		stopAudioTrack();
@@ -449,7 +450,7 @@ class Game {
 			this.ball.reset();
 			this.showScore();
 			if (!this.gameover)
-				this.send_ready();
+				setTimeout(() => this.send_ready(), 3000);
 			else
 				this.endGame();
 		}

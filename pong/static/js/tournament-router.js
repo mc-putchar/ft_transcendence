@@ -47,7 +47,7 @@ class TournamentRouter {
 		if (event.endsWith('join/')) {
 			this.tournamentID = event.split('/')[1];
 			if (this.tournamentID && await this.joinTournament(this.tournamentID))
-				return `/tournaments/in-tournament/${this.tournamentID}`;
+				return `/in-tournament/${this.tournamentID}`;
 		} else if (event.endsWith('leave/')) {
 			this.tournamentID = event.split('/')[1];
 			this.leaveTournament(this.tournamentID);
