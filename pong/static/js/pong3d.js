@@ -1,3 +1,5 @@
+"use strict";
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
@@ -36,6 +38,8 @@ const WALL_TEX_IMG = "static/img/matrix-purple.jpg"
 const AVATAR1_IMG = "static/img/avatar.jpg"
 const AVATAR2_IMG = "static/img/avatar-marvin.png"
 const FLOOR_TEX_IMG = "static/img/login-install.jpg"
+// const PADDLE_TEX_IMG = "../../static/img/bricks.jpg"
+const PADDLE_TEX_IMG = "../../static/img/wickerWeaves.jpg"
 
 let button_left = null;
 let button_right = null;
@@ -326,11 +330,9 @@ class Game {
 		this.fsButton = document.createElement('div');
 		fsthing = this.fsButton;
 		this.fsButton.id = "fullscreenButton";
-		this.fsButton.style = "font-size: 24px; cursor: pointer; top: 20%; right: 20%;";
 		this.fsButton.classList.add("game-ui", "btn", "bg-transparent", "btn-outline-light");
 		this.fsButton.innerText = "♐";
 		this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
-		this.parent.appendChild(this.fsButton);
 		
 		this.canvas = document.createElement('canvas');
 		this.canvas.width = window.innerWidth;
@@ -341,6 +343,8 @@ class Game {
 		this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+		
+		this.canvas.appendChild(this.fsButton);
 
 		// buttons
 		button_right = document.createElement("button");
@@ -382,7 +386,9 @@ class Game {
 		this.ball.place(this.scene, 0, 0);
 		this.saved = {x: this.ball.dir.x, y: this.ball.dir.y};
 
-		const wire_material = new THREE.MeshPhongMaterial({ color: 0x42FF42, wireframe: true });
+		const paddle_texture = new THREE.TextureLoader().load(PADDLE_TEX_IMG);
+		paddle_texture.wrapS = THREE.RepeatWrapping;
+		const wire_material = new THREE.MeshPhongMaterial({ map: paddle_texture });
 		const box_geometry = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2);
 		const avatar1_texture = new THREE.TextureLoader().load(AVATAR1_IMG);
 		const avatar2_texture = new THREE.TextureLoader().load(AVATAR2_IMG);

@@ -47,7 +47,7 @@ class TournamentRouter {
 		if (event.endsWith('join/')) {
 			this.tournamentID = event.split('/')[1];
 			if (this.tournamentID && await this.joinTournament(this.tournamentID))
-				return `in-tournament/${this.tournamentID}`;
+				return `/tournaments/in-tournament/${this.tournamentID}`;
 		} else if (event.endsWith('leave/')) {
 			this.tournamentID = event.split('/')[1];
 			this.leaveTournament(this.tournamentID);
@@ -61,21 +61,10 @@ class TournamentRouter {
 			this.tournamentID = event.split('/')[1];
 			this.nextRound(this.tournamentID);
 		} else {
-			const data = await getJSON(`/game/${event}`, this.csrfToken);
-			if (data) {
-				const fields = [
-					{ key: 'name', label: 'Name' },
-					{ key: 'player_limit', label: 'Max Players' },
-					{ key: 'status', label: 'Status' },
-				];
-				createModal(data, "tournament-modal", "tournament-modal-content", fields);
-				window.location.hash = '/tournaments';
-			} else {
-				this.showError("Error loading content");
-			}
+			console.debug("Unknown tournament route:", event);
 		}
 		this.tournamentID = null;
-		return 'tournaments';
+		return "/tournaments";
 	}
 
 	parseMessage(event) {

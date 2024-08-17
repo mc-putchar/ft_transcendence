@@ -17,7 +17,7 @@ services:
     networks:
       - transcendeNet
     volumes:
-      - ./cloudflared:/etc/cloudflared
+      - ./cloudflared:/etc/cloudflared:ro
     profiles:
       - tunnel
     restart: unless-stopped

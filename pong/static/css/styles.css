@@ -58,6 +58,10 @@ img {
   -ms-user-select: none;
 }
 
+img {
+  z-index: 999;
+}
+
 html,
 body {
   padding: 0;
@@ -117,15 +121,7 @@ canvas {
   /* justify-content: center; */
 }
 
-#chat {
-  position: fixed;
-  top: 5%;
-  right: 5%;
-  z-index: 100;
-  display: none;
-  flex-direction: column;
-  height: 100%;
-}
+
 
 #game-container {
   position: relative;
@@ -314,12 +310,6 @@ img.mp3-hover:hover {
 }
 
 .popover-body {
-  /* position: relative; */
-  /* border: 1px solid #d1d1d1; */
-  /* justify-content: left; */
-  /* text-align: left; */
-  /* font-size: 1rem; */
-  /* width: 50vw; */
   font-family: "Lucida Sans";
 }
 
@@ -335,15 +325,47 @@ img.mp3-hover:hover {
   height: 100%;
 }
 
+#chat {
+  position: fixed;
+  bottom: 5%;
+  right: 5%; 
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  max-height: 70vh;
+  /* overflow-y: auto; */
+  margin-bottom: 5%;
+}
+
 #chat-log {
+  height: 50vh; /* Adjust as needed */
+  max-height: 50vh; /* Ensures the maximum height is 50vh */
+  overflow-y: auto; /* Enables vertical scrolling */
+  overflow-x: hidden; /* Hides horizontal scrolling */
+  position: relative;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   margin-bottom: 15px;
-  overflow-y: auto;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  user-select: none; /* Disables text selection */
+  -webkit-user-select: none; /* For WebKit browsers */
+  -moz-user-select: none; /* For Mozilla browsers */
+  -ms-user-select: none; /* For Internet Explorer/Edge browsers */
+  
+  /* WebKit browsers (Chrome, Safari) */
+  ::-webkit-scrollbar {
+    width: 0; /* Hides the scrollbar */
+    background: transparent; /* Optional: background for better visibility */
+  }
+
+  /* Firefox */
+  scrollbar-width: none; /* Hides the scrollbar */
+
+  /* Edge */
+  -ms-overflow-style: none; /* Hides the scrollbar */
 }
+
 
 #chat-message-input {
   width: 100%;
@@ -354,7 +376,26 @@ img.mp3-hover:hover {
   padding: 10px;
   margin-top: 20px;
 }
- 
+
+.chat-message {
+  margin: 0; /* Removes default margin */
+  margin-left: 10px; /* Adds space between messages */
+  padding: 0; /* Removes default padding */
+  line-height: 1.4; /* Adjust line height to reduce extra space */
+  display: flex; /* Use flexbox for centering */
+  align-items: center; /* Vertically center text */
+  justify-content: left; /* Horizontally center text, if needed */
+  min-height: 30px; /* Set a minimum height if needed */
+  word-break: break-word; /* Ensures long words are broken */
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  max-height: inherit;
+  overflow: auto;
+  max-width: 50vw; /* Limit the width to 50% of the viewport width */
+	font-size: smaller;
+}
+
 #room-name {
   margin-top: 15px;
 }
