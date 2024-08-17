@@ -2,16 +2,18 @@
 
 import { getJSON, postJSON } from "./utils.js";
 import { initGame } from "./pong-online.js";
+import { ClientClassic } from "./client-classic.js";
 
 class GameRouter {
-	constructor(crsfToken, appElement) {
-		this.csrfToken = crsfToken;
+	constructor (csrfToken, appElement) {
+		this.csrfToken = csrfToken;
 		this.appElement = appElement;
 		this.gameSocket = null;
 		this.username = "";
+		this.client = null;
 	}
 
-	setupGameWebSocket(gameID) {
+	setupGameWebSocket (gameID) {
 		if (this.gameSocket) {
 			console.log("Game socket already exists");
 			// this.gameSocket.close();
@@ -26,59 +28,78 @@ class GameRouter {
 		);
 		console.log("Game socket created");
 
-		this.gameSocket.addEventListener('open', () => {
-			console.log("Game socket opened");
-		});
+		this.gameSocket.addEventListener('open', () => console.log("Game socket opened"));
 		this.gameSocket.addEventListener('error', (e) => console.error("Game websocket error:", e));
 		this.gameSocket.addEventListener('close', (e) => {
 			if (!e.wasClean) console.error("Game socket closed unexpectedly:", e);
 			else console.log("Game socket closed:", e);
+			this.gameSocket = null;
 		});
 		this.gameSocket.addEventListener('message', (event) => this.parseMessage(event));
 	}
 
-	route(event) {
-		console.debug("Routing to game", event);
-		if (event !== "/game/") {
-			window.location.hash = "/game/";
-		}
+	route (event) {
+		console.debug("Routing to game?", event);
 	}
 
-	async parseMessage(event) {
+	async parseMessage (event) {
 		const data = JSON.parse(event.data);
 
-		if (data.type === 'game_state') {
-			this.gameData.update(data.game_state);
-		} else if (data.type === 'error') {
-			console.error(`Received error: ${data.message}`);
-		} else if (data.hasOwnProperty('message')) {
-			if (data.message.startsWith("match_id")) {
-				console.log("Received match_id message", data.message);
-				const gameID = data.message.split(' ')[1];
-				const result = await this.joinGame(gameID);
-				if (result === null) {
-					console.error("Error! Game cancelled.");
-					return;
-				}
+		if (!data.hasOwnProperty('type')) {
+			console.error("No type in message", data);
+			return;
+		}
+		switch (data.type) {
+			case 'error':
+				console.error("Error message", data.message);
+				break;
+			case 'connection':
+				console.log("Connection message", data.message);
+				break;
+			case 'registration':
+				console.log("Registration message", data.message);
+				break;
+			case 'spectate':
+				console.log("Spectator joined", data.message);
+				break;
+			case 'game_state':
+				this.gameData.update(data.game_state);
+				break;
+			case 'decline':
+				console.log("Game declined", data.message);
+				this.gameSocket.close();
+				break;
+			case 'accept':
+				console.log("Game accepted", data.message);
 				const username = document.getElementById("chat-username").innerText.trim();
 				let opponent = this.gameID;
 				const isChallenger = (username === opponent);
 				if (isChallenger)
 					opponent = data.message.split(' ')[2];
-				console.log("Starting game between", username, opponent);
-				await initGame(this.gameData, this.gameSocket, gameID, username, opponent, isChallenger);
-			} else if (data.message === "declined") {
-				console.log("Game declined");
-				this.gameSocket.close();
-			} else {
-				console.log(`Received msg: ${data.message}`);
-			}
-		} else {
-			console.log(`Received type ${data.type}`);
+				const gameID = data.message.split(' ')[1];
+				const result = await this.joinGame(gameID);
+				if (!result) {
+					console.error("Error! Game cancelled.");
+					return;
+				}
+				const gameData = {
+					"player": username,
+					"opponent": opponent,
+					"gameID": gameID,
+					"isChallenger": isChallenger,
+				};
+				await this.startOnlineGame(gameData);
+				break;
+			default:
+				if (data.hasOwnProperty('message')) {
+					console.log("Message", data.message);
+				} else {
+					console.log("Unknown message", data);
+				}
 		}
 	}
 
-	handleInitialSend(msg) {
+	handleInitialSend (msg) {
 		if (this.gameSocket.readyState === WebSocket.OPEN) {
 			this.gameSocket.send(JSON.stringify(msg));
 			if (msg.type === 'decline') {
@@ -93,7 +114,7 @@ class GameRouter {
 		}
 	}
 
-	async acceptChallenge(gameID) {
+	async acceptChallenge (gameID) {
 		this.setupGameWebSocket(gameID);
 		this.username = document.querySelector('#chat-username').textContent;
 		const matchID = await this.createGame();
@@ -109,7 +130,7 @@ class GameRouter {
 		console.log("Accepted challenge", matchID);
 	}
 
-	async declineChallenge(gameID) {
+	async declineChallenge (gameID) {
 		this.setupGameWebSocket(gameID);
 		this.handleInitialSend({
 			"type": "decline",
@@ -117,7 +138,7 @@ class GameRouter {
 		});
 	}
 
-	async createGame() {
+	async createGame () {
 		const response = await postJSON("/game/matches/create_match/", this.csrfToken);
 		if (response && response.hasOwnProperty('match_id')) {
 			return response.match_id;
@@ -126,7 +147,7 @@ class GameRouter {
 		return null;
 	}
 
-	async joinGame(gameID) {
+	async joinGame (gameID) {
 		const response = await postJSON(`/game/matches/${gameID}/join/`, this.csrfToken);
 		if (response && response.hasOwnProperty('message')) {
 				return response.message;
@@ -135,7 +156,43 @@ class GameRouter {
 		return null;
 	}
 
-	async startTournamentGame(data) {
+	async startOnlineGame (data) {
+		// create players
+		const playerProfile = await getJSON(`/api/profiles/user/${data.player}/`)
+		const opponentProfile = await getJSON(`/api/profiles/user/${data.opponent}/`);
+		if (playerProfile === null || opponentProfile === null) {
+			console.error("Error fetching player profiles");
+			return;
+		}
+		const player = new Player(
+			data.isChallenger ? "left" : "right",
+			playerProfile.user.username,
+			playerProfile.alias,
+			{ up: "ArrowLeft", down: "ArrowRight" },
+			playerProfile.avatar
+		);
+		const opponent = new Player(
+			data.isChallenger ? "right" : "left",
+			opponentProfile.user.username,
+			opponentProfile.alias,
+			null,
+			opponentProfile.avatar
+		);
+		const gameSetup = new GameSetup(
+			this.appElement,
+			player,
+			opponent,
+			data.isChallenger,
+			"online",
+			"2d"
+		);
+		// this.client = new ClientClassic(gameSetup, this.gameSocket, this.gameData, data.gameID);
+		// this.client.start();
+		this.gameData = new GameData();
+		initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
+	}
+
+	async startTournamentGame (data) {
 		this.setupGameWebSocket(`${data.tournamentID}#${data.gameID}#${data.player}`);
 		if (await this.joinGame(data.gameID) == null) {
 			console.error("Error joining game");
@@ -146,36 +203,46 @@ class GameRouter {
 };
 
 class GameData {
-	constructor() {
-		this.status = "starting";
-		this.player1Position = 0;
-		this.player1Direction = 0;
-		this.player2Position = 0;
-		this.player2Direction = 0;
-		this.ballPosition = {x: 0, y: 0};
-		this.ballDirection = {dx: 0, dy: 0};
-		this.ballSpeed = 2;
-		this.player1Score = 0;
-		this.player2Score = 0;
-		this.scoreLimit = 11;
+	constructor () {
+		this.status = "setup";
+		this.player1 = { x: 0, dx: 0, ready: false };
+		this.player2 = { x: 0, dx: 0, ready: false };
+		this.ball = { x: 0, y: 0, dx: 0, dy: 0, v: 2 };
+		this.score = { p1: 0, p2: 0, limit: 11 };
 		this.timestamp = Date.now();
 	}
 
-	update(data) {
+	update (data) {
 		this.status = data.status;
-		this.player1Position = data.player1_position;
-		this.player1Direction = data.player1_direction;
-		this.player2Position = data.player2_position;
-		this.player1Direction = data.player2_direction;
-		this.ballPosition = data.ball_position;
-		this.ballDirection = data.ball_direction;
-		this.ballSpeed = data.ball_speed;
-		this.player1Score = data.player1_score;
-		this.player2Score = data.player2_score;
-		this.scoreLimit = data.score_limit;
+		this.player1 = data.player1;
+		this.player2 = data.player2;
+		this.ball = data.ball;
+		this.score = data.score;
 		this.timestamp = data.timestamp;
 	}
 };
 
-export { GameRouter, GameData };
+class GameSetup {
+	constructor (parentElement, player1, player2, isChallenger, mode="single", client="2d") {
+		this.parentElement = parentElement;
+		this.player1 = player1;
+		this.player2 = player2;
+		this.isChallenger = isChallenger;
+		this.mode = mode;
+		this.client = client;
+	}
+};
+
+class Player {
+	constructor (side, name, alias=null, controls=null, avatar="/static/img/avatar-marvin.png", isAI=false) {
+		this.side = side;
+		this.name = name;
+		this.alias = alias ?? name;
+		this.controls = isAI ? null : controls;
+		this.avatar = avatar;
+		this.AI = isAI;
+	}
+};
+
+export { GameRouter, GameData, GameSetup, Player };
 

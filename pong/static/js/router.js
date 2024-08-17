@@ -140,10 +140,11 @@ class Router {
 			const action = template.split('/')[0];
 			const id = template.split('/')[1];
 			this.manageFrenemy(action, id);
-			setTimeout(() => window.location.hash = this.oldHash, 100);
+			setTimeout(() => history.back(), 100);
 		} else {
 			this.loadTemplate(template);
 		}
+		this.oldHash = window.location.hash;
 	}
 
 	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
@@ -250,19 +251,14 @@ class Router {
 		if (!sessionStorage.getItem('access_token'))
 			return;
 		try {
-			const response = await getJSON('/api/profiles/friends/', this.csrfToken);
+			let response = await getJSON('/api/profiles/friends/', this.csrfToken);
 			if (response) {
 				console.log("Updated friends", response);
 				sessionStorage.setItem('friends', JSON.stringify(response));
 			} else {
 				throw new Error("Failed to update friends");
 			}
-		} catch (error) {
-			this.displayError(error.message);
-			return;
-		}
-		try {
-			const response = await getJSON('/api/profiles/blocked_users/', this.csrfToken);
+			response = await getJSON('/api/profiles/blocked_users/', this.csrfToken);
 			if (response) {
 				console.log("Updated blocked", response);
 				sessionStorage.setItem('blocked', JSON.stringify(response));
