@@ -18,7 +18,7 @@
 		- [x] Google Chrome compatibility
 		- [ ] no unhandled errors or warnings
 		- [x] single command line launch (make)
-		- [ ] Docker runtime files must be located in /goinfre or /sgoinfre
+		- [x] Docker runtime files must be located in /goinfre or /sgoinfre
 		- [x] no “bind-mount volumes” between the host and the container if non-root UIDs are used in the container
 		- [ ] Game:
 			- [x] remote players (+ 42 OAuth)
@@ -40,6 +40,7 @@
 			- [ ] sound preferences
 			- [ ] default Pong client variant (2D/3D/any other)
 		- [ ] user settings:
+			- [x] on change of profile picture, overwrite old one if not default
 			- [ ] change email
 			- [ ] validate user email
 				- [ ] password recovery
@@ -47,7 +48,7 @@
 			- [ ] change password
 			- [x] anonymize account (ensure no personal data is stored)
 			- [ ] delete account (adjust cascading in db on delete)
-			- [ ] resolve 42 acount username conflict
+			- [x] resolve 42 acount username conflict
 			- [ ] connect 42 account (after conventional registration)
 			- [ ] ? display blockchain user address? status? (after optin)
 		- [ ] custom paddle texture:
@@ -75,6 +76,7 @@
 		- [ ] mobile controls
 		- [ ] improve predictive client
 		- [ ] global matchmaking
+		- [ ] spectating mode
 
 	- [ ] tournaments:
 		- [ ] mandatory:
@@ -84,6 +86,12 @@
 			- [ ] websocket updates
 			- [x] tournament round progressions
 			- [x] tournament finalization
+			- [ ] tournament rewards
+		- [ ] presentation:
+			- [x] list tournaments
+			- [x] tournament details
+			- [ ] tournament brackets
+			- [ ] tournament results
 		- [ ] ? customizations
 
 	- [ ] swag:
@@ -129,6 +137,7 @@
 	- [ ] ? prepare for webassembly (footuristic)
 
 ### CI/CD:
+	- [x] statusrobot monitor
 	- [ ] github actions:
 		- [ ] testing
 		- [ ] deployment

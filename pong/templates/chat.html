@@ -1,10 +1,10 @@
 
 {% if user.is_authenticated %}
-<div class="container py-5" id="chat-container">
+<div class="container p-5" id="chat-container">
 
-    <div class="row d-flex justify-content-center border border-2 rounded-3 border-success">
+    <div class="row d-flex justify-content-center bg-transparent border border-2 rounded-3 border-success m-1">
 
-        <a data-mdb-ripple-init class="btn btn-info btn-lg btn-block" data-mdb-collapse-init data-bs-toggle="collapse" data-bs-target="#collapseChat"
+        <a data-mdb-ripple-init class="btn btn-lg btn-block overlay" data-mdb-collapse-init data-bs-toggle="collapse" data-bs-target="#collapseChat"
           role="button" aria-expanded="false" aria-controls="collapseChat">
             <div class="d-flex justify-content-between align-items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="lime" class="bi bi-chat" viewBox="0 0 16 16">
@@ -15,27 +15,32 @@
         </a>
 
         <!-- Collapsed content -->
-        <div class="collapse" id="collapseChat">
+        <div class="collapse overlay" id="collapseChat">
             <div class="row flex-fill bg-transparent">
-                <div class="col-10">
-                <textarea id="chat-log" class="form-control" rows="14" readonly></textarea>
+                <div class="col m-1">
+                    <textarea id="chat-log" class="form-control" rows="14" readonly></textarea>
                 </div>
-                <div class="col-2 overlay">
-                <div class="container" id="chat-userlist"></div>
+                <div class="col-2">
+                <div class="container p-1" id="chat-userlist"></div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-10 bg-dark border border-success">
-                    <img src="{{ user.profile.image.url }}" class="rounded-circle" style="width: 42px; height: 42px;">
-                    <label id="chat-username" class="bg-dark">{{ user.username }}</label>
-                    <input id="chat-message-input" class="form-control" type="text" autocomplete="off"
-                    placeholder="Type your message here... type /help for list of commands"/>
-                </div>
-                <div class="col-2">
-                    <div class="col-2 text-center" style="margin-top: 25%">
-                        <button id="chat-message-submit" class="btn btn-primary btn-block">
+                <div class="col bg-dark border rounded border-success clearfix m-1">
+                    <!-- <img src="{{ user.profile.image.url }}" class="rounded-circle m-1" style="width: 42px; height: 42px; float: left;"> -->
+                    <div class="m-1">
+                        <label id="chat-username" class="bg-dark mb-1">{{ user.username }}</label>
+                        <button id="chat-message-submit" class="btn-sm btn-primary btn-block float-end m-1">
                             Send
                         </button>
+                    </div>
+                    <div class="input-group m-1">
+                        <input id="chat-message-input" class="form-control form-control-sm m-1" type="text" autocomplete="off" list="commands" maxlength="142"
+                        placeholder="Type your message here..."/>
+                        <datalist id="commands">
+                            <option value="/duel">
+                            <option value="/help">
+                            <option value="/pm">
+                        </datalist>
                     </div>
                 </div>
             </div>

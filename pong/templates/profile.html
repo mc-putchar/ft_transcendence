@@ -17,18 +17,18 @@
                         {{ p_form.as_p }}
 
                         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                        <button class="btn btn-primary" type="submit">Update</button>
+                        <button class="btn btn-primary my-2" type="submit">Update</button>
                     </form>
-                    {% if user.profile.blockchain_opted_in %}
-                        <button id="blockchain-optin" class="btn btn-primary">Blockchain Opt-In</button>
+                    {% if not user.profile.blockchain_address %}
+                        <button id="blockchain-optin" class="btn btn-primary my-2">Blockchain Opt-In</button>
                     {% endif %}
-                    <button id="account-administration" class="btn btn-warning">Account Administration</button>
+                    <button id="account-administration" class="btn btn-warning my-2">Account Administration</button>
                     <form class="form" id="password-form" method="POST" style="display: none;">
                         {{ cp_form.as_p }}
                         <button class="btn btn-primary" type="submit">Change Password</button>
                     </form>
-                    <button id="anonymize-data" class="btn btn-warning" style="display: none;">Anonymize Data</button>
-                    <button id="delete-account" class="btn btn-danger" style="display: none;">Delete Account</button>
+                    <button id="anonymize-data" class="btn btn-warning my-2" style="display: none;">Anonymize Data</button>
+                    <button id="delete-account" class="btn btn-danger my-2" style="display: none;">Delete Account</button>
                 </div>
             </div>
         </div>

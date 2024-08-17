@@ -9,6 +9,7 @@ networks:
 configs:
   caddyfile:
     file: "${PWD}/server/Caddyfile${DEPLOY:+_deploy}"
+    file: "${PWD}/server/Caddyfile${DEPLOY:+_deploy}"
 
 services:
   cloudflared:
@@ -20,13 +21,6 @@ services:
       - ./cloudflared:/etc/cloudflared
     profiles:
       - tunnel
-    restart: unless-stopped
-
-  blockchain:
-    build:
-      context: "${PWD}/pong/blockchain"
-    networks:
-      - transcendeNet
     restart: unless-stopped
 
   server:
@@ -42,11 +36,45 @@ services:
       - transcendeNet
     ports:
       - "127.0.0.1:4243:443"
+    restart: unless-stopped
+
+  blockchain:
+    build:
+      context: "${PWD}/pong/blockchain"
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+  django:
+    build:
+      context: "${PWD}/pong"
+    command: sh -c "
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - "${PWD}/pong:/code:rw"
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - DJANGO_SECRET_KEY
+      - DJANGO_ALLOWED_HOSTS
+      - DJANGO_TRUSTED_ORIGINS
+      - CLIENT_ID
+      - CLIENT_SECRET
+      - REDIRECT_URI
+      - HARDHAT_PRIVATE_KEY
+      - DEBUG
+    networks:
+      - transcendeNet
+    ports:
+      - "127.0.0.1:4243:443"
     depends_on:
-      django:
-        condition: service_started
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     restart: unless-stopped
 
   db:
@@ -67,35 +95,9 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7.2.5-alpine
+    image: redis:7.4.0-alpine
     networks:
       - transcendeNet
-    restart: unless-stopped
-
-  django:
-    build:
-      context: "${PWD}/pong"
-    volumes:
-      - "${PWD}/pong:/code:rw"
-    environment:
-      - POSTGRES_DB
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - DJANGO_SECRET_KEY
-      - DJANGO_ALLOWED_HOSTS
-      - DJANGO_TRUSTED_ORIGINS
-      - CLIENT_ID
-      - CLIENT_SECRET
-      - REDIRECT_URI
-      - HARDHAT_PRIVATE_KEY
-      - DEBUG
-    networks:
-      - transcendeNet
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
     restart: unless-stopped
 
 volumes:

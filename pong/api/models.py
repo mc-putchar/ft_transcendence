@@ -4,16 +4,24 @@ from django.utils import timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
+from PIL import Image
+
 import logging
 import random
 
 logger = logging.getLogger(__name__)
 
+def image_upload(instance, filename):
+    ext = filename.split('.')[-1]
+    if instance.user.username == 'default':
+        return f'profile_images/{instance.user.username}#{instance.user.id}.{ext}'
+    return f'profile_images/{instance.user.username}.{ext}'
+
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
     alias = models.CharField(max_length=150, blank=True)
     isOnline = models.BooleanField(default=False)
-    image = models.ImageField(upload_to='profile_images', default='profile_images/default.png')
+    image = models.ImageField(upload_to=image_upload, default='profile_images/default.png')
     friends = models.ManyToManyField('self', through='Friend', symmetrical=False, related_name='friend_profiles', default=None, blank=True)
     blocked_users = models.ManyToManyField('self', through='Blocked', symmetrical=False, related_name='blocked_profiles', default=None, blank=True)
     forty_two_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
@@ -23,6 +31,15 @@ class Profile(models.Model):
         if not self.alias:
             self.alias = f'marvin_{self.user.id}'
         super().save(*args, **kwargs)
+        # if self.image and self.image.name != 'profile_images/default.png':
+        #     self.resize_image()
+
+    def resize_image(self):
+        img = Image.open(self.image.path)
+        if img.height > 420 or img.width > 420:
+            output_size = (420, 420)
+            img.thumbnail(output_size)
+            img.save(self.image.path)
 
     def __str__(self):
         return f'{self.user.username} Profile'

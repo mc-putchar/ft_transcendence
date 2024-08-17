@@ -179,7 +179,7 @@ class ChatRouter {
 		return blockedUsers.includes(username);
 	}
 
-	pushMessage(message, type = 'message') {
+	pushMessage(message, type = 'message', sender = null) {
 		const senderUsername = message.split(':')[0].trim();
 
 		if (this.isBlockedUser(senderUsername)) {
@@ -196,13 +196,18 @@ class ChatRouter {
 				this.chatLog.scrollTop = this.chatLog.scrollHeight;
 				break;
 			case 'system':
-				this.chatLog.value += `${message}\n`;
+				this.chatLog.value += `${sender}:: ${message}\n`;
 				this.chatLog.scrollTop = this.chatLog.scrollHeight;
 				break;
 			default:
 				this.chatLog.value += `${message}\n`;
 				this.chatLog.scrollTop = this.chatLog.scrollHeight;
 		}
+	}
+
+	sendAnnouncement(detail) {
+		const { origin, message } = detail;
+		this.pushMessage(message, 'system', origin);
 	}
 
 	handleDuelRequest(data) {

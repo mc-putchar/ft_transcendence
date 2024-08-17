@@ -43,6 +43,7 @@ COLOUR_CYNB := \033[1;36m
 up: .env # Beam me up, Scotty
 	@echo -e "Deploying $(COLOUR_GREEN)${DOMAIN}$(COLOUR_END)"
 	@echo -e "Building and starting containers, with $(COLOUR_CYNB)$(DC)$(COLOUR_END) and $(COLOUR_MAGB)$(SRC)$(COLOUR_END)"
+	@rm -f pong/static/maintenance.on
 	$(DC) -f $(SRC) $@ --build
 
 down: # Bring 'em down
@@ -60,9 +61,27 @@ re: # Re-create containers
 .env:
 	bash setup_wizard.sh
 
-debug: # DEBUG MODE
-	@echo -e 'using $(DC) and $(SRC)'
-	$(DC) -f $(SRC) --profile debug up --build
+migrate: # Make and run DB migrations
+	$(DC) -f $(SRC) stop
+	$(DC) -f $(SRC) run --build --rm django python manage.py makemigrations $(APPS)
+	$(DC) -f $(SRC) run --rm django python manage.py migrate
+	$(DC) -f $(SRC) stop
+
+clean: # DROP database (Warning: all database data will be irreversibly lost! Consider making backup)
+	@$(MAKE) -s down
+	@docker volume rm $(NAME)_dbdata
+	@$(MAKE) -s newkey
+	@echo -e "$(COLOUR_GREEN)^^Here^^$(COLOUR_END) is a new Django key for you, if you need it"
+
+collect: # Collect static files to be served
+	$(DC) -f $(SRC) run --rm --no-deps django python manage.py collectstatic --noinput --clear
+
+schema: # Output OpenAPI3 Schema into pong/schema.yml
+	$(DC) -f $(SRC) run --rm --no-deps django python manage.py spectacular --validate --color --file schema.yml
+	lolcat -a pong/schema.yml || cat pong/schema.yml
+
+newkey: # Generate a new secret key for Django
+	$(DC) -f $(SRC) run --rm --no-deps django python manage.py shell -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 
 swapmode: .env stop # Swap online/local mode (requires restart)
 	$(shell \
@@ -73,6 +92,17 @@ swapmode: .env stop # Swap online/local mode (requires restart)
 	fi )
 	$(info Mode swapped.)
 
+maintenance:
+	touch pong/static/maintenance.on
+	$(DC) -f $(SRC) stop blockchain
+	$(DC) -f $(SRC) stop django
+	$(DC) -f $(SRC) stop db
+	$(DC) -f $(SRC) stop redis
+
+debug: # DEBUG MODE
+	@echo -e 'using $(DC) and $(SRC)'
+	$(DC) -f $(SRC) --profile debug up --build
+
 clitest: # CLI test
 	cd transcendCLI && source .venv/bin/activate && python $(CLI)
 
@@ -81,30 +111,12 @@ testlogin: # Selenium tests
 	docker exec ft_transcendence-django-1 python test_selenium.py
 	@echo "Test done"
 
-migrate: # Make and run DB migrations
-	$(DC) -f $(SRC) stop
-	$(DC) -f $(SRC) run --build --rm django python manage.py makemigrations $(APPS)
-	$(DC) -f $(SRC) run --rm django python manage.py migrate
-	$(DC) -f $(SRC) stop
-
-clean: # DROP database and create a new one
-	$(DC) -f $(SRC) start db
-	$(DC) -f $(SRC) exec db dropdb -U ${POSTGRES_USER} ${POSTGRES_DB}
-	$(DC) -f $(SRC) exec db createdb -U ${POSTGRES_USER} ${POSTGRES_DB}
-	$(DC) -f $(SRC) stop db
-
-collect: # Collect static files to be served
-	$(DC) -f $(SRC) run --rm --no-deps django python manage.py collectstatic --noinput --clear
-
-schema: # Output OpenAPI3 Schema into pong/schema.yml
-	$(DC) -f $(SRC) run --rm --no-deps django python manage.py spectacular --validate --color --file schema.yml
-	lolcat -a pong/schema.yml || cat pong/schema.yml
-
 tests: # Run automated tests
-	$(DC) -f $(SRC) start
-	@echo "Testing smart contract"
-	@docker exec -it ft_transcendence-blockchain-1 sh -c "npx hardhat test" 
-	$(DC) -f $(SRC) run --rm django python manage.py test
+#	$(DC) -f $(SRC) start
+#	@docker exec -it ft_transcendence-blockchain-1 sh -c "npx hardhat test" 
+	@echo -e "$(COLOUR_MAGB)Testing smart contract$(COLOUR_END)"
+	$(DC) -f $(SRC) run --rm blockchain npx hardhat test
+#	$(DC) -f $(SRC) run --rm django python manage.py test # should run on separate test volume
 	$(DC) -f $(SRC) stop
 
 help: # Display this helpful message
