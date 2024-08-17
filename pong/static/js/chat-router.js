@@ -103,34 +103,38 @@ class ChatRouter {
 		}
 	}
 
-	updateUserList(users) {
+	async updateUserList(users) {
 		if (this.users !== users) {
 			this.users = users;
 
 			this.usersList.innerHTML = '';
-			this.users.forEach((user) => {
+			await this.users.forEach(async (user) => {
 				const userBtn = document.createElement('button');
-				userBtn.className = 'btn btn-dark btn-outline-success btn-sm m-1';
-				userBtn.textContent = user;
+				userBtn.className = 'btn btn-dark btn-outline-success btn-sm rounded-circle';
+				const data = await getJSON(`/api/profiles/user/${user}/`, this.csrfToken);
+				if (!data) {
+					this.showError("Error loading user profile");
+					return;
+				}
+
+				const imageUrl = data.image.startsWith("http://")
+				? data.image.replace("http://", "https://")
+				: data.image;
+				
+				userBtn.innerHTML = `<img src="${imageUrl}" alt="Profile Image" class="rounded-circle img-thumbnail" title="${user}" height="2vh" loading="lazy">`;
+				
 				userBtn.onclick = async () => {
-					const data = await getJSON(`/api/profiles/user/${user}/`, this.csrfToken);
-					if (!data) {
-						this.showError("Error loading user profile");
-						return;
-					}
 					const fields = [
 						{ key: "user.username", label: "<b>User: </b>" },
 						{ key: "alias", label: "<b>Alias: </b>" },
 					];
-					const imageUrl = data.image.startsWith("http://")
-					? data.image.replace("http://", "https://")
-					: data.image;
 
 					const isMe = (user === this.username);
 					const isFriend = sessionStorage.getItem('friends').includes(user);
 					const isBlocked = sessionStorage.getItem('blocked').includes(user);
 					let btnTemplate = '<button type="button" data-bs-dismiss="modal" class="btn btn-';
 					let frenemyButtons = '';
+					
 					if (isMe) {
 						frenemyButtons = btnTemplate + 'primary" onclick="location.hash=\'#/profile\'">Edit Profile</button>';
 					} else {
@@ -181,24 +185,10 @@ class ChatRouter {
 		if (this.isBlockedUser(senderUsername)) {
 			return; // Do not show the message if the user is blocked
 		}
+		
+		this.insertChatMessage(message, this.chatLog, type);
 
-		switch (type) {
-			case 'duel':
-				this.chatLog.value += `${message}\n`;
-				this.chatLog.scrollTop = this.chatLog.scrollHeight;
-				break;
-			case 'pm':
-				this.chatLog.value += `${message}\n`;
-				this.chatLog.scrollTop = this.chatLog.scrollHeight;
-				break;
-			case 'system':
-				this.chatLog.value += `${sender}:: ${message}\n`;
-				this.chatLog.scrollTop = this.chatLog.scrollHeight;
-				break;
-			default:
-				this.chatLog.value += `${message}\n`;
-				this.chatLog.scrollTop = this.chatLog.scrollHeight;
-		}
+		this.chatLog.scrollTop = this.chatLog.scrollHeight;
 	}
 
 	sendAnnouncement(detail) {
@@ -240,7 +230,7 @@ class ChatRouter {
 		}
 	}
 
-	sendDuelResponse(response) {
+	sendDuelResponse(response) {	
 		const data = {
 			message: `${this.username} has ${response} the challenge!`,
 			username: this.username,
@@ -269,6 +259,36 @@ class ChatRouter {
 
 	closeChatWebSocket() {
 		this.chatSocket.close();
+	}
+
+	insertChatMessage(message, parent, type) { 
+		const card = document.createElement('div');
+		card.className = 'card chat-card my-1';
+		card.style += 'max-height:inherit;';
+		const cardBody = document.createElement('p');
+		cardBody.innerText = message;
+		cardBody.className = 'chat-message';
+
+
+		switch (type) {
+			case 'duel':
+				cardBody.classList.add('text-primary');
+				break;
+			case 'pm':
+				cardBody.classList.add('text-warning');
+				break;
+			case 'system':
+				cardBody.classList.add('text-secondary');
+				break;
+			default:
+				cardBody.classList.add('text-success');
+				break;
+		}
+
+		card.appendChild(cardBody);
+		parent.appendChild(card);
+		// set focus to the message input
+		document.querySelector('#chat-message-input').focus();
 	}
 };
 
