@@ -33,13 +33,17 @@ const CAM_START_Y = 130;
 
 const SCORE_FONT = "static/fonts/helvetiker_regular.typeface.json";
 const WIN_FONT = "static/fonts/optimer_regular.typeface.json";
-const BALL_TEX_IMG = "static/img/green-texture.avif"
+// const BALL_TEX_IMG = "static/img/green-texture.avif"
+// const BALL_TEX_IMG = "static/img/textures/bronze/MetalBronzeWorn001_COL_2K_METALNESS.png"
+const BALL_TEX_BUMP = "static/img/textures/bronze/BronzeBUMP.png"
+const BALL_TEX_IMG = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_BaseColor.jpg"
+const BALL_TEX_METAL = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_Metallic.jpg"
 const WALL_TEX_IMG = "static/img/matrix-purple.jpg"
 const AVATAR1_IMG = "static/img/avatar.jpg"
 const AVATAR2_IMG = "static/img/avatar-marvin.png"
 const FLOOR_TEX_IMG = "static/img/login-install.jpg"
-// const PADDLE_TEX_IMG = "../../static/img/bricks.jpg"
-const PADDLE_TEX_IMG = "../../static/img/wickerWeaves.jpg"
+const PADDLE_TEX_IMG = "static/img/textures/bricks/2K/Poliigon_BrickWallReclaimed_8320_BaseColor.jpg"
+const PADDLE_TEX_NORMAL = "static/img/textures/bricks/2K/Poliigon_BrickWallReclaimed_8320_Normal.jpg"
 
 let button_left = null;
 let button_right = null;
@@ -48,10 +52,13 @@ class Arena {
 	constructor() {
 		this.ambient_light = new THREE.AmbientLight(0x882288);
 
-		this.lightbulb1 = new THREE.SpotLight(0xffaa99, 300);
-		this.lightbulb2 = new THREE.SpotLight(0xaa99ff, 300);
-		this.lightbulb1.position.set(0, 40, -160);
-		this.lightbulb2.position.set(0, 40, 160);
+		// this.pointLight = new THREE.PointLight(0xffffff, 1, 300);
+		// this.pointLight.position.set(20, 100, 40);
+	
+		this.lightbulb1 = new THREE.SpotLight(0xffaa99, 420);
+		this.lightbulb2 = new THREE.SpotLight(0xaa99ff, 420);
+		this.lightbulb1.position.set(0, 42, -160);
+		this.lightbulb2.position.set(0, 42, 160);
 
 		this.lightbulb1.shadow.camera.near = 1;
 		this.lightbulb1.shadow.camera.far = 80;
@@ -60,7 +67,7 @@ class Arena {
 		this.lightbulb2.shadow.camera.far = 80;
 		this.lightbulb2.shadow.focus = 1;
 
-		this.spotLight = new THREE.SpotLight( 0xffffff, 300 );
+		this.spotLight = new THREE.SpotLight( 0xffffff, 300);
 		this.spotLight.position.set( 0, 200, 0 );
 		this.spotLight.angle = Math.PI / 4;
 		this.spotLight.penumbra = 1;
@@ -70,19 +77,21 @@ class Arena {
 		this.spotLight.shadow.camera.near = 1;
 		this.spotLight.shadow.camera.far = 10;
 		this.spotLight.shadow.focus = 1;
-		this.lightHelper = new THREE.SpotLightHelper( this.spotLight );
+		// this.lightHelper = new THREE.SpotLightHelper( this.spotLight );
 
-		this.grid = new THREE.GridHelper(Math.max(ARENA_HEIGHT, ARENA_WIDTH), 40);
+		// this.grid = new THREE.GridHelper(Math.max(ARENA_HEIGHT, ARENA_WIDTH), 40);
 		const plane_geo = new THREE.PlaneGeometry(ARENA_WIDTH, ARENA_HEIGHT);
 		const floor_texture = new THREE.TextureLoader().load(FLOOR_TEX_IMG);
 		const plane_mat = new THREE.MeshPhongMaterial({ map: floor_texture });
+		plane_mat.side = THREE.DoubleSide;
 		this.plane = new THREE.Mesh(plane_geo, plane_mat);
 		this.plane.receiveShadow = true;
+		this.plane.castShadow = true;
 
 		this.plane.rotateX(-Math.PI / 2);
 		this.plane.rotateZ(-Math.PI / 2);
 		const wall_texture = new THREE.TextureLoader().load(WALL_TEX_IMG);
-		const wall_material = new THREE.MeshPhongMaterial({ map: wall_texture });
+		const wall_material = new THREE.MeshBasicMaterial({ map: wall_texture });
 		const mod_wall_geometry = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ARENA_WIDTH / 8, 2, 2, 2);
 		this.bottomWalls = [];
 		this.topWalls = [];
@@ -110,6 +119,8 @@ class Ball {
 	constructor(ball_geo, ball_mat) {
 		this.mesh = new THREE.Mesh(ball_geo, ball_mat);
 		this.mesh.castShadow = true;
+		this.mesh.receiveShadow = true;
+
 		this.pos = new THREE.Vector3();
 		this.dir = new THREE.Vector3();
 		this.speed = 0;
@@ -347,15 +358,15 @@ class Game {
 		this.canvas.appendChild(this.fsButton);
 
 		// buttons
-		button_right = document.createElement("button");
-		button_left = document.createElement("button");
-		this.parent.appendChild(button_right);
-		this.parent.appendChild(button_left);
+		// button_right = document.createElement("button");
+		// button_left = document.createElement("button");
+		// this.parent.appendChild(button_right);
+		// this.parent.appendChild(button_left);
 		
-		button_right.className = "Buttons";
-		button_left.className = "Buttons";
+		// button_right.className = "Buttons";
+		// button_left.className = "Buttons";
 
-		this.updateButton();
+		// this.updateButton();
 
 		this.scene = new THREE.Scene();
 		const FOV = 75;
@@ -379,22 +390,33 @@ class Game {
 		}
 		this.loader = new FontLoader();
 
+		// const ball_mat = new THREE.MeshStandardMaterial({ color: 0xf6d32d });
 		const ball_texture = new THREE.TextureLoader().load(BALL_TEX_IMG);
-		const ball_mat = new THREE.MeshPhongMaterial({ map: ball_texture });
-		const ball_geometry = new THREE.SphereGeometry( BALL_SIZE, 32, 16 )
+		const ball_mat = new THREE.MeshStandardMaterial({ map: ball_texture });
+		ball_mat.metalness = 0.9;
+		ball_mat.roughness = 0.42;
+		ball_mat.shininess = 100;
+		ball_mat.reflectivity = 1;
+
+		const ball_geometry = new THREE.SphereGeometry( BALL_SIZE, 32, 32 )
 		this.ball = new Ball(ball_geometry, ball_mat);
 		this.ball.place(this.scene, 0, 0);
 		this.saved = {x: this.ball.dir.x, y: this.ball.dir.y};
 
 		const paddle_texture = new THREE.TextureLoader().load(PADDLE_TEX_IMG);
+		const paddle_normal = new THREE.TextureLoader().load(PADDLE_TEX_NORMAL);
 		paddle_texture.wrapS = THREE.RepeatWrapping;
-		const wire_material = new THREE.MeshPhongMaterial({ map: paddle_texture });
-		const box_geometry = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2);
+		paddle_texture.wrapT = THREE.RepeatWrapping;
+		paddle_texture.repeat.set(4, 1);
+		paddle_texture.bump_map = paddle_normal;
+		paddle_texture.bumpScale = 0.4;
+		const paddle_mat = new THREE.MeshStandardMaterial({ map: paddle_texture });
+		const paddle_geo = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 2, 2, 2);
 		const avatar1_texture = new THREE.TextureLoader().load(AVATAR1_IMG);
 		const avatar2_texture = new THREE.TextureLoader().load(AVATAR2_IMG);
 
-		this.playerOne = new Player(box_geometry, wire_material, avatar1_texture);
-		this.playerTwo = new Player(box_geometry, wire_material, avatar2_texture);
+		this.playerOne = new Player(paddle_geo, paddle_mat, avatar1_texture);
+		this.playerTwo = new Player(paddle_geo, paddle_mat, avatar2_texture);
 		this.playerOne.place(this.scene, 0, -ARENA_WIDTH / 2 + GOAL_LINE);
 		this.playerTwo.place(this.scene, 0, ARENA_WIDTH / 2 - GOAL_LINE);
 
@@ -410,16 +432,16 @@ class Game {
 
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
-		button_right.addEventListener("mousedown", () => this.button_right_onmousedown());
-		button_left.addEventListener("mousedown", () => this.button_left_onmousedown());
-		button_right.addEventListener("mouseup", () => this.button_right_onmouseup());
-		button_left.addEventListener("mouseup", () => this.button_left_onmouseup());
+		// button_right.addEventListener("mousedown", () => this.button_right_onmousedown());
+		// button_left.addEventListener("mousedown", () => this.button_left_onmousedown());
+		// button_right.addEventListener("mouseup", () => this.button_right_onmouseup());
+		// button_left.addEventListener("mouseup", () => this.button_left_onmouseup());
 
 		if(ACTIVE_AI == true)
 			this.ai = new proAI(this.playerTwo);
 		this.showScore();
 		playAudioTrack();
-		this.setupTouchControls();
+		// this.setupTouchControls();
 	}
 	setupTouchControls() {
 		console.log("setting it up");
@@ -505,12 +527,12 @@ class Game {
 			this.ball.speed = BALL_START_SPEED;
 		}
 		switch(key.code) {
-			case "ArrowUp":
+			case "ArrowLeft":
 				if(this.playerOne.direction != 1)
 					this.playerOne.keys_active++;
 				this.playerOne.direction = 1;
 				break;
-			case "ArrowDown":
+			case "ArrowRight":
 				if(this.playerOne.direction != -1)
 					this.playerOne.keys_active++;
 				this.playerOne.direction = -1;
@@ -531,7 +553,7 @@ class Game {
 	}
 	keyup(key) {
 		if (this.gameover)	return;
-		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
+		if (key.code == "ArrowLeft" || key.code == "ArrowRight") {
 			this.playerOne.keys_active--;
 			if(this.playerOne.keys_active == 0)
 				this.playerOne.direction = 0;
