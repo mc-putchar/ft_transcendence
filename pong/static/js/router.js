@@ -8,6 +8,7 @@ import { startPong3DGame, stopPong3DGame } from './pong3d.js';
 import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
 import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
+import { startAudioContext } from './audio.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
@@ -36,7 +37,7 @@ class Router {
 		this.chat = new ChatRouter(this.csrfToken, this.chatElement);
 		this.game = new GameRouter(this.csrfToken, this.appElement);
 		this.tournament = new TournamentRouter(this.csrfToken, this.appElement);
-
+		this.audioContext = null;
 		this.init();
 	}
 
@@ -133,7 +134,7 @@ class Router {
 				this.chat.sendDuelResponse('accepted');
 			} else if (template.startsWith('game/decline/')) {
 				// this.chat.declineGame();
-				this.chat.sendDuelResponse('declined');
+				this.chat.sendDuelResponse('decline🔇d');
 			}
 			setTimeout(() => window.location.hash = this.oldHash, 100);
 			this.game.route(template);
@@ -198,6 +199,13 @@ class Router {
    			 } else {
 				this.notifyError("Navbar collapse element not found.");
    			 }
+
+			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
+				console.log("Mute button clicked");
+				const audioMuteBtn = document.getElementById('audioMuteBtn');
+				audioMuteBtn.innerHTML = '🔇';
+			});
+
 		} catch (error) {
 			console.debug("Error loading nav: ", error);
 			this.navElement.innerHTML = "<p>Error loading navigation</p>";

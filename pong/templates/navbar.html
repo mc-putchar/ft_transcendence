@@ -1,10 +1,17 @@
 <div class="container overlay">
 	<a class="navbar-brand" style="background-color: black;" href="#/">Transcendence</a>
-	<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+	<button class="navbar-toggler collapse type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 		<span class="navbar-toggler-icon"></span>
 	</button>
-	<div class="collapse navbar-collapse" id="navbarNav">
+	<div class="navbar-collapse" id="navbarNav">
 		<ul class="navbar-nav ms-auto">
+
+			<li class="nav-item">
+				<button type="button" id="audioMuteBtn" class="btn btn-primary">
+					🔊
+				</button>
+			</li>
+
 			<li class="nav-item">
 				<a class="nav-link" href="#/play">Play Local</a>
 			</li>
@@ -37,6 +44,7 @@
 					</li>
 				</ul>
 			</li>
+			<li>
 			{% else %}
 			<li class="nav-item">
 				<a class="nav-link" href="#/login">Login</a>

@@ -42,7 +42,6 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	`;
 
 	document.body.appendChild(modal);
-	console.log("Modal created");
 
 	if (closeCallback) {
 		document.getElementById(`close${modalId}`).addEventListener("click", closeCallback);
