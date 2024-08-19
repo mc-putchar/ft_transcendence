@@ -269,8 +269,9 @@ button:focus {
   
   button {
     padding-left: 42px;
-    font-size: 1em;
-   chat-container {
+    font-size: 0.6em;
+  }
+    chat-container {
       width: 100%;
       display: flex;
       flex-direction: row;
@@ -278,21 +279,21 @@ button:focus {
     chat-log {
       width: 100%;
     }
-  }
   /* img { */
   /*   width: 50%; */
   /* } */
 }
 
 @media (max-width: 480px) {
-  button {
-    padding-left: 42px;
-    font-size: 0.9em;
+  
+  html, body {
+      font-size: 0.8em;
   }
 
-  /* img { */
-  /*   width: 60%; */
-  /* } */
+  button {
+    padding-left: 42px;
+    font-size: 0.6em;
+  }
 
   #chat {
       position: fixed;
