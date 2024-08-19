@@ -2,7 +2,8 @@
 
 import { getJSON, postJSON } from "./utils.js";
 import { initGame } from "./pong-online.js";
-// import { ClientClassic } from "./client-classic.js";
+import { ClientClassic } from "./client-classic.js";
+import { Client3DGame } from "./pong3d.js";
 
 class GameRouter {
 	constructor (csrfToken, appElement) {
@@ -200,6 +201,55 @@ class GameRouter {
 		}
 		initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
 	}
+
+	startClassicGame (player1, player2=null) {
+		const gameSetup = new GameSetup(
+			this.appElement,
+			player1,
+			player2 ?? this.makeAIPlayer("right"),
+			true,
+			"classic",
+			"2d"
+		);
+		this.client = new ClientClassic(gameSetup);
+		this.client.start();
+	}
+
+	start3DGame (player1, player2=null) {
+		const gameSetup = new GameSetup(
+			this.appElement,
+			player1,
+			player2 ?? this.makeAIPlayer("right"),
+			true,
+			"classic",
+			"3d"
+		);
+		this.client = new Client3DGame(gameSetup);
+		this.client.start();
+	}
+
+	makePlayer (side, name, alias=null, img=null) {
+		let player = new Player(side, name);
+		if (side === "left")
+			player.controls = { up: "KeyW", down: "KeyS" };
+		else
+			player.controls = { up: "ArrowUp", down: "ArrowDown" };
+		player.alias = alias ?? name;
+		if (img) player.avatar = img;
+		return player;
+	}
+
+	makeAIPlayer (side) {
+		return new Player(
+			side,
+			"Marvin",
+			"Marvin",
+			null,
+			"static/img/avatar-marvin.png",
+			true
+		);
+	}
+
 };
 
 class GameData {
@@ -234,11 +284,11 @@ class GameSetup {
 };
 
 class Player {
-	constructor (side, name, alias=null, controls=null, avatar="/static/img/avatar-marvin.png", isAI=false) {
+	constructor (side, name, alias=null, controls=null, avatar="static/img/avatar-marvin.png", isAI=false) {
 		this.side = side;
 		this.name = name;
 		this.alias = alias ?? name;
-		this.controls = isAI ? null : controls;
+		this.controls = controls;
 		this.avatar = avatar;
 		this.AI = isAI;
 	}

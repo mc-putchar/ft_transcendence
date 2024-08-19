@@ -58,11 +58,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "type": "user_list",
                     "users_list": user_list
                 })
-        # Join room group
+        await self.accept()
         await self.channel_layer.group_add(self.room_group_name,
                                            self.channel_name)
-        await self.accept()
         await self.chat_message({"message": "", "username": self.username})
+        await self.channel_layer.group_send(
+            self.room_group_name, {"type": "connection", "username": self.username}
+        )
 
     async def disconnect(self, close_code):
         try:
@@ -113,7 +115,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "users_list": users_list
         }))
-  
+
+    async def connection(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "connect",
+            "username": event["username"],
+        }))
+
     @database_sync_to_async
     def get_online_users(self):
         return list(Profile.objects.filter(isOnline=True).values_list("user__username", flat=True))

@@ -4,7 +4,6 @@ import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
 import { startPongGame, stopPongGame } from './pong-game.js';
-import { startPong3DGame, stopPong3DGame } from './pong3d.js';
 import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
 import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
@@ -13,17 +12,10 @@ import { startAudioContext } from './audio.js';
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
 
-    function stopAllGames() {
-        // if (this.pongClassicGame) {
-        //     this.pongClassicGame.stop();
-        // }
-        // if (this.pong3DGame) {
-        //     this.pong3DGame.stop();
-        // }
+function stopAllGames() {
 		stopPongGame();
-		stopPong3DGame();
 		stopPong4PGame();
-    }
+}
 
 class Router {
 	constructor(navElement, appElement, chatElement) {
@@ -134,7 +126,7 @@ class Router {
 				this.chat.sendDuelResponse('accepted');
 			} else if (template.startsWith('game/decline/')) {
 				// this.chat.declineGame();
-				this.chat.sendDuelResponse('decline🔇d');
+				this.chat.sendDuelResponse('declined');
 			}
 			setTimeout(() => window.location.hash = this.oldHash, 100);
 			this.game.route(template);
@@ -353,11 +345,15 @@ class Router {
 				break;
 			case 'pong-classic':
 				stopAllGames();
-				startPongGame();
+				const p1 = this.game.makePlayer('left', 'Player 1');
+				const p2 = this.game.makePlayer('right', 'Player 2');
+				this.game.startClassicGame(p1, p2);
 				break;
 			case 'pong-3d':
 				stopAllGames();
-				startPong3DGame();
+				const pl1 = this.game.makePlayer('left', 'Player 1');
+				const pl2 = this.game.makePlayer('right', 'Player 2');
+				this.game.start3DGame(pl1, pl2);
 				break;
 			case 'pong-4p':
 				stopAllGames();

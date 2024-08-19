@@ -60,6 +60,11 @@ class ChatRouter {
 	parseMessage(event) {
 		const data = JSON.parse(event.data);
 
+		if (data.type === 'connect' && data.username !== this.username) {
+			this.pushMessage(`${data.username} has connected`);
+			return;
+		}
+
 		if (data.hasOwnProperty('users_list')) {
 			this.updateUserList(data.users_list);
 		}
@@ -98,6 +103,8 @@ class ChatRouter {
 				if (data.message.length > 0)
 					this.pushMessage(`${data.username}: ${data.message}`);
 			}
+		} else if (data.hasOwnProperty('username')) {
+			console.log(`Received username ${data.username}`);
 		} else {
 			console.log(`Received type ${data.type}`);
 		}
