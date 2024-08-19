@@ -201,9 +201,16 @@ class Router {
    			 }
 
 			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
-				console.log("Mute button clicked");
 				const audioMuteBtn = document.getElementById('audioMuteBtn');
 				audioMuteBtn.innerHTML = '🔇';
+				// flip the mute state and update the button
+				if (this.audioContext) {
+					this.audioContext.suspend();
+					audioMuteBtn.innerHTML = '🔇';
+				} else {
+					startAudioContext();
+					audioMuteBtn.innerHTML = '🔊';
+				}
 			});
 
 		} catch (error) {

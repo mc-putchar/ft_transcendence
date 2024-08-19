@@ -9,10 +9,10 @@
                         <button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
                         <h5 class="mb-0">Dashboard</h5>
                     </div>
-                    <div class="col-4 mt-4">
+                    <div class="col mt-4">
                         <img src="{{ profile.image }}" class="rounded border border-3 border-info account-img img-fluid mx-auto" alt="Profile Picture" >
                     </div>
-                    <div class="col-4 mt-4">
+                    <div class="col mt-4">
                         <div class="card-body text-center" >
                             <h3 class="card-title">{{ username }}</h3>
                             <span class="badge bg-{% if profile.isOnline %}success{% else %}danger{% endif %}">{{ status }}</span>
@@ -27,7 +27,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="card mt-4">
+                    <div class="card mt-2">
                         <div class="card-header bg-dark text-success align-items-center">
                             <h5 class="mb-0">Friends:</h5>
                         </div>
@@ -38,7 +38,7 @@
                             </button>
                         {% endfor %}
                         </div>
-                        <a class="btn btn-primary" href="#/chat">Enter Chat</a>
+                        <a class="btn btn-primary m-3 p-3" href="#/chat">Enter Chat</a>
                     </div>
                 </div>
                 <div class="row">

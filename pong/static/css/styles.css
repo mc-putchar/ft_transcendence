@@ -265,10 +265,11 @@ button:focus {
 /* Responsive Design */
 
 @media (max-width: 768px) {
+  
   button {
     padding-left: 42px;
     font-size: 1em;
-    chat-container {
+   chat-container {
       width: 100%;
       display: flex;
       flex-direction: row;
@@ -291,6 +292,19 @@ button:focus {
   img {
     width: 60%;
   }
+
+  #chat {
+      position: fixed;
+      bottom: 2px;
+      right: 2px; 
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      max-height: 50vh;
+      /* overflow-y: auto; */
+      margin-bottom: 1%;
+    }
+
 }
 
 .mp3-hover:hover {
@@ -316,7 +330,10 @@ img.mp3-hover:hover {
 .chat-userlist {
   display: flex;
   flex-direction: column;
-  margin-top: 20px;
+  margin-top: 12px;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important; /* Ensure no extra unused space */
 }
 
 .chat-container {
