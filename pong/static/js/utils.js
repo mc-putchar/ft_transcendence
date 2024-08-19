@@ -52,44 +52,7 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	});
 }
 
-function createCmdPopover(element = "body") {
-	const chatInput = document.querySelector("#chat-message-input");
-	const commands = {
-		"/pm": "Send a private message to a user",
-		"/duel": "Challenge a user to a duel",
-		"/help": "List all available commands",
-	};
-
-	chatInput.setAttribute("data-bs-toggle", "popover");
-	chatInput.setAttribute("data-bs-trigger", "manual");
-
-	const popoverContent = Object.entries(commands)
-		.map(([cmd, desc]) => `<strong>${cmd}</strong>    ${desc}`)
-		.join("<br>");
-
-	const popover = new bootstrap.Popover(chatInput, {
-		content: popoverContent,
-		html: true,
-		placement: "auto",
-		container: element,
-	});
-
-	chatInput.addEventListener("keyup", (event) => {
-		if (event.key === "/") {
-			popover.show();
-		} else if (event.key === "@") {
-			//replace popover content 
-			popover.update();
-			popoverContent = "List of users";
-			popover.show();
-		} else {          // avoid hiding popover when shift key is released
-			if (event.key === "Shift") return;
-			popover.hide();
-		}
-	});
-}
-
-async function getHTML(endpoint, csrftoken) {
+async function getHTML(endpoint) {
 	const accessToken = sessionStorage.getItem('access_token') || "";
 	const response = await fetch(endpoint, {
 		method: "GET",
@@ -97,7 +60,6 @@ async function getHTML(endpoint, csrftoken) {
 		"Content-Type": "text/html",
 		"Accept": "text/html",
 		"X-Requested-With": "XMLHttpRequest",
-		"X-CSRFToken": csrftoken,
 		"Authorization": `Bearer ${accessToken}`,
 		},
 		credentials: "include"
@@ -107,7 +69,7 @@ async function getHTML(endpoint, csrftoken) {
 		return data;
 	} else if (response.status === 401) {
 		if (await refreshToken())
-			return await getHTML(endpoint, csrftoken);
+			return await getHTML(endpoint);
 		return null;
 	} else {
 		console.error("Server returned error response", response);
@@ -115,14 +77,13 @@ async function getHTML(endpoint, csrftoken) {
 	}
 }
 
-async function getJSON(endpoint, csrftoken) {
+async function getJSON(endpoint) {
 	const accessToken = sessionStorage.getItem('access_token') || "";
 	const response = await fetch(endpoint, {
 		method: "GET",
 		headers: {
 		"Accept": "application/json",
 		"X-Requested-With": "XMLHttpRequest",
-		"X-CSRFToken": csrftoken,
 		"Authorization": `Bearer ${accessToken}`,
 		},
 		credentials: "include"
@@ -132,7 +93,7 @@ async function getJSON(endpoint, csrftoken) {
 		return data;
 	} else if (response.status === 401) {
 		if (await refreshToken())
-			return await getJSON(endpoint, csrftoken);
+			return await getJSON(endpoint);
 		return null;
 	} else {
 		console.error("Server returned error response", response);
@@ -259,4 +220,4 @@ function popupCenter(url, title, w, h) {
 	return authWindow;
 }
 
-export { createModal, createCmdPopover, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter };
+export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter };

@@ -37,13 +37,11 @@
                     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                 </div>
                 <div class="accordion">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#matchesCollapse" aria-expanded="true" aria-controls="matchesCollapse">
-                                Match History
-                            </button>
-                        </h2>
-                    </div>
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#matchesCollapse" aria-expanded="true" aria-controls="matchesCollapse">
+                            Match History
+                        </button>
+                    </h2>
                     <div id="matchesCollapse" class="accordion-collapse collapse">
                         <div class="accordion-body">
                             <div class="list-group">
@@ -71,13 +69,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tournamentsCollapse" aria-expanded="true" aria-controls="tournamentsCollapse">
-                                Tournament History
-                            </button>
-                        </h2>
-                    </div>
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tournamentsCollapse" aria-expanded="true" aria-controls="tournamentsCollapse">
+                            Tournament History
+                        </button>
+                    </h2>
                     <div id="tournamentsCollapse" class="accordion-collapse collapse">
                         <div class="accordion-body">
                             <div class="list-group">
@@ -99,5 +95,5 @@
 
 {% else %}
     <p>Log in required to view this page.</p>
-    <button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+    <button class="btn btn-primary m-2" onclick="location.href='#/login'">Log in</button>
 {% endif %}

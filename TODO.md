@@ -52,21 +52,21 @@
 			- [ ] connect 42 account (after conventional registration)
 			- [ ] ? display blockchain user address? status? (after optin)
 		- [ ] custom paddle texture:
-			- [ ] provide defaults
+			- [x] provide defaults
 			- [ ] ? visualize with 3D model
 			- [ ] ? hats:
 				- i dunno, ppl like hats
 
 	- [ ] chat:
 		- [x] mandatory
-		- [ ] change message log container from textarea
-		- [ ] special style for private messages and announcements
+		- [x] change message log container from textarea
+		- [x] special style for private messages and announcements
 		- [ ] add some chat history (maybe with redis)
 		- [ ] validate challenged/mentioned user is in online user list
 		- [ ] expand commands list
 		- [ ] ? chat spam detection
 		- [ ] ? chat rooms (lobby, tournament, game, private)
-		- [ ] ? chat emoji :p
+		- [x] ? chat emoji :p
 
 	- [ ] online game:
 		- [x] mandatory
@@ -77,6 +77,7 @@
 		- [ ] improve predictive client
 		- [ ] global matchmaking
 		- [ ] spectating mode
+		- [ ] correct game socket management
 
 	- [ ] tournaments:
 		- [ ] mandatory:
@@ -86,7 +87,7 @@
 			- [ ] websocket updates
 			- [x] tournament round progressions
 			- [x] tournament finalization
-			- [ ] tournament rewards
+		- [ ] tournament rewards
 		- [ ] presentation:
 			- [x] list tournaments
 			- [x] tournament details
@@ -101,7 +102,6 @@
 			- [ ] improve look
 		- [ ] sound controls
 		- [ ] ensure device support
-		- [ ] ? tooltips
 
 ### Security:
 	- [x] JWT auth

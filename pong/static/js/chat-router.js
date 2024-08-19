@@ -1,6 +1,6 @@
 "use strict";
 
-import { createModal, createCmdPopover, getJSON } from './utils.js';
+import { createModal, getJSON } from './utils.js';
 import { showNotification } from './notification.js';
 
 class ChatRouter {
@@ -12,10 +12,7 @@ class ChatRouter {
 
 	setupChatWebSocket(roomName) {
 		const accessToken = sessionStorage.getItem('access_token') || '';
-		if (!accessToken) {
-			// this.showError("No access token found");
-			return;
-		}
+		if (!accessToken)	return;
 		this.chatLog = document.getElementById('chat-log');
 		if (!this.chatLog) {
 			console.log("Could not find chat log", this.chatLog);
@@ -43,7 +40,6 @@ class ChatRouter {
 		this.chatSocket.addEventListener('message', (event) => this.parseMessage(event));
 
 		document.querySelector('#chat-message-input').onkeypress = (e) => {
-			createCmdPopover("#collapseChat");
 			if (e.keyCode === 13) {
 				this.sendMessage();
 			}
@@ -136,8 +132,7 @@ class ChatRouter {
 					const isMe = (user === this.username);
 					const isFriend = sessionStorage.getItem('friends').includes(user);
 					const isBlocked = sessionStorage.getItem('blocked').includes(user);
-					
-					let btnTemplate = `'<button type="button" data-bs-dismiss="modal" class="btn btn-"'`;
+					let btnTemplate = '<button type="button" data-bs-dismiss="modal" class="btn btn-';
 					let frenemyButtons = '';
 					
 					if (isMe) {
