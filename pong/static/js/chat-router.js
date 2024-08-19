@@ -128,7 +128,7 @@ class ChatRouter {
 				? data.image.replace("http://", "https://")
 				: data.image;
 				
-				userBtn.innerHTML = `<img src="${imageUrl}" alt="Profile Image" class="rounded-circle img-thumbnail" title="${user}" height="2vh" loading="lazy">`;
+				userBtn.innerHTML = `<img src="${imageUrl}" alt="Profile Image" class="rounded-circle img-thumbnail" title="${user}" height="32" width="32" loading="lazy">`;
 				
 				userBtn.onclick = async () => {
 					const fields = [
