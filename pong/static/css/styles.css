@@ -278,9 +278,9 @@ button:focus {
       width: 100%;
     }
   }
-  img {
-    width: 50%;
-  }
+  /* img { */
+  /*   width: 50%; */
+  /* } */
 }
 
 @media (max-width: 480px) {
@@ -289,9 +289,9 @@ button:focus {
     font-size: 0.9em;
   }
 
-  img {
-    width: 60%;
-  }
+  /* img { */
+  /*   width: 60%; */
+  /* } */
 
   #chat {
       position: fixed;

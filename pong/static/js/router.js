@@ -178,6 +178,8 @@ class Router {
    			 if (navbarCollapse) {
    			     var collapse = new bootstrap.Collapse(navbarCollapse);
   
+			     collapse.hide();
+
    			     // Hide the navbar when a link inside it is clicked
    			     var navbarLinks = document.querySelectorAll('.navbar-collapse a');
    			     navbarLinks.forEach(function (link) {
