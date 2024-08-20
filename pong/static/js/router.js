@@ -544,37 +544,31 @@ class Router {
 	}
 
 	handleTournamentPage() {
-		const createTournamentBtn = document.getElementById('create-tournament');
-		if (!createTournamentBtn) return;
-		createTournamentBtn.addEventListener('click', (e) => {
+		const form = document.getElementById('create-tournament-form');
+		const btn = document.getElementById('create-tournament-btn');
+		if (!form || !btn) return;
+		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
-			const form = document.getElementById('create-tournament-form');
-			const btn = document.getElementById('create-tournament-btn');
-			form.style.display = form.style.display === 'none' ? 'block' : 'none';
-			btn.style.display = btn.style.display === 'none' ? 'block' : 'none';
-			form.addEventListener('submit', async (e) => {
-				e.preventDefault();
-				const formData = new FormData(form);
-				try {
-					const response = await fetch('/game/tournaments/create_tournament_form/', {
-						method: 'POST',
-						headers: {
-							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`,
-							'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-						},
-						body: formData
-					});
-					if (response.ok) {
-						console.log("Tournament created successfully", response);
-						this.loadTemplate('tournaments');
-					} else {
-						console.log("Failed to create tournament", response);
-						throw new Error("Failed to create tournament");
-					}
-				} catch (error) {
-					this.displayError(error.message);
+			const formData = new FormData(form);
+			try {
+				const response = await fetch('/game/tournaments/create_tournament_form/', {
+					method: 'POST',
+					headers: {
+						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`,
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
+					},
+					body: formData
+				});
+				if (response.ok) {
+					console.log("Tournament created successfully", response);
+					this.loadTemplate('tournaments');
+				} else {
+					console.log("Failed to create tournament", response);
+					throw new Error("Failed to create tournament");
 				}
-			});
+			} catch (error) {
+				this.displayError(error.message);
+			}
 		});
 	}
 

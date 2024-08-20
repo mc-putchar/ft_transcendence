@@ -8,33 +8,35 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	modal.id = modalId;
 
 	modal.classList.add("modal");
-	// modal.classList.add("fade");
+	modal.classList.add("bg-transparent");
 	// modal.dataset.bsBackdrop = "static";
 	// modal.dataset.bsKeyboard = "false";
 	modal.style.display = "block";
 	modal.style.zIndex = "1000";
 
-	let modalBodyContent = "";
-	fields.forEach((field) => {
-		const value = field.key.split(".").reduce((o, i) => o[i], data);
-		modalBodyContent += `<p>${field.label}: ${value}</p>`;
-	});
+	let modalBodyContainer = document.createElement("div");
+	modalBodyContainer.id = "modalLabelId";
+	modalBodyContainer.classList.add("container", "bg-transparent", "m-2");
+	if (fields.length !== 0) {
+		fields.forEach((field) => {
+			let elem = document.createElement("p");
+			elem.innerHTML = `<span class="text-primary-emphasis"><b>${field.label}:</b></span>`;
+			const value = field.key.split(".").reduce((o, i) => o[i], data);
+			elem.innerText += ` ${value}`;
+			modalBodyContainer.appendChild(elem);
+		});
+	}
 
 	modal.innerHTML = `
 		<div class="modal-dialog modal-dialog-centered" role="document">
 			<div class="modal-content">
-				<div class="modal-header">
-					<div class="col-12">
-						<h5 class="modal-title" id="${modalLabelId}">${fields[0].key.split(".").reduce((o, i) => o[i], data)}</h5>
+				<div class="modal-header bg-info-subtle m-1">
+					<div class="m-0" style="text-align: right; position: absolute; right: 0.2rem; top: 0.2rem;">
+						<button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal" id="close${modalId}">x</button>
 					</div>
-					<div class="col-12" style="text-align: right; position: absolute; right: 0.2rem; top: 0.2rem;">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="close${modalId}">X</button>
-					</div>
+					${modalBodyContainer.outerHTML}
 				</div>
-				<div class="modal-body">
-					${modalBodyContent}
-				</div>
-				<div class="modal-footer">
+				<div class="modal-body bg-info-subtle text-success m-1">
 					${customContent}
 				</div>
 			</div>

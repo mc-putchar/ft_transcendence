@@ -118,7 +118,7 @@ class ChatRouter {
 			await this.users.forEach(async (user) => {
 				const userBtn = document.createElement('button');
 				userBtn.className = 'btn btn-dark btn-outline-success btn-sm rounded-circle';
-				const data = await getJSON(`/api/profiles/user/${user}/`, this.csrfToken);
+				const data = await getJSON(`/api/profiles/user/${user}/`);
 				if (!data) {
 					this.showError("Error loading user profile");
 					return;
@@ -128,43 +128,43 @@ class ChatRouter {
 				? data.image.replace("http://", "https://")
 				: data.image;
 				
-				userBtn.innerHTML = `<img src="${imageUrl}" alt="Profile Image" class="rounded-circle img-thumbnail" title="${user}" height="32" width="32" loading="lazy">`;
+				userBtn.innerHTML = `<img src="${imageUrl}" title="${user}" alt="Profile Image" class="rounded-circle" height="32" width="32" loading="lazy">`;
 				
 				userBtn.onclick = async () => {
 					const fields = [
-						{ key: "user.username", label: "<b>User: </b>" },
-						{ key: "alias", label: "<b>Alias: </b>" },
+						{ key: "alias", label: "Alias" },
+						{ key: "user.username", label: "Username" }
 					];
+					console.log("Fields length", fields.length);
 
 					const isMe = (user === this.username);
 					const isFriend = sessionStorage.getItem('friends').includes(user);
 					const isBlocked = sessionStorage.getItem('blocked').includes(user);
-					let btnTemplate = '<button type="button" data-bs-dismiss="modal" class="btn btn-';
+					let btnTemplate = '<button type="button" data-bs-dismiss="modal" class="btn m-1 btn-';
 					let frenemyButtons = '';
 					
 					if (isMe) {
 						frenemyButtons = btnTemplate + 'primary" onclick="location.hash=\'#/profile\'">Edit Profile</button>';
 					} else {
 						frenemyButtons = `${isFriend ?
-							btnTemplate + 'danger" onclick="location.hash=\'#/removeFriend/' + data.user['id'] + '/\'">Remove Friend</button>'
+							btnTemplate + 'danger" onclick="location.hash=\'#/deleteFriend/' + data.user['id'] + '/\'">Remove Friend</button>'
 							: btnTemplate + 'success" onclick="location.hash=\'#/addFriend/' + data.user['id'] + '/\'">Add Friend</button>'}`;
 						frenemyButtons += `${isBlocked ? 
 							btnTemplate + 'success" onclick="location.hash=\'#/unblock/' + data.user['id'] + '/\'">Unblock</button>'
 							: btnTemplate + 'danger" onclick="location.hash=\'#/block/' + data.user['id'] + '/\'">Block</button>'}`;
 						frenemyButtons += btnTemplate + 'warning" onclick="location.hash=\'#/duel/' + data.user['id'] + '/\'">Challenge to Duel</button>';
 					}
+					const viewProfileBtn = btnTemplate + 'primary" onclick="location.hash=\'#/profiles/' + user + '\'">View Profile</button>';
 					const customContent = `
-					<div class="img-container">
-						<img src="${imageUrl}" alt="Profile Image" class="rounded-circle border border-3 border-success account-img mb-3" style="width: 150px; height: auto;">
-					</div>
 					<div class="container-fluid">
-						<div class="row">
-							<div class="col-6">
-								${frenemyButtons}
+						<div class="d-flex justify-content-center">
+							<div class="d-flex flex-column">
+								<img src="${imageUrl}" alt="Profile Image" class="rounded-circle border border-3 border-success m-2" height="128" width="128" loading="lazy">
 							</div>
-						</div>
-						<div class="bio">
-							${btnTemplate}primary onclick="location.hash='#/profiles/${user}'">View Profile</button>
+							<div class="d-flex flex-column">
+								${frenemyButtons}
+								${viewProfileBtn}
+							</div>
 						</div>
 					</div>`;
 					createModal(
