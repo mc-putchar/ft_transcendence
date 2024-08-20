@@ -202,7 +202,7 @@ class Router {
 					this.audioContext.suspend();
 					audioMuteBtn.innerHTML = '🔇';
 				} else {
-					startAudioContext();
+					this.audioContext = startAudioContext();
 					audioMuteBtn.innerHTML = '🔊';
 				}
 			});

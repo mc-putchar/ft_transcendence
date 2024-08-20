@@ -5,8 +5,8 @@ import { GameData, Player } from "./game-router.js";
 // Constants
 const CANVAS_PADDING = 10;
 const TARGET_FPS = 120;
-const ARENA_WIDTH = 300;
-const ARENA_HEIGHT = 200;
+const ARENA_WIDTH = 150;
+const ARENA_HEIGHT = 100;
 const GOAL_LINE = 20;
 const BALL_SIZE = 8;
 const BALL_START_SPEED = 2 / 12;
@@ -40,10 +40,12 @@ class Arena {
 			this.width = width;
 			this.height = width / aspectRatio;
 		}
-		this.height *= 0.9;
+		// this.height *= 0.9;
 		this.width = this.height * aspectRatio;
 		this.startX = (width - this.width) / 2;
 		this.startY = 0.1 * this.height;
+		console.log("Arena resized to:", this.width, this.height);
+		console.log("StartX:", this.startX, "StartY:", this.startY);
 	}
 	
 	draw (ctx) {
@@ -94,11 +96,13 @@ class Paddle {
 	drawPaddle (ctx) {
 		if (this.hit) {
 			ctx.fillStyle = this.colorEffect;
+			ctx.strokeStyle = this.color;
 		} else {
 			ctx.fillStyle = this.color;
+			ctx.strokeStyle = this.colorEffect;
 		}
-		ctx.strokeStyle = this.color;
 		ctx.fillRect(this.x - this.width / 2, this.y - this.len / 2, this.width, this.len);
+		ctx.strokeRect(this.x - this.width / 2, this.y - this.len / 2, this.width, this.len);
 	}
 
 	onResize (arenaWidth, arenaHeight, startX, prevHeight) {
@@ -111,7 +115,7 @@ class Paddle {
 		if(this.side == "left")
 			this.x = startX + this.goalLine	 + this.width / 2;
 		else
-			this.x = startX + arenaWidth - this.goalLine	 - this.width / 2;
+			this.x = startX + arenaWidth - this.goalLine - this.width / 2;
 	}
 
 	onHit () {
@@ -192,12 +196,12 @@ class Score {
 		ctx.fillText(this.score.right, startX + 3 * width / 4, startY + height / 8);
 	}
 
-	drawEndGame (ctx, height, width, startX, startY) {
+	drawEndGame (ctx, height, width, startX, startY, left, right) {
 		this.draw(ctx, height, width, startX, startY);
 		ctx.fillStyle = SCORE_COLOR;
 		ctx.font = `${height / 20}px Orbitron`;
 		ctx.fillText("Game Over", startX + width / 2, startY + height / 2);
-		const text = this.score.left > this.score.right ? "Player 1 wins" : "Player 2 wins";
+		const text = this.score.left > this.score.right ? `${left} wins` : `${right} wins`;
 		ctx.fillText(text, startX + width / 2, startY + height / 2 + height / 20);
 	}
 }
@@ -237,7 +241,7 @@ class ClientClassic {
 		console.log("Player 1:", this.player);
 		console.log("Player 2:", this.opponent);
 	}
-	
+
 	init () {
 		this.arena = new Arena(this.canvas.width, this.canvas.height);
 		this.ball = new Ball(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
@@ -257,7 +261,7 @@ class ClientClassic {
 		}
 	}
 
-	sendRegisterPlayer() {
+	sendRegisterPlayer () {
 		this.gameSocket?.send(JSON.stringify({
 			type: 'register',
 			player: this.myPlayer,
@@ -266,14 +270,14 @@ class ClientClassic {
 		}));
 	}
 
-	sendReady() {
+	sendReady () {
 		this.gameSocket?.send(JSON.stringify({
 			type: 'ready',
 			player: this.myPlayer,
 		}));
 	}
 
-	sendPlayerUpdate(direction) {
+	sendPlayerUpdate (direction) {
 		this.gameSocket?.send(JSON.stringify({
 			type: `${this.myPlayer}_move`,
 			direction: direction
@@ -297,6 +301,8 @@ class ClientClassic {
 
 	keydown (key) {
 		if (this.gameover)	return;
+		if (this.gameData.status == "paused")
+			setTimeout(() => this.sendReady(), 1000);
 		switch(key.code) {
 			case this.player.controls?.up:
 				if(this.player1.direction != -1)
@@ -414,21 +420,15 @@ class ClientClassic {
 		return false;
 	}
 
-	checkEndGame () {
-		if (this.score.score.left >= this.gameData.scoreLimit 
-		|| this.score.score.right >= this.gameData.scoreLimit
-		|| this.gameData.status == "finished"
-		|| this.gameData.status == "forfeited") {
-			this.gameover = true;
-			this.ball = null;
-		}
-	}
-
 	update () {
 		if (this.checkGoal(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY)) {
 			this.ball.reset(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
 			this.score.update(this.score.hasScored.scorer);
-			this.checkEndGame();
+			if (this.score.score.left >= this.gameData.scoreLimit 
+			|| this.score.score.right >= this.gameData.scoreLimit) {
+				this.gameover = true;
+				this.ball = null;
+			}
 			return ;
 		}
 		const hit = this.wallCollision(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
@@ -440,18 +440,31 @@ class ClientClassic {
 		this.player2.doMove(this.arena);
 	}
 
+	transposePosition (x, y) {
+		const tx = (this.arena.width / ARENA_WIDTH * y) + this.arena.startX + (this.arena.width / 2);
+		const ty = (this.arena.height / ARENA_HEIGHT * x) + this.arena.startY + (this.arena.height / 2);
+		return [tx, ty];
+	}
+
 	syncData () {
-		this.score.score.left = this.gameData.score.p1;
-		this.score.score.right = this.gameData.score.p2;
+		if (this.score.score.left != this.gameData.score.p1
+		|| this.score.score.right != this.gameData.score.p2) {
+			this.score.score.left = this.gameData.score.p1;
+			this.score.score.right = this.gameData.score.p2;
+			setTimeout(() => this.sendReady(), 1000);
+		}
 		if (this.gameData.status == "finished" || this.gameData.status == "forfeited") {
 			this.gameover = true;
 			this.ball = null;
 			return;
 		}
-		this.player1.y = this.gameData.player1.x;
-		this.player2.y = this.gameData.player2.x;
-		this.ball.x = this.gameData.ball.x;
-		this.ball.y = this.gameData.ball.y;
+		// this.player1.y = (this.gameData.player1.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
+		// this.player2.y = (this.gameData.player2.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
+		[ , this.player1.y] = this.transposePosition(this.gameData.player1.x, 0);
+		[ , this.player2.y] = this.transposePosition(this.gameData.player2.x, 0);
+		this.ball.y = this.gameData.ball.x + this.arena.startY + this.arena.height / 2;
+		this.ball.x = this.gameData.ball.y + this.arena.startX + this.arena.width / 2;
+		// [this.ball.x, this.ball.y] = this.transposePosition(this.gameData.ball.x, this.gameData.ball.y);
 		this.ball.vx = this.gameData.ball.dx;
 		this.ball.vy = this.gameData.ball.dy;
 	}
@@ -459,7 +472,8 @@ class ClientClassic {
 	draw () {
 		this.arena.draw(this.context);
 		if (this.gameover) {
-			this.score.drawEndGame(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY);
+			const [left, right] = this.isChallenger ? [this.player, this.opponent] : [this.opponent, this.player];
+			this.score.drawEndGame(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY, left.alias, right.alias);
 		} else {
 			this.score.draw(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY);
 		}

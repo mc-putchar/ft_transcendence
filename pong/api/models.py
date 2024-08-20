@@ -21,6 +21,8 @@ class Profile(models.Model):
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
     alias = models.CharField(max_length=150, blank=True)
     isOnline = models.BooleanField(default=False)
+    client_3d = models.BooleanField(default=False)
+    paddle = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to=image_upload, default='profile_images/default.png')
     friends = models.ManyToManyField('self', through='Friend', symmetrical=False, related_name='friend_profiles', default=None, blank=True)
     blocked_users = models.ManyToManyField('self', through='Blocked', symmetrical=False, related_name='blocked_profiles', default=None, blank=True)

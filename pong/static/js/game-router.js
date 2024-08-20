@@ -18,7 +18,7 @@ class GameRouter {
 		if (this.gameSocket) {
 			console.log("Game socket already exists");
 			// this.gameSocket.close();
-			return;
+			return false;
 		}
 		const accessToken = sessionStorage.getItem('access_token') || '';
 		this.gameID = gameID;
@@ -37,6 +37,7 @@ class GameRouter {
 			this.gameSocket = null;
 		});
 		this.gameSocket.addEventListener('message', (event) => this.parseMessage(event));
+		return true;
 	}
 
 	route (event) {
@@ -116,7 +117,7 @@ class GameRouter {
 	}
 
 	async acceptChallenge (gameID) {
-		this.setupGameWebSocket(gameID);
+		if (!this.setupGameWebSocket(gameID)) return;
 		this.username = document.querySelector('#chat-username').textContent;
 		const matchID = await this.createGame();
 		if (matchID === null) {
@@ -165,6 +166,7 @@ class GameRouter {
 			console.error("Error fetching player profiles");
 			return;
 		}
+		// console.log("Player profiles", playerProfile, opponentProfile);
 		const player = new Player(
 			data.isChallenger ? "left" : "right",
 			playerProfile.user.username,
@@ -185,12 +187,12 @@ class GameRouter {
 			opponent,
 			data.isChallenger,
 			"online",
-			"2d"
+			playerProfile.client_3d ? "3d" : "2d"
 		);
-		// this.client = new ClientClassic(gameSetup, this.gameSocket, this.gameData, data.gameID);
-		// this.client.start();
 		this.gameData = new GameData();
-		initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
+		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
+		this.client = new ClientClassic(gameSetup, this.gameSocket, this.gameData, data.gameID);
+		this.client.start();
 	}
 
 	async startTournamentGame (data) {

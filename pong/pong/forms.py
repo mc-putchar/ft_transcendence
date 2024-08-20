@@ -68,10 +68,11 @@ class UserUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['alias', 'image']
+        fields = ['alias', 'image', 'client_3d']
         widgets = {
             'alias': forms.TextInput(attrs={'class': 'form-control'}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'client_3d': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean(self):
