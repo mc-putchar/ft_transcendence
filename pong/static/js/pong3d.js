@@ -4,14 +4,18 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-// import { MaterialXLoader } from 'three/addons/loaders/MaterialXLoader.js';
+
+// import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+// import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+// import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+// import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
+// import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
+// import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
 
 import { getAmps, playAudioTrack, playTone, stopAudioTrack } from './audio.js';
-import { GameSetup, GameData } from './game-router.js';
-
-const ACTIVE_AI = true;
-
-let animationID = null;
+import { GameData } from './game-router.js';
 
 const CANVAS_PADDING = 10;
 const BALL_SIZE = 8;
@@ -32,6 +36,7 @@ const WALL_THICKNESS = 10;
 
 const SCORE_FONT = "static/fonts/helvetiker_regular.typeface.json";
 const WIN_FONT = "static/fonts/optimer_regular.typeface.json";
+const HUD_FONT = "static/fonts/terminess_nerd_font_mono_bold.json";
 
 // const BALL_TEX_IMG = "static/img/green-texture.avif"
 // const BALL_TEX_IMG = "static/img/textures/bronze/MetalBronzeWorn001_COL_2K_METALNESS.png"
@@ -112,14 +117,106 @@ class Arena {
 
 	place(scene, topWallPos, bottomWallPos) {
 		for (let i = 0; i<8; ++i) {
-			this.bottomWalls[i].position.set(bottomWallPos + WALL_THICKNESS, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
-			this.topWalls[7 - i].position.set(topWallPos - WALL_THICKNESS, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
+			this.bottomWalls[i].position.set(bottomWallPos + WALL_THICKNESS / 2, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
+			this.topWalls[7 - i].position.set(topWallPos - WALL_THICKNESS / 2, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
 			scene.add(this.bottomWalls[i], this.topWalls[i]);
 		}
 		scene.add(this.lightbulb1, this.lightbulb2);
 		scene.add( this.spotLight );
 		scene.add(this.ambient_light);
 		scene.add(this.floor);
+	}
+};
+
+class Hud {
+	constructor (fontLoader, player1, player2, score, p1avatar, p2avatar) {
+		const frustumSize = 5;
+		const aspect = window.innerWidth / window.innerHeight;
+		this.camera = new THREE.OrthographicCamera(
+			(frustumSize * aspect) / -2,
+			(frustumSize * aspect) / 2,
+			frustumSize / 2,
+			frustumSize / -2,
+			0.1,
+			100
+		);
+
+		this.scene = new THREE.Scene();
+		this.camera.position.set(0, 0, 5);
+
+		const leftAlias = player1.side === "left" ? player1.alias : player2.alias;
+		const rightAlias = player1.side === "right" ? player1.alias : player2.alias;
+		const leftAvatar = player1.side === "left" ? p1avatar : p2avatar;
+		const rightAvatar = player1.side === "right" ? p1avatar : p2avatar;
+		this.p1img = new THREE.Mesh(
+			new THREE.BoxGeometry(0.5, 0.5, 0.5),
+			new THREE.MeshLambertMaterial({ map: leftAvatar })
+		);
+		this.p1img.position.set(this.camera.left + 0.5, this.camera.bottom + 1.1, -4);
+		this.p1img.rotateY(Math.PI / 6);
+		this.p1img.rotateX(-Math.PI / 6);
+		this.scene.add(this.p1img);
+
+		this.p2img = new THREE.Mesh(
+			new THREE.BoxGeometry(0.5, 0.5, 0.5),
+			new THREE.MeshLambertMaterial({ map: rightAvatar })
+		);
+		this.p2img.position.set(this.camera.right - 0.5, this.camera.bottom + 1.1, -4);
+		this.p2img.rotateY(Math.PI / 6);
+		this.p2img.rotateX(Math.PI / 6);
+		this.scene.add(this.p2img);
+
+		const light1 = new THREE.SpotLight(0xffaa99, 30);
+		light1.position.set(-3, -2, -2);
+		light1.target = this.p1img;
+		this.scene.add(light1);
+
+		const light2 = new THREE.SpotLight(0xaa99ff, 30);
+		light2.position.set(3, -2, -2);
+		light2.target = this.p2img;
+		this.scene.add(light2);
+
+		fontLoader.load(HUD_FONT, font => {
+			const textGeo = new TextGeometry(`${leftAlias}`, {
+				font: font,
+				size: 0.3,
+				depth: 0.1,
+				curveSegments: 12,
+				bevelEnabled: false
+			});
+			textGeo.computeBoundingBox();
+			const textMat = new THREE.MeshBasicMaterial({ color: 0xffaa99, wireframe: true });
+			const textMesh = new THREE.Mesh(textGeo, textMat);
+			textMesh.position.x = this.camera.left + 0.5;
+			textMesh.position.y = this.camera.bottom + 0.2;
+			textMesh.rotateY(Math.PI / 6);
+			textMesh.rotateX(-Math.PI / 6);
+			this.scene.add(textMesh);
+		});
+		fontLoader.load(HUD_FONT, font => {
+			const textGeo = new TextGeometry(`${rightAlias}`, {
+				font: font,
+				size: 0.3,
+				depth: 0.1,
+				curveSegments: 12,
+				bevelEnabled: false
+			});
+			textGeo.computeBoundingBox();
+			const textMat = new THREE.MeshBasicMaterial({ color: 0xaa99ff, wireframe: true });
+			const textMesh = new THREE.Mesh(textGeo, textMat);
+			textMesh.position.x = this.camera.right - textGeo.boundingBox.max.x;
+			textMesh.position.y = this.camera.bottom + 0.5;
+			textMesh.rotateY(Math.PI / 6);
+			textMesh.rotateX(Math.PI / 6);
+			this.scene.add(textMesh);
+		});
+	}
+
+	update () {
+		this.p1img.rotation.x += 0.01;
+		this.p1img.rotation.y += 0.01;
+		this.p2img.rotation.x += 0.01;
+		this.p2img.rotation.y += 0.01;
 	}
 };
 
@@ -154,24 +251,41 @@ class Ball {
 		return [this.dir.x, this.dir.z];
 	}
 
-	doMove () {
-		if(this.lastMove == 0 || Date.now() - this.lastMove > 100 || Date.now() - this.lastMove <= 4)
-			this.lastMove = Date.now();
-		this.time = Date.now() - this.lastMove;
+	doMove (online=false) {
+		const now = Date.now();
+		if (online) {
+			const elapsedTime = (now - this.lastUpdateTime) / 1000;
+			this.lastUpdateTime = now;
+
+			this.mesh.translateX(this.dir.x * this.speed * elapsedTime);
+			this.mesh.translateZ(this.dir.z * this.speed * elapsedTime);
+			return;
+		}
+		if(this.lastMove == 0 || now - this.lastMove > 100 || now - this.lastMove <= 4)
+			this.lastMove = now;
+		this.time = now - this.lastMove;
 		this.mesh.translateX(this.dir.x * this.speed * this.time);
 		this.mesh.translateZ(this.dir.z * this.speed * this.time);
-		this.lastMove = Date.now();
+		this.lastMove = now;
 	}
 
 	reset () {
 		this.mesh.position.set(0, BALL_SIZE, 0);
 		this.dir.set(0, 0, 0);
+		this.speed = 0;
+	}
+
+	sync (ballData, timestamp) {
+		this.mesh.position.set(ballData.x, BALL_SIZE, ballData.y);
+		this.dir.set(ballData.dx, 0, ballData.dy);
+		this.speed = ballData.v;
+		// this.lastUpdateTime = timestamp;
 	}
 };
 
 class Paddle {
-	constructor(paddle_geo, paddle_mat, avatar_tex, _side) {
-		this.side = _side;
+	constructor (paddle_geo, paddle_mat, avatar_tex, side) {
+		this.side = side;
 		this.mesh = new THREE.Mesh(paddle_geo, paddle_mat);
 		this.mesh.castShadow = true;
 		this.pos = new THREE.Vector3();
@@ -191,19 +305,32 @@ class Paddle {
 			wire_material
 		);
 	}
-	place(scene, x, y) {
+
+	place (side, scene) {
+		const x = 0;
+		const y = (side === "left") ? -ARENA_WIDTH / 2 + GOAL_LINE : ARENA_WIDTH / 2 - GOAL_LINE;
 		this.mesh.position.set(x, PADDLE_HEIGHT, y);
 		this.avatar.position.set(0, AVATAR_HEIGHT, 0);
 		this.avatar_box.position.set(0, AVATAR_HEIGHT, 0);
 		this.mesh.add(this.avatar, this.avatar_box)
 		scene.add(this.mesh);
 	}
+
 	get position() {
 		this.mesh.getWorldPosition(this.pos);
 		return [this.pos.x, this.pos.z];
 	}
-	doMove() {
-		const limit = (ARENA_HEIGHT / 2 - WALL_THICKNESS);
+
+	doMove (online=false) {
+		const limit = (ARENA_HEIGHT / 2 - (PADDLE_LEN / 2));
+		if (online) {
+			const now = Date.now();
+			const elapsedTime = (now - this.lastUpdateTime) / 100;
+			this.lastUpdateTime = now;
+			const delta = this.direction * this.speed * elapsedTime;
+			this.mesh.position.x = Math.min(limit, Math.max(-limit, this.mesh.position.x + delta));
+			return;
+		}
 		if (this.direction) {
 			this.mesh.getWorldPosition(this.pos);
 			let move = this.direction * this.speed;
@@ -212,11 +339,14 @@ class Paddle {
 			}
 		}
 	}
-};
 
-// direction 1 is up
-// X for ARENA HEIGHT
-// Z for ARENA WIDTH
+	sync (pos, dir, timestamp) {
+		this.direction = dir;
+		this.mesh.position.x = pos;
+
+		this.lastUpdateTime = timestamp;
+	}
+};
 
 class proAI {
 	constructor (player) {
@@ -345,18 +475,23 @@ class proAI {
 		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
 		this.setWait(this.simBall);
 	}
-}
+};
 
 class Client3DGame {
-	constructor (gameSetup) {
-		this.parent = document.getElementById('app');
+	constructor (gameSetup, gameSocket=null, gameData=null, gameID=null) {
+		this.parent = gameSetup.parentElement;
+		this.gameSocket = gameSocket;
+		this.isOnline = gameSocket !== null;
+		this.hasAI = gameSetup.mode === "single";
+		this.gameData = this.isOnline ? gameData : new GameData();
+		this.gameID = gameID;
 		const nav = document.getElementById('nav');
 		const footer = document.getElementById('footer');
 	
-		parent.height = window.innerHeight - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
-		parent.width = window.innerWidth - CANVAS_PADDING;
-		while (parent.firstChild) {
-			parent.removeChild(parent.lastChild);
+		this.parent.height = window.innerHeight - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
+		this.parent.width = window.innerWidth - CANVAS_PADDING;
+		while (this.parent.firstChild) {
+			this.parent.removeChild(this.parent.lastChild);
 		}
 
 		// this.fsButton = document.createElement('div');
@@ -389,18 +524,18 @@ class Client3DGame {
 
 		this.loadManager = new THREE.LoadingManager();
 		this.loadManager.onStart = function ( url, itemsLoaded, itemsTotal ) {
-			console.log( 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+			console.debug( 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
 		};
 		this.loadManager.onLoad = () => {
-			console.log( 'Loading complete!' );
+			console.debug( 'Loading complete!' );
 			progressBar.style.display = "none";
 		};
 		this.loadManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-			console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+			console.debug( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
 			progress.style.width = (itemsLoaded / itemsTotal * 100) + "%";
 			progress.innerText = Math.floor(itemsLoaded / itemsTotal * 100) + "%";
 		};
-		this.loadManager.onError = (url) => { console.log('There was an error loading ' + url); };
+		this.loadManager.onError = (url) => { console.log('Error loading ' + url); };
 		this.texLoader = new THREE.TextureLoader(this.loadManager);
 		this.fontLoader = new FontLoader(this.loadManager);
 
@@ -436,23 +571,23 @@ class Client3DGame {
 
 		// setup scene
 		this.scene = new THREE.Scene();
-		const background = this.texLoader.load("static/img/textures/background.jpg");
-		// background.colorSpace = THREE.sRGBEncoding;
-		// this.scene.background = background;
 
 		// setup camera
 		const FOV = 75;
 		const DRAW_DISTANCE = 1000;
-		const CAM_START_X = -160;
-		const CAM_START_Y = 130;
+		const CAM_START_X = -220;
+		const CAM_START_Y = 80;
 		this.camera = new THREE.PerspectiveCamera(
 			FOV, this.canvas.clientWidth / this.canvas.clientHeight, 1, DRAW_DISTANCE
 		);
-		this.camera.position.set(CAM_START_X, CAM_START_Y, 0);
+		const cam_h = (this.hasAI || this.isOnline) ? CAM_START_Y : 300;
+		this.camera.position.set(CAM_START_X, cam_h, 0);
 		this.camera.lookAt(0, 0, 0);
 
 		// setup controls
 		this.cam_controls = new OrbitControls(this.camera, this.renderer.domElement);
+		this.cam_controls.enabled = false;
+
 		// this.cam_controls.touches = {
 		// 	ONE: null,
 		// 	TWO: 	THREE.TOUCH.ROTATE
@@ -464,7 +599,7 @@ class Client3DGame {
 
 		this.ball = new Ball();
 		this.ball.place(this.scene, 0, 0);
-		this.saved = {x: this.ball.dir.x, y: this.ball.dir.y};
+		// this.saved = {x: this.ball.dir.x, y: this.ball.dir.y}; ???
 
 		const paddle_texture = this.texLoader.load(PADDLE_TEX_IMG);
 		const paddle_normal = this.texLoader.load(PADDLE_TEX_NORMAL);
@@ -478,21 +613,74 @@ class Client3DGame {
 
 		this.playerOne = gameSetup.player1;
 		this.playerTwo = gameSetup.player2;
+		this.isChallenger = gameSetup.isChallenger;
 
 		const avatar1_texture = this.texLoader.load(this.playerOne.avatar);
 		const avatar2_texture = this.texLoader.load(this.playerTwo.avatar);
 
 		this.playerOne.paddle = new Paddle(paddle_geo, paddle_mat, avatar1_texture);
-		this.playerOne.paddle.place(this.scene, 0, -ARENA_WIDTH / 2 + GOAL_LINE);
+		this.playerOne.paddle.place(this.playerOne.side, this.scene);
 		this.playerTwo.paddle = new Paddle(paddle_geo, paddle_mat, avatar2_texture);
-		this.playerTwo.paddle.place(this.scene, 0, ARENA_WIDTH / 2 - GOAL_LINE);
+		this.playerTwo.paddle.place(this.playerTwo.side, this.scene);
 
-		if(ACTIVE_AI == true)
+		if (this.isOnline) {
+			this.myPlayer = this.isChallenger ? "player1" : "player2";
+			this.sendRegisterPlayer();
+			setTimeout(() => this.intro(), 1000);
+		}
+		if (this.hasAI) {
 			this.ai = new proAI(this.playerTwo.paddle);
+			setTimeout(() => this.intro(), 1000);
+		}
 		this.showScore();
+
+		// setup HUD
+		this.hud = new Hud(this.fontLoader, this.playerOne, this.playerTwo, this.gameData.score, avatar1_texture, avatar2_texture);
 	}
 
-	toggleFullScreen() {
+	intro() {
+		if (this.isOnline || this.hasAI) {
+			this.cam_controls.autoRotate = true;
+			if (this.playerOne.side === "left") {
+				this.cam_controls.autoRotateSpeed = 6;
+			} else {
+				this.cam_controls.autoRotateSpeed = -6;
+			}
+			setTimeout(() => {
+				this.cam_controls.autoRotate = false;
+				this.cam_controls.enabled = true;
+				this.sendReady();
+			}, 3000);
+		} else {
+			this.cam_controls.autoRotate = false;
+			this.cam_controls.enabled = true;
+		}
+	}
+
+	sendRegisterPlayer () {
+		this.gameSocket?.send(JSON.stringify({
+			type: 'register',
+			player: this.myPlayer,
+			user: this.playerOne.name,
+			match_id: this.gameID,
+		}));
+	}
+
+	sendReady () {
+		this.gameSocket?.send(JSON.stringify({
+			type: 'ready',
+			player: this.myPlayer,
+		}));
+	}
+
+	sendPlayerUpdate (direction) {
+		this.gameSocket?.send(JSON.stringify({
+			type: `${this.myPlayer}_move`,
+			direction: direction
+		}));
+	}
+
+	toggleFullScreen () {
 		if (this.renderer.domElement.requestFullscreen) {
 			this.renderer.domElement.requestFullscreen();
 		} else if (this.renderer.domElement.webkitRequestFullscreen) {
@@ -503,19 +691,24 @@ class Client3DGame {
 			this.renderer.domElement.msRequestFullscreen();
 		}
 	}
-	resize(ev) {
-		const width = this.canvas.clientWidth;
-		const height = this.canvas.clientHeight;
-		const needResize = this.canvas.width !== width || this.canvas.height !== height;
-		if (needResize) {
+
+	resize (ev) {
+		// const width = this.canvas.clientWidth;
+		// const height = this.canvas.clientHeight;
+		// const needResize = this.canvas.width !== width || this.canvas.height !== height;
+		// if (needResize) {
 			this.camera.aspect = width / height;
 			this.camera.updateProjectionMatrix();
 			this.renderer.setSize(width, height, false);
-		}
+		// }
 	}
-	keydown(key) {
+
+	keydown (key) {
 		if (this.gameover)	return;
-		if (this.running === false) {
+		if (this.isOnline) {
+			if (this.gameData.status == "paused")
+				setTimeout(() => this.sendReady(), 1000);
+		} else if (this.running === false) {
 			this.running = true;
 			if (this.last_scored === 1)
 				this.ball.dir.z = -1;
@@ -525,22 +718,24 @@ class Client3DGame {
 			this.ball.speed = BALL_START_SPEED;
 		}
 		switch(key.code) {
-			case "ArrowLeft":
+			case this.playerOne.controls?.up:
 				if(this.playerOne.paddle.direction != 1)
 					this.playerOne.paddle.keys_active++;
 				this.playerOne.paddle.direction = 1;
+				if (this.isOnline) this.sendPlayerUpdate(1);
 				break;
-			case "ArrowRight":
+			case this.playerOne.controls?.down:
 				if(this.playerOne.paddle.direction != -1)
 					this.playerOne.paddle.keys_active++;
 				this.playerOne.paddle.direction = -1;
+				if (this.isOnline) this.sendPlayerUpdate(-1);
 				break;
-			case "KeyW":
+			case this.playerTwo.controls?.up:
 				if(this.playerTwo.paddle.direction != 1)
 					this.playerTwo.paddle.keys_active++;
 				this.playerTwo.paddle.direction = 1;
 				break;
-			case "KeyS":
+			case this.playerTwo.controls?.down:
 				if(this.playerTwo.paddle.direction != -1)
 					this.playerTwo.paddle.keys_active++;
 				this.playerTwo.paddle.direction = -1;
@@ -549,33 +744,38 @@ class Client3DGame {
 				break;
 		}
 	}
-	keyup(key) {
+
+	keyup (key) {
 		if (this.gameover)	return;
-		if (key.code == "ArrowLeft" || key.code == "ArrowRight") {
+		if (key.code == this.playerOne.controls?.up || key.code == this.playerOne.controls?.down) {
 			this.playerOne.paddle.keys_active--;
 			if(this.playerOne.paddle.keys_active == 0)
 				this.playerOne.paddle.direction = 0;
-		} else if (key.code == "KeyW" || key.code == "KeyS") {
+			if (this.isOnline) this.sendPlayerUpdate(0);
+		} else if (key.code == this.playerTwo.controls?.up || key.code == this.playerTwo.controls?.down) {
 			this.playerTwo.paddle.keys_active--;
 			if(this.playerTwo.paddle.keys_active == 0)
 				this.playerTwo.paddle.direction = 0;
 		}
 	}
+
 	button_right_onmousedown () {
 		this.playerOne.paddle.direction = 1;
 	}
+
 	button_left_onmousedown () {
 		this.playerOne.paddle.direction = -1;
 	}
+
 	button_right_onmouseup () {
 		this.playerOne.paddle.direction = 0;
 	}
+
 	button_left_onmouseup () {
 		this.playerOne.paddle.direction = 0;
 	}
-	endGame() {
-		document.removeEventListener("keydown", ev => this.keydown(ev));
-		document.removeEventListener("keyup", ev => this.keyup(ev));
+
+	endGame () {
 		if (this.playerOne.paddle.score > this.playerTwo.paddle.score) {
 			this.showText(`${this.playerOne.alias} WINS`);
 		} else {
@@ -584,14 +784,29 @@ class Client3DGame {
 		this.gameover = true;
 		this.scene.remove(this.ball);
 		this.cam_controls.autoRotate = true;
+		if (this.isChallenger) {
+			this.cam_controls.autoRotateSpeed = -5;
+		} else {
+			this.cam_controls.autoRotateSpeed = 5;
+		}
 	}
-	loop() {
+
+	loop () {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
-		animationID = this.animRequestId;
 		if (!this.gameover) {
 			let now = Date.now();
 			let elapsed = now - this.lastUpdate;
-			if (elapsed > this.fpsInterval) {
+			if (this.isOnline) {
+				if (elapsed * 2 > this.fpsInterval) {
+					this.lastUpdate = now;
+					this.syncData();
+				}
+				if (this.running) {
+					this.ball.doMove(true);
+				}
+				this.playerOne.paddle.doMove(true);
+				this.playerTwo.paddle.doMove(true);
+			} else if (elapsed > this.fpsInterval) {
 				this.lastUpdate = now;
 				this.update();
 			}
@@ -611,22 +826,64 @@ class Client3DGame {
 				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
 			}
 		}
-		if(ACTIVE_AI == true)
+		if(this.hasAI)
 			this.ai.update(this.ball);
 		this.draw();
 	}
-	update() {
+
+	update () {
 		if (!this.running)	return;
 		this.playerOne.paddle.doMove();
 		this.playerTwo.paddle.doMove();
 		this.ball.doMove();
 		this.checkCollisions();
 	}
-	draw() {
-		this.cam_controls.update();
-		this.renderer.render(this.scene, this.camera);
+
+	syncData () {
+		const now = Date.now();
+
+		this.running = (this.gameData.status === 'running');
+		this.gameover = (this.gameData.status === 'finished' || this.gameData.status === 'forfeited');
+		this.scoreLimit = this.gameData.score.limit;
+
+		this.playerTwo.paddle.sync(this.gameData.player2.x, this.gameData.player2.dx, now);
+		this.playerOne.paddle.sync(this.gameData.player1.x, this.gameData.player1.dx, now);
+
+		this.ball.sync(this.gameData.ball, now);
+
+		if (this.playerOne.paddle.score != this.gameData.score.p1 || this.playerTwo.paddle.score != this.gameData.score.p2) {
+			this.playerOne.paddle.score = this.gameData.score.p1;
+			this.playerTwo.paddle.score = this.gameData.score.p2;
+			this.ball.reset();
+			this.showScore();
+			if (!this.gameover)
+				setTimeout(() => this.sendReady(), 3000);
+			else
+				this.endGame();
+		}
+
+		if (this.gameData.status === 'forfeited') {
+			if (this.isChallenger) {
+				this.playerOne.paddle.score = this.gameData.score.limit;
+				this.playerTwo.paddle.score = 0;
+			} else {
+				this.playerOne.paddle.score = 0;
+				this.playerTwo.paddle.score = this.gameData.score.limit;
+			}
+			this.showScore();
+			this.endGame();
+		}
 	}
-	repositionBall(ballX, ballY, p2y, p1y) {
+
+	draw () {
+		this.cam_controls.update();
+		this.hud.update();
+		this.renderer.autoClear = false;
+		this.renderer.render(this.scene, this.camera);
+		this.renderer.render(this.hud.scene, this.hud.camera);
+	}
+
+	repositionBall (ballX, ballY, p2y, p1y) {
 		let distance;
 		
 		if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)){
@@ -645,11 +902,11 @@ class Client3DGame {
 			this.ball.pos.z += this.ball.dir.z * distance;
 		}
 	}
-	
-	checkCollisions() {
+
+	checkCollisions () {
 		const [ballX, ballY] = this.ball.position;
-		if (ballX <= -(ARENA_HEIGHT / 2) // any wall collision
-		|| ballX >= (ARENA_HEIGHT / 2)) {
+		if (ballX <= -(ARENA_HEIGHT / 2) + BALL_SIZE / 2
+		|| ballX >= (ARENA_HEIGHT / 2) - BALL_SIZE / 2) {
 			playTone(180, 40, 140);
 			this.ball.dir.x *= (-1.1);
 			Math.min(Math.max(this.ball.dir.x, -1), 1);
@@ -666,7 +923,7 @@ class Client3DGame {
 			this.ball.reset();
 			// this.playerOne.reset();
 			// this.playerTwo.reset();
-			if(ACTIVE_AI == true)
+			if(this.hasAI)
 				this.ai.resetTimes();
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
 			playTone(240, 20, 210, 3);
@@ -678,7 +935,7 @@ class Client3DGame {
 			this.ball.reset();
 			// this.playerOne.reset();
 			// this.playerTwo.reset();
-			if(ACTIVE_AI == true)
+			if(this.hasAI)
 				this.ai.resetTimes();
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
@@ -706,7 +963,8 @@ class Client3DGame {
 			// this.repositionBall(ballX, ballY, p2y, p1y);
 		}
 	}
-	showScore() {
+
+	showScore () {
 		this.scene.remove(this.score);
 		this.fontLoader.load(SCORE_FONT, font => {
 			const textGeo = new TextGeometry (
@@ -743,7 +1001,8 @@ class Client3DGame {
 			this.scene.add(this.score);
 		} );
 	}
-	showText(text) {
+
+	showText (text) {
 		this.scene.remove(this.score);
 		this.fontLoader.load(WIN_FONT, font => {
 			const textGeo = new TextGeometry(
@@ -781,6 +1040,7 @@ class Client3DGame {
 
 	start () {
 		console.log("Pong 3D - Starting new game");
+		this.intro();
 		playAudioTrack();
 		this.loop();
 	}
@@ -788,7 +1048,7 @@ class Client3DGame {
 	stop () {
 		console.log("Pong 3D - Stopping game");
 		if (this.animRequestId) {
-			cancelAnimationFrame(this.animRequestId);
+			window.cancelAnimationFrame(this.animRequestId);
 		}
 		this.animRequestId = null;
 		window.removeEventListener("resize", ev => this.resize(ev), true);
@@ -796,7 +1056,8 @@ class Client3DGame {
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
 		stopAudioTrack();
+		this.gameSocket?.close();
 	}
-}
+};
 
 export { Client3DGame };

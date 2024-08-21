@@ -40,10 +40,10 @@ class Arena {
 			this.width = width;
 			this.height = width / aspectRatio;
 		}
-		// this.height *= 0.9;
+		this.height *= 0.9;
+		this.startY = 0.1 * this.height;
 		this.width = this.height * aspectRatio;
 		this.startX = (width - this.width) / 2;
-		this.startY = 0.1 * this.height;
 		console.log("Arena resized to:", this.width, this.height);
 		console.log("StartX:", this.startX, "StartY:", this.startY);
 	}
@@ -74,10 +74,10 @@ class Paddle {
 		this.direction = 0;
 
 		const ratio = (arenaHeight + arenaWidth) / 500;
-		this.speed = PADDLE_SPEED * ratio;
-		this.goalLine = GOAL_LINE * ratio;
 		this.len = PADDLE_LEN * ratio;
 		this.width = PADDLE_WIDTH * ratio;
+		this.speed = PADDLE_SPEED * ratio;
+		this.goalLine = GOAL_LINE * ratio;
 		this.x = (side == "left") ? startX + this.goalLine + this.width / 2 
 			: startX + arenaWidth - this.goalLine - this.width / 2;
 		this.y = startY + arenaHeight / 2;
@@ -105,7 +105,7 @@ class Paddle {
 		ctx.strokeRect(this.x - this.width / 2, this.y - this.len / 2, this.width, this.len);
 	}
 
-	onResize (arenaWidth, arenaHeight, startX, prevHeight) {
+	resize (arenaWidth, arenaHeight, startX, prevHeight) {
 		const ratio = (arenaHeight + arenaWidth) / 500;
 		this.len = PADDLE_LEN * ratio;
 		this.width = PADDLE_WIDTH * ratio;
@@ -209,12 +209,13 @@ class Score {
 class ClientClassic {
 	constructor (gameSetup, gameSocket=null, gameData=null, matchId=null) {
 		const nav = document.getElementById('nav');
+		const footer = document.getElementById('footer');
 		this.parent = gameSetup.parentElement;
 
 		while (this.parent.firstChild) {
 			this.parent.removeChild(this.parent.lastChild);
 		}
-		this.parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
+		this.parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
 		this.parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
 
 		this.canvas = document.createElement("canvas");
@@ -294,8 +295,8 @@ class ClientClassic {
 			this.canvas.height = this.parent.height;
 			const prevHeight = this.arena.height;
 			this.arena.resize(this.canvas.width, this.canvas.height);
-			this.player1.onResize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
-			this.player2.onResize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
+			this.player1.resize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
+			this.player2.resize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
 		}, 200);
 	}
 
@@ -424,8 +425,8 @@ class ClientClassic {
 		if (this.checkGoal(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY)) {
 			this.ball.reset(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
 			this.score.update(this.score.hasScored.scorer);
-			if (this.score.score.left >= this.gameData.scoreLimit 
-			|| this.score.score.right >= this.gameData.scoreLimit) {
+			if (this.score.score.left >= this.gameData.score.limit 
+			|| this.score.score.right >= this.gameData.score.limit) {
 				this.gameover = true;
 				this.ball = null;
 			}

@@ -172,14 +172,14 @@ class GameRouter {
 			playerProfile.user.username,
 			playerProfile.alias,
 			{ up: "ArrowLeft", down: "ArrowRight" },
-			playerProfile.avatar
+			playerProfile.image.replace("http://", "https://")
 		);
 		const opponent = new Player(
 			data.isChallenger ? "right" : "left",
 			opponentProfile.user.username,
 			opponentProfile.alias,
 			null,
-			opponentProfile.avatar
+			opponentProfile.image.replace("http://", "https://")
 		);
 		const gameSetup = new GameSetup(
 			this.appElement,
@@ -191,7 +191,10 @@ class GameRouter {
 		);
 		this.gameData = new GameData();
 		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
-		this.client = new ClientClassic(gameSetup, this.gameSocket, this.gameData, data.gameID);
+		if (playerProfile.client_3d)
+			this.client = new Client3DGame(gameSetup, this.gameSocket, this.gameData, data.gameID);
+		else
+			this.client = new ClientClassic(gameSetup, this.gameSocket, this.gameData, data.gameID);
 		this.client.start();
 	}
 
@@ -208,9 +211,9 @@ class GameRouter {
 		const gameSetup = new GameSetup(
 			this.appElement,
 			player1,
-			player2 ?? this.makeAIPlayer("right"),
+			player2 ?? this.makeAIPlayer("left"),
 			true,
-			"classic",
+			(player2 === null)? "single" : "classic",
 			"2d"
 		);
 		this.client = new ClientClassic(gameSetup);
@@ -223,9 +226,12 @@ class GameRouter {
 			player1,
 			player2 ?? this.makeAIPlayer("right"),
 			true,
-			"classic",
+			(player2 === null)? "single" : "classic",
 			"3d"
 		);
+		if (!player2) {
+			gameSetup.player1.controls = { up: "ArrowLeft", down: "ArrowRight" };
+		}
 		this.client = new Client3DGame(gameSetup);
 		this.client.start();
 	}
@@ -252,6 +258,10 @@ class GameRouter {
 		);
 	}
 
+	stopGame () {
+		this.client?.stop();
+		this.client = null;
+	}
 };
 
 class GameData {
