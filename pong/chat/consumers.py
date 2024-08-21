@@ -88,6 +88,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
         username = text_data_json["username"]
+        if text_data_json.get("type") == "challenge":
+            await self.channel_layer.group_send(
+                self.room_group_name, {
+                    "type": "challenge",
+                    "message": message,
+                    "username": username,
+                }
+            )
+            return
         usersList = await self.get_online_users() 
 
         # Send message to room group
@@ -120,6 +129,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "type": "connect",
             "username": event["username"],
+        }))
+
+    async def challenge(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "challenge",
+            "username": event["username"],
+            "message": event["message"],
         }))
 
     @database_sync_to_async

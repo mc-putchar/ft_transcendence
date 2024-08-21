@@ -69,7 +69,9 @@ class ChatRouter {
 			this.updateUserList(data.users_list);
 		}
 
-		if (data.hasOwnProperty('message')) {
+		if (data.type === 'challenge') {
+			this.pushMessage(`${data.username} has ${data.message} the challenge`, 'duel');
+		} else if (data.hasOwnProperty('message')) {
 			if (this.isCommand(data.message)) {
 				const command = data.message.split(' ')[0];
 				switch (command) {
@@ -78,7 +80,7 @@ class ChatRouter {
 						break;
 					case '/pm':
 						const recipient = data.message.split(' ')[1];
-						if (recipient === this.username) {
+						if (recipient === this.username && !this.isBlockedUser(data.username)) {
 							const message = data.message.replace(`/pm ${recipient} `, '');
 							this.pushMessage(`PM from ${data.username}: ${message}`, 'pm');
 						}
@@ -90,7 +92,8 @@ class ChatRouter {
 				}
 			} else {
 				if (data.message.startsWith('@')
-				&& this.getMention(data.message) === this.username) {
+				&& this.getMention(data.message) === this.username
+				&& !this.isBlockedUser(data.username)) {
 					const msg = data.message.replace(`@${this.username} `, '');
 					const notificationEvent = new CustomEvent('notification', {
 						detail: {
@@ -239,11 +242,11 @@ class ChatRouter {
 
 	sendDuelResponse(response) {	
 		const data = {
-			message: `${this.username} has ${response} the challenge!`,
+			type: 'challenge',
 			username: this.username,
-			type: 'announcement',
+			message: response,
 		};
-		this.chatSocket.send(JSON.stringify(data));
+		this.chatSocket?.send(JSON.stringify(data));
 	}
 
 	getMention(message) {

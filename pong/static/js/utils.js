@@ -8,14 +8,28 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	modal.id = modalId;
 
 	modal.classList.add("modal");
-	modal.classList.add("bg-transparent");
-	// modal.dataset.bsBackdrop = "static";
-	// modal.dataset.bsKeyboard = "false";
-	modal.style.display = "block";
-	modal.style.zIndex = "1000";
+	modal.setAttribute("aria-labelledby", modalLabelId);
+	modal.setAttribute("aria-hidden", "true");
 
-	let modalBodyContainer = document.createElement("div");
-	modalBodyContainer.id = "modalLabelId";
+	const modalDialog = document.createElement("div");
+	modalDialog.classList.add("modal-dialog", "modal-dialog-centered");
+	modalDialog.role = "document";
+	const modalContent = document.createElement("div");
+	modalContent.classList.add("modal-content");
+	const modalHeader = document.createElement("div");
+	modalHeader.classList.add("modal-header", "bg-info-subtle", "m-1");
+	const closeButtonContainer = document.createElement("div");
+	closeButtonContainer.classList.add("m-0");
+	closeButtonContainer.style.cssText = "text-align: right; position: absolute; right: 0.2rem; top: 0.2rem;";
+	const closeButton = document.createElement("button");
+	closeButton.type = "button";
+	closeButton.classList.add("btn-close");
+	closeButton.setAttribute("data-bs-dismiss", "modal");
+	closeButton.id = `close${modalId}`;
+	closeButtonContainer.appendChild(closeButton);
+	modalHeader.appendChild(closeButtonContainer);
+
+	const modalBodyContainer = document.createElement("div");
 	modalBodyContainer.classList.add("container", "bg-transparent", "m-2");
 	if (fields.length !== 0) {
 		fields.forEach((field) => {
@@ -26,31 +40,25 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 			modalBodyContainer.appendChild(elem);
 		});
 	}
+	modalHeader.appendChild(modalBodyContainer);
 
-	modal.innerHTML = `
-		<div class="modal-dialog modal-dialog-centered" role="document">
-			<div class="modal-content">
-				<div class="modal-header bg-info-subtle m-1">
-					<div class="m-0" style="text-align: right; position: absolute; right: 0.2rem; top: 0.2rem;">
-						<button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal" id="close${modalId}">x</button>
-					</div>
-					${modalBodyContainer.outerHTML}
-				</div>
-				<div class="modal-body bg-info-subtle text-success m-1">
-					${customContent}
-				</div>
-			</div>
-		</div>
-	`;
+	const modalBody = document.createElement("div");
+	modalBody.classList.add("modal-body", "bg-info-subtle", "text-success", "m-1");
+	modalBody.innerHTML = customContent;
 
+	modalContent.appendChild(modalHeader);
+	modalContent.appendChild(modalBody);
+	modalDialog.appendChild(modalContent);
+	modal.appendChild(modalDialog);
 	document.body.appendChild(modal);
 
+	let modalElement = new bootstrap.Modal(document.getElementById(modalId));
+	modalElement.show();
 	if (closeCallback) {
 		document.getElementById(`close${modalId}`).addEventListener("click", closeCallback);
 	}
-	document.getElementById(`close${modalId}`).addEventListener("click", function () {
-		modal.style.display = "none";
-		document.body.removeChild(modal);
+	modal.addEventListener('hidden.bs.modal', function (event) {
+		modal.remove();
 	});
 }
 

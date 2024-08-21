@@ -108,6 +108,7 @@ class Router {
 
 	async route(e) {
 		this.oldHash = this.oldHash ?? window.location.hash;
+		this.game?.stopGame();
 		const template = window.location.hash.substring(2) || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
@@ -123,12 +124,13 @@ class Router {
 				const gameID = template.substring(12);
 				this.game.acceptChallenge(gameID);
 				// this.chat.acceptGame();
+				window.location.hash = this.oldHash;
 				this.chat.sendDuelResponse('accepted');
 			} else if (template.startsWith('game/decline/')) {
 				// this.chat.declineGame();
+				window.location.hash = this.oldHash;
 				this.chat.sendDuelResponse('declined');
 			}
-			setTimeout(() => window.location.hash = this.oldHash, 100);
 			this.game.route(template);
 		} else if (template.startsWith('addFriend') || template.startsWith('deleteFriend') || template.startsWith('block') || template.startsWith('unblock')) {
 			const action = template.split('/')[0];
@@ -360,9 +362,11 @@ class Router {
 				break;
 			case 'pong-3d':
 				stopAllGames();
-				const pl1 = this.game.makePlayer('left', 'Player 1');
-				const pl2 = this.game.makePlayer('right', 'Player 2');
-				this.game.start3DGame(pl1, pl2);
+				// const pl1 = this.game.makePlayer('left', 'Player 1');
+				// const pl2 = this.game.makePlayer('right', 'Player 2');
+				// this.game.start3DGame(pl1, pl2);
+				const pl1 = this.game.makePlayer('left', 'Player 1', '*.*', '/static/assets/42Berlin.svg');
+				this.game.start3DGame(pl1);
 				break;
 			case 'pong-4p':
 				stopAllGames();
