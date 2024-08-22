@@ -1,27 +1,46 @@
-{% if user.is_authenticated %}
-<h1>You are already logged in as {{ user.username }}</h1>
-<a href="#/logout" class="btn btn-primary mt-2">Logout</a>
+<div class="container mt-5">
+	<div class="row justify-content-center">
+		<div class="col-md-8">
+			<div class="card p-2 bg-secondary-subtle">
+				<div class="card-header bg-dark text-success d-flex align-items-center justify-content-between">
+					<button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
+					<h5 class="mb-0">Login</h5>
+				</div>
+				{% if user.is_authenticated %}
+				<div class="card-body text-center">
+					<h1>You are already logged in as {{ user.username }}</h1>
+					<a href="#/dashboard" class="btn btn-success m-2">Dashboard</a>
+					<a href="#/logout" class="btn btn-primary m-2">Logout</a>
+				</div>
 
-{% else %}
-{% load static %}
-<button onclick='location.href="/auth42"' class="btn btn-secondary mt-2">Authenticate with <img src="{% static 'assets/42logo.svg' %}" alt="Logo" style="height: 40px;"></button>
-<form id="login-form" method="post" action="#/login/" class="form-group mb-2">
-{% csrf_token %}
-  <div class="align-items-center">
-    <label for="username" class="form-label col-sm-2 col-form-label no-select">Username</label>
-    <input type="text" class="form-control col-sm-4" name="username" id="username" autocomplete="username" maxlength="30" required autofocus>
-  </div>
+				{% else %}
+				{% load static %}
+				<div class="card-body text-center">
+					<button onclick='location.href="/auth42"' class="btn btn-secondary mt-2">Authenticate with <img src="{% static 'assets/42logo.svg' %}" alt="Logo" style="height: 40px;"></button>
+					<h5 class="bg-dark-subtle my-4" style="width: 100%; text-align: center; border-bottom: 1px solid green; line-height: 0.1em; margin: 10px 0 50px;">
+						<span class="rounded bg-dark-subtle text-success" style="padding:0 10px;">OR</span>
+					</h5>
+					<h1>Login</h1>
+					<form id="login-form" method="post" action="#/login/" class="form-group mb-2">
+						{% csrf_token %}
+						<div class="form-floating my-2">
+							<input type="text" class="form-control" name="username" id="username" autocomplete="username" maxlength="30" placeholder="user" autofocus required >
+							<label for="username" class="form-label no-select">Username</label>
+						</div>
 
-  <div class="align-items-center">
-    <label for="password" class="form-label col-sm-2 col-form-label no-select">Password</label>
-    <input type="password" class="form-control col-sm-4" name="password" id="password" autocomplete="current-password" required maxlength="30">
-  </div>
-  
-  <input type="hidden" name="next" value="">
-  <button type="submit" class="btn btn-primary my-2">Login</button>
-  <button type="button" onclick='location.hash="/register"' class="btn btn-info my-2 float-end">Register</button>
-</form>
-WIP <a href="#/reset-password">Forgotten Password?</a>
-<!-- <a href="#/auth42" class="btn btn-secondary mt-2">Authenticate with 42 (popup test)</a> -->
+						<div class="form-floating my-2">
+							<input type="password" class="form-control" name="password" id="password" autocomplete="current-password" placeholder="p4$$W0rd" required maxlength="30">
+							<label for="password" class="form-label no-select">Password</label>
+						</div>
+						<button type="submit" class="btn btn-primary my-2">Login</button>
+					</form>
+					WIP <a href="#/reset-password">Forgotten Password?</a>
+					<br>
+					No account? <button type="button" onclick='location.hash="/register"' class="btn btn-info my-2">Register</button>
+				<!-- <a href="#/auth42" class="btn btn-secondary mt-2">Authenticate with 42 (popup test)</a> -->
 
-{% endif %}
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
