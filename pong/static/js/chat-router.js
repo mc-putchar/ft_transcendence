@@ -61,7 +61,7 @@ class ChatRouter {
 		const data = JSON.parse(event.data);
 
 		if (data.type === 'connect' && data.username !== this.username) {
-			this.pushMessage(`${data.username} has connected`);
+			this.pushMessage(`${data.username} has connected`, 'system');
 			return;
 		}
 
@@ -70,7 +70,7 @@ class ChatRouter {
 		}
 
 		if (data.type === 'challenge') {
-			this.pushMessage(`${data.username} has ${data.message} the challenge`, 'duel');
+			this.pushMessage(`${data.username} has ${data.message} the challenge`, 'duel', 'Announcer');
 		} else if (data.hasOwnProperty('message')) {
 			if (this.isCommand(data.message)) {
 				const command = data.message.split(' ')[0];
@@ -82,7 +82,10 @@ class ChatRouter {
 						const recipient = data.message.split(' ')[1];
 						if (recipient === this.username && !this.isBlockedUser(data.username)) {
 							const message = data.message.replace(`/pm ${recipient} `, '');
-							this.pushMessage(`PM from ${data.username}: ${message}`, 'pm');
+							this.pushMessage(message, 'pm', data.username);
+						} else if (data.username === this.username) {
+							const message = data.message.replace(`/pm ${recipient} `, `> ${recipient} > `);
+							this.pushMessage(message, 'pm', data.username);
 						}
 						break;
 					case '/help':
@@ -104,7 +107,7 @@ class ChatRouter {
 					this.chatElement.dispatchEvent(notificationEvent);
 				}
 				if (data.message.length > 0)
-					this.pushMessage(`${data.username}: ${data.message}`);
+					this.pushMessage(data.message, 'message', data.username);
 			}
 		} else if (data.hasOwnProperty('username')) {
 			console.log(`Received username ${data.username}`);
@@ -189,15 +192,10 @@ class ChatRouter {
 		return blockedUsers.includes(username);
 	}
 
-	pushMessage(message, type = 'message', sender = null) {
-		const senderUsername = message.split(':')[0].trim();
-
-		if (this.isBlockedUser(senderUsername)) {
-			return; // Do not show the message if the user is blocked
-		}
-		
-		this.insertChatMessage(message, this.chatLog, type);
-
+	pushMessage(message, type='message', sender=null) {
+		if ((type === 'message' || type === 'pm')
+		&& (!sender || this.isBlockedUser(sender)))	return;
+		this.insertChatMessage(message, this.chatLog, type, sender);
 		this.chatLog.scrollTop = this.chatLog.scrollHeight;
 	}
 
@@ -210,7 +208,7 @@ class ChatRouter {
 		const challengedUser = data.message.split(' ')[1];
 		if (this.users.includes(challengedUser)) {
 			if (data.username === this.username) {
-				this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel');
+				this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
 				// start game websocket
 				const challengeEvent = new CustomEvent('challenge', {
 					detail: {
@@ -219,9 +217,9 @@ class ChatRouter {
 				});
 				this.chatElement.dispatchEvent(challengeEvent);
 			} else if (challengedUser !== this.username) {
-				this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel');
+				this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
 			} else {
-				this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel');
+				this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel', 'Announcer');
 				const modalData = {
 					message: `Challenged by ${data.username}`,
 				};
@@ -271,30 +269,38 @@ class ChatRouter {
 		this.chatSocket.close();
 	}
 
-	insertChatMessage(message, parent, type) { 
+	insertChatMessage(message, parent, type, sender=null) { 
 		const card = document.createElement('div');
-		card.className = 'card chat-card my-1';
+		card.classList.add('card', 'chat-card', 'my-1', 'mw-50');
+		card.style += 'max-width:50vw;';
 		card.style += 'max-height:inherit;';
+		const cardPrefix = document.createElement('span');
+		cardPrefix.classList.add('badge', 'rounded-pill', 'm-1');
+		cardPrefix.innerText = (type === 'system') ? 'PONG' : sender;
 		const cardBody = document.createElement('p');
 		cardBody.innerText = message;
 		cardBody.className = 'chat-message';
 
-
 		switch (type) {
 			case 'duel':
+				cardPrefix.classList.add('text-bg-primary');
 				cardBody.classList.add('text-primary');
 				break;
 			case 'pm':
+				cardPrefix.classList.add('text-bg-warning');
 				cardBody.classList.add('text-warning');
 				break;
 			case 'system':
+				cardPrefix.classList.add('text-bg-secondary');
 				cardBody.classList.add('text-secondary');
 				break;
 			default:
+				cardPrefix.classList.add('text-bg-success');
 				cardBody.classList.add('text-success');
 				break;
 		}
 
+		cardBody.prepend(cardPrefix);
 		card.appendChild(cardBody);
 		parent.appendChild(card);
 		// set focus to the message input

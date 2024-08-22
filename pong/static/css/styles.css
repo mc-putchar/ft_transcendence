@@ -411,8 +411,8 @@ img.mp3-hover:hover {
   white-space: pre-wrap;
   max-height: inherit;
   overflow: auto;
-  max-width: 50vw; /* Limit the width to 50% of the viewport width */
-	font-size: smaller;
+  /* max-width: 50vw; */
+  font-size: smaller;
 }
 
 #room-name {
