@@ -24,6 +24,7 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	const closeButton = document.createElement("button");
 	closeButton.type = "button";
 	closeButton.classList.add("btn-close");
+	closeButton.classList.add("m-1");
 	closeButton.setAttribute("data-bs-dismiss", "modal");
 	closeButton.id = `close${modalId}`;
 	closeButtonContainer.appendChild(closeButton);

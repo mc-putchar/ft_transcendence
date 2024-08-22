@@ -19,7 +19,7 @@ def image_upload(instance, filename):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
-    alias = models.CharField(max_length=150, blank=True)
+    alias = models.CharField(max_length=24, blank=True)
     isOnline = models.BooleanField(default=False)
     client_3d = models.BooleanField(default=False)
     paddle = models.PositiveIntegerField(default=0)
@@ -31,7 +31,7 @@ class Profile(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.alias:
-            self.alias = f'marvin_{self.user.id}'
+            self.alias = self.user.username
         super().save(*args, **kwargs)
         # if self.image and self.image.name != 'profile_images/default.png':
         #     self.resize_image()
