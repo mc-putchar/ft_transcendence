@@ -57,6 +57,9 @@ const PADDLE_TEX_NORMAL = "static/img/textures/bricks/2K/Poliigon_BrickWallRecla
 
 const TEX_PATH = "static/img/textures/";
 
+const soundExp = 4.0;
+const soundBase = 16.0;
+
 class Arena {
 	constructor(texLoader) {
 		this.ambient_light = new THREE.AmbientLight(0x882288);
@@ -902,19 +905,19 @@ class Client3DGame {
 			this.ball.pos.z += this.ball.dir.z * distance;
 		}
 	}
-
+	
 	checkCollisions () {
 		const [ballX, ballY] = this.ball.position;
 		if (ballX <= -(ARENA_HEIGHT / 2) + BALL_SIZE / 2
 		|| ballX >= (ARENA_HEIGHT / 2) - BALL_SIZE / 2) {
-			this.audio.playTone(180, 140, 140);
+			this.audio.playTone(30 + (soundBase * this.ball.speed) ** soundExp, 10 + (140 * Math.random()), 10 + (140 * Math.random()));
 			this.ball.dir.x *= (-1.1);
 			Math.min(Math.max(this.ball.dir.x, -1), 1);
 		}
 		const [p1x, p1y] = this.playerOne.paddle.position;
 		const [p2x, p2y] = this.playerTwo.paddle.position;
 		if (ballY < -ARENA_WIDTH / 2 - GOAL_LINE) {
-			this.audio.playTone(240, 120, 210, 3);
+			this.audio.playTone(30 + (soundBase * this.ball.speed) ** soundExp, 20 + (200 * Math.random()), 30 + (210 * Math.random()), 0.4);
 			this.last_scored = 2;
 			this.running = false;
 			this.playerTwo.paddle.score++;
@@ -926,7 +929,7 @@ class Client3DGame {
 			if(this.hasAI)
 				this.ai.resetTimes();
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
-			this.audio.playTone(240, 120, 210, 3);
+			this.audio.playTone(30 + (soundBase * this.ball.speed) ** soundExp, 20 + (40 * Math.random()), 30 + (Math.random() * 300), 0.4);
 			this.last_scored = 1;
 			this.running = false;
 			this.playerOne.paddle.score++;
@@ -943,7 +946,7 @@ class Client3DGame {
 			if(ballY > p2y + PADDLE_WIDTH) {
 				return ;
 			}
-			this.audio.playTone(200, 130, 200, 0.6);
+			this.audio.playTone(30 + (soundBase * this.ball.speed) ** soundExp, 10 + (400 * Math.random()), 10 + (400 * Math.random()));
 			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(-1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
@@ -955,7 +958,7 @@ class Client3DGame {
 			if(ballY < p1y - PADDLE_WIDTH) {
 				return ;
 			}
-			this.audio.playTone(200, 130, 200, 0.6);
+			this.audio.playTone(30 + (soundBase * this.ball.speed) ** soundExp, 130 * Math.random(), 10 + (400 * Math.random()));
 			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));

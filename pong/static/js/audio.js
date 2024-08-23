@@ -29,8 +29,8 @@ class AudioController {
 	}
   
 	_initializeParameters() {
-	  this.delay.delayTime.value = 0.35;
-	  this.feedback.gain.value = 0.4;
+	  this.delay.delayTime.value = 0.08;
+	  this.feedback.gain.value = 0.5;
 	  this.modmodGain.gain.value = 350;
 	  this.vca.gain.value = 0;
 	  this.osc.type = "triangle";
@@ -94,7 +94,7 @@ class AudioController {
 	  this.mainOUT.gain.value = 1;
 	}
 
-	playTone(freq, modulation, mod_amt, sus = 0.3) {
+	playTone(freq, modulation, mod_amt, sus = 0.2) {
 	  if (!this.ctx) {
 	    return;
           }
