@@ -14,7 +14,7 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 // import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 
-import { getAmps, playAudioTrack, playTone, stopAudioTrack } from './audio.js';
+import { AudioController } from './audio.js';
 import { GameData } from './game-router.js';
 
 const CANVAS_PADDING = 10;
@@ -815,7 +815,7 @@ class Client3DGame {
 				this.endGame();
 			}
 		}
-		this.amps = getAmps();
+		this.amps = this.audio.getAmps();
 		for (let i = 0; i < 8; ++i) {
 			this.arena.topWalls[i].position.y = (50 - this.amps[i + 1])/-5;
 			this.arena.bottomWalls[i].position.y = (50 - this.amps[i + 1])/-5;
@@ -907,14 +907,14 @@ class Client3DGame {
 		const [ballX, ballY] = this.ball.position;
 		if (ballX <= -(ARENA_HEIGHT / 2) + BALL_SIZE / 2
 		|| ballX >= (ARENA_HEIGHT / 2) - BALL_SIZE / 2) {
-			playTone(180, 40, 140);
+			this.audio.playTone(180, 40, 140);
 			this.ball.dir.x *= (-1.1);
 			Math.min(Math.max(this.ball.dir.x, -1), 1);
 		}
 		const [p1x, p1y] = this.playerOne.paddle.position;
 		const [p2x, p2y] = this.playerTwo.paddle.position;
 		if (ballY < -ARENA_WIDTH / 2 - GOAL_LINE) {
-			playTone(240, 20, 210, 3);
+			this.audio.playTone(240, 20, 210, 3);
 			this.last_scored = 2;
 			this.running = false;
 			this.playerTwo.paddle.score++;
@@ -926,7 +926,7 @@ class Client3DGame {
 			if(this.hasAI)
 				this.ai.resetTimes();
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
-			playTone(240, 20, 210, 3);
+			this.audio.playTone(240, 20, 210, 3);
 			this.last_scored = 1;
 			this.running = false;
 			this.playerOne.paddle.score++;
@@ -943,7 +943,7 @@ class Client3DGame {
 			if(ballY > p2y + PADDLE_WIDTH) {
 				return ;
 			}
-			playTone(200, 30, 200, 0.6);
+			this.audio.playTone(200, 30, 200, 0.6);
 			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(-1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
@@ -955,7 +955,7 @@ class Client3DGame {
 			if(ballY < p1y - PADDLE_WIDTH) {
 				return ;
 			}
-			playTone(200, 30, 200, 0.6);
+			this.audio.playTone(200, 30, 200, 0.6);
 			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			this.ball.dir.setZ(1 * Math.cos(refAngle));
 			this.ball.dir.setX(Math.sin(refAngle));
@@ -1040,8 +1040,9 @@ class Client3DGame {
 
 	start () {
 		console.log("Pong 3D - Starting new game");
+		this.audio = new AudioController();
+		this.audio.playAudioTrack();
 		this.intro();
-		playAudioTrack();
 		this.loop();
 	}
 
@@ -1055,7 +1056,7 @@ class Client3DGame {
 		window.removeEventListener("fullscreenchange", (e) => this.resize(e));
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
-		stopAudioTrack();
+		this.audio.stopAudioTrack();
 		this.gameSocket?.close();
 	}
 };

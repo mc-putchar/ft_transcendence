@@ -1,6 +1,6 @@
 "use strict";
 
-import { startAudioContext } from './audio.js';
+import { AudioController } from './audio.js';
 import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
@@ -181,14 +181,17 @@ class Router {
 
 			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
 				const audioMuteBtn = document.getElementById('audioMuteBtn');
-				audioMuteBtn.innerHTML = '🔇';
-				// flip the mute state and update the button
-				if (this.audioContext) {
-					this.audioContext.suspend();
-					audioMuteBtn.innerHTML = '🔇';
+
+				if (audioMuteBtn.innerText === '🔊') {
+					audioMuteBtn.innerText = '🔇';
+					if(window.mainOUT) {
+						window.mainOUT.gain.value = 1;
+					}
 				} else {
-					this.audioContext = startAudioContext();
-					audioMuteBtn.innerHTML = '🔊';
+					audioMuteBtn.innerText = '🔊';
+					if (window.mainOUT) {
+						window.mainOUT.gain.value = 0;
+					}
 				}
 			});
 
