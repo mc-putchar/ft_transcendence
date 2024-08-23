@@ -29,11 +29,10 @@ class AudioController {
 	}
   
 	_initializeParameters() {
-	  this.initialGain = 0.4;
 	  this.delay.delayTime.value = 0.35;
-	  this.feedback.gain.value = 0.1;
+	  this.feedback.gain.value = 0.4;
 	  this.modmodGain.gain.value = 350;
-	  this.vca.gain.value = 0.7;
+	  this.vca.gain.value = 0;
 	  this.osc.type = "triangle";
 	  this.modmod.type = "sine";
 	  this.mod.type = "sine";
@@ -69,11 +68,11 @@ class AudioController {
 		this.ctx.resume();
 		this.mod.start();
 		this.modmod.start();
-		this.osc.start();
 	  }
 	}
   
 	playAudioTrack() {
+	  this.osc.start();
 	  this._startAudioContext();
 	  this.trackSource.connect(this.mainGainNode);
 	  this.audioTrack.play();
@@ -96,7 +95,7 @@ class AudioController {
 	}
 
 	playTone(freq, modulation, mod_amt, sus = 0.3) {
-	  if (this.ctx.state !== "running" || !this.ctx) {
+	  if (!this.ctx) {
 	    return;
           }
 
@@ -105,11 +104,13 @@ class AudioController {
 	  this.osc.frequency.value = freq;
   
 	  const currentTime = this.ctx.currentTime;
+
 	  this.vca.gain.exponentialRampToValueAtTime(1, currentTime + 0.08); // attack
-	  this.vca.gain.exponentialRampToValueAtTime(
-		this.vca.gain.value,
-		currentTime + sus
-	  ); // sustain
+	  
+	 //  this.vca.gain.exponentialRampToValueAtTime(
+		// this.vca.gain.value,
+		// currentTime + sus
+	 //  ); // sustain
 	  this.vca.gain.exponentialRampToValueAtTime(0.00001, currentTime + sus + 0.3); // release
 	}
   

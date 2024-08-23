@@ -185,12 +185,12 @@ class Router {
 				if (audioMuteBtn.innerText === '🔊') {
 					audioMuteBtn.innerText = '🔇';
 					if(window.mainOUT) {
-						window.mainOUT.gain.value = 1;
+						window.mainOUT.gain.value = 0;
 					}
 				} else {
 					audioMuteBtn.innerText = '🔊';
 					if (window.mainOUT) {
-						window.mainOUT.gain.value = 0;
+						window.mainOUT.gain.value = 1;
 					}
 				}
 			});
