@@ -16,6 +16,7 @@ function startAudioContext() {
     modmod.start();
     osc.start();
   }
+  return ctx;
 }
 const audioTrack = new Audio("/static/assets/music.mp3");
 

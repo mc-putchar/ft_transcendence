@@ -5,14 +5,20 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-import { getAmps, playAudioTrack, playTone } from './audio.js';
+// import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+// import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+// import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
-const ACTIVE_AI = true;
+// import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
+// import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
+// import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-let animationID = null;
+
+import { getAmps, playAudioTrack, playTone, stopAudioTrack } from './audio.js';
+import { GameData } from './game-router.js';
 
 const CANVAS_PADDING = 10;
-const BALL_SIZE = 8;
+const BALL_SIZE = 6; // like big but not too big
 const ARENA_WIDTH = 300;
 const ARENA_HEIGHT = 200;
 const SCORE_HEIGHT = 42;
@@ -24,20 +30,24 @@ const PADDLE_LEN = 42;
 const PADDLE_WIDTH = 6;
 const PADDLE_HEIGHT = 6;
 const TARGET_FPS = 120;
-const DRAW_DISTANCE = 1000;
 const AVATAR_HEIGHT = PADDLE_HEIGHT + 2;
 const WALL_HEIGHT = 20;
 const WALL_THICKNESS = 10;
-const CAM_START_X = -160;
-const CAM_START_Y = 130;
 
 const SCORE_FONT = "static/fonts/helvetiker_regular.typeface.json";
 const WIN_FONT = "static/fonts/optimer_regular.typeface.json";
+const HUD_FONT = "static/fonts/terminess_nerd_font_mono_bold.json";
+
 // const BALL_TEX_IMG = "static/img/green-texture.avif"
 // const BALL_TEX_IMG = "static/img/textures/bronze/MetalBronzeWorn001_COL_2K_METALNESS.png"
-const BALL_TEX_BUMP = "static/img/textures/bronze/BronzeBUMP.png"
 const BALL_TEX_IMG = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_BaseColor.jpg"
+const BALL_TEX_DISP = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_Displacement.tiff"
+const BALL_TEX_NORMAL = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_Normal.jpg"
 const BALL_TEX_METAL = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_Metallic.jpg"
+const BALL_TEX_ROUGH = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_Roughness.jpg"
+const BALL_TEX_AMB = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_AmbientOcclusion.jpg"
+const BALL_TEX_BUMP = "static/img/textures/bronze/BronzeBUMP.png"
+
 const WALL_TEX_IMG = "static/img/matrix-purple.jpg"
 const AVATAR1_IMG = "static/img/avatar.jpg"
 const AVATAR2_IMG = "static/img/avatar-marvin.png"
@@ -45,15 +55,11 @@ const FLOOR_TEX_IMG = "static/img/login-install.jpg"
 const PADDLE_TEX_IMG = "static/img/textures/bricks/2K/Poliigon_BrickWallReclaimed_8320_BaseColor.jpg"
 const PADDLE_TEX_NORMAL = "static/img/textures/bricks/2K/Poliigon_BrickWallReclaimed_8320_Normal.jpg"
 
-let button_left = null;
-let button_right = null;
+const TEX_PATH = "static/img/textures/";
 
 class Arena {
-	constructor() {
+	constructor(texLoader) {
 		this.ambient_light = new THREE.AmbientLight(0x882288);
-
-		// this.pointLight = new THREE.PointLight(0xffffff, 1, 300);
-		// this.pointLight.position.set(20, 100, 40);
 	
 		this.lightbulb1 = new THREE.SpotLight(0xffaa99, 420);
 		this.lightbulb2 = new THREE.SpotLight(0xaa99ff, 420);
@@ -77,21 +83,29 @@ class Arena {
 		this.spotLight.shadow.camera.near = 1;
 		this.spotLight.shadow.camera.far = 10;
 		this.spotLight.shadow.focus = 1;
-		// this.lightHelper = new THREE.SpotLightHelper( this.spotLight );
 
-		// this.grid = new THREE.GridHelper(Math.max(ARENA_HEIGHT, ARENA_WIDTH), 40);
 		const plane_geo = new THREE.PlaneGeometry(ARENA_WIDTH, ARENA_HEIGHT);
-		const floor_texture = new THREE.TextureLoader().load(FLOOR_TEX_IMG);
-		const plane_mat = new THREE.MeshPhongMaterial({ map: floor_texture });
-		plane_mat.side = THREE.DoubleSide;
-		this.plane = new THREE.Mesh(plane_geo, plane_mat);
-		this.plane.receiveShadow = true;
-		this.plane.castShadow = true;
+		const floor_tex = texLoader.load(TEX_PATH + "42floor/login-install.jpg");
+		const floor_ao = texLoader.load(TEX_PATH + "42floor/AmbientOcclusionMap.png");
+		const floor_normal = texLoader.load(TEX_PATH + "42floor/NormalMap.png");
+		const floor_disp = texLoader.load(TEX_PATH + "42floor/DisplacementMap.png");
+		const floor_spec = texLoader.load(TEX_PATH + "42floor/SpecularMap.png");
+		const floor_mat = new THREE.MeshStandardMaterial({
+			map: floor_tex,
+			aoMap: floor_ao,
+			// normalMap: floor_normal,
+			displacementMap: floor_disp,
+			displacementScale: 0.1,
+			side: THREE.DoubleSide,
+		});
+		this.floor = new THREE.Mesh(plane_geo, floor_mat);
+		this.floor.receiveShadow = true;
+		this.floor.castShadow = true;
+		this.floor.rotateX(-Math.PI / 2);
+		this.floor.rotateZ(-Math.PI / 2);
 
-		this.plane.rotateX(-Math.PI / 2);
-		this.plane.rotateZ(-Math.PI / 2);
-		const wall_texture = new THREE.TextureLoader().load(WALL_TEX_IMG);
-		const wall_material = new THREE.MeshBasicMaterial({ map: wall_texture });
+		const wall_texture = texLoader.load(WALL_TEX_IMG);
+		const wall_material = new THREE.MeshStandardMaterial({ map: wall_texture });
 		const mod_wall_geometry = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, ARENA_WIDTH / 8, 2, 2, 2);
 		this.bottomWalls = [];
 		this.topWalls = [];
@@ -100,23 +114,119 @@ class Arena {
 			this.topWalls.push(new THREE.Mesh(mod_wall_geometry, wall_material));
 		}
 	}
+
 	place(scene, topWallPos, bottomWallPos) {
 		for (let i = 0; i<8; ++i) {
-			this.bottomWalls[i].position.set(bottomWallPos + WALL_THICKNESS, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
-			this.topWalls[7 - i].position.set(topWallPos - WALL_THICKNESS, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
+			this.bottomWalls[i].position.set(bottomWallPos + WALL_THICKNESS / 2, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
+			this.topWalls[7 - i].position.set(topWallPos - WALL_THICKNESS / 2, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
 			scene.add(this.bottomWalls[i], this.topWalls[i]);
 		}
 		scene.add(this.lightbulb1, this.lightbulb2);
 		scene.add( this.spotLight );
 		scene.add(this.ambient_light);
-		scene.add(this.plane);
-		// scene.add(this.grid);
-		// scene.add( this.lightHelper, this.lightHelper1, this.lightHelper2 );
+		scene.add(this.floor);
+	}
+};
+
+class Hud {
+	constructor (fontLoader, player1, player2, score, p1avatar, p2avatar) {
+		const frustumSize = 5;
+		const aspect = window.innerWidth / window.innerHeight;
+		this.camera = new THREE.OrthographicCamera(
+			(frustumSize * aspect) / -2,
+			(frustumSize * aspect) / 2,
+			frustumSize / 2,
+			frustumSize / -2,
+			0.1,
+			100
+		);
+
+		this.scene = new THREE.Scene();
+		this.camera.position.set(0, 0, 5);
+
+		const leftAlias = player1.side === "left" ? player1.alias : player2.alias;
+		const rightAlias = player1.side === "right" ? player1.alias : player2.alias;
+		const leftAvatar = player1.side === "left" ? p1avatar : p2avatar;
+		const rightAvatar = player1.side === "right" ? p1avatar : p2avatar;
+		this.p1img = new THREE.Mesh(
+			new THREE.BoxGeometry(0.5, 0.5, 0.5),
+			new THREE.MeshLambertMaterial({ map: leftAvatar })
+		);
+		this.p1img.position.set(this.camera.left + 0.5, this.camera.bottom + 1.1, -4);
+		this.p1img.rotateY(Math.PI / 6);
+		this.p1img.rotateX(-Math.PI / 6);
+		this.scene.add(this.p1img);
+
+		this.p2img = new THREE.Mesh(
+			new THREE.BoxGeometry(0.5, 0.5, 0.5),
+			new THREE.MeshLambertMaterial({ map: rightAvatar })
+		);
+		this.p2img.position.set(this.camera.right - 0.5, this.camera.bottom + 1.1, -4);
+		this.p2img.rotateY(Math.PI / 6);
+		this.p2img.rotateX(Math.PI / 6);
+		this.scene.add(this.p2img);
+
+		const light1 = new THREE.SpotLight(0xffaa99, 30);
+		light1.position.set(-3, -2, -2);
+		light1.target = this.p1img;
+		this.scene.add(light1);
+
+		const light2 = new THREE.SpotLight(0xaa99ff, 30);
+		light2.position.set(3, -2, -2);
+		light2.target = this.p2img;
+		this.scene.add(light2);
+
+		fontLoader.load(HUD_FONT, font => {
+			const textGeo = new TextGeometry(`${leftAlias}`, {
+				font: font,
+				size: 0.3,
+				depth: 0.1,
+				curveSegments: 12,
+				bevelEnabled: false
+			});
+			textGeo.computeBoundingBox();
+			const textMat = new THREE.MeshBasicMaterial({ color: 0xffaa99, wireframe: true });
+			const textMesh = new THREE.Mesh(textGeo, textMat);
+			textMesh.position.x = this.camera.left + 0.5;
+			textMesh.position.y = this.camera.bottom + 0.2;
+			textMesh.rotateY(Math.PI / 6);
+			textMesh.rotateX(-Math.PI / 6);
+			this.scene.add(textMesh);
+		});
+		fontLoader.load(HUD_FONT, font => {
+			const textGeo = new TextGeometry(`${rightAlias}`, {
+				font: font,
+				size: 0.3,
+				depth: 0.1,
+				curveSegments: 12,
+				bevelEnabled: false
+			});
+			textGeo.computeBoundingBox();
+			const textMat = new THREE.MeshBasicMaterial({ color: 0xaa99ff, wireframe: true });
+			const textMesh = new THREE.Mesh(textGeo, textMat);
+			textMesh.position.x = this.camera.right - textGeo.boundingBox.max.x;
+			textMesh.position.y = this.camera.bottom + 0.5;
+			textMesh.rotateY(Math.PI / 6);
+			textMesh.rotateX(Math.PI / 6);
+			this.scene.add(textMesh);
+		});
+	}
+
+	update () {
+		this.p1img.rotation.x += 0.01;
+		this.p1img.rotation.y += 0.01;
+		this.p2img.rotation.x += 0.01;
+		this.p2img.rotation.y += 0.01;
 	}
 };
 
 class Ball {
-	constructor(ball_geo, ball_mat) {
+	constructor () {
+		const ball_mat = new THREE.MeshStandardMaterial({ color: 0xf6d32d });
+		ball_mat.metalness = 0.8;
+		ball_mat.roughness = 0.19;
+
+		const ball_geo = new THREE.SphereGeometry( BALL_SIZE, 32, 32 )
 		this.mesh = new THREE.Mesh(ball_geo, ball_mat);
 		this.mesh.castShadow = true;
 		this.mesh.receiveShadow = true;
@@ -126,34 +236,56 @@ class Ball {
 		this.speed = 0;
 		this.lastMove = 0;
 	}
-	place(scene, x, z) {
+
+	place (scene, x, z) {
 		this.mesh.position.set(x, BALL_SIZE, z);
 		scene.add(this.mesh);
 	}
-	get position() {
+
+	get position () {
 		this.mesh.getWorldPosition(this.pos);
 		return [this.pos.x, this.pos.z];
 	}
-	get direction() {
+
+	get direction () {
 		return [this.dir.x, this.dir.z];
 	}
-	doMove() {
-		if(this.lastMove == 0 || Date.now() - this.lastMove > 100 || Date.now() - this.lastMove <= 4)
-			this.lastMove = Date.now();
-		this.time = Date.now() - this.lastMove;
+
+	doMove (online=false) {
+		const now = Date.now();
+		if (online) {
+			const elapsedTime = (now - this.lastUpdateTime) / 1000;
+			this.lastUpdateTime = now;
+
+			this.mesh.translateX(this.dir.x * this.speed * elapsedTime);
+			this.mesh.translateZ(this.dir.z * this.speed * elapsedTime);
+			return;
+		}
+		if(this.lastMove == 0 || now - this.lastMove > 100 || now - this.lastMove <= 4)
+			this.lastMove = now;
+		this.time = now - this.lastMove;
 		this.mesh.translateX(this.dir.x * this.speed * this.time);
 		this.mesh.translateZ(this.dir.z * this.speed * this.time);
-		this.lastMove = Date.now();
+		this.lastMove = now;
 	}
-	reset() {
+
+	reset () {
 		this.mesh.position.set(0, BALL_SIZE, 0);
 		this.dir.set(0, 0, 0);
+		this.speed = 0;
+	}
+
+	sync (ballData, timestamp) {
+		this.mesh.position.set(ballData.x, BALL_SIZE, ballData.y);
+		this.dir.set(ballData.dx, 0, ballData.dy);
+		this.speed = ballData.v;
+		// this.lastUpdateTime = timestamp;
 	}
 };
 
-class Player {
-	constructor(paddle_geo, paddle_mat, avatar_tex, _side) {
-		this.side = _side;
+class Paddle {
+	constructor (paddle_geo, paddle_mat, avatar_tex, side) {
+		this.side = side;
 		this.mesh = new THREE.Mesh(paddle_geo, paddle_mat);
 		this.mesh.castShadow = true;
 		this.pos = new THREE.Vector3();
@@ -173,19 +305,32 @@ class Player {
 			wire_material
 		);
 	}
-	place(scene, x, y) {
+
+	place (side, scene) {
+		const x = 0;
+		const y = (side === "left") ? -ARENA_WIDTH / 2 + GOAL_LINE : ARENA_WIDTH / 2 - GOAL_LINE;
 		this.mesh.position.set(x, PADDLE_HEIGHT, y);
 		this.avatar.position.set(0, AVATAR_HEIGHT, 0);
 		this.avatar_box.position.set(0, AVATAR_HEIGHT, 0);
 		this.mesh.add(this.avatar, this.avatar_box)
 		scene.add(this.mesh);
 	}
+
 	get position() {
 		this.mesh.getWorldPosition(this.pos);
 		return [this.pos.x, this.pos.z];
 	}
-	doMove() {
-		const limit = (ARENA_HEIGHT / 2 - WALL_THICKNESS);
+
+	doMove (online=false) {
+		const limit = (ARENA_HEIGHT / 2 - (PADDLE_LEN / 2));
+		if (online) {
+			const now = Date.now();
+			const elapsedTime = (now - this.lastUpdateTime) / 100;
+			this.lastUpdateTime = now;
+			const delta = this.direction * this.speed * elapsedTime;
+			this.mesh.position.x = Math.min(limit, Math.max(-limit, this.mesh.position.x + delta));
+			return;
+		}
 		if (this.direction) {
 			this.mesh.getWorldPosition(this.pos);
 			let move = this.direction * this.speed;
@@ -194,11 +339,14 @@ class Player {
 			}
 		}
 	}
-};
 
-// direction 1 is up
-// X for ARENA HEIGHT
-// Z for ARENA WIDTH
+	sync (pos, dir, timestamp) {
+		this.direction = dir;
+		this.mesh.position.x = pos;
+
+		this.lastUpdateTime = timestamp;
+	}
+};
 
 class proAI {
 	constructor (player) {
@@ -327,84 +475,134 @@ class proAI {
 		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
 		this.setWait(this.simBall);
 	}
-}
+};
 
-let fsthing = null;
+class Client3DGame {
+	constructor (gameSetup, gameSocket=null, gameData=null, gameID=null) {
+		this.parent = gameSetup.parentElement;
+		this.gameSocket = gameSocket;
+		this.isOnline = gameSocket !== null;
+		this.hasAI = gameSetup.mode === "single";
+		this.gameData = this.isOnline ? gameData : new GameData();
+		this.gameID = gameID;
+		const nav = document.getElementById('nav');
+		const footer = document.getElementById('footer');
+	
+		this.parent.height = window.innerHeight - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
+		this.parent.width = window.innerWidth - CANVAS_PADDING;
+		while (this.parent.firstChild) {
+			this.parent.removeChild(this.parent.lastChild);
+		}
 
-class Game {
-	constructor(parentElement, scoreLimit) {
-		this.parent = parentElement;
-		
+		// this.fsButton = document.createElement('div');
+		// this.fsButton.id = "fullscreenButton";
+		// this.fsButton.classList.add("game-ui", "btn", "bg-transparent", "btn-outline-light");
+		// this.fsButton.innerText = "♐";
+		// this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
+		// this.canvas.appendChild(this.fsButton);
+
+		const progressBar = document.createElement('div');
+		progressBar.id = "progressBar";
+		progressBar.classList.add("progress");
+		progressBar.style.zIndex = "101";
+		progressBar.style.position = "absolute";
+		progressBar.style.top = "50%";
+		progressBar.style.left = "50%";
+		progressBar.style.transform = "translate(-50%, -50%)";
+		progressBar.style.width = "50%";
+		progressBar.ariaLabel = "Game Loading";
+		progressBar.ariaValueNow = "0";
+		progressBar.ariaValueMin = "0";
+		progressBar.ariaValueMax = "100";
+		const progress = document.createElement('div');
+		progress.id = "progress";
+		progress.classList.add("progress-bar", "progress-bar-striped", "progress-bar-animated", "bg-success");
+		progress.style.width = "0%";
+		progress.innerText = "0%";
+		progressBar.appendChild(progress);
+		this.parent.appendChild(progressBar);
+
+		this.loadManager = new THREE.LoadingManager();
+		this.loadManager.onStart = function ( url, itemsLoaded, itemsTotal ) {
+			console.debug( 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+		};
+		this.loadManager.onLoad = () => {
+			console.debug( 'Loading complete!' );
+			progressBar.style.display = "none";
+		};
+		this.loadManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+			console.debug( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+			progress.style.width = (itemsLoaded / itemsTotal * 100) + "%";
+			progress.innerText = Math.floor(itemsLoaded / itemsTotal * 100) + "%";
+		};
+		this.loadManager.onError = (url) => { console.log('Error loading ' + url); };
+		this.texLoader = new THREE.TextureLoader(this.loadManager);
+		this.fontLoader = new FontLoader(this.loadManager);
+
+		this.running = false;
+		this.last_scored = 0;
+		this.lastUpdate = Date.now();
+		this.fpsInterval = 1000 / TARGET_FPS;
+		this.scoreLimit = 11;
+		this.gameover = false;
+
 		window.addEventListener("resize", ev => this.resize(ev), true);
 		window.addEventListener("fullscreenchange", (e) => this.resize(e));
-		
-		this.fsButton = document.createElement('div');
-		fsthing = this.fsButton;
-		this.fsButton.id = "fullscreenButton";
-		this.fsButton.classList.add("game-ui", "btn", "bg-transparent", "btn-outline-light");
-		this.fsButton.innerText = "♐";
-		this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
-		
+
+		document.addEventListener("keydown", ev => this.keydown(ev));
+		document.addEventListener("keyup", ev => this.keyup(ev));
+
+		this.init(gameSetup);
+	}
+
+	init (gameSetup) {
+		// setup canvas
 		this.canvas = document.createElement('canvas');
 		this.canvas.width = window.innerWidth;
 		this.canvas.height = window.innerHeight;
 		this.parent.appendChild(this.canvas);
+
+		// setup renderer
 		this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-		
-		this.canvas.appendChild(this.fsButton);
 
-		// buttons
-		// button_right = document.createElement("button");
-		// button_left = document.createElement("button");
-		// this.parent.appendChild(button_right);
-		// this.parent.appendChild(button_left);
-		
-		// button_right.className = "Buttons";
-		// button_left.className = "Buttons";
-
-		// this.updateButton();
-
+		// setup scene
 		this.scene = new THREE.Scene();
+
+		// setup camera
 		const FOV = 75;
-		const near = 1;
-		const far = DRAW_DISTANCE;
+		const DRAW_DISTANCE = 1000;
+		const CAM_START_X = -220;
+		const CAM_START_Y = 80;
 		this.camera = new THREE.PerspectiveCamera(
-			FOV, this.canvas.clientWidth / this.canvas.clientHeight, near, far
+			FOV, this.canvas.clientWidth / this.canvas.clientHeight, 1, DRAW_DISTANCE
 		);
-		this.camera.position.set(CAM_START_X, CAM_START_Y, 0);
+		const cam_h = (this.hasAI || this.isOnline) ? CAM_START_Y : 300;
+		this.camera.position.set(CAM_START_X, cam_h, 0);
 		this.camera.lookAt(0, 0, 0);
 
+		// setup controls
 		this.cam_controls = new OrbitControls(this.camera, this.renderer.domElement);
-		this.cam_controls.touches = {
-			ONE: null,
-			TWO: 	THREE.TOUCH.ROTATE
-		}
+		this.cam_controls.enabled = false;
 
-		this.cam_controls.touches = {
-			ONE: null,
-			TWO: 	THREE.TOUCH.ROTATE
-		}
-		this.loader = new FontLoader();
+		// this.cam_controls.touches = {
+		// 	ONE: null,
+		// 	TWO: 	THREE.TOUCH.ROTATE
+		// };
 
-		// const ball_mat = new THREE.MeshStandardMaterial({ color: 0xf6d32d });
-		const ball_texture = new THREE.TextureLoader().load(BALL_TEX_IMG);
-		const ball_mat = new THREE.MeshStandardMaterial({ map: ball_texture });
-		ball_mat.metalness = 0.9;
-		ball_mat.roughness = 0.42;
-		ball_mat.shininess = 100;
-		ball_mat.reflectivity = 1;
+		// setup objects
+		this.arena = new Arena(this.texLoader);
+		this.arena.place(this.scene, -ARENA_HEIGHT / 2, ARENA_HEIGHT / 2);
 
-		const ball_geometry = new THREE.SphereGeometry( BALL_SIZE, 32, 32 )
-		this.ball = new Ball(ball_geometry, ball_mat);
+		this.ball = new Ball();
 		this.ball.place(this.scene, 0, 0);
-		this.saved = {x: this.ball.dir.x, y: this.ball.dir.y};
+		// this.saved = {x: this.ball.dir.x, y: this.ball.dir.y}; ???
 
-		const paddle_texture = new THREE.TextureLoader().load(PADDLE_TEX_IMG);
-		const paddle_normal = new THREE.TextureLoader().load(PADDLE_TEX_NORMAL);
+		const paddle_texture = this.texLoader.load(PADDLE_TEX_IMG);
+		const paddle_normal = this.texLoader.load(PADDLE_TEX_NORMAL);
 		paddle_texture.wrapS = THREE.RepeatWrapping;
 		paddle_texture.wrapT = THREE.RepeatWrapping;
 		paddle_texture.repeat.set(4, 1);
@@ -412,88 +610,77 @@ class Game {
 		paddle_texture.bumpScale = 0.4;
 		const paddle_mat = new THREE.MeshStandardMaterial({ map: paddle_texture });
 		const paddle_geo = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 2, 2, 2);
-		const avatar1_texture = new THREE.TextureLoader().load(AVATAR1_IMG);
-		const avatar2_texture = new THREE.TextureLoader().load(AVATAR2_IMG);
 
-		this.playerOne = new Player(paddle_geo, paddle_mat, avatar1_texture);
-		this.playerTwo = new Player(paddle_geo, paddle_mat, avatar2_texture);
-		this.playerOne.place(this.scene, 0, -ARENA_WIDTH / 2 + GOAL_LINE);
-		this.playerTwo.place(this.scene, 0, ARENA_WIDTH / 2 - GOAL_LINE);
+		this.playerOne = gameSetup.player1;
+		this.playerTwo = gameSetup.player2;
+		this.isChallenger = gameSetup.isChallenger;
 
-		this.arena = new Arena();
-		this.arena.place(this.scene, -ARENA_HEIGHT / 2, ARENA_HEIGHT / 2);
+		const avatar1_texture = this.texLoader.load(this.playerOne.avatar);
+		const avatar2_texture = this.texLoader.load(this.playerTwo.avatar);
 
-		this.running = false;
-		this.last_scored = 0;
-		this.lastUpdate = Date.now();
-		this.fpsInterval = 1000 / TARGET_FPS;
-		this.scoreLimit = scoreLimit;
-		this.gameover = false;
+		this.playerOne.paddle = new Paddle(paddle_geo, paddle_mat, avatar1_texture);
+		this.playerOne.paddle.place(this.playerOne.side, this.scene);
+		this.playerTwo.paddle = new Paddle(paddle_geo, paddle_mat, avatar2_texture);
+		this.playerTwo.paddle.place(this.playerTwo.side, this.scene);
 
-		document.addEventListener("keydown", ev => this.keydown(ev));
-		document.addEventListener("keyup", ev => this.keyup(ev));
-		// button_right.addEventListener("mousedown", () => this.button_right_onmousedown());
-		// button_left.addEventListener("mousedown", () => this.button_left_onmousedown());
-		// button_right.addEventListener("mouseup", () => this.button_right_onmouseup());
-		// button_left.addEventListener("mouseup", () => this.button_left_onmouseup());
-
-		if(ACTIVE_AI == true)
-			this.ai = new proAI(this.playerTwo);
+		if (this.isOnline) {
+			this.myPlayer = this.isChallenger ? "player1" : "player2";
+			this.sendRegisterPlayer();
+			setTimeout(() => this.intro(), 1000);
+		}
+		if (this.hasAI) {
+			this.ai = new proAI(this.playerTwo.paddle);
+			setTimeout(() => this.intro(), 1000);
+		}
 		this.showScore();
-		playAudioTrack();
-		// this.setupTouchControls();
+
+		// setup HUD
+		this.hud = new Hud(this.fontLoader, this.playerOne, this.playerTwo, this.gameData.score, avatar1_texture, avatar2_texture);
 	}
-	setupTouchControls() {
-		console.log("setting it up");
-        this.canvas.addEventListener("touchstart", event => this.onTouchCanvas(event), false);
-        this.canvas.addEventListener("touchend", event => this.endOfTouchCanvas(event), false);
-    }
-	onTouchCanvas(event) {
-		event.preventDefault();
 
-		console.log("Touch start event Canvas.");
-		
-		if (event.touches.length == 1) {
-			console.log("ONE TOUCH");
-			const touch = event.touches[0];
-			
-			const rect = this.canvas.getBoundingClientRect();
-
-			const x = touch.clientX - rect.left;
-			const y = touch.clientY - rect.top;
-
-			if(x <= this.canvas.width / 2)
-				this.playerOne.direction = 1;
-			else
-				this.playerOne.direction = -1;
+	intro() {
+		if (this.isOnline || this.hasAI) {
+			this.cam_controls.autoRotate = true;
+			if (this.playerOne.side === "left") {
+				this.cam_controls.autoRotateSpeed = 6;
+			} else {
+				this.cam_controls.autoRotateSpeed = -6;
+			}
+			setTimeout(() => {
+				this.cam_controls.autoRotate = false;
+				this.cam_controls.enabled = true;
+				this.sendReady();
+			}, 3000);
+		} else {
+			this.cam_controls.autoRotate = false;
+			this.cam_controls.enabled = true;
 		}
 	}
-	endOfTouchCanvas(event) {
-		console.log("Touch end event Canvas.");
-		this.playerOne.direction = 0;
+
+	sendRegisterPlayer () {
+		this.gameSocket?.send(JSON.stringify({
+			type: 'register',
+			player: this.myPlayer,
+			user: this.playerOne.name,
+			match_id: this.gameID,
+		}));
 	}
 
-	updateButton () {
-		[button_right, button_left].forEach(button => {
-			button.style.backgroundColor = 'rgb(2, 2, 27)';
-			button.style.color = 'white';
-			button.style.cursor = 'pointer';
-			button.style.margin = '5px 0';
-
-			button.style.position = "absolute";
-
-			button.style.left = "80%";
-			button.style.height = "10%";
-			button.style.width = "5%";
-			});
-
-		button_right.style.top = "45%";
-		button_right.innerText = "LEFT / UP";
-
-		button_left.style.top = "55%";
-		button_left.innerText = "RIGHT / DOWN";
+	sendReady () {
+		this.gameSocket?.send(JSON.stringify({
+			type: 'ready',
+			player: this.myPlayer,
+		}));
 	}
-	toggleFullScreen() {
+
+	sendPlayerUpdate (direction) {
+		this.gameSocket?.send(JSON.stringify({
+			type: `${this.myPlayer}_move`,
+			direction: direction
+		}));
+	}
+
+	toggleFullScreen () {
 		if (this.renderer.domElement.requestFullscreen) {
 			this.renderer.domElement.requestFullscreen();
 		} else if (this.renderer.domElement.webkitRequestFullscreen) {
@@ -504,20 +691,24 @@ class Game {
 			this.renderer.domElement.msRequestFullscreen();
 		}
 	}
-	resize(ev) {
-		const width = this.canvas.clientWidth;
-		const height = this.canvas.clientHeight;
-		const needResize = this.canvas.width !== width || this.canvas.height !== height;
-		if (needResize) {
-			this.renderer.setSize(width, height, false);
-			this.camera.aspect = width / height;
+
+	resize (ev) {
+		// const width = this.canvas.clientWidth;
+		// const height = this.canvas.clientHeight;
+		// const needResize = this.canvas.width !== width || this.canvas.height !== height;
+		// if (needResize) {
+			this.camera.aspect = this.canvas.width / this.canvas.height;
 			this.camera.updateProjectionMatrix();
-			this.updateButton();	
-		}
+			this.renderer.setSize(this.canvas.width, this.canvas.height, false);
+		// }
 	}
-	keydown(key) {
+
+	keydown (key) {
 		if (this.gameover)	return;
-		if (this.running === false) {
+		if (this.isOnline) {
+			if (this.gameData.status == "paused")
+				setTimeout(() => this.sendReady(), 1000);
+		} else if (this.running === false) {
 			this.running = true;
 			if (this.last_scored === 1)
 				this.ball.dir.z = -1;
@@ -527,77 +718,99 @@ class Game {
 			this.ball.speed = BALL_START_SPEED;
 		}
 		switch(key.code) {
-			case "ArrowLeft":
-				if(this.playerOne.direction != 1)
-					this.playerOne.keys_active++;
-				this.playerOne.direction = 1;
+			case this.playerOne.controls?.up:
+				if(this.playerOne.paddle.direction != 1)
+					this.playerOne.paddle.keys_active++;
+				this.playerOne.paddle.direction = 1;
+				if (this.isOnline) this.sendPlayerUpdate(1);
 				break;
-			case "ArrowRight":
-				if(this.playerOne.direction != -1)
-					this.playerOne.keys_active++;
-				this.playerOne.direction = -1;
+			case this.playerOne.controls?.down:
+				if(this.playerOne.paddle.direction != -1)
+					this.playerOne.paddle.keys_active++;
+				this.playerOne.paddle.direction = -1;
+				if (this.isOnline) this.sendPlayerUpdate(-1);
 				break;
-			case "KeyW":
-				if(this.playerTwo.direction != 1)
-					this.playerTwo.keys_active++;
-				this.playerTwo.direction = 1;
+			case this.playerTwo.controls?.up:
+				if(this.playerTwo.paddle.direction != 1)
+					this.playerTwo.paddle.keys_active++;
+				this.playerTwo.paddle.direction = 1;
 				break;
-			case "KeyS":
-				if(this.playerTwo.direction != -1)
-					this.playerTwo.keys_active++;
-				this.playerTwo.direction = -1;
+			case this.playerTwo.controls?.down:
+				if(this.playerTwo.paddle.direction != -1)
+					this.playerTwo.paddle.keys_active++;
+				this.playerTwo.paddle.direction = -1;
 				break;
 			default:
 				break;
 		}
 	}
-	keyup(key) {
+
+	keyup (key) {
 		if (this.gameover)	return;
-		if (key.code == "ArrowLeft" || key.code == "ArrowRight") {
-			this.playerOne.keys_active--;
-			if(this.playerOne.keys_active == 0)
-				this.playerOne.direction = 0;
-		} else if (key.code == "KeyW" || key.code == "KeyS") {
-			this.playerTwo.keys_active--;
-			if(this.playerTwo.keys_active == 0)
-				this.playerTwo.direction = 0;
+		if (key.code == this.playerOne.controls?.up || key.code == this.playerOne.controls?.down) {
+			this.playerOne.paddle.keys_active--;
+			if(this.playerOne.paddle.keys_active == 0)
+				this.playerOne.paddle.direction = 0;
+			if (this.isOnline) this.sendPlayerUpdate(0);
+		} else if (key.code == this.playerTwo.controls?.up || key.code == this.playerTwo.controls?.down) {
+			this.playerTwo.paddle.keys_active--;
+			if(this.playerTwo.paddle.keys_active == 0)
+				this.playerTwo.paddle.direction = 0;
 		}
 	}
+
 	button_right_onmousedown () {
-		this.playerOne.direction = 1;
+		this.playerOne.paddle.direction = 1;
 	}
+
 	button_left_onmousedown () {
-		this.playerOne.direction = -1;
+		this.playerOne.paddle.direction = -1;
 	}
+
 	button_right_onmouseup () {
-		this.playerOne.direction = 0;
+		this.playerOne.paddle.direction = 0;
 	}
+
 	button_left_onmouseup () {
-		this.playerOne.direction = 0;
+		this.playerOne.paddle.direction = 0;
 	}
-	endGame() {
-		document.removeEventListener("keydown", ev => this.keydown(ev));
-		document.removeEventListener("keyup", ev => this.keyup(ev));
-		if (this.playerOne.score > this.playerTwo.score) {
-			this.showText("P1 WINS");
+
+	endGame () {
+		if (this.playerOne.paddle.score > this.playerTwo.paddle.score) {
+			this.showText(`${this.playerOne.alias} WINS`);
 		} else {
-			this.showText("P2 WINS");
+			this.showText(`${this.playerTwo.alias} WINS`);
 		}
 		this.gameover = true;
 		this.scene.remove(this.ball);
 		this.cam_controls.autoRotate = true;
+		if (this.isChallenger) {
+			this.cam_controls.autoRotateSpeed = -5;
+		} else {
+			this.cam_controls.autoRotateSpeed = 5;
+		}
 	}
-	loop() {
+
+	loop () {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
-		animationID = this.animRequestId;
 		if (!this.gameover) {
 			let now = Date.now();
 			let elapsed = now - this.lastUpdate;
-			if (elapsed > this.fpsInterval) {
+			if (this.isOnline) {
+				if (elapsed * 2 > this.fpsInterval) {
+					this.lastUpdate = now;
+					this.syncData();
+				}
+				if (this.running) {
+					this.ball.doMove(true);
+				}
+				this.playerOne.paddle.doMove(true);
+				this.playerTwo.paddle.doMove(true);
+			} else if (elapsed > this.fpsInterval) {
 				this.lastUpdate = now;
 				this.update();
 			}
-			this.gameover = this.playerOne.score >= this.scoreLimit || this.playerTwo.score >= this.scoreLimit;
+			this.gameover = this.playerOne.paddle.score >= this.scoreLimit || this.playerTwo.paddle.score >= this.scoreLimit;
 			if (this.gameover) {
 				this.endGame();
 			}
@@ -613,31 +826,64 @@ class Game {
 				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
 			}
 		}
-		if(ACTIVE_AI == true)
+		if(this.hasAI)
 			this.ai.update(this.ball);
 		this.draw();
 	}
-	update() {
+
+	update () {
 		if (!this.running)	return;
-		this.playerOne.doMove();
-		this.playerTwo.doMove();
+		this.playerOne.paddle.doMove();
+		this.playerTwo.paddle.doMove();
 		this.ball.doMove();
 		this.checkCollisions();
 	}
-	onTouchCanvas(event) {
-		// if(event == null)
-		// 	return;
-		// console.log("TOUCH CANVAS");
-		// if(event.touches.length > 1) {
-		// 	this.cam_controls.update();
-		// 	this.renderer.render(this.scene, this.camera);
-		// }
+
+	syncData () {
+		const now = Date.now();
+
+		this.running = (this.gameData.status === 'running');
+		this.gameover = (this.gameData.status === 'finished' || this.gameData.status === 'forfeited');
+		this.scoreLimit = this.gameData.score.limit;
+
+		this.playerTwo.paddle.sync(this.gameData.player2.x, this.gameData.player2.dx, now);
+		this.playerOne.paddle.sync(this.gameData.player1.x, this.gameData.player1.dx, now);
+
+		this.ball.sync(this.gameData.ball, now);
+
+		if (this.playerOne.paddle.score != this.gameData.score.p1 || this.playerTwo.paddle.score != this.gameData.score.p2) {
+			this.playerOne.paddle.score = this.gameData.score.p1;
+			this.playerTwo.paddle.score = this.gameData.score.p2;
+			this.ball.reset();
+			this.showScore();
+			if (!this.gameover)
+				setTimeout(() => this.sendReady(), 3000);
+			else
+				this.endGame();
+		}
+
+		if (this.gameData.status === 'forfeited') {
+			if (this.isChallenger) {
+				this.playerOne.paddle.score = this.gameData.score.limit;
+				this.playerTwo.paddle.score = 0;
+			} else {
+				this.playerOne.paddle.score = 0;
+				this.playerTwo.paddle.score = this.gameData.score.limit;
+			}
+			this.showScore();
+			this.endGame();
+		}
 	}
-	draw() {
+
+	draw () {
 		this.cam_controls.update();
+		this.hud.update();
+		this.renderer.autoClear = false;
 		this.renderer.render(this.scene, this.camera);
+		this.renderer.render(this.hud.scene, this.hud.camera);
 	}
-	repositionBall(ballX, ballY, p2y, p1y) {
+
+	repositionBall (ballX, ballY, p2y, p1y) {
 		let distance;
 		
 		if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)){
@@ -656,40 +902,40 @@ class Game {
 			this.ball.pos.z += this.ball.dir.z * distance;
 		}
 	}
-	
-	checkCollisions() {
+
+	checkCollisions () {
 		const [ballX, ballY] = this.ball.position;
-		if (ballX <= -(ARENA_HEIGHT / 2) // any wall collision
-		|| ballX >= (ARENA_HEIGHT / 2)) {
+		if (ballX <= -(ARENA_HEIGHT / 2) + BALL_SIZE / 2
+		|| ballX >= (ARENA_HEIGHT / 2) - BALL_SIZE / 2) {
 			playTone(180, 40, 140);
 			this.ball.dir.x *= (-1.1);
 			Math.min(Math.max(this.ball.dir.x, -1), 1);
 		}
-		const [p1x, p1y] = this.playerOne.position;
-		const [p2x, p2y] = this.playerTwo.position;
+		const [p1x, p1y] = this.playerOne.paddle.position;
+		const [p2x, p2y] = this.playerTwo.paddle.position;
 		if (ballY < -ARENA_WIDTH / 2 - GOAL_LINE) {
 			playTone(240, 20, 210, 3);
 			this.last_scored = 2;
 			this.running = false;
-			this.playerTwo.score++;
+			this.playerTwo.paddle.score++;
 			this.scene.remove(this.score);
 			this.showScore();
 			this.ball.reset();
 			// this.playerOne.reset();
 			// this.playerTwo.reset();
-			if(ACTIVE_AI == true)
+			if(this.hasAI)
 				this.ai.resetTimes();
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
 			playTone(240, 20, 210, 3);
 			this.last_scored = 1;
 			this.running = false;
-			this.playerOne.score++;
+			this.playerOne.paddle.score++;
 			this.scene.remove(this.score);
 			this.showScore();
 			this.ball.reset();
 			// this.playerOne.reset();
 			// this.playerTwo.reset();
-			if(ACTIVE_AI == true)
+			if(this.hasAI)
 				this.ai.resetTimes();
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
@@ -717,11 +963,12 @@ class Game {
 			// this.repositionBall(ballX, ballY, p2y, p1y);
 		}
 	}
-	showScore() {
+
+	showScore () {
 		this.scene.remove(this.score);
-		this.loader.load(SCORE_FONT, font => {
+		this.fontLoader.load(SCORE_FONT, font => {
 			const textGeo = new TextGeometry (
-					this.playerOne.score + ' : ' + this.playerTwo.score, {
+					this.playerOne.paddle.score + ' : ' + this.playerTwo.paddle.score, {
 					font: font,
 					size: 80,
 					height: 10,
@@ -754,9 +1001,10 @@ class Game {
 			this.scene.add(this.score);
 		} );
 	}
-	showText(text) {
+
+	showText (text) {
 		this.scene.remove(this.score);
-		this.loader.load(WIN_FONT, font => {
+		this.fontLoader.load(WIN_FONT, font => {
 			const textGeo = new TextGeometry(
 					text, {
 					font: font,
@@ -789,38 +1037,27 @@ class Game {
 			this.scene.add(this.score);
 		} );
 	}
-}
 
-function startPong3DGame() {
-	console.log("Pong 3D - Starting new game");
-	const parent = document.getElementById('app');
-	const nav = document.getElementById('nav');
-	const footer = document.getElementById('footer');
-
-	parent.height = window.innerHeight - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
-	parent.width = window.innerWidth - CANVAS_PADDING;
-	while (parent.firstChild) {
-		parent.removeChild(parent.lastChild);
+	start () {
+		console.log("Pong 3D - Starting new game");
+		this.intro();
+		playAudioTrack();
+		this.loop();
 	}
-	const pong = new Game(parent, 11);
-	pong.loop();
-}
 
-function stopPong3DGame () {
-	if(animationID) {
-		console.log("STOPPING Pong3D");
-		cancelAnimationFrame(animationID);
+	stop () {
+		console.log("Pong 3D - Stopping game");
+		if (this.animRequestId) {
+			window.cancelAnimationFrame(this.animRequestId);
+		}
+		this.animRequestId = null;
+		window.removeEventListener("resize", ev => this.resize(ev), true);
+		window.removeEventListener("fullscreenchange", (e) => this.resize(e));
+		document.removeEventListener("keydown", ev => this.keydown(ev));
+		document.removeEventListener("keyup", ev => this.keyup(ev));
+		stopAudioTrack();
+		this.gameSocket?.close();
 	}
-	animationID = null;
-	window.removeEventListener("resize", ev => this.resize(ev), true);
-	window.removeEventListener("fullscreenchange", (e) => this.resize(e));
-	document.removeEventListener("keydown", ev => this.keydown(ev));
-	document.removeEventListener("keyup", ev => this.keyup(ev));
-	if (button_right && button_left) {
-		button_right.remove();
-		button_left.remove();
-	}
-	return ;
-}
+};
 
-export { startPong3DGame, stopPong3DGame };
+export { Client3DGame };

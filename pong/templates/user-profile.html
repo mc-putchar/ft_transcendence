@@ -11,13 +11,13 @@
                     <h5 class="mb-0">Profile</h5>
                 </div>
                 <div class="card-body text-center">
-                    <img src="{{ profile.image }}" class="rounded-circle account-img mb-3" alt="Profile Picture" style="width: 150px; height: auto;">
+                    <img src="{{ profile.image }}" class="account-img rounded border border-3 border-info mb-3" alt="Profile Picture" style="width: 210px; height: auto;">
                     <h3 class="card-title">{{ username }}</h3>
-                    <span class="badge bg-{% if profile.isOnline %}success{% else %}danger{% endif %}">{{ status }}</span>
+                    <span class="badge my-1 bg-{% if profile.isOnline %}success{% else %}danger{% endif %}">{{ status }}</span>
                     <p class="card-text"><b>Alias:</b> {{ profile.alias }}</p>
                     <p class="card-text"><b>Games played:</b> {{ match_stats.played }}</p>
                     <p class="card-text"><b>Won: <span class="text-success">{{ match_stats.wins }}</span> / Lost: <span class="text-danger">{{ match_stats.losses }}</span></b></p>
-                    
+
                     {% if is_me %}
                         <a class="btn btn-primary" href="#/profile">Edit Profile</a>
                     {% else %}
@@ -32,7 +32,7 @@
                             <a class="btn btn-danger" href="#/block/{{ profile.user }}/">Block</a>
                         {% endif %}
                     {% endif %}
-                    
+
                     <input type="hidden" id="friend-id" value="{{ profile.user }}">
                     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                 </div>
@@ -43,7 +43,7 @@
                         </button>
                     </h2>
                     <div id="matchesCollapse" class="accordion-collapse collapse">
-                        <div class="accordion-body">
+                        <div class="accordion-body overflow-y-auto">
                             <div class="list-group">
                                 {% for match in match_history %}
                                     <div class="list-group-item">

@@ -1,27 +1,62 @@
-<form id="registration-form" method="post" action="#/register/" class="form-group mb-2">
-{% csrf_token %}
-    <div class="align-items-center">
-      <label for="username" class="form-label col-sm-4 col-form-label no-select">Username</label>
-      <input type="text" class="form-control col-sm-4" name="username" id="username" maxlength="16" autocomplete="username" required autofocus>
-    </div>
-  
-    <div class="align-items-center">
-      <label for="email" class="form-label col-sm-4 col-form-label no-select">Email</label>
-      <input type="email" class="form-control col-sm-4" name="email" id="email" maxlength="50" autocomplete="email" required>
-    </div>
-  
-    <div class="align-items-center">
-      <label for="password" class="form-label col-sm-4 col-form-label no-select">Password</label>
-      <input type="password" class="form-control col-sm-4" name="password" id="password" autocomplete="new-password" required maxlength="30">
-    </div>
-  
-    <div class="align-items-center">
-      <label for="password_confirmation" class="form-label col-sm-4 col-form-label no-select">Confirm Password</label>
-      <input type="password" class="form-control col-sm-4" name="password_confirmation" id="password_confirmation" autocomplete="new-password" required maxlength="30">
-    </div>
-  
-    <input type="hidden" name="next" value="">
-    <button type="submit" class="btn btn-primary mt-2">Register</button>
-</form>
-<p>Already have an account? <a href="#/login">Login</a></p>
+<div class="container mt-5">
+	<div class="row justify-content-center">
+		<div class="col-md-8">
+			<div class="card p-2 bg-secondary-subtle">
+				<div class="card-header bg-dark text-success d-flex justify-content-between align-items-center">
+					<button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
+					<h5 class="mb-0">Register</h5>
+				</div>
+				{% if user.is_authenticated %}
+				<div class="card-body text-center">
+					<h1>You are already logged in as {{ user.username }}</h1>
+					<a href="#/logout" class="btn btn-primary m-2">Logout</a>
+				</div>
+
+				{% else %}
+				{% load static %}
+				<div class="card-body text-center">
+					<button onclick='location.href="/auth42"' class="btn btn-secondary mt-2">Authenticate with <img src="{% static 'assets/42logo.svg' %}" alt="Logo" style="height: 40px;"></button>
+					<h5 class="bg-dark-subtle my-4" style="width: 100%; text-align: center; border-bottom: 1px solid green; line-height: 0.1em; margin: 10px 0 50px;">
+						<span class="rounded bg-dark-subtle text-success" style="padding:0 10px;">OR</span>
+					</h5>
+					<div class="card-header rounded text-success d-flex align-items-center justify-content-center">
+						<h4 class="mb-0 glitch" data-text="Create Account">Create Account</h4>
+					</div>
+					<div class="card-body text-center">
+						<form id="registration-form" method="post" action="#/register/" class="form-group mb-2">
+						{% csrf_token %}
+							<div class="form-floating my-2">
+								<input type="text" class="form-control col-sm-4" name="username" id="username" maxlength="16" autocomplete="username" placeholder="user" required autofocus>
+								<label for="username" class="form-label col-sm-4 col-form-label no-select">Username</label>
+							</div>
+						
+							<div class="form-floating my-2">
+								<input type="email" class="form-control col-sm-4" name="email" id="email" maxlength="50" autocomplete="email" placeholder="mail@sky.net" required>
+								<label for="email" class="form-label col-sm-4 col-form-label no-select">Email</label>
+							</div>
+						
+							<div class="form-floating my-2">
+								<input type="password" class="form-control col-sm-4" name="password" id="password" autocomplete="new-password" placeholder="p4$$W0rd" maxlength="30" required>
+								<label for="password" class="form-label col-sm-4 col-form-label no-select">Password</label>
+							</div>
+						
+							<div class="form-floating my-2">
+								<input type="password" class="form-control col-sm-4" name="password_confirmation" id="password_confirmation" autocomplete="new-password"  placeholder="p4$$W0rd" maxlength="30" required>
+								<label for="password_confirmation" class="form-label col-sm-4 col-form-label no-select">Confirm Password</label>
+							</div>
+						
+							<input type="hidden" name="next" value="">
+							<button type="submit" class="btn btn-primary my-2">Register</button>
+						</form>
+					</div>
+					<div class="card-footer bg-dark text-success d-flex align-items-center">
+						<h5 class="mb-0">Already have an account?</h5>
+						<button type="button" onclick='location.hash="/login"' class="btn btn-info mx-5 my-2">Login</button>
+					</div>
+				</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
 
