@@ -15,13 +15,12 @@
 				{% else %}
 				{% load static %}
 				<div class="card-body text-center">
-
 					<button onclick='location.href="/auth42"' class="btn btn-secondary mt-2">Authenticate with <img src="{% static 'assets/42logo.svg' %}" alt="Logo" style="height: 40px;"></button>
 					<h5 class="bg-dark-subtle my-4" style="width: 100%; text-align: center; border-bottom: 1px solid green; line-height: 0.1em; margin: 10px 0 50px;">
 						<span class="rounded bg-dark-subtle text-success" style="padding:0 10px;">OR</span>
 					</h5>
-					<div class="card-header rounded bg-dark text-success d-flex align-items-center">
-						<h4>Create Account</h4>
+					<div class="card-header rounded text-success d-flex align-items-center justify-content-center">
+						<h4 class="mb-0 glitch" data-text="Create Account">Create Account</h4>
 					</div>
 					<div class="card-body text-center">
 						<form id="registration-form" method="post" action="#/register/" class="form-group mb-2">

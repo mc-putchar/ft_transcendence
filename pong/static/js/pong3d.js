@@ -697,9 +697,9 @@ class Client3DGame {
 		// const height = this.canvas.clientHeight;
 		// const needResize = this.canvas.width !== width || this.canvas.height !== height;
 		// if (needResize) {
-			this.camera.aspect = width / height;
+			this.camera.aspect = this.canvas.width / this.canvas.height;
 			this.camera.updateProjectionMatrix();
-			this.renderer.setSize(width, height, false);
+			this.renderer.setSize(this.canvas.width, this.canvas.height, false);
 		// }
 	}
 

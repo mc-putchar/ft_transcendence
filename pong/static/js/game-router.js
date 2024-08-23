@@ -1,17 +1,59 @@
 "use strict";
 
-import { getJSON, postJSON } from "./utils.js";
-import { initGame } from "./pong-online.js";
+import { getJSON, postJSON, getCookie } from "./utils.js";
+// import { initGame } from "./pong-online.js";
 import { ClientClassic } from "./client-classic.js";
 import { Client3DGame } from "./pong3d.js";
 
+class GameSetup {
+	constructor (parentElement, player1, player2, isChallenger, mode="single", client="2d") {
+		this.parentElement = parentElement;
+		this.player1 = player1;
+		this.player2 = player2;
+		this.isChallenger = isChallenger;
+		this.mode = mode;
+		this.client = client;
+	}
+};
+
+class Player {
+	constructor (side, name, alias=null, controls=null, avatar="static/img/avatar-marvin.png", isAI=false) {
+		this.side = side;
+		this.name = name;
+		this.alias = alias ?? name;
+		this.controls = controls;
+		this.avatar = avatar;
+		this.AI = isAI;
+	}
+};
+
+class GameData {
+	constructor () {
+		this.status = "setup";
+		this.player1 = { x: 0, dx: 0, ready: false };
+		this.player2 = { x: 0, dx: 0, ready: false };
+		this.ball = { x: 0, y: 0, dx: 0, dy: 0, v: 2 };
+		this.score = { p1: 0, p2: 0, limit: 11 };
+		this.timestamp = Date.now();
+	}
+
+	update (data) {
+		this.status = data.status;
+		this.player1 = data.player1;
+		this.player2 = data.player2;
+		this.ball = data.ball;
+		this.score = data.score;
+		this.timestamp = data.timestamp;
+	}
+};
+
 class GameRouter {
-	constructor (csrfToken, appElement) {
-		this.csrfToken = csrfToken;
+	constructor (appElement) {
 		this.appElement = appElement;
 		this.gameSocket = null;
 		this.username = "";
 		this.client = null;
+		this.csrfToken = getCookie('csrftoken');
 	}
 
 	setupGameWebSocket (gameID) {
@@ -204,7 +246,7 @@ class GameRouter {
 			console.error("Error joining game");
 			return;
 		}
-		initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
+		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
 	}
 
 	startClassicGame (player1, player2=null) {
@@ -261,48 +303,6 @@ class GameRouter {
 	stopGame () {
 		this.client?.stop();
 		this.client = null;
-	}
-};
-
-class GameData {
-	constructor () {
-		this.status = "setup";
-		this.player1 = { x: 0, dx: 0, ready: false };
-		this.player2 = { x: 0, dx: 0, ready: false };
-		this.ball = { x: 0, y: 0, dx: 0, dy: 0, v: 2 };
-		this.score = { p1: 0, p2: 0, limit: 11 };
-		this.timestamp = Date.now();
-	}
-
-	update (data) {
-		this.status = data.status;
-		this.player1 = data.player1;
-		this.player2 = data.player2;
-		this.ball = data.ball;
-		this.score = data.score;
-		this.timestamp = data.timestamp;
-	}
-};
-
-class GameSetup {
-	constructor (parentElement, player1, player2, isChallenger, mode="single", client="2d") {
-		this.parentElement = parentElement;
-		this.player1 = player1;
-		this.player2 = player2;
-		this.isChallenger = isChallenger;
-		this.mode = mode;
-		this.client = client;
-	}
-};
-
-class Player {
-	constructor (side, name, alias=null, controls=null, avatar="static/img/avatar-marvin.png", isAI=false) {
-		this.side = side;
-		this.name = name;
-		this.alias = alias ?? name;
-		this.controls = controls;
-		this.avatar = avatar;
-		this.AI = isAI;
 	}
 };
 

@@ -1,20 +1,19 @@
 "use strict";
 
 import { getJSON, postJSON, createModal, getCookie, deleteJSON } from "./utils.js";
-import { Notification } from "./notification.js";
+import { showNotification } from "./notification.js";
 
 class TournamentRouter {
-	constructor(crsfToken, appElement) {
-		this.csrfToken = crsfToken;
+	constructor(appElement) {
 		this.appElement = appElement;
 		this.tournamentSocket = null;
 		this.tournamentID = null;
 		this.username = "";
+		this.csrfToken = getCookie('csrftoken');
 	}
 
 	showError(message) {
-		const notification = new Notification(message, "error");
-		notification.show();
+		showNotification(message, "error");
 	}
 
 	setupTournamentWebSocket(tournamentID) {
@@ -32,9 +31,7 @@ class TournamentRouter {
 			`wss://${window.location.host}/ws/tournament/${tournamentID}/?token=${accessToken}`
 		);
 
-		this.tournamentSocket.addEventListener('open', () => {
-			console.log("Tournament socket opened");
-		});
+		this.tournamentSocket.addEventListener('open', () => console.log("Tournament socket opened"));
 		this.tournamentSocket.addEventListener('error', (e) => console.error("Tournament websocket error:", e));
 		this.tournamentSocket.addEventListener('close', (e) => {
 			if (!e.wasClean) console.error("Tournament socket closed unexpectedly:", e);

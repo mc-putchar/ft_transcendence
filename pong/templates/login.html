@@ -20,24 +20,27 @@
 					<h5 class="bg-dark-subtle my-4" style="width: 100%; text-align: center; border-bottom: 1px solid green; line-height: 0.1em; margin: 10px 0 50px;">
 						<span class="rounded bg-dark-subtle text-success" style="padding:0 10px;">OR</span>
 					</h5>
-					<h1>Login</h1>
-					<form id="login-form" method="post" action="#/login/" class="form-group mb-2">
-						{% csrf_token %}
-						<div class="form-floating my-2">
-							<input type="text" class="form-control" name="username" id="username" autocomplete="username" maxlength="30" placeholder="user" autofocus required >
-							<label for="username" class="form-label no-select">Username</label>
-						</div>
+					<div class="card-header rounded text-success d-flex align-items-center justify-content-center">
+						<h4 class="mb-0 glitch" data-text="Login">Login</h4>
+					</div>
+					<div class="card-body text-center">
+						<form id="login-form" method="post" action="#/login/" class="form-group mb-2">
+							{% csrf_token %}
+							<div class="form-floating my-2">
+								<input type="text" class="form-control" name="username" id="username" autocomplete="username" maxlength="30" placeholder="user" autofocus required >
+								<label for="username" class="form-label no-select">Username</label>
+							</div>
 
-						<div class="form-floating my-2">
-							<input type="password" class="form-control" name="password" id="password" autocomplete="current-password" placeholder="p4$$W0rd" required maxlength="30">
-							<label for="password" class="form-label no-select">Password</label>
-						</div>
-						<button type="submit" class="btn btn-primary my-2">Login</button>
-					</form>
-					WIP <a href="#/reset-password">Forgotten Password?</a>
-					<br>
-					No account? <button type="button" onclick='location.hash="/register"' class="btn btn-info my-2">Register</button>
-				<!-- <a href="#/auth42" class="btn btn-secondary mt-2">Authenticate with 42 (popup test)</a> -->
+							<div class="form-floating my-2">
+								<input type="password" class="form-control" name="password" id="password" autocomplete="current-password" placeholder="p4$$W0rd" required maxlength="30">
+								<label for="password" class="form-label no-select">Password</label>
+							</div>
+							<button type="submit" class="btn btn-primary my-2">Login</button>
+						</form>
+						WIP <a href="#/reset-password">Forgotten Password?</a>
+						<br>
+						No account? <button type="button" onclick='location.hash="/register"' class="btn btn-info my-2">Register</button>
+					</div>
 
 				{% endif %}
 			</div>

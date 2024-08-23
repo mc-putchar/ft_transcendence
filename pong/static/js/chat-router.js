@@ -4,8 +4,7 @@ import { createModal, getJSON } from './utils.js';
 import { showNotification } from './notification.js';
 
 class ChatRouter {
-	constructor(crsfToken, chatElement) {
-		this.csrfToken = crsfToken;
+	constructor(chatElement) {
 		this.chatElement = chatElement;
 		this.chatSocket = null;
 	}
@@ -42,10 +41,12 @@ class ChatRouter {
 		document.querySelector('#chat-message-input').onkeypress = (e) => {
 			if (e.keyCode === 13) {
 				this.sendMessage();
+				document.querySelector('#chat-message-input').focus();
 			}
 		};
 		document.querySelector('#chat-message-submit').onclick = () => {
 			this.sendMessage();
+			document.querySelector('#chat-message-input').focus();
 		};
 	}
 
@@ -209,29 +210,19 @@ class ChatRouter {
 		if (this.users.includes(challengedUser)) {
 			if (data.username === this.username) {
 				this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
-				// start game websocket
-				const challengeEvent = new CustomEvent('challenge', {
-					detail: {
-						gameID: data.username,
-					},
-				});
-				this.chatElement.dispatchEvent(challengeEvent);
+				this.chatElement.dispatchEvent(new CustomEvent('challenge', { detail: { gameID: challengedUser } }));
 			} else if (challengedUser !== this.username) {
 				this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
 			} else {
 				this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel', 'Announcer');
-				const modalData = {
-					message: `Challenged by ${data.username}`,
-				};
+				const modalData = { message: `Challenged by ${data.username}` };
 				const fields = [{ key: "message", label: "Message" }];
 				const custom = `
 					<div class="row">
 						<button onclick="location.hash='/game/accept/${data.username}'" class="btn btn-success" data-bs-dismiss="modal">Accept</button>
 						<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-bs-dismiss="modal">Decline</button>
 					</div>`;
-				const closeCallback = () => {
-					location.hash = '/game/decline/';
-				};
+				const closeCallback = () => { location.hash = '/game/decline/' };
 
 				createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
 			}
@@ -263,10 +254,6 @@ class ChatRouter {
 			username: this.username,
 		};
 		this.chatSocket.send(JSON.stringify(data));
-	}
-
-	closeChatWebSocket() {
-		this.chatSocket.close();
 	}
 
 	insertChatMessage(message, parent, type, sender=null) { 
@@ -304,7 +291,7 @@ class ChatRouter {
 		card.appendChild(cardBody);
 		parent.appendChild(card);
 		// set focus to the message input
-		document.querySelector('#chat-message-input').focus();
+		// document.querySelector('#chat-message-input').focus();
 	}
 };
 
