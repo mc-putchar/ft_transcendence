@@ -247,7 +247,8 @@ class ChatRouter {
 	}
 
 	sendMessage() {
-		const message = this.messageInput.value;
+		const message = this.messageInput?.value;
+		if (!message || message.length === 0) return;
 		this.messageInput.value = '';
 		const data = {
 			message: message,
