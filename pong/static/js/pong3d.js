@@ -18,7 +18,7 @@ import { getAmps, playAudioTrack, playTone, stopAudioTrack } from './audio.js';
 import { GameData } from './game-router.js';
 
 const CANVAS_PADDING = 10;
-const BALL_SIZE = 8;
+const BALL_SIZE = 6; // like big but not too big
 const ARENA_WIDTH = 300;
 const ARENA_HEIGHT = 200;
 const SCORE_HEIGHT = 42;

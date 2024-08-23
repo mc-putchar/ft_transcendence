@@ -43,8 +43,10 @@ class TournamentRouter {
 	async route(event) {
 		if (event.endsWith('join/')) {
 			this.tournamentID = event.split('/')[1];
-			if (this.tournamentID && await this.joinTournament(this.tournamentID))
+			if (this.tournamentID && await this.joinTournament(this.tournamentID)) {
+				history.back();
 				return `/in-tournament/${this.tournamentID}`;
+			}
 		} else if (event.endsWith('leave/')) {
 			this.tournamentID = event.split('/')[1];
 			this.leaveTournament(this.tournamentID);
@@ -61,6 +63,7 @@ class TournamentRouter {
 			console.debug("Unknown tournament route:", event);
 		}
 		this.tournamentID = null;
+		history.back();
 		return "/tournaments";
 	}
 

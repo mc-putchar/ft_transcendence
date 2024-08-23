@@ -206,15 +206,165 @@ class Score {
 	}
 }
 
+class proAI {
+	constructor (player, arena) {
+		this.player = player;
+		this.arena = arena;
+		this.lastMove = 0;
+		this.objective = 0;
+		this.msc = 21;
+		this.time = {x : null, y : null};
+		this.distance;
+		this.wait = 0; // time before it hits left paddle
+		this.timeOfImpact = 0; // time before it hits right paddle
+		this.roundsTillImpact = 0;
+		this.leftSide = this.arena.startX + this.player.goalLine;
+		this.rightSide = this.arena.startX + this.arena.width - this.player.goalLine;
+		this.topSide = this.arena.startY;
+		this.downSide = this.arena.startY + this.arena.height;
+	}
+	resetTimes() {
+		this.wait = 0;
+		this.timeOfImpact = 0;
+		this.roundsTillImpact = 0;
+	}
+	nextCollision(simBall) {
+		this.endX;
+
+		this.endY = this.topSide;
+		if(simBall.dirY > 0)
+			this.endY = this.downSide;
+		this.time.y = Math.abs((this.endY - simBall.posY) / simBall.dirY);
+
+		if(simBall.dirX > 0)
+			this.time.x = Math.abs((this.rightSide - simBall.posX) / simBall.dirX);
+		
+		if(this.time.y < this.time.x) {
+			this.endX = this.time.y * simBall.dirX + simBall.posX;
+			simBall.dirY *= - 1;
+		}
+		else {
+			this.endY = this.time.x * simBall.dirY + simBall.posY;
+			if(simBall.dirX > 0)
+				this.endX = this.rightSide;
+			else {
+				this.endX = this.leftSide;
+			}
+			simBall.dirX *= -1.1;
+			this.endY = this.time.x * simBall.dirY + simBall.posY;
+		}
+		this.distance = Math.abs(simBall.posX - this.endX);
+		simBall.posY = this.endY;
+		simBall.posX = this.endX;
+	}
+	randomMargin() {
+		let rand = Math.random();
+		if(rand < 0.33) {
+			return 0;
+		}
+		else if (rand < 0.66) {
+			return this.player.len / 2 - this.player.len / 8;
+		}
+		else {
+			return this.player.len - this.player.len / 4;
+		}
+	}
+	setObjective(simBall) {
+		let rounds = 0;
+		this.timeOfImpact = 0;
+		while(simBall.posX != this.rightSide && rounds < 8) {
+			this.nextCollision(simBall);
+			this.timeOfImpact += this.distance * simBall.vx / simBall.speedx;
+			rounds++;
+		}
+		this.timeOfImpact += Date.now();
+		this.roundsTillImpact = rounds;
+
+		let margin = this.randomMargin();
+		this.objective = simBall.posY + this.player.len / 4 + margin;
+	}
+	setWait(simBall) {
+		this.wait = 0;
+		let rounds = 0;
+
+		if(simBall.dirX > 0) { // hits AI paddle first so then we want to reposition the paddle strategically in anticipation and estimate when ball will hit the left paddle
+			while(simBall.posX < (this.rightSide) && rounds < 9) {
+				this.nextCollision(simBall);
+				this.wait += this.distance / simBall.speedx;
+				rounds++;
+			}
+			let refAngle = (this.objective - this.player.y) / (PADDLE_LEN / 2) * (Math.PI / 4);
+			simBall.dirX = -1 * Math.cos(refAngle);
+			simBall.dirY = Math.sin(refAngle);
+			
+			rounds = 0;
+			while(simBall.posX != (this.leftSide) && rounds < 9) {
+				this.nextCollision(simBall);
+				this.wait += this.distance / simBall.speed;
+				rounds++;
+			}
+		}
+		if(simBall.dirX < 0) { // we want to know when it will hit the left paddle
+			while(simBall.posX != (this.leftSide) && rounds < 9) {
+				this.nextCollision(simBall);
+				this.wait += this.distance / simBall.speed;
+				rounds++;
+			}
+			if(rounds > 5) {
+				this.wait = 0;
+			}
+		}
+	}
+	stopMove() {
+		if(this.player.direction == 1 && this.player.y + this.player.len / 2 >= this.objective) {
+			this.player.direction = 0;
+		}
+		else if(this.player.direction == -1 && this.player.y + this.player.len / 2 <= this.objective) {
+			this.player.direction = 0;
+		}
+	}
+	setDirection() {
+		if(this.player.y + this.player.len  / 2 < this.objective)
+			this.player.direction = 1;
+		else
+			this.player.direction = -1;
+	}
+	executeMove(ball) {
+		this.simBall = { posY : ball.y, posX : ball.x, dirY : ball.vy, dirX : ball.vx, speedx : ball.speedx, speedy : ball.speedy};
+		this.setObjective(this.simBall);
+		this.setDirection();
+	}
+	update(ball) {
+		if(this.timeOfImpact != 0 && Date.now() > this.timeOfImpact + (this.arena.width / 2) / ball.speedx && this.player.direction == 0) {
+			this.timeOfImpact = 0;
+			this.objective = this.arena.height / 2 + this.player.len / 2;
+			this.setDirection();
+		}
+		this.stopMove();
+		if((ball.vx == 0 || ball.vy == 0) || Date.now() < this.lastMove + 1000 || (Date.now() < this.lastMove + this.wait + 1 / ball.speedx))
+			return ;
+		this.lastMove = Date.now();
+		this.executeMove(ball);
+		this.simBall = { posY : ball.y, posX : ball.x, dirY : ball.vy, dirX : ball.vx, speedx : ball.speedx, speedy : ball.speedy};
+		this.setWait(this.simBall);
+	}
+}
+
 class ClientClassic {
 	constructor (gameSetup, gameSocket=null, gameData=null, matchId=null) {
-		const nav = document.getElementById('nav');
-		const footer = document.getElementById('footer');
 		this.parent = gameSetup.parentElement;
+		this.gameSocket = gameSocket;
+		this.isOnline = gameSocket !== null;
+		this.hasAI = gameSetup.mode === "single";
+		this.gameData = this.isOnline ? gameData : new GameData();
+		this.matchId = matchId;
 
 		while (this.parent.firstChild) {
 			this.parent.removeChild(this.parent.lastChild);
 		}
+
+		const nav = document.getElementById('nav');
+		const footer = document.getElementById('footer');
 		this.parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
 		this.parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
 
@@ -233,10 +383,6 @@ class ClientClassic {
 		this.player = gameSetup.player1;
 		this.opponent = gameSetup.player2;
 		this.isChallenger = gameSetup.isChallenger;
-		this.gameSocket = gameSocket;
-		this.isOnline = gameSocket ? true : false;
-		this.gameData = this.isOnline ? gameData : new GameData();
-		this.matchId = matchId;
 		this.init();
 
 		console.log("Player 1:", this.player);
@@ -249,6 +395,17 @@ class ClientClassic {
 		this.player1 = new Paddle(this.player.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
 		this.player2 = new Paddle(this.opponent.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
 		this.score = new Score();
+		if (this.hasAI) {
+			if (this.player.AI) {
+				this.playerAI = new proAI(this.player1, this.arena);
+				console.log("AI player found");
+			} else if (this.opponent.AI) {
+				this.opponentAI = new proAI(this.player2, this.arena);
+				console.log("AI player opponent found");
+			} else {
+				console.error("No AI player found");
+			}
+		}
 
 		this.gameover = false;
 		this.animationID = 0;
