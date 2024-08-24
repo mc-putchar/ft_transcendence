@@ -1,6 +1,6 @@
 "use strict";
 
-import { GameData, Player } from "./game-router.js";
+import { GameData } from "./game-router.js";
 
 // Constants
 const CANVAS_PADDING = 10;
@@ -78,8 +78,10 @@ class Paddle {
 		this.width = PADDLE_WIDTH * ratio;
 		this.speed = PADDLE_SPEED * ratio;
 		this.goalLine = GOAL_LINE * ratio;
-		this.x = (side == "left") ? startX + this.goalLine + this.width / 2 
-			: startX + arenaWidth - this.goalLine - this.width / 2;
+		this.goalLine += (side == "left") ? this.width / 2 : -this.width / 2;
+		this.x = (side == "left") 
+			? startX + this.goalLine 
+			: startX + arenaWidth - this.goalLine;
 		this.y = startY + arenaHeight / 2;
 		}
 
@@ -156,7 +158,7 @@ class Ball {
 		this.y = startY + arenaHeight / 2;
 		const rand = Math.random();
 		this.vx = rand < 0.5 ? 1 : -1;
-		this.vy = 0.25 < rand || rand > 0.75 ? 1 : -1;
+		this.vy = (Math.floor(rand * 100) & 1) ? 1 : -1;
 		this.speedx = BALL_START_SPEED * arenaWidth / 300;
 		this.speedy = BALL_START_SPEED * arenaHeight / 200;
 		this.incr_speed = BALL_INCR_SPEED / 200 * arenaHeight;
@@ -396,15 +398,8 @@ class ClientClassic {
 		this.player2 = new Paddle(this.opponent.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
 		this.score = new Score();
 		if (this.hasAI) {
-			if (this.player.AI) {
-				this.playerAI = new proAI(this.player1, this.arena);
-				console.log("AI player found");
-			} else if (this.opponent.AI) {
-				this.opponentAI = new proAI(this.player2, this.arena);
-				console.log("AI player opponent found");
-			} else {
-				console.error("No AI player found");
-			}
+			this.proAI = new proAI(this.player2, this.arena);
+			console.log("proAI opponent joined the game");
 		}
 
 		this.gameover = false;
@@ -538,28 +533,30 @@ class ClientClassic {
 	}
 
 	paddleCollision () {
-		if(this.ball.x - this.ball.radius <= this.player1.x + this.player1.width) {
-			if(this.ball.x < this.player1.x - this.player1.width)
+		const left = this.player1.side == "left" ? this.player1 : this.player2;
+		const right = this.player1.side == "right" ? this.player1 : this.player2;
+		if(this.ball.x - this.ball.radius <= left.x + left.width) {
+			if(this.ball.x < left.x - left.width)
 				return;
-			if(this.ball.y + this.ball.radius >= this.player1.y - this.player1.len / 2
-				&& this.ball.y - this.ball.radius <= this.player1.y + this.player1.len / 2) {
-					let refAngle = (this.ball.y - this.player1.y) / (this.player1.len / 2) * (Math.PI / 4);
+			if(this.ball.y + this.ball.radius >= left.y - left.len / 2
+				&& this.ball.y - this.ball.radius <= left.y + left.len / 2) {
+					let refAngle = (this.ball.y - left.y) / (left.len / 2) * (Math.PI / 4);
 					this.ball.vx = 1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
-					this.player1.onHit();
+					left.onHit();
 			}
 		}
-		if(this.ball.x + this.ball.radius >= this.player2.x - this.player2.width / 2) {
-			if(this.ball.x > this.player2.x + this.player2.width)
+		if(this.ball.x + this.ball.radius >= right.x - right.width / 2) {
+			if(this.ball.x > right.x + right.width)
 				return;
-			if(this.ball.y + this.ball.radius >= this.player2.y - this.player2.len / 2
-				&& this.ball.y - this.ball.radius <= this.player2.y + this.player2.len / 2) {
-					let refAngle = (this.ball.y - this.player2.y) / (this.player1.len / 2) * (Math.PI / 4);
+			if(this.ball.y + this.ball.radius >= right.y - right.len / 2
+				&& this.ball.y - this.ball.radius <= right.y + right.len / 2) {
+					let refAngle = (this.ball.y - right.y) / (right.len / 2) * (Math.PI / 4);
 					this.ball.vx = -1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
-					this.player2.onHit();
+					right.onHit();
 			}
 		}
 	}
@@ -593,6 +590,9 @@ class ClientClassic {
 		this.paddleCollision();
 		if (!this.score.hasScored.goal) {
 			this.ball.doMove();
+		}
+		if (this.hasAI) {
+			this.proAI.update(this.ball);
 		}
 		this.player1.doMove(this.arena);
 		this.player2.doMove(this.arena);
@@ -642,6 +642,10 @@ class ClientClassic {
 
 	start () {
 		console.log("Pong Classic - client started");
+		// Should be done like this according to the subject
+		// if (this.hasAI) {
+		// 	this.AIupdater = setInterval(() => this.proAI.update(this.ball), 1000);
+		// }
 		this.loop();
 	}
 
@@ -650,6 +654,9 @@ class ClientClassic {
 			cancelAnimationFrame(this.animationID);
 		}
 		this.animationID = null;
+		if (this.hasAI) {
+			clearInterval(this.AIupdater);
+		}
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
 		window.removeEventListener("resize", ev => this.onResize(ev));

@@ -5,14 +5,17 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-// import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-// import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-// import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-// import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
-// import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
-// import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { BloomPass } from 'three/addons/postprocessing/BloomPass.js';
+import { FilmPass } from 'three/addons/postprocessing/FilmPass.js';
+import { AfterimagePass } from 'three/addons/postprocessing/AfterimagePass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
+import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 import { AudioController } from './audio.js';
 import { GameData } from './game-router.js';
@@ -38,20 +41,7 @@ const SCORE_FONT = "static/fonts/helvetiker_regular.typeface.json";
 const WIN_FONT = "static/fonts/optimer_regular.typeface.json";
 const HUD_FONT = "static/fonts/terminess_nerd_font_mono_bold.json";
 
-// const BALL_TEX_IMG = "static/img/green-texture.avif"
-// const BALL_TEX_IMG = "static/img/textures/bronze/MetalBronzeWorn001_COL_2K_METALNESS.png"
-const BALL_TEX_IMG = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_BaseColor.jpg"
-const BALL_TEX_DISP = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_Displacement.tiff"
-const BALL_TEX_NORMAL = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_Normal.jpg"
-const BALL_TEX_METAL = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_Metallic.jpg"
-const BALL_TEX_ROUGH = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_Roughness.jpg"
-const BALL_TEX_AMB = "static/img/textures/gold/2K/Poliigon_MetalGoldPaint_7253_AmbientOcclusion.jpg"
-const BALL_TEX_BUMP = "static/img/textures/bronze/BronzeBUMP.png"
-
 const WALL_TEX_IMG = "static/img/matrix-purple.jpg"
-const AVATAR1_IMG = "static/img/avatar.jpg"
-const AVATAR2_IMG = "static/img/avatar-marvin.png"
-const FLOOR_TEX_IMG = "static/img/login-install.jpg"
 const PADDLE_TEX_IMG = "static/img/textures/bricks/2K/Poliigon_BrickWallReclaimed_8320_BaseColor.jpg"
 const PADDLE_TEX_NORMAL = "static/img/textures/bricks/2K/Poliigon_BrickWallReclaimed_8320_Normal.jpg"
 
@@ -120,8 +110,8 @@ class Arena {
 
 	place(scene, topWallPos, bottomWallPos) {
 		for (let i = 0; i<8; ++i) {
-			this.bottomWalls[i].position.set(bottomWallPos + WALL_THICKNESS / 2, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
-			this.topWalls[7 - i].position.set(topWallPos - WALL_THICKNESS / 2, 0, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
+			this.bottomWalls[i].position.set(bottomWallPos + WALL_THICKNESS / 2, WALL_HEIGHT / 2, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
+			this.topWalls[7 - i].position.set(topWallPos - WALL_THICKNESS / 2, WALL_HEIGHT / 2, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
 			scene.add(this.bottomWalls[i], this.topWalls[i]);
 		}
 		scene.add(this.lightbulb1, this.lightbulb2);
@@ -170,12 +160,12 @@ class Hud {
 		this.scene.add(this.p2img);
 
 		const light1 = new THREE.SpotLight(0xffaa99, 30);
-		light1.position.set(-3, -2, -2);
+		light1.position.set(-3, 2, -2);
 		light1.target = this.p1img;
 		this.scene.add(light1);
 
 		const light2 = new THREE.SpotLight(0xaa99ff, 30);
-		light2.position.set(3, -2, -2);
+		light2.position.set(3, 2, -2);
 		light2.target = this.p2img;
 		this.scene.add(light2);
 
@@ -502,7 +492,7 @@ class Client3DGame {
 		// this.fsButton.classList.add("game-ui", "btn", "bg-transparent", "btn-outline-light");
 		// this.fsButton.innerText = "♐";
 		// this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
-		// this.canvas.appendChild(this.fsButton);
+		// this.parent.appendChild(this.fsButton);
 
 		const progressBar = document.createElement('div');
 		progressBar.id = "progressBar";
@@ -571,9 +561,11 @@ class Client3DGame {
 		this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+		this.renderer.autoClear = false;
 
 		// setup scene
 		this.scene = new THREE.Scene();
+		this.scene.fog = new THREE.Fog(0x000000, 1, 1000);
 
 		// setup camera
 		const FOV = 75;
@@ -586,6 +578,27 @@ class Client3DGame {
 		const cam_h = (this.hasAI || this.isOnline) ? CAM_START_Y : 300;
 		this.camera.position.set(CAM_START_X, cam_h, 0);
 		this.camera.lookAt(0, 0, 0);
+
+		// setup postprocessing
+		this.composer = new EffectComposer(this.renderer);
+		this.composer.addPass(new RenderPass(this.scene, this.camera));
+		const bloom = new BloomPass(1, 25, 4, 256);
+		bloom.enabled = false;
+		this.composer.addPass(bloom);
+		const film = new FilmPass(0.5, false);
+		this.composer.addPass(film);
+		const rgbShift = new ShaderPass(RGBShiftShader);
+		rgbShift.uniforms.amount.value = 0.0015;
+		this.composer.addPass(rgbShift);
+		// const dotScreen = new ShaderPass(DotScreenShader);
+		// dotScreen.uniforms.scale.value = 0.2;
+		// this.composer.addPass(dotScreen);
+		const afterimage = new AfterimagePass();
+		afterimage.uniforms.damp.value = 0.86;
+		afterimage.enabled = true;
+		this.composer.addPass(afterimage);
+		this.composer.addPass(new OutputPass());
+		this.composer.autoClear = false;
 
 		// setup controls
 		this.cam_controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -639,6 +652,70 @@ class Client3DGame {
 
 		// setup HUD
 		this.hud = new Hud(this.fontLoader, this.playerOne, this.playerTwo, this.gameData.score, avatar1_texture, avatar2_texture);
+
+		// DEV GUI
+		this.gui = new GUI({ autoPlace: false });
+		{
+			const folder = this.gui.addFolder('Camera');
+			folder.add(this.camera.position, 'x').min(-300).max(300).step(1).name('X');
+			folder.add(this.camera.position, 'y').min(0).max(300).step(1).name('Y');
+			folder.add(this.camera.position, 'z').min(-300).max(300).step(1).name('Z');
+		}
+		{
+			const folder = this.gui.addFolder('Lighting');
+			folder.add(this.arena.lightbulb1.position, 'x').min(-300).max(300).step(1).name('Light 1 X');
+			folder.add(this.arena.lightbulb1.position, 'y').min(0).max(300).step(1).name('Light 1 Y');
+			folder.add(this.arena.lightbulb1.position, 'z').min(-300).max(300).step(1).name('Light 1 Z');
+			folder.add(this.arena.lightbulb2.position, 'x').min(-300).max(300).step(1).name('Light 2 X');
+			folder.add(this.arena.lightbulb2.position, 'y').min(0).max(300).step(1).name('Light 2 Y');
+			folder.add(this.arena.lightbulb2.position, 'z').min(-300).max(300).step(1).name('Light 2 Z');
+
+			folder.add(this.arena.spotLight.position, 'x').min(-300).max(300).step(1).name('Spot Light X');
+			folder.add(this.arena.spotLight.position, 'y').min(0).max(300).step(1).name('Spot Light Y');
+			folder.add(this.arena.spotLight.position, 'z').min(-300).max(300).step(1).name('Spot Light Z');
+
+			folder.add(this.arena.spotLight, 'angle').min(0).max(Math.PI).step(0.01).name('Spot Light Angle');
+			folder.add(this.arena.spotLight, 'penumbra').min(0).max(1).step(0.01).name('Spot Light Penumbra');
+			folder.add(this.arena.spotLight, 'decay').min(1).max(2).step(0.01).name('Spot Light Decay');
+			folder.add(this.arena.spotLight, 'distance').min(0).max(300).step(1).name('Spot Light Distance');
+
+			folder.add(this.arena.ambient_light, 'intensity').min(0).max(2).step(0.01).name('Ambient Light Intensity');
+			folder.close();
+		}
+		{
+			const folder = this.gui.addFolder('Paddle 1');
+			folder.add(this.playerOne.paddle.mesh.position, 'x').min(-300).max(300).step(1).name('X');
+			folder.add(this.playerOne.paddle.mesh.position, 'y').min(0).max(300).step(1).name('Y');
+			folder.add(this.playerOne.paddle.mesh.position, 'z').min(-300).max(300).step(1).name('Z');
+			folder.close();
+		}
+		{
+			const folder = this.gui.addFolder('Paddle 2');
+			folder.add(this.playerTwo.paddle.mesh.position, 'x').min(-300).max(300).step(1).name('X');
+			folder.add(this.playerTwo.paddle.mesh.position, 'y').min(0).max(300).step(1).name('Y');
+			folder.add(this.playerTwo.paddle.mesh.position, 'z').min(-300).max(300).step(1).name('Z');
+			folder.close();
+		}
+		{
+			const folder = this.gui.addFolder('Post Processing');
+			folder.add(bloom, 'enabled').name('Bloom');
+			folder.add(film, 'enabled').name('Film Grain');
+			folder.add(rgbShift.uniforms.amount, 'value').min(0.001).max(0.01).step(0.0001).name('RGB Shift Amount');
+			folder.add(afterimage, 'enabled').name('Afterimage');
+			folder.add(afterimage.uniforms.damp, 'value').min(0.5).max(0.99).step(0.01).name('Afterimage Dampening');
+		}
+
+		this.gui.domElement.style.position = 'absolute';
+		this.gui.domElement.style.top = '10%';
+		this.gui.domElement.style.right = '0';
+		this.gui.domElement.style.zIndex = '900';
+		this.gui.domElement.style.width = '300px';
+		this.gui.domElement.style.height = '80%';
+		this.gui.domElement.style.overflow = 'auto';
+		this.gui.domElement.style.backgroundColor = 'rgba(200, 200, 200, 0.5)';
+		this.gui.domElement.style.display = 'none';
+		document.body.appendChild(this.gui.domElement);
+
 	}
 
 	intro() {
@@ -696,13 +773,14 @@ class Client3DGame {
 	}
 
 	resize (ev) {
-		// const width = this.canvas.clientWidth;
-		// const height = this.canvas.clientHeight;
+		const width = this.canvas.clientWidth;
+		const height = this.canvas.clientHeight;
 		// const needResize = this.canvas.width !== width || this.canvas.height !== height;
 		// if (needResize) {
-			this.camera.aspect = this.canvas.width / this.canvas.height;
+			this.camera.aspect = width / height;
 			this.camera.updateProjectionMatrix();
-			this.renderer.setSize(this.canvas.width, this.canvas.height, false);
+			this.renderer.setSize(width, height);
+			this.composer.setSize(width, height);
 		// }
 	}
 
@@ -759,6 +837,8 @@ class Client3DGame {
 			this.playerTwo.paddle.keys_active--;
 			if(this.playerTwo.paddle.keys_active == 0)
 				this.playerTwo.paddle.direction = 0;
+		} else if (key.key === "`") {
+			this.gui.domElement.style.display = this.gui.domElement.style.display === 'none' ? 'block' : 'none';
 		}
 	}
 
@@ -779,19 +859,15 @@ class Client3DGame {
 	}
 
 	endGame () {
+		this.gameover = true;
+		this.scene.remove(this.ball);
+		this.cam_controls.autoRotate = true;
 		if (this.playerOne.paddle.score > this.playerTwo.paddle.score) {
 			this.showText(`${this.playerOne.alias} WINS`);
 		} else {
 			this.showText(`${this.playerTwo.alias} WINS`);
 		}
-		this.gameover = true;
-		this.scene.remove(this.ball);
-		this.cam_controls.autoRotate = true;
-		if (this.isChallenger) {
-			this.cam_controls.autoRotateSpeed = -5;
-		} else {
-			this.cam_controls.autoRotateSpeed = 5;
-		}
+		this.cam_controls.autoRotateSpeed = 6;
 	}
 
 	loop () {
@@ -820,11 +896,10 @@ class Client3DGame {
 		}
 		this.amps = this.audio.getAmps();
 		for (let i = 0; i < 8; ++i) {
-			this.arena.topWalls[i].position.y = (50 - this.amps[i + 1])/-5;
-			this.arena.bottomWalls[i].position.y = (50 - this.amps[i + 1])/-5;
+			this.arena.topWalls[i].position.y = WALL_HEIGHT / 2 + (50 - this.amps[i + 1])/-5;
+			this.arena.bottomWalls[i].position.y = WALL_HEIGHT / 2 + (50 - this.amps[i + 1])/-5;
 			if (i === 6) {
 				this.arena.lightbulb1.intensity = this.amps[i + 1] * 50;
-				// console.log(this.arena.lightbulb1.intensity);
 			} else if (i === 5) {
 				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
 			}
@@ -881,8 +956,8 @@ class Client3DGame {
 	draw () {
 		this.cam_controls.update();
 		this.hud.update();
-		this.renderer.autoClear = false;
-		this.renderer.render(this.scene, this.camera);
+		// this.renderer.render(this.scene, this.camera);
+		this.composer.render();
 		this.renderer.render(this.hud.scene, this.hud.camera);
 	}
 

@@ -1,4 +1,6 @@
-window.startPong4PGame = startPong4PGame;
+"use strict";
+
+const CANVAS_PADDING = 10;
 
 let animationID = null;
 let button_up = null;
@@ -11,13 +13,18 @@ function startPong4PGame() {
 	const canvas = document.createElement("canvas");
 
 	const nav = document.getElementById("nav");
+	const footer = document.getElementById('footer');
 	
 	while (parent.firstChild) {
 		parent.removeChild(parent.firstChild);
 	}
 
+	parent.height = window.innerHeight - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
+	parent.width = window.innerWidth - CANVAS_PADDING;
 	parent.appendChild(canvas);
 
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
 	let	canvas_old_width = null;
 	let	canvas_old_height = null;
 	const ctx = canvas.getContext("2d");
@@ -93,11 +100,11 @@ function startPong4PGame() {
 
 	function init ()
 	{	
-		canvas.style.width = "45%";
-		canvas.style.height = "90%";
+		// canvas.style.width = "45%";
+		// canvas.style.height = "90%";
 
-		parent.style.height = (screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - 10) + "px";
-		parent.style.width = (screen.availWidth - (window.outerWidth - window.innerWidth)) + "px";
+		// parent.style.height = (screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - 10) + "px";
+		// parent.style.width = (screen.availWidth - (window.outerWidth - window.innerWidth)) + "px";
 
 		// Calculating the height
 		let screenHeight = screen.availHeight;
@@ -111,17 +118,17 @@ function startPong4PGame() {
 
 		canvas_old_width = canvas.width;
 		canvas_old_height = canvas.height;
-		canvas.width = calculatedWidth;
-		canvas.height = calculatedHeight;
+		// canvas.width = calculatedWidth;
+		// canvas.height = calculatedHeight;
 
 		if(calculatedWidth < calculatedHeight) {
-			canvas.width = canvas.width - canvas.width / 20;
-			canvas.height = canvas.width;
+			// canvas.width = canvas.width - canvas.width / 20;
+			// canvas.height = canvas.width;
 			format = "width";
 		}
 		else {
-			canvas.height = canvas.height - canvas.height / 20;
-			canvas.width = canvas.height;
+			// canvas.height = canvas.height - canvas.height / 20;
+			// canvas.width = canvas.height;
 			format = "height";
 		}
 

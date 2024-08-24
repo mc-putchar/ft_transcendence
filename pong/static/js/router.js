@@ -120,6 +120,21 @@ class Router {
 			const id = template.split('/')[1];
 			this.manageFrenemy(action, id);
 			setTimeout(() => history.back(), 100);
+		} else if (template.startsWith('pong-')) {
+			if (template === 'pong-classic') {
+				const p1Name = document.getElementById('p1-name')?.value;
+				const p2Name = document.getElementById('p2-name')?.value;
+				// await this.loadTemplate(template);
+				if (!p1Name) {
+					this.notifyError("Player 1 name is required");
+					history.back();
+					return;
+				}
+				const p1 = this.game.makePlayer('right', p1Name);
+				// const p2 = this.game.makeAIPlayer('left', 'Marvin');
+				this.game.startClassicGame(p1);
+			} else
+				this.loadTemplate(template);
 		} else {
 			this.loadTemplate(template);
 		}
@@ -340,11 +355,11 @@ class Router {
 			case 'tournaments':
 				this.handleTournamentPage();
 				break;
-			case 'pong-classic':
-				const p1 = this.game.makePlayer('left', 'Player 1');
-				const p2 = this.game.makePlayer('right', 'Player 2');
-				this.game.startClassicGame(p1, p2);
-				break;
+			// case 'pong-classic':
+			// 	const p1 = this.game.makePlayer('left', 'Player 1');
+			// 	const p2 = this.game.makePlayer('right', 'Player 2');
+			// 	this.game.startClassicGame(p1, p2);
+			// 	break;
 			case 'pong-3d':
 				// const pl1 = this.game.makePlayer('left', 'Player 1');
 				// const pl2 = this.game.makePlayer('right', 'Player 2');

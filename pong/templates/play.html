@@ -33,33 +33,76 @@
                                 <div class="card-header bg-dark-subtle text-success d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">Classic Pong</h5>
                                 </div>
-                                <div class="card-body text-center">
+                                <div class="card-body text-center rounded-2 border border-success my-1">
                                     <div class="row bg-dark justify-content-center mb-4">
                                         <div class="col-auto text-center">
-                                            <button class="btn btn-outline-light">
+                                            <button class="btn btn-outline-light active" data-bs-toggle="collapse" data-bs-target="#p1-setup" aria-expanded="true" aria-controls="p1-setup">
+                                                P 1
                                                 <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" height="42">
                                             </button>
                                         </div>
-                                        <div class="col-auto text-center">
-                                            <button class="btn btn-outline-light">
+                                        <div class="col-auto text-center" data-bs-toggle="button" data-bs-target="p2-toggle-btn">
+                                            <button id="p2-toggle-btn" class="btn btn-outline-light" data-bs-toggle="collapse" data-bs-target="#p2-setup" aria-expanded="false" aria-controls="p2-setup"
+                                                onclick="">
                                                 <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" height="42">
+                                                P 2
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="row justify-content-center">
+                                    <div class="row">
                                         <div class="text-center">
-                                            <button id="startGame" class="btn btn-success">Start Game</button>
+                                            <form id="game-form">
+                                                <div class="form-floating">
+                                                    <select name="arena" id="arena" class="form-select" aria-label="Select arena">
+                                                        <option value="1" selected>Classic</option>
+                                                    </select>
+                                                    <label for="arena">Select Arena</option>
+                                                </div>
+                                                <div class="input-group collapse show my-2" id="p1-setup">
+                                                    <div class="form-floating mx-1">
+                                                        <input type="text" class="form-control" name="player1" id="p1-name" autocomplete="nickname" maxlength="20" placeholder="Player 1" autofocus>
+                                                        <label for="player1" class="form-label no-select">Player 1 Name</label>
+                                                    </div>
+                                                    <div class="form-floating mx-1">
+                                                        <input type="color" class="form-control form-control-color" id="p1-color" value="#42ff42" title="Choose your paddle color">
+                                                        <label for="p1-color" class="form-label">Color</label>
+                                                    </div>
+                                                    <!-- <div class="form-check form-switch mx-1">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="flexProAI1" checked>
+                                                        <label class="form-check-label" for="flexProAI1">pro AI</label>
+                                                    </div> -->
+                                                </div>
+                                                <div class="input-group collapse my-2" id="p2-setup">
+                                                    <div class="form-floating mx-0">
+                                                        <input type="text" class="form-control" name="player2" id="p2-name" autocomplete="nickname" maxlength="20" placeholder="Player 2">
+                                                        <label for="player2" class="form-label no-select">Player 2 Name</label>
+                                                    </div>
+                                                    <div class="form-floating mx-0">
+                                                        <input type="color" class="form-control form-control-color" id="p2-color" value="#be42cc" title="Choose your paddle color">
+                                                        <label for="p2-color" class="form-label">Color</label>
+                                                    </div>
+                                                    <div class="form-floating mx-0">
+                                                        <div class="form-switch">
+                                                            <input type="checkbox" role="switch" class="btn-check" id="flexProAI2" autocomplete="off" checked aria-checked="true">
+                                                            <label class="btn btn-outline-success" for="flexProAI2">pro AI</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                            <button id="startGame" class="btn btn-success m-1" onclick="location.hash='/pong-classic'">Start Game</button>
                                         </div>
                                     </div>
-                                <a class="btn btn-outline-primary w-100 mb-3" href="#/pong-classic">Pong Classic</a>
                                 </div>
                             </div>
+
                             <div class="tab-pane fade bg-dark-subtle" id="pills-3dpong" role="tabpanel" aria-labelledby="pills-3dpong-tab" tabindex="0">
                                 <a class="btn btn-outline-primary w-100 mb-3" href="#/pong-3d">Pong 3D</a>
                             </div>
+
                             <div class="tab-pane fade bg-dark-subtle" id="pills-4ppong" role="tabpanel" aria-labelledby="pills-4ppong-tab" tabindex="0">
                                 <a class="btn btn-outline-primary w-100 mb-3" href="#/pong-4p">Pong 4P</a>
                             </div>
+
                         </div>
                     </div>
                 </div>
