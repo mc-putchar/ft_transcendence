@@ -202,10 +202,25 @@ class Router {
 					if(window.mainOUT) {
 						window.mainOUT.gain.value = 0;
 					}
-				} else {
+				} else if (audioMuteBtn.innerText === '🔇'){
 					audioMuteBtn.innerText = '🔊';
 					if (window.mainOUT) {
 						window.mainOUT.gain.value = 1;
+					}
+				}
+			});
+			document.getElementById('fxMuteBtn').addEventListener('click', (e) => {
+				const fxMuteBtn = document.getElementById('fxMuteBtn');
+
+				if (fxMuteBtn.innerText === '🔊') {
+					fxMuteBtn.innerText = '🔇';
+					if(window.fxGainNode) {
+						window.fxGainNode.gain.value = 0;
+					}
+				} else if(fxMuteBtn.innerText === '🔇'){
+					fxMuteBtn.innerText = '🔊';
+					if (window.fxGainNode) {
+						window.fxGainNode.gain.value = 1;
 					}
 				}
 			});
