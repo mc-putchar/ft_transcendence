@@ -122,8 +122,8 @@ class Router {
 			setTimeout(() => history.back(), 100);
 		} else if (template.startsWith('pong-')) {
 			if (template === 'pong-classic') {
-				const p1Name = document.getElementById('p1-name')?.value;
-				const p2Name = document.getElementById('p2-name')?.value;
+				const p1Name = document.getElementById('player1-name')?.value;
+				const p2Name = document.getElementById('player2-name')?.value;
 				// await this.loadTemplate(template);
 				if (!p1Name) {
 					this.notifyError("Player 1 name is required");

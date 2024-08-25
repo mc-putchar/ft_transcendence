@@ -367,14 +367,14 @@ class ClientClassic {
 
 		const nav = document.getElementById('nav');
 		const footer = document.getElementById('footer');
-		this.parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
+		this.parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - footer.offsetHeight;
 		this.parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
 
 		this.canvas = document.createElement("canvas");
 		// this.canvas.style.width = "80%";
 		// this.canvas.style.height = "100%";
-		this.canvas.width = this.parent.width;
-		this.canvas.height = this.parent.height;
+		this.canvas.width = this.parent.width - CANVAS_PADDING;
+		this.canvas.height = this.parent.height - CANVAS_PADDING;
 		this.parent.appendChild(this.canvas);
 		this.context = this.canvas.getContext("2d");
 
@@ -441,10 +441,10 @@ class ClientClassic {
 	onResize () {
 		if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
 		this.resizeTimeout = setTimeout(() => {
-			this.parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - document.getElementById('nav')?.offsetHeight - CANVAS_PADDING;
+			this.parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - document.getElementById('nav')?.offsetHeight;
 			this.parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
-			this.canvas.width = this.parent.width;
-			this.canvas.height = this.parent.height;
+			this.canvas.width = this.parent.width - CANVAS_PADDING;
+			this.canvas.height = this.parent.height - CANVAS_PADDING;
 			const prevHeight = this.arena.height;
 			this.arena.resize(this.canvas.width, this.canvas.height);
 			this.player1.resize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
