@@ -2,12 +2,13 @@
 class AudioController {
 	constructor(audioFilePath = "/static/assets/music.mp3") {
 	  this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-	  
 	  this.mainOUT = this.ctx.createGain();	  
 	  window.mainOUT = this.mainOUT;
+	  
 	  this.mainGainNode = this.ctx.createGain();
 	  this.fxGainNode = this.ctx.createGain();
 	  window.fxGainNode = this.fxGainNode;
+	  
 	  this.vca = this.ctx.createGain();
 	  this.osc = this.ctx.createOscillator();
 	  this.mod = this.ctx.createOscillator();
@@ -16,7 +17,7 @@ class AudioController {
 	  this.feedback = this.ctx.createGain();
 	  this.analyser = this.ctx.createAnalyser();
   
-	  this.baseFreq = 12;
+	  this.baseFreq = 1;
 	  this.baseMod = 10;
 	  this.baseAmt = 10;
 	  this.sustain = 0.48;
@@ -30,13 +31,12 @@ class AudioController {
   
 	_initializeParameters() {
 
-	  this.delay.delayTime.value = 0.05;
-	  this.feedback.gain.value = 0.4;
+	  this.delay.delayTime.value = 0.1;
+	  this.feedback.gain.value = 0.3;
 	  this.vca.gain.value = 0;
 	  this.osc.type = "sine";
 	  this.mod.type = "sine";
 	  this.mod.frequency.value = 30;
-	  this.modGain.gain.value = 100;
 	  this.mainGainNode.gain.value = 0.9;
 	  this.fxGainNode.gain.value = 1;
 
@@ -46,6 +46,9 @@ class AudioController {
 	  this.dataArray = new Uint8Array(this.bufferLength);
 	  this.smoothingFactor = 0.8;
 	  this.smoothedAmplitudes = Array(8).fill(0);
+	  this.osc.start();
+	  this.mod.start();
+
 	}
   
 	_connectNodes() {
@@ -66,12 +69,10 @@ class AudioController {
 	_startAudioContext() {
 	  if (this.ctx.state !== "running") {
 		this.ctx.resume();
-		this.mod.start();
 	  }
 	}
   
 	playAudioTrack() {
-	  this.osc.start();
 	  this._startAudioContext();
 	  this.trackSource.connect(this.mainGainNode);
 	  this.audioTrack.play();
@@ -86,15 +87,16 @@ class AudioController {
 	}
 	
 	playTone(ball_speed) {
+	    
 	    if (!this.ctx) {
 		return;
 	    }
 	    const currentTime = this.ctx.currentTime;
-	    const slideDuration = 0.22; // Duration of the slide in seconds, can be adjusted
+	    const slideDuration = this.sustain; // Duration of the slide in seconds, can be adjusted
 
-	    const targetModFreq = (Math.random() * 200) + ((this.baseMod * (1 + ball_speed)) * 2);
-	    const targetModGain = 300 + (Math.random() * 200) + ((this.baseAmt * ball_speed) ** 3);
-	    const targetOscFreq = 2 + ((this.baseFreq * (ball_speed + 1)) ** 2);
+	    const targetModFreq = (Math.floor(Math.random() * 60)) + ((this.baseMod * (2 + ball_speed * 10)) * 2);
+	    const targetModGain = (Math.floor(Math.random() * 1000)) + ((this.baseAmt * (2 + ball_speed * 10 )) ** 2);
+	    const targetOscFreq = ((this.baseFreq * (ball_speed + 2 * 2)) ** 3);
 
 	    this.mod.frequency.cancelScheduledValues(currentTime); // Clear previous scheduling
 	    this.mod.frequency.linearRampToValueAtTime(targetModFreq, currentTime + slideDuration);
