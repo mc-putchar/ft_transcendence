@@ -76,8 +76,6 @@ body {
 
 canvas {
   margin-top: auto;
-  width: 80%;
-  height: 100%;
   display: block;
   align-content: center;
   background-color: black;
@@ -110,11 +108,11 @@ canvas {
 #app {
   position: relative;
   top: 5%;
-  margin-top: 5rem;
-  margin-bottom: 5rem;
-  z-index: 99;
+  margin-bottom: 2%;
+  margin-top: 5%;
   width: 100%;
   height: auto;
+  z-index: 99;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -279,6 +277,8 @@ button:focus {
     chat-log {
       width: 100%;
     }
+
+  
   /* img { */
   /*   width: 50%; */
   /* } */
@@ -306,7 +306,9 @@ button:focus {
       /* overflow-y: auto; */
       margin-bottom: 1%;
     }
-
+  #app {
+    margin-top: 18%;
+  }
 }
 
 .mp3-hover:hover {

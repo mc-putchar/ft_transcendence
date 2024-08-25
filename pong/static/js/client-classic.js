@@ -3,7 +3,7 @@
 import { GameData } from "./game-router.js";
 
 // Constants
-const CANVAS_PADDING = 10;
+const CANVAS_PADDING = 2;
 const TARGET_FPS = 120;
 const ARENA_WIDTH = 150;
 const ARENA_HEIGHT = 100;
@@ -40,7 +40,7 @@ class Arena {
 			this.width = width;
 			this.height = width / aspectRatio;
 		}
-		this.height *= 0.9;
+		this.height *= 0.8;
 		this.startY = 0.1 * this.height;
 		this.width = this.height * aspectRatio;
 		this.startX = (width - this.width) / 2;
