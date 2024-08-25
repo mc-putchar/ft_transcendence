@@ -1,6 +1,6 @@
 "use strict";
 
-const CANVAS_PADDING = 10;
+const CANVAS_PADDING = 3;
 
 let animationID = null;
 let button_up = null;
