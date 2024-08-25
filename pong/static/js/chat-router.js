@@ -210,7 +210,7 @@ class ChatRouter {
 		if (this.users.includes(challengedUser)) {
 			if (data.username === this.username) {
 				this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
-				this.chatElement.dispatchEvent(new CustomEvent('challenge', { detail: { gameID: challengedUser } }));
+				this.chatElement.dispatchEvent(new CustomEvent('challenge', { detail: { gameID: data.username } }));
 			} else if (challengedUser !== this.username) {
 				this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
 			} else {
@@ -291,8 +291,6 @@ class ChatRouter {
 		cardBody.prepend(cardPrefix);
 		card.appendChild(cardBody);
 		parent.appendChild(card);
-		// set focus to the message input
-		// document.querySelector('#chat-message-input').focus();
 	}
 };
 

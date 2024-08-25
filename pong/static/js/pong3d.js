@@ -377,8 +377,7 @@ class Ball {
  * paddle.sync(pos, dir, timestamp);
  */
 class Paddle {
-	constructor (paddle_geo, paddle_mat, avatar_tex, side) {
-		this.side = side;
+	constructor (paddle_geo, paddle_mat, avatar_tex) {
 		this.mesh = new THREE.Mesh(paddle_geo, paddle_mat);
 		this.mesh.castShadow = true;
 		this.pos = new THREE.Vector3();
@@ -400,6 +399,7 @@ class Paddle {
 	}
 
 	place (side, scene) {
+		this.side = side;
 		const x = 0;
 		const y = (side === "left") ? -ARENA_WIDTH / 2 + GOAL_LINE : ARENA_WIDTH / 2 - GOAL_LINE;
 		this.mesh.position.set(x, PADDLE_HEIGHT, y);
