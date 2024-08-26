@@ -88,8 +88,6 @@ class Player {
 				this.x = startX + arenaWidth / 2;
 				break;
 		}
-
-		console.log(this.side, ": \n", "x: ", this.x, ", y: ", this.y);
 	}
 	doMove(arena) {
 		if(this.side == "left" || this.side == "right") {
@@ -118,8 +116,6 @@ class Player {
 			ctx.fillRect(this.x - this.width / 2, this.y - this.len / 2, this.width, this.len);
 		}
 		else {
-			if(this.side == "top")
-				debugger;
 			ctx.fillRect(this.x - this.len / 2, this.y - this.width / 2, this.len, this.width);
 		}
 	}
@@ -191,6 +187,7 @@ class Ball {
 class Scores {
 	constructor (arenaWidth, arenaHeight, startX, startY) {
 		this.lastTouch = "none";
+		this.conceded = "none";
 		this.goals = {left : 0, right : 0, top : 0, bottom : 0};
 		this.init(arenaWidth, arenaHeight, startX, startY);
 	}
@@ -202,11 +199,17 @@ class Scores {
 		this.startX = startX;
 		this.startY = startY;
 	}
-	updateScore(scorer) {
-		if(scorer == "left")
-			this.goals.left++;
-		else if (scorer == "right")
-			this.goals.right++;
+	updateScore() {
+		const substrings = ["left", "right", "top", "bottom"];
+		for(let key of substrings) {
+			if(this.conceded.includes(substrings[key])) {
+				this.goals[substrings[key]]--;
+			}
+		}
+		if(this.lastTouch != "none")
+			this.goals[this.lastTouch]++;
+		this.lastTouch = "none";
+		this.conceded = "none";
 	}
 	drawScore(ctx, arenaHeight, start_x, start_y) {
 		for (let key in this.goals) {
@@ -375,14 +378,18 @@ class Game {
 		}, 200);
 	}
 	keydown(key) {
-		if (this.gameover)	return;
+		console.log("code : ", key.code);
+		console.log(key);
+		if(key.code == "KeyC") {
+			debugger;
+		}
 		switch(key.code) {
-			case "KeyW":
+			case "KeyQ":
 				if(this.playerLeft.direction != -1)
 					this.playerLeft.keys_active++;
 				this.playerLeft.direction = -1; // -1 goes up
 				break;
-			case "KeyS":
+			case "KeyA":
 				if(this.playerLeft.direction != 1)
 					this.playerLeft.keys_active++;
 				this.playerLeft.direction = 1;
@@ -397,30 +404,60 @@ class Game {
 					this.playerRight.keys_active++;
 				this.playerRight.direction = 1;
 				break;
+			case "KeyF":
+				if(this.playerTop.direction != -1)
+					this.playerTop.keys_active++;
+				this.playerTop.direction = -1; // -1 goes left
+				break;
+			case "KeyG":
+				if(this.playerTop.direction != 1)
+					this.playerTop.keys_active++;
+				this.playerTop.direction = 1;
+				break;
+			case "KeyK":
+				if(this.playerBottom.direction != -1)
+					this.playerBottom.keys_active++;
+				this.playerBottom.direction = -1; // -1 goes left
+				break;
+			case "KeyL":
+				if(this.playerBottom.direction != 1)
+					this.playerBottom.keys_active++;
+				this.playerBottom.direction = 1;
+				break;
 			default:
 				break;
 		}
 	}
 	keyup(key) {
 		if (this.gameover)	return;
-		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
-			if(this.playerRight.keys_active > 0)
-				this.playerRight.keys_active--;
-			if(this.playerRight.keys_active == 0)
-				this.playerRight.direction = 0;
-		} else if (key.code == "KeyW" || key.code == "KeyS") {
+		if (key.code == "KeyQ" || key.code == "KeyA") {
 			if(this.playerLeft.keys_active > 0)
 				this.playerLeft.keys_active--;
 			if(this.playerLeft.keys_active == 0)
 				this.playerLeft.direction = 0;
 		}
+		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
+			if(this.playerRight.keys_active > 0)
+				this.playerRight.keys_active--;
+			if(this.playerRight.keys_active == 0)
+				this.playerRight.direction = 0;
+		}
+		if (key.code == "KeyF" || key.code == "KeyG") {
+			if(this.playerTop.keys_active > 0)
+				this.playerTop.keys_active--;
+			if(this.playerTop.keys_active == 0)
+				this.playerTop.direction = 0;
+		} 
+		if (key.code == "KeyK" || key.code == "KeyL") {
+			if(this.playerBottom.keys_active > 0)
+				this.playerBottom.keys_active--;
+			if(this.playerBottom.keys_active == 0)
+				this.playerBottom.direction = 0;
+		} 
 	}
 	loop() {
 		let now = Date.now();
 		if(now < this.animation.times.third) {
-			// console.log("now: ", now);
-			// console.log("Times.third: ", this.animation.times.third);
-			// console.log("ball: ",this.ball.position);
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			if(this.animation.times.first != null && now < this.animation.times.first) {
 				this.score.drawGolazo(this.context);
@@ -441,19 +478,17 @@ class Game {
 			this.playerBottom.drawPaddle(this.context);
 		}
 		else {
-			this.score.lastTouch = "none";
 			this.score.goal = false;
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.update();
 			this.draw();
 		}
-		// console.log("here2");
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
 	}
 	paddleCollision() {
 		if(this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width) {
-			if(this.ball.x < this.playerLeft.x - this.playerLeft.width)
+			if(this.score.lastTouch == "left"  || this.ball.x - this.ball.radius < this.playerLeft.x - this.playerLeft.width / 2)
 				return;
 			if(this.ball.y + this.ball.radius >= this.playerLeft.y - this.playerLeft.len / 2
 				&& this.ball.y - this.ball.radius <= this.playerLeft.y + this.playerLeft.len / 2) {
@@ -461,10 +496,11 @@ class Game {
 					this.ball.vx = 1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
-			}
+					this.score.lastTouch = "left";
+				}
 		} // LEFT PADDLE
 		else if(this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
-			if(this.ball.x > this.playerRight.x + this.playerRight.width)
+			if(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width / 2)
 				return;
 			if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
 				&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
@@ -472,48 +508,61 @@ class Game {
 					this.ball.vx = -1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
+					this.score.lastTouch = "right";
 			}
 		} // RIGHT PADDLE
 		// it can hit left and bottom or top so no else here
-		if (this.ball.y - this.ball.radius <= this.playerTop.y - this.playerTop.width) {
-			if(this.ball.y < this.playerTop.y - this.playerTop.width)
+		if (this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
+			if (this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width / 2)) {
 				return;
-			if(this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2
-				&& this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
-					let refAngle = (this.ball.x - this.playerTop.x) / (this.playerTop.len / 2) * (Math.PI / 4);
-					this.ball.vx = Math.cos(refAngle);
-					this.ball.vy = 1 * Math.sin(refAngle);
-					this.ball.speed_up();
 			}
-		} // TOP PADDLE
-		else if(this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
-			if(this.ball.y > this.playerBottom.y + this.playerBottom.width)
+			if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
+				this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
+				
+				let refAngle = (this.ball.x - this.playerTop.x) / (this.playerTop.len / 2) * (Math.PI / 4);
+				
+				this.ball.vx = Math.sin(refAngle);
+				this.ball.vy = Math.cos(refAngle);
+				
+				this.ball.speed_up();
+				this.score.lastTouch = "top";
+			}
+		}// TOP PADDLE
+		else if (this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
+			if (this.score.lastTouch == "bottom" || (this.ball.y + this.ball.radius > this.playerBottom.y + this.playerBottom.width / 2)) {
 				return;
-			if(this.ball.x + this.ball.radius >= this.playerBottom.x - this.playerBottom.len / 2
-				&& this.ball.x - this.ball.radius <= this.playerBottom.x + this.playerBottom.len / 2) {
-					let refAngle = (this.ball.x - this.playerBottom.x) / (this.playerBottom.len / 2) * (Math.PI / 4);
-					this.ball.vx = Math.cos(refAngle);
-					this.ball.vy = -1 * Math.sin(refAngle);
-					this.ball.speed_up();
 			}
-		} // BOTTOM PADDLE
+			if (this.ball.x + this.ball.radius >= this.playerBottom.x - this.playerBottom.len / 2 &&
+				this.ball.x - this.ball.radius <= this.playerBottom.x + this.playerBottom.len / 2) {
+				
+				let refAngle = (this.ball.x - this.playerBottom.x) / (this.playerBottom.len / 2) * (Math.PI / 4);
+				
+				this.ball.vx = Math.sin(refAngle);
+				this.ball.vy = -Math.cos(refAngle);
+				
+				this.ball.speed_up();
+				this.score.lastTouch = "bottom";
+			}
+		}
+		
 	}
 	checkGoal(arenaWidth, arenaHeight, arenaStartX, arenaStartY) {
+		this.score.conceded = "";
 		if (this.ball.x < arenaStartX - this.playerLeft.goalLine) {
 			this.score.goal = true;
-			this.score.hasScored.scorer += "right";
+			this.score.conceded += "right";
 		}
 		else if (this.ball.x > arenaStartX + arenaWidth + this.playerRight.goalLine) {
 			this.score.goal = true;
-			this.score.hasScored.scorer += "left";
+			this.score.conceded += "left";
 		}
-		if (this.ball.y < arenaStartY - this.playerLeft.goalLine) {
+		if (this.ball.y < arenaStartY - this.playerTop.goalLine) {
 			this.score.goal = true;
-			this.score.hasScored.scorer += "top";
+			this.score.conceded += "top";
 		}
-		else if (this.ball.y > arenaStartY + arenaWidth + this.playerRight.goalLine) {
+		else if (this.ball.y > arenaStartY + arenaHeight + this.playerBottom.goalLine) {
 			this.score.goal = true;
-			this.score.hasScored.scorer += "bottom";
+			this.score.conceded += "bottom";
 		}
 	}
 	resetPositions () {
@@ -528,7 +577,7 @@ class Game {
 		if(this.score.goal == true) {
 			this.animation.setTimeStamps();
 			this.resetPositions();
-			this.score.updateScore(this.score.hasScored.scorer);
+			this.score.updateScore();
 			return ;
 		}
 		this.paddleCollision();
@@ -551,7 +600,7 @@ class Game {
 };
 
 function startPongGame() {
-	console.log("Pong Classic - Starting new game");
+	console.log("Pong 4P - Starting new game");
 	const parent = document.getElementById('app');
 	const nav = document.getElementById('nav');
 
