@@ -22,6 +22,6 @@ body {
     top: 50px; /* Adjust according to the nav height */
     left: 0;
     width: 100%;
-    height: calc(100vh - 50px); /* Adjust according to the nav height */
+    height: 100%; /* Adjust according to the nav height */
     background-color: black;
 }

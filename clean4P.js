@@ -7,7 +7,7 @@ const BALL_SIZE = 8;
 const ARENA_COLOR = "white";
 const SCORE_COLOR = "white";
 const GOAL_COLOR = "grey";
-const GOAL_LINE = 20;
+const GOAL_LINE = 10;
 const BALL_START_SPEED = 2 / 12;
 const BALL_INCR_SPEED = 1 / 64;
 const PADDLE_SPEED = 5;
@@ -19,25 +19,17 @@ const TARGET_FPS = 120;
 const BALL_COLOR = "red";
 const PADDLE_COLOR = "green";
 
-console.log("hey");
-
 class Arena {
 	constructor(ctxwidth, ctxheight) {
-		this.startX = 0;
-
-		const aspectRatio = 3 / 2;
-
-		if (ctxwidth / ctxheight >= aspectRatio) {
-			this.height = ctxheight;
-			this.width = ctxheight * aspectRatio;
-		} else {
-			this.width = ctxwidth;
-			this.height = ctxwidth / aspectRatio;
-		}
-		this.height *= 0.9;
-		this.width = this.height * aspectRatio;
-		this.startX = (ctxwidth - this.width) / 2;
-		this.startY = 0.1 * this.height;
+		this.resize(ctxwidth, ctxheight);
+	}
+	resize(ctxwidth, ctxheight) {
+		const size = Math.min(ctxwidth, ctxheight) * 0.9;
+    
+		this.width = size;
+		this.height = size;
+		this.startX = ctxwidth / 2 - this.width / 2;
+		this.startY = 0.05 * this.height;
 	}
 	drawArena(ctx) {
 		ctx.fillStyle = ARENA_COLOR;
@@ -45,8 +37,8 @@ class Arena {
 		ctx.fillRect(this.startX, this.startY, this.width, 1);
 		ctx.fillRect(this.startX, this.startY + this.height, this.width, 1);
 		ctx.fillStyle = GOAL_COLOR;
-		ctx.fillRect(this.startX, this.startY, 1, this._height);
-		ctx.fillRect(this.startX + this._width, this.startY, 1, this._height);
+		ctx.fillRect(this.startX, this.startY, 1, this.height);
+		ctx.fillRect(this.startX + this.width, this.startY, 1, this.height);
 	}
 	get _startX() {
 		return this.startX;
@@ -65,6 +57,10 @@ class Arena {
 class Player {
 	constructor(side, arenaWidth, arenaHeight, startX, startY) {
 		this.side = side;
+		this.init(arenaWidth, arenaHeight, startX, startY);
+	}
+	init(arenaWidth, arenaHeight, startX, startY)
+	{
 		this.color = PADDLE_COLOR;
 		this.len = PADDLE_LEN / 200 * arenaHeight;
 		this.width = PADDLE_WIDTH / 300 * arenaWidth;
@@ -74,32 +70,69 @@ class Player {
 		this.speed = PADDLE_SPEED / 200 * arenaHeight;
 		this.goalLine = GOAL_LINE / 200 * arenaHeight;
 
-		this.y = startY + arenaHeight / 2;
-		if(side == "left")
-			this.x = startX + this.goalLine	 + this.width / 2;
-		else
-			this.x = startX + arenaWidth - this.goalLine	 - this.width / 2;
+		switch (this.side) {
+			case "left":
+				this.x = startX + this.goalLine + this.width / 2;
+				this.y = startY + arenaHeight / 2;
+				break;
+			case "right":
+				this.x = startX + arenaWidth - this.goalLine - this.width /2;
+				this.y = startY + arenaHeight / 2;
+				break;
+			case "top":
+				this.y = startY + this.goalLine + this.width/ 2;
+				this.x = startX + arenaWidth / 2;
+				break;
+			case "bottom":
+				this.y = startY + arenaHeight - this.goalLine - this.width / 2;
+				this.x = startX + arenaWidth / 2;
+				break;
+		}
+
+		console.log(this.side, ": \n", "x: ", this.x, ", y: ", this.y);
 	}
 	doMove(arena) {
-		const limitMin = arena.startY + this.len / 2;
-		const limitMax = arena.startY + arena.height - this.len / 2;
-		if (this.direction) {
-			let new_pos = this.y + this.direction * this.speed;
-			if(new_pos > limitMin && new_pos < limitMax)
-				this.y = new_pos;
+		if(this.side == "left" || this.side == "right") {
+			const limitMin = arena.startY + this.len / 2;
+			const limitMax = arena.startY + arena.height - this.len / 2;
+			if (this.direction) {
+				let new_pos = this.y + this.direction * this.speed;
+				if(new_pos > limitMin && new_pos < limitMax)
+					this.y = new_pos;
+			}
+		}
+		else {
+			const limitMin = arena.startX + this.len / 2;
+			const limitMax = arena.startX + arena.width - this.len / 2;
+			if (this.direction) {
+				let new_pos = this.x + this.direction * this.speed;
+				if(new_pos > limitMin && new_pos < limitMax)
+					this.x = new_pos;
+			}
 		}
 	}
 	drawPaddle(ctx) {
 		ctx.fillStyle = PADDLE_COLOR;
 		ctx.strokeStyle = PADDLE_COLOR;
-		ctx.fillRect(this.x - this.width / 2, this.y - this.len / 2, this.width, this.len);
+		if(this.side == "left" || this.side == "right") {
+			ctx.fillRect(this.x - this.width / 2, this.y - this.len / 2, this.width, this.len);
+		}
+		else {
+			if(this.side == "top")
+				debugger;
+			ctx.fillRect(this.x - this.len / 2, this.y - this.width / 2, this.len, this.width);
+		}
 	}
 };
 
 class Ball {
 	constructor(arenaWidth, arenaHeight, startX, startY) {
-		this.color = BALL_COLOR;
 		this.radius = (BALL_SIZE / 2 / 200 * arenaWidth);
+		this.color = BALL_COLOR;
+		this.initBall(arenaWidth, arenaHeight, startX, startY);
+	}
+	initBall(arenaWidth, arenaHeight, startX, startY)
+	{
 		this.x = startX + arenaWidth / 2;
 		this.y = startY + arenaHeight / 2;
 		this.lastMove = 0;
@@ -131,7 +164,7 @@ class Ball {
 	moveY() {
 		this.y += this.vy * this.speedy;
 	}
-	doMove(arenaWidth, arenaHeight, hit) {
+	doMove() {
 		if(this.lastMove == 0 || Date.now() - this.lastMove > 100 || Date.now() - this.lastMove <= 4)
 			this.lastMove = Date.now();
 		this.time = Date.now() - this.lastMove;
@@ -140,14 +173,6 @@ class Ball {
 		this.x += this.vx * this.speedx * this.time;
 		this.y += this.vy * this.speedy * this.time;
 		this.lastMove = this.time;
-	}
-	reset(arenaWidth, arenaHeight, startX, startY) {
-		this.color = BALL_COLOR;
-		this.speed = 0;
-		this.vx = 0;
-		this.vy = 0;
-		this.x = arenaWidth / 2;
-		this.y = arenaHeight / 2;
 	}
 	speed_up () {
 		this.speedx += this.incr_speed;
@@ -165,8 +190,11 @@ class Ball {
 
 class Scores {
 	constructor (arenaWidth, arenaHeight, startX, startY) {
-		this.hasScored = {goal: false, scorer: "none"};
-		this.goals = {left : 0, right : 0}
+		this.lastTouch = "none";
+		this.goals = {left : 0, right : 0, top : 0, bottom : 0};
+		this.init(arenaWidth, arenaHeight, startX, startY);
+	}
+	init(arenaWidth, arenaHeight, startX, startY) {
 		this.pos_y = arenaHeight / 2;
 		this.pos_x = {left: arenaWidth / 2 - arenaWidth / 8, right: arenaWidth / 2 + arenaWidth / 8};
 		this.arenaWidth = arenaWidth;
@@ -184,7 +212,7 @@ class Scores {
 		for (let key in this.goals) {
 			ctx.fillStyle = SCORE_COLOR;
 			let font_size = arenaHeight / 20;
-			ctx.font = '${font_size}px Orbitron';
+			ctx.font = `${font_size}px Orbitron`;
 			ctx.fillText (this.goals[key], start_x + this.pos_x[key], start_y + this.pos_y + font_size / 2, 100);
 		}
 	}
@@ -192,14 +220,14 @@ class Scores {
 		for (let key in this.goals) {
 			ctx.fillStyle = SCORE_COLOR;
 			let font_size = this.arenaHeight / 20;
-			ctx.font = '${font_size}px Orbitron';
-			if(key == this.hasScored.scorer) {
+			ctx.font = `${font_size}px Orbitron`;
+			if(key == this.lastTouch) {
 				this.prevScore = this.goals[key] -1;
-				ctx.font = '${font_size}px Orbitron';
+				ctx.font = `${font_size}px Orbitron`;
 				ctx.fillText (this.prevScore, this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
 			}
 			else {
-				ctx.font = '${font_size}px Orbitron';
+				ctx.font = `${font_size}px Orbitron`;
 				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
 			}
 		}
@@ -208,8 +236,8 @@ class Scores {
 		for (let key in this.goals) {
 			ctx.fillStyle = SCORE_COLOR;
 			let font_size = this.arenaHeight / 20;
-			ctx.font = '${font_size}px Orbitron';
-			let text = "Golazo " + this.hasScored.scorer;
+			ctx.font = `${font_size}px Orbitron`;
+			let text = "Golazo " + this.lastTouch;
 			let textSize = ctx.measureText(text);
 			ctx.fillText (text, this.startX + this.arenaWidth / 2 - textSize.width / 2, this.arenaHeight / 3 + font_size / 2);
 		}
@@ -218,14 +246,14 @@ class Scores {
 		for (let key in this.goals) {
 			ctx.fillStyle = SCORE_COLOR;
 			let font_size = this.arenaHeight / 20;
-			ctx.font = '${font_size}px Orbitron';
-			if(key == this.hasScored.scorer) {
+			ctx.font = `${font_size}px Orbitron`;
+			if(key == this.lastTouch) {
 				this.prevScore = this.goals[key] -1;
-				ctx.font = '${font_size * 1.5}px Orbitron';
+				ctx.font = `${font_size * 1.5}px Orbitron`;
 				ctx.fillText (this.prevScore, this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
 			}
 			else {
-				ctx.font = '${font_size}px Orbitron';
+				ctx.font = `${font_size}px Orbitron`;
 				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
 			}
 		}
@@ -234,13 +262,13 @@ class Scores {
 		for (let key in this.goals) {
 			ctx.fillStyle = SCORE_COLOR;
 			let font_size = this.arenaHeight / 20;
-			ctx.font = '${font_size}px Orbitron';
-			if(key == this.hasScored.scorer) {
-				ctx.font = '${font_size * 1.5}px Orbitron';
+			ctx.font = `${font_size}px Orbitron`;
+			if(key == this.lastTouch) {
+				ctx.font = `${font_size * 1.5}px Orbitron`;
 				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
 			}
 			else {
-				ctx.font = '${font_size}px Orbitron';
+				ctx.font = `${font_size}px Orbitron`;
 				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
 			}
 		}
@@ -267,14 +295,16 @@ class Game {
 		this.parent = parentElement;
 		this.canvas = document.createElement("canvas");
 		this.parent.appendChild(this.canvas);
-		this.canvas.style.width = "80%";
-		this.canvas.style.height = "100%";
+		this.canvas.style.width = Math.min(this.parent.height, this.parent.width);
+		this.canvas.style.height = Math.min(this.parent.height, this.parent.width);
 		this.canvas.width = this.parent.width;
 		this.canvas.height = this.parent.height;
 		this.context = this.canvas.getContext("2d");
 		this.arena = new Arena(this.canvas.width, this.canvas.height);
-		this.player1 = new Player("left", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		this.player2 = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerLeft = new Player("left", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerRight = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerTop = new Player("top", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerBottom = new Player("bottom", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.ball = new Ball(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.score = new Scores(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.animation = new Animation();
@@ -316,57 +346,56 @@ class Game {
 	}
 
 	onTouchStartLeft(event) {
-		// console.log("Touch start event triggered on left.");
+		console.log("Touch start event triggered on left.");
 		if(event.touches.length == 1)
-			this.player1.direction = -1; // -1 goes up
+			this.playerLeft.direction = -1; // -1 goes up
 	}
 	onTouchEndLeft(event) {
-		// console.log("Touch end event triggered on left.");
-			this.player1.direction = 0;
+		console.log("Touch end event triggered on left.");
+			this.playerLeft.direction = 0;
 	}
 	onTouchStartRight(event) {
-		// console.log("Touch start event triggered on right.");
+		console.log("Touch start event triggered on right.");
 		if(event.touches.length == 1)
-			this.player1.direction = 1;
+			this.playerLeft.direction = 1;
 	}
 	onTouchEndRight(event) {
-		// console.log("Touch end event triggered on right.");
-			this.player1.direction = 0;
+		console.log("Touch end event triggered on right.");
+			this.playerLeft.direction = 0;
 	}
-
+	resize() {
+		this.canvas.width = this.parent.width;
+		this.canvas.height = this.parent.height;
+		this.arena.resize(this.canvas.width, this.canvas.height);
+	}
 	onResize() {
 		if (resizeTimeout) clearTimeout(resizeTimeout);
 		resizeTimeout = setTimeout(() => {
 			this.resize();
 		}, 200);
 	}
-	resize() {
-		this.canvas.width = this.parent.width;
-		this.canvas.height = this.parent.height;
-		this.arena = new Arena (this.canvas.width, this.canvas.height);
-	}
 	keydown(key) {
 		if (this.gameover)	return;
 		switch(key.code) {
 			case "KeyW":
-				if(this.player1.direction != -1)
-					this.player1.keys_active++;
-				this.player1.direction = -1; // -1 goes up
+				if(this.playerLeft.direction != -1)
+					this.playerLeft.keys_active++;
+				this.playerLeft.direction = -1; // -1 goes up
 				break;
 			case "KeyS":
-				if(this.player1.direction != 1)
-					this.player1.keys_active++;
-				this.player1.direction = 1;
+				if(this.playerLeft.direction != 1)
+					this.playerLeft.keys_active++;
+				this.playerLeft.direction = 1;
 				break;
 			case "ArrowUp":
-				if(this.player2.direction != -1)
-					this.player2.keys_active++;
-				this.player2.direction = -1;
+				if(this.playerRight.direction != -1)
+					this.playerRight.keys_active++;
+				this.playerRight.direction = -1;
 				break;
 			case "ArrowDown":
-				if(this.player2.direction != 1)
-					this.player2.keys_active++;
-				this.player2.direction = 1;
+				if(this.playerRight.direction != 1)
+					this.playerRight.keys_active++;
+				this.playerRight.direction = 1;
 				break;
 			default:
 				break;
@@ -375,15 +404,15 @@ class Game {
 	keyup(key) {
 		if (this.gameover)	return;
 		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
-			if(this.player2.keys_active > 0)
-				this.player2.keys_active--;
-			if(this.player2.keys_active == 0)
-				this.player2.direction = 0;
+			if(this.playerRight.keys_active > 0)
+				this.playerRight.keys_active--;
+			if(this.playerRight.keys_active == 0)
+				this.playerRight.direction = 0;
 		} else if (key.code == "KeyW" || key.code == "KeyS") {
-			if(this.player1.keys_active > 0)
-				this.player1.keys_active--;
-			if(this.player1.keys_active == 0)
-				this.player1.direction = 0;
+			if(this.playerLeft.keys_active > 0)
+				this.playerLeft.keys_active--;
+			if(this.playerLeft.keys_active == 0)
+				this.playerLeft.direction = 0;
 		}
 	}
 	loop() {
@@ -406,12 +435,14 @@ class Game {
 				this.score.drawBigCurrScore(this.context);
 			}
 			this.arena.drawArena(this.context);
-			this.player1.drawPaddle(this.context);
-			this.player2.drawPaddle(this.context);
+			this.playerLeft.drawPaddle(this.context);
+			this.playerRight.drawPaddle(this.context);
+			this.playerTop.drawPaddle(this.context);
+			this.playerBottom.drawPaddle(this.context);
 		}
 		else {
-			this.score.hasScored.scorer = "none";
-			this.score.hasScored.goal = false;
+			this.score.lastTouch = "none";
+			this.score.goal = false;
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.update();
 			this.draw();
@@ -420,96 +451,100 @@ class Game {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
 	}
-	ballVecLimits() {
-		if(this.ball.vy > 1.1)
-			this.ball.vy = 1.1;
-		else if(this.ball.vy < -1.1)
-			this.ball.vy = -1.1;
-	}
-	stopCollision(arenaHeight, arenaStartY) {
-		let rounds = 0;
-		while(this.ball.y - this.ball.radius <= arenaStartY || this.ball.y + this.ball.radius >= arenaStartY + arenaHeight) {
-			this.ball.moveY();
-			rounds++;
-		}
-	}
-	wallCollision(arenaWidth, arenaHeight, arenaStartX, arenaStartY, hit) { 
-		// top wall
-		if(this.ball.y - this.ball.radius <= arenaStartY) {
-			hit = true;
-			this.ball.vy *= -1.1;
-			this.ballVecLimits();
-			this.stopCollision(arenaHeight, arenaStartY);
-			return true;
-		}
-		else if (this.ball.y + this.ball.radius >= arenaStartY + arenaHeight) { // bottom wall
-			hit = true;
-			this.ball.vy *= -1.1;
-			this.ballVecLimits();
-			this.stopCollision(arenaHeight, arenaStartY);
-			return true;
-		}
-		return false;
-	}
 	paddleCollision() {
-		if(this.ball.x - this.ball.radius <= this.player1.x + this.player1.width) { // LEFT PADDLE
-			if(this.ball.x < this.player1.x - this.player1.width)
+		if(this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width) {
+			if(this.ball.x < this.playerLeft.x - this.playerLeft.width)
 				return;
-			if(this.ball.y + this.ball.radius >= this.player1.y - this.player1.len / 2
-				&& this.ball.y - this.ball.radius <= this.player1.y + this.player1.len / 2) {
-					let refAngle = (this.ball.y - this.player1.y) / (this.player1.len / 2) * (Math.PI / 4);
+			if(this.ball.y + this.ball.radius >= this.playerLeft.y - this.playerLeft.len / 2
+				&& this.ball.y - this.ball.radius <= this.playerLeft.y + this.playerLeft.len / 2) {
+					let refAngle = (this.ball.y - this.playerLeft.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
 					this.ball.vx = 1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
 			}
-		}
-		if(this.ball.x + this.ball.radius >= this.player2.x - this.player2.width / 2) {
-			if(this.ball.x > this.player2.x + this.player2.width)
+		} // LEFT PADDLE
+		else if(this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
+			if(this.ball.x > this.playerRight.x + this.playerRight.width)
 				return;
-			if(this.ball.y + this.ball.radius >= this.player2.y - this.player2.len / 2
-				&& this.ball.y - this.ball.radius <= this.player2.y + this.player2.len / 2) {
-					let refAngle = (this.ball.y - this.player2.y) / (this.player1.len / 2) * (Math.PI / 4);
+			if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
+				&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
+					let refAngle = (this.ball.y - this.playerRight.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
 					this.ball.vx = -1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
 			}
-		}
+		} // RIGHT PADDLE
+		// it can hit left and bottom or top so no else here
+		if (this.ball.y - this.ball.radius <= this.playerTop.y - this.playerTop.width) {
+			if(this.ball.y < this.playerTop.y - this.playerTop.width)
+				return;
+			if(this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2
+				&& this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
+					let refAngle = (this.ball.x - this.playerTop.x) / (this.playerTop.len / 2) * (Math.PI / 4);
+					this.ball.vx = Math.cos(refAngle);
+					this.ball.vy = 1 * Math.sin(refAngle);
+					this.ball.speed_up();
+			}
+		} // TOP PADDLE
+		else if(this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
+			if(this.ball.y > this.playerBottom.y + this.playerBottom.width)
+				return;
+			if(this.ball.x + this.ball.radius >= this.playerBottom.x - this.playerBottom.len / 2
+				&& this.ball.x - this.ball.radius <= this.playerBottom.x + this.playerBottom.len / 2) {
+					let refAngle = (this.ball.x - this.playerBottom.x) / (this.playerBottom.len / 2) * (Math.PI / 4);
+					this.ball.vx = Math.cos(refAngle);
+					this.ball.vy = -1 * Math.sin(refAngle);
+					this.ball.speed_up();
+			}
+		} // BOTTOM PADDLE
 	}
 	checkGoal(arenaWidth, arenaHeight, arenaStartX, arenaStartY) {
-		if (this.ball.x < arenaStartX - this.player1.goalLine) {
-			this.score.hasScored.goal = true;
-			this.score.hasScored.scorer = "right";
+		if (this.ball.x < arenaStartX - this.playerLeft.goalLine) {
+			this.score.goal = true;
+			this.score.hasScored.scorer += "right";
 		}
-		else if (this.ball.x > arenaStartX + arenaWidth + this.player2.goalLine) {
-			this.score.hasScored.goal = true;
-			this.score.hasScored.scorer = "left";
+		else if (this.ball.x > arenaStartX + arenaWidth + this.playerRight.goalLine) {
+			this.score.goal = true;
+			this.score.hasScored.scorer += "left";
+		}
+		if (this.ball.y < arenaStartY - this.playerLeft.goalLine) {
+			this.score.goal = true;
+			this.score.hasScored.scorer += "top";
+		}
+		else if (this.ball.y > arenaStartY + arenaWidth + this.playerRight.goalLine) {
+			this.score.goal = true;
+			this.score.hasScored.scorer += "bottom";
 		}
 	}
 	resetPositions () {
-		this.ball = new Ball (this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		this.player1 = new Player("left", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		this.player2 = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.ball.initBall(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerLeft.init (this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerRight.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerTop.init (this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerBottom.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 	}
 	update() {
-		let hit = false;
-		hit = this.wallCollision(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY, hit);
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		if(this.score.hasScored.goal == true) {
+		if(this.score.goal == true) {
 			this.animation.setTimeStamps();
 			this.resetPositions();
 			this.score.updateScore(this.score.hasScored.scorer);
 			return ;
 		}
 		this.paddleCollision();
-		this.ball.doMove(this.arena._width, this.canvas.height, hit);
-		this.player1.doMove(this.arena);
-		this.player2.doMove(this.arena);
+		this.ball.doMove();
+		this.playerLeft.doMove(this.arena);
+		this.playerRight.doMove(this.arena);
+		this.playerTop.doMove(this.arena);
+		this.playerBottom.doMove(this.arena);
 	}
 	draw() {
 		this.arena.drawArena(this.context);
 		this.score.drawScore(this.context, this.arena._height, this.arena._startX, this.arena._startY);
-		this.player1.drawPaddle(this.context);
-		this.player2.drawPaddle(this.context);
+		this.playerLeft.drawPaddle(this.context);
+		this.playerRight.drawPaddle(this.context);
+		this.playerTop.drawPaddle(this.context);
+		this.playerBottom.drawPaddle(this.context);
 		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
 		// DRAW BALL
 	}
