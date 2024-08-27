@@ -14,6 +14,7 @@ const PADDLE_SPEED = 5;
 const PADDLE_LEN = 42;
 const PADDLE_WIDTH = 6;
 const TARGET_FPS = 120;
+const SCORE_LIMIT = 10;
 // const WALL_THICKNESS = 10;
 
 const BALL_COLOR = "red";
@@ -149,7 +150,6 @@ class Ball {
 			this.vx = -1;
 			this.vy = -1;
 		}
-		this.vy = 1;
 		this.speedx = BALL_START_SPEED * arenaWidth / 300;
 		this.speedy = BALL_START_SPEED * arenaHeight / 200;
 		this.incr_speed = BALL_INCR_SPEED / 200 * arenaHeight;
@@ -186,94 +186,80 @@ class Ball {
 
 class Scores {
 	constructor (arenaWidth, arenaHeight, startX, startY) {
+		this.goal = false;
 		this.lastTouch = "none";
 		this.conceded = "none";
 		this.goals = {left : 0, right : 0, top : 0, bottom : 0};
+		this.prevScore = {left : 0, right : 0, top : 0, bottom : 0};
 		this.init(arenaWidth, arenaHeight, startX, startY);
 	}
 	init(arenaWidth, arenaHeight, startX, startY) {
-		this.pos_y = arenaHeight / 2;
-		this.pos_x = {left: arenaWidth / 2 - arenaWidth / 8, right: arenaWidth / 2 + arenaWidth / 8};
+		this.pos_y = {left: arenaHeight / 2, right: arenaHeight / 2, top: arenaHeight / 2 - arenaHeight / 8, bottom: arenaHeight / 2 + arenaHeight / 8};
+		this.pos_x = {left: arenaWidth / 2 - arenaWidth / 8, right: arenaWidth / 2 + arenaWidth / 8, top: arenaWidth / 2, bottom: arenaWidth / 2};
 		this.arenaWidth = arenaWidth;
 		this.arenaHeight = arenaHeight;
 		this.startX = startX;
 		this.startY = startY;
 	}
 	updateScore() {
-		const substrings = ["left", "right", "top", "bottom"];
-		for(let key of substrings) {
-			if(this.conceded.includes(substrings[key])) {
-				this.goals[substrings[key]]--;
+		for(let key in this.goals) {
+			this.prevScore[key] = this.goals[key];
+			if(this.conceded.includes(key)) {
+				this.goals[key]--;
 			}
 		}
 		if(this.lastTouch != "none")
 			this.goals[this.lastTouch]++;
+	}
+	resetGoalTracker() {
 		this.lastTouch = "none";
 		this.conceded = "none";
+	}
+	drawGolazo(ctx) {
+		ctx.fillStyle = SCORE_COLOR;
+		let font_size = this.arenaHeight / 10;
+		ctx.font = `${font_size}px Orbitron`;
+		let text = "GOLAZO";
+		if(this.lastTouch != "none")
+			text += " " + this.lastTouch;
+		let textSize = ctx.measureText(text);
+		ctx.fillText(text, this.startX + this.arenaWidth / 2 - textSize.width / 2.2, this.arenaHeight / 4 + font_size / 2);
 	}
 	drawScore(ctx, arenaHeight, start_x, start_y) {
 		for (let key in this.goals) {
 			ctx.fillStyle = SCORE_COLOR;
 			let font_size = arenaHeight / 20;
 			ctx.font = `${font_size}px Orbitron`;
-			ctx.fillText (this.goals[key], start_x + this.pos_x[key], start_y + this.pos_y + font_size / 2, 100);
+			ctx.fillText(this.goals[key], start_x + this.pos_x[key], start_y + this.pos_y[key] + font_size / 2, 100);
 		}
 	}
 	drawPrevScore(ctx) {
+		let font_size = this.arenaHeight / 20;
+		ctx.font = `${font_size}px Orbitron`;
 		for (let key in this.goals) {
-			ctx.fillStyle = SCORE_COLOR;
-			let font_size = this.arenaHeight / 20;
-			ctx.font = `${font_size}px Orbitron`;
-			if(key == this.lastTouch) {
-				this.prevScore = this.goals[key] -1;
-				ctx.font = `${font_size}px Orbitron`;
-				ctx.fillText (this.prevScore, this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
-			}
-			else {
-				ctx.font = `${font_size}px Orbitron`;
-				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
-			}
-		}
-		}
-	drawGolazo(ctx) {
-		for (let key in this.goals) {
-			ctx.fillStyle = SCORE_COLOR;
-			let font_size = this.arenaHeight / 20;
-			ctx.font = `${font_size}px Orbitron`;
-			let text = "Golazo " + this.lastTouch;
-			let textSize = ctx.measureText(text);
-			ctx.fillText (text, this.startX + this.arenaWidth / 2 - textSize.width / 2, this.arenaHeight / 3 + font_size / 2);
+			ctx.fillText(this.prevScore[key], this.startX + this.pos_x[key], this.startY + this.pos_y[key] + font_size / 2, 100);
 		}
 	}
 	drawBigPrevScore(ctx) {
+		let font_size = this.arenaHeight / 20;
+		ctx.font = `${font_size}px Orbitron`;
 		for (let key in this.goals) {
-			ctx.fillStyle = SCORE_COLOR;
-			let font_size = this.arenaHeight / 20;
-			ctx.font = `${font_size}px Orbitron`;
-			if(key == this.lastTouch) {
-				this.prevScore = this.goals[key] -1;
+			if(this.prevScore[key] != this.goals[key])
 				ctx.font = `${font_size * 1.5}px Orbitron`;
-				ctx.fillText (this.prevScore, this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
-			}
-			else {
+			else
 				ctx.font = `${font_size}px Orbitron`;
-				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
-			}
+			ctx.fillText(this.prevScore[key], this.startX + this.pos_x[key], this.startY + this.pos_y[key] + font_size / 2, 100);
 		}
 	}
 	drawBigCurrScore(ctx) {
+		let font_size = this.arenaHeight / 20;
+		ctx.font = `${font_size}px Orbitron`;
 		for (let key in this.goals) {
-			ctx.fillStyle = SCORE_COLOR;
-			let font_size = this.arenaHeight / 20;
-			ctx.font = `${font_size}px Orbitron`;
-			if(key == this.lastTouch) {
+			if(this.prevScore[key] != this.goals[key])
 				ctx.font = `${font_size * 1.5}px Orbitron`;
-				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
-			}
-			else {
+			else
 				ctx.font = `${font_size}px Orbitron`;
-				ctx.fillText (this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y + font_size / 2, 100);
-			}
+			ctx.fillText(this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y[key] + font_size / 2, 100);
 		}
 	}
 }
@@ -283,7 +269,7 @@ class Animation {
 		this.times = {first: 0, second: 0, third: 0};
 	}
 	setTimeStamps() {
-		this.times = {first: 800, second: 1800, third: 2800};
+		this.times = {first: 500, second: 1000, third: 1500};
 		let now = Date.now();
 		for (let key in this.times) {
 			this.times[key] += now;
@@ -294,7 +280,7 @@ class Animation {
 let resizeTimeout;
 
 class Game {
-	constructor(parentElement, scoreLimit) {
+	constructor(parentElement) {
 		this.parent = parentElement;
 		this.canvas = document.createElement("canvas");
 		this.parent.appendChild(this.canvas);
@@ -310,8 +296,8 @@ class Game {
 		this.playerBottom = new Player("bottom", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.ball = new Ball(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.score = new Scores(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.kickOff = true;
 		this.animation = new Animation();
-		this.scoreLimit = scoreLimit;
 		this.gameover = false;
 		this.animRequestId = 0;
 		this.lastUpdate = Date.now();
@@ -319,52 +305,6 @@ class Game {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 		window.addEventListener("resize", ev => this.onResize(ev));
-
-		this.setupTouchControls();
-	}
-	setupTouchControls() {
-		this.touch_left = document.createElement("div");
-		this.touch_left.id = "touch-left";
-		this.touch_right = document.createElement("div");
-		this.touch_right.id = "touch-right";
-		this.parent.appendChild(this.touch_left);
-		this.parent.appendChild(this.touch_right);
-		
-		this.touch_left.style.display = "block";
-		this.touch_left.style.width = "50%";
-		this.touch_left.style.height = "100%";
-		this.touch_left.style.position = "absolute";
-		this.touch_left.style.left = "0"; 
-
-		this.touch_right.style.display = "block";
-		this.touch_right.style.width = "50%";
-		this.touch_right.style.height = "100%";
-		this.touch_right.style.position = "absolute";
-		this.touch_right.style.right = "0";
-
-		this.touch_left.addEventListener("touchstart", event => this.onTouchStartLeft(event), false);
-		this.touch_left.addEventListener("touchend", event => this.onTouchEndLeft(event), false);
-		this.touch_right.addEventListener("touchstart", event => this.onTouchStartRight(event), false);
-		this.touch_right.addEventListener("touchend", event => this.onTouchEndRight(event), false);
-	}
-
-	onTouchStartLeft(event) {
-		console.log("Touch start event triggered on left.");
-		if(event.touches.length == 1)
-			this.playerLeft.direction = -1; // -1 goes up
-	}
-	onTouchEndLeft(event) {
-		console.log("Touch end event triggered on left.");
-			this.playerLeft.direction = 0;
-	}
-	onTouchStartRight(event) {
-		console.log("Touch start event triggered on right.");
-		if(event.touches.length == 1)
-			this.playerLeft.direction = 1;
-	}
-	onTouchEndRight(event) {
-		console.log("Touch end event triggered on right.");
-			this.playerLeft.direction = 0;
 	}
 	resize() {
 		this.canvas.width = this.parent.width;
@@ -378,8 +318,6 @@ class Game {
 		}, 200);
 	}
 	keydown(key) {
-		console.log("code : ", key.code);
-		console.log(key);
 		if(key.code == "KeyC") {
 			debugger;
 		}
@@ -455,40 +393,51 @@ class Game {
 				this.playerBottom.direction = 0;
 		} 
 	}
+	goalAnimation(now) {
+		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		if(this.animation.times.first != null && now < this.animation.times.first) {
+			this.score.drawGolazo(this.context);
+			this.score.drawPrevScore(this.context);
+		}
+		else if(this.animation.times.second != null && now < this.animation.times.second) {
+			this.score.drawGolazo(this.context);
+			this.score.drawBigPrevScore(this.context);
+		}
+		else if(this.animation.times.third != null && now < this.animation.times.third) {
+			this.score.drawGolazo(this.context);
+			this.score.drawBigCurrScore(this.context);
+		}
+		this.arena.drawArena(this.context);
+		this.playerLeft.drawPaddle(this.context);
+		this.playerRight.drawPaddle(this.context);
+		this.playerTop.drawPaddle(this.context);
+		this.playerBottom.drawPaddle(this.context);
+	}
 	loop() {
 		let now = Date.now();
 		if(now < this.animation.times.third) {
-			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			if(this.animation.times.first != null && now < this.animation.times.first) {
-				this.score.drawGolazo(this.context);
-				this.score.drawPrevScore(this.context);
-			}
-			else if(this.animation.times.second != null && now < this.animation.times.second) {
-				this.score.drawGolazo(this.context);
-				this.score.drawBigPrevScore(this.context);
-			}
-			else if(this.animation.times.third != null && now < this.animation.times.third) {
-				this.score.drawGolazo(this.context);
-				this.score.drawBigCurrScore(this.context);
-			}
-			this.arena.drawArena(this.context);
-			this.playerLeft.drawPaddle(this.context);
-			this.playerRight.drawPaddle(this.context);
-			this.playerTop.drawPaddle(this.context);
-			this.playerBottom.drawPaddle(this.context);
+			this.kickOff = true;
+			this.goalAnimation(now);
+		}
+		else if(this.kickOff == true) {
+			this.kickOff = false;
+			this.score.resetGoalTracker();
 		}
 		else {
-			this.score.goal = false;
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.update();
-			this.draw();
+			if(this.score.goal == false) {
+				this.draw();
+			}
+			else
+				this.goalAnimation(now);
 		}
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
 	}
 	paddleCollision() {
-		if(this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width) {
-			if(this.score.lastTouch == "left"  || this.ball.x - this.ball.radius < this.playerLeft.x - this.playerLeft.width / 2)
+		if(this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width / 2) {
+			if(this.score.lastTouch == "left"  || this.ball.x - this.ball.radius < this.playerLeft.x - this.playerLeft.width)
 				return;
 			if(this.ball.y + this.ball.radius >= this.playerLeft.y - this.playerLeft.len / 2
 				&& this.ball.y - this.ball.radius <= this.playerLeft.y + this.playerLeft.len / 2) {
@@ -500,7 +449,7 @@ class Game {
 				}
 		} // LEFT PADDLE
 		else if(this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
-			if(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width / 2)
+			if(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)
 				return;
 			if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
 				&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
@@ -511,9 +460,9 @@ class Game {
 					this.score.lastTouch = "right";
 			}
 		} // RIGHT PADDLE
-		// it can hit left and bottom or top so no else here
+		// it can hit left and bottom so no else here
 		if (this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
-			if (this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width / 2)) {
+			if (this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width)) {
 				return;
 			}
 			if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
@@ -529,7 +478,7 @@ class Game {
 			}
 		}// TOP PADDLE
 		else if (this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
-			if (this.score.lastTouch == "bottom" || (this.ball.y + this.ball.radius > this.playerBottom.y + this.playerBottom.width / 2)) {
+			if (this.score.lastTouch == "bottom" || (this.ball.y + this.ball.radius > this.playerBottom.y + this.playerBottom.width)) {
 				return;
 			}
 			if (this.ball.x + this.ball.radius >= this.playerBottom.x - this.playerBottom.len / 2 &&
@@ -548,19 +497,20 @@ class Game {
 	}
 	checkGoal(arenaWidth, arenaHeight, arenaStartX, arenaStartY) {
 		this.score.conceded = "";
-		if (this.ball.x < arenaStartX - this.playerLeft.goalLine) {
-			this.score.goal = true;
-			this.score.conceded += "right";
-		}
-		else if (this.ball.x > arenaStartX + arenaWidth + this.playerRight.goalLine) {
+		this.score.goal = false;
+		if (this.ball.x < arenaStartX) {
 			this.score.goal = true;
 			this.score.conceded += "left";
 		}
-		if (this.ball.y < arenaStartY - this.playerTop.goalLine) {
+		else if (this.ball.x > arenaStartX + arenaWidth) {
+			this.score.goal = true;
+			this.score.conceded += "right";
+		}
+		if (this.ball.y < arenaStartY) {
 			this.score.goal = true;
 			this.score.conceded += "top";
 		}
-		else if (this.ball.y > arenaStartY + arenaHeight + this.playerBottom.goalLine) {
+		else if (this.ball.y > arenaStartY + arenaHeight) {
 			this.score.goal = true;
 			this.score.conceded += "bottom";
 		}
@@ -595,7 +545,6 @@ class Game {
 		this.playerTop.drawPaddle(this.context);
 		this.playerBottom.drawPaddle(this.context);
 		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
-		// DRAW BALL
 	}
 };
 
@@ -610,8 +559,7 @@ function startPongGame() {
 	while (parent.firstChild) {
 		parent.removeChild(parent.lastChild);
 	}
-
-	const pong = new Game(parent, 11);
+	const pong = new Game(parent);
 	pong.loop();
 }
 
