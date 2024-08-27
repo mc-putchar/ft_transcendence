@@ -150,8 +150,15 @@ class Ball {
 			this.vx = -1;
 			this.vy = -1;
 		}
-		this.speedx = BALL_START_SPEED * arenaWidth / 300;
-		this.speedy = BALL_START_SPEED * arenaHeight / 200;
+		rand = Math.random();
+		if(rand < 0.5) {
+			this.speedx = BALL_START_SPEED * arenaWidth / 300;
+			this.speedy = BALL_START_SPEED * arenaHeight / 200;
+		}
+		else {
+			this.speedx = BALL_START_SPEED * arenaHeight / 200;
+			this.speedy = BALL_START_SPEED * arenaWidth / 300;
+		}
 		this.incr_speed = BALL_INCR_SPEED / 200 * arenaHeight;
 	}
 	get position() {
@@ -437,63 +444,60 @@ class Game {
 	}
 	paddleCollision() {
 		if(this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width / 2) {
-			if(this.score.lastTouch == "left"  || this.ball.x - this.ball.radius < this.playerLeft.x - this.playerLeft.width)
-				return;
-			if(this.ball.y + this.ball.radius >= this.playerLeft.y - this.playerLeft.len / 2
-				&& this.ball.y - this.ball.radius <= this.playerLeft.y + this.playerLeft.len / 2) {
-					let refAngle = (this.ball.y - this.playerLeft.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
-					this.ball.vx = 1 * Math.cos(refAngle);
-					this.ball.vy = Math.sin(refAngle);
-					this.ball.speed_up();
-					this.score.lastTouch = "left";
-				}
+			if(!(this.score.lastTouch == "left"  || this.ball.x - this.ball.radius < this.playerLeft.x - this.playerLeft.width)) {
+				if(this.ball.y + this.ball.radius >= this.playerLeft.y - this.playerLeft.len / 2
+					&& this.ball.y - this.ball.radius <= this.playerLeft.y + this.playerLeft.len / 2) {
+						let refAngle = (this.ball.y - this.playerLeft.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
+						this.ball.vx = 1 * Math.cos(refAngle);
+						this.ball.vy = Math.sin(refAngle);
+						this.ball.speed_up();
+						this.score.lastTouch = "left";
+					}
+			}
 		} // LEFT PADDLE
-		else if(this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
-			if(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)
-				return;
-			if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
-				&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
-					let refAngle = (this.ball.y - this.playerRight.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
-					this.ball.vx = -1 * Math.cos(refAngle);
-					this.ball.vy = Math.sin(refAngle);
-					this.ball.speed_up();
-					this.score.lastTouch = "right";
+		if(this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
+			if((this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {				
+				if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
+					&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
+						let refAngle = (this.ball.y - this.playerRight.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
+						this.ball.vx = -1 * Math.cos(refAngle);
+						this.ball.vy = Math.sin(refAngle);
+						this.ball.speed_up();
+						this.score.lastTouch = "right";
+				}
 			}
 		} // RIGHT PADDLE
 		// it can hit left and bottom so no else here
 		if (this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
-			if (this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width)) {
-				return;
+			if ((this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width))) {
+				if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
+					this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
+					
+					let refAngle = (this.ball.x - this.playerTop.x) / (this.playerTop.len / 2) * (Math.PI / 4);
+					
+					this.ball.vx = Math.sin(refAngle);
+					this.ball.vy = Math.cos(refAngle);
+					
+					this.ball.speed_up();
+					this.score.lastTouch = "top";
+				}
 			}
-			if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
-				this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
-				
-				let refAngle = (this.ball.x - this.playerTop.x) / (this.playerTop.len / 2) * (Math.PI / 4);
-				
-				this.ball.vx = Math.sin(refAngle);
-				this.ball.vy = Math.cos(refAngle);
-				
-				this.ball.speed_up();
-				this.score.lastTouch = "top";
+		} // TOP PADDLE
+		if (this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
+			if (!(this.score.lastTouch == "bottom" || (this.ball.y + this.ball.radius > this.playerBottom.y + this.playerBottom.width))) {
+				if (this.ball.x + this.ball.radius >= this.playerBottom.x - this.playerBottom.len / 2 &&
+					this.ball.x - this.ball.radius <= this.playerBottom.x + this.playerBottom.len / 2) {
+					
+					let refAngle = (this.ball.x - this.playerBottom.x) / (this.playerBottom.len / 2) * (Math.PI / 4);
+	
+					this.ball.vx = Math.sin(refAngle);
+					this.ball.vy = -Math.cos(refAngle);
+	
+					this.ball.speed_up();
+					this.score.lastTouch = "bottom";
+				}
 			}
-		}// TOP PADDLE
-		else if (this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
-			if (this.score.lastTouch == "bottom" || (this.ball.y + this.ball.radius > this.playerBottom.y + this.playerBottom.width)) {
-				return;
-			}
-			if (this.ball.x + this.ball.radius >= this.playerBottom.x - this.playerBottom.len / 2 &&
-				this.ball.x - this.ball.radius <= this.playerBottom.x + this.playerBottom.len / 2) {
-				
-				let refAngle = (this.ball.x - this.playerBottom.x) / (this.playerBottom.len / 2) * (Math.PI / 4);
-				
-				this.ball.vx = Math.sin(refAngle);
-				this.ball.vy = -Math.cos(refAngle);
-				
-				this.ball.speed_up();
-				this.score.lastTouch = "bottom";
-			}
-		}
-		
+		} // BOTTOM PADDLE
 	}
 	checkGoal(arenaWidth, arenaHeight, arenaStartX, arenaStartY) {
 		this.score.conceded = "";
