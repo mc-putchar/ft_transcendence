@@ -456,7 +456,7 @@ class Game {
 			}
 		} // LEFT PADDLE
 		if(this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
-			if((this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {				
+			if(!(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {				
 				if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
 					&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
 						let refAngle = (this.ball.y - this.playerRight.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
@@ -469,7 +469,7 @@ class Game {
 		} // RIGHT PADDLE
 		// it can hit left and bottom so no else here
 		if (this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
-			if ((this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width))) {
+			if (!(this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width))) {
 				if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
 					this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
 					
