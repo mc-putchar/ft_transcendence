@@ -552,7 +552,7 @@ class Game {
 	}
 };
 
-function startPong4PGame() {
+function startPongGame() {
 	console.log("Pong 4P - Starting new game");
 	const parent = document.getElementById('app');
 	const nav = document.getElementById('nav');
@@ -567,7 +567,7 @@ function startPong4PGame() {
 	pong.loop();
 }
 
-function stopPong4PGame () {
+function stopPongGame () {
 	if(animationID) {
 		cancelAnimationFrame(animationID);
 	}
@@ -578,4 +578,4 @@ function stopPong4PGame () {
 	return ;
 }
 
-export { startPong4PGame, stopPong4PGame };
+export { startPongGame, stopPongGame };
