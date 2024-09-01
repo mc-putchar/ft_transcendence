@@ -39,12 +39,13 @@ class PongBlockchain(metaclass=Singleton):
 	###################
 	def deploy(self):
 		logger.info("Connected") if self.is_connected() else logger.info("Connection failed")
-		account = self.accounts[0]
-		hardhat_private_key = os.getenv('HARDHAT_PRIVATE_KEY')
-		if not hardhat_private_key:
-			raise ValueError("HARDHAT_PRIVATE_KEY environment variable not set")
-		self.deploy_contract(account, hardhat_private_key, "PongTournament.sol")
-		logger.info(f"Contract deployed at address: {self.address}")
+		if not self.is_deployed:
+			account = self.accounts[0]
+			hardhat_private_key = os.getenv('HARDHAT_PRIVATE_KEY').strip('"')
+			if not hardhat_private_key:
+				raise ValueError("HARDHAT_PRIVATE_KEY environment variable not set")
+			self.deploy_contract(account, hardhat_private_key, "PongTournament.sol")
+			logger.info(f"Contract deployed at address: {self.address}")
 		return self.address
 
 	def build_params(self, additional_params: dict):
@@ -92,7 +93,7 @@ class PongBlockchain(metaclass=Singleton):
 		contract = self.web3.eth.contract(abi=abi, bytecode=bytecode)
 		txn = self.build_generic_transaction(account, contract)
 		signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
-		tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+		tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
 		tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
 		if tx_receipt['status'] == 0:
 			raise ValueError("Transaction failed")
