@@ -15,15 +15,13 @@ import ssl
 import certifi
 
 DEBUG = True
-
 LOGIN_ROUTE = '/api/login/'
-
 
 console = Console()
 
 def send_get_request(url, headers, cookies):
 	try:
-		response = requests.get(url, headers=headers, cookies=cookies, verify=False)
+		response = requests.get(url, headers=headers, cookies=cookies)
 		response.raise_for_status()
 		return response
 	except (RequestException, KeyError, ValueError) as e:
@@ -32,7 +30,7 @@ def send_get_request(url, headers, cookies):
 
 def send_post_request(url, headers, cookies, data=''):
 	try:
-		response = requests.post(url, data=data, headers=headers, cookies=cookies, verify=False)
+		response = requests.post(url, data=data, headers=headers, cookies=cookies)
 		response.raise_for_status()
 		return response
 	except (RequestException, KeyError, ValueError) as e:
@@ -41,7 +39,7 @@ def send_post_request(url, headers, cookies, data=''):
 
 def get_csrf_token(url):
 	try:
-		response = requests.get(url, verify=False)
+		response = requests.get(url)
 		response.raise_for_status()
 		csrf_token = response.cookies.get('csrftoken')
 		if not csrf_token:
@@ -56,7 +54,7 @@ def obtain_jwt_token(base_url, username, password):
 	url = f"https://{base_url}{LOGIN_ROUTE}"
 	data = {'username': username, 'password': password}
 	try:
-		response = requests.post(url, data=data, verify=False)
+		response = requests.post(url, data=data)
 		response.raise_for_status()
 		jwt_token = response.json().get('access')
 		if not jwt_token:
@@ -101,12 +99,18 @@ class Chat:
 		self.users_list = []
 
 	async def send_message(self, message):
-		data = {
-			'message': message,
-			'username': self.username,
-		}
-		await self.websocket.send(json.dumps(data))
-		console.print(f'[bold cyan]{self.username}[/bold cyan]: {message}')
+		if self.websocket:
+			try:
+				data = {
+					'message': message,
+					'username': self.username,
+				}
+				await self.websocket.send(json.dumps(data))
+				console.print(f'[bold cyan]{self.username}[/bold cyan]: {message}')
+			except Exception as e:
+				console.print(f'Failed to send message: {e}', style='red')
+		else:
+			console.print('WebSocket is not connected. Unable to send message.', style='red')
 
 	async def receive_message(self):
 		async for data in self.websocket:
@@ -134,22 +138,26 @@ class Chat:
 						console.print(f'Online users: {", ".join(users_list)}')
 			except json.JSONDecodeError as e:
 				console.print(f'Error decoding JSON: {e}', style='red')
-
+	
 	async def connect(self):
 		self.ws_url = f"wss://{self.base_url}/ws/chat/lobby/?token={self.jwt_token}"
 		try:
-			async with websockets.connect(
-				uri = self.ws_url,
+			self.websocket = await websockets.connect(
+				uri=self.ws_url,
 				extra_headers=self.headers,
 				ssl=ssl.create_default_context(cafile=certifi.where()),
-			) as self.websocket:
-				console.print('Connected to WebSocket server.')
-				await self.receive_message()
-				await self.send_message('')
+			)
+			console.print('Connected to WebSocket server.')
+			asyncio.create_task(self.receive_message())
 		except websockets.exceptions.InvalidStatusCode as e:
-			console.print(f'WebSocket connection failed: {e}', style='red')
+			self.websocket = None
+			with open('error.log', 'w') as f:
+				f.write(f'WebSocket connection failed with status code: {e}')
+					
 		except Exception as e:
-			console.print(f'WebSocket error: {e}', style='red')
+			with open('error.log', 'w') as f:
+				f.write(f'WebSocket error: {e}')
+			self.websocket = None
 
 class TranscendCLI(App):
 	TITLE = 'Transcend42 CLI'
@@ -168,15 +176,24 @@ class TranscendCLI(App):
 		self.cookies = None
 		self.chat = None
 
-	async def on_start(self) -> None:
-		self.chat = Chat(self.base_url, self.jwt_token, self.username)
-		print('Connecting to chat...')
-		await self.chat.connect()
+	async def on_mount(self) -> None:
+		self.query_one(RichLog).write('Welcome to Transcend')
+		try:
+			self.chat = Chat(self.base_url, self.jwt_token, self.username)
+			self.query_one(RichLog).write('Connecting to chat...')
+			await self.chat.connect()
+			self.query_one(RichLog).write('Connected to chat.')
+		except Exception as e:
+			self.query_one(RichLog).write(f'Error connecting to chat: {e}')
+
 
 	async def on_key(self, event: events.Key) -> None:
-		self.query_one(RichLog).write(event.key)
-		if event.key == 'q':
-			self.exit()
+		if event.key == 'enter':
+			chat_input = self.query_one("#chatInput", Input)
+			message = chat_input.value
+			if self.chat:
+				await self.chat.send_message(message)
+			chat_input.value = ''
 
 	def compose(self) -> ComposeResult:
 		yield Header()
