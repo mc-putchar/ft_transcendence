@@ -189,7 +189,6 @@ class Router {
    			         var isToggle = event.target.classList.contains('navbar-toggler');
    			         
    			         if (!isClickInside && !isToggle) {
-   			            //  console.log('click outside');
    			             collapse.hide();
    			         }
    			     });
@@ -226,6 +225,26 @@ class Router {
 						window.fxGainNode.gain.value = 1;
 					}
 				}
+			});
+
+			let count = 1;
+
+			document.getElementById('changeMusicBtn').addEventListener('click', (e) => {
+				const changeMusicBtn = document.getElementById('changeMusicBtn');
+
+				if (count === 0) {
+					window.changeMusicTrack("/static/assets/music.mp3");
+					count++;
+				} else if (count === 1) {
+					window.changeMusicTrack("/static/assets/music2.mp3");
+					count++;
+				} else if (count === 2) {
+					window.changeMusicTrack("/static/assets/music3.mp3");
+					count++;
+				}
+
+				if (count === 3)
+					count = 0;
 			});
 
 		} catch (error) {

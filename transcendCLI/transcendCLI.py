@@ -23,7 +23,7 @@ console = Console()
 
 def send_get_request(url, headers, cookies):
 	try:
-		response = requests.get(url, headers=headers, cookies=cookies)
+		response = requests.get(url, headers=headers, cookies=cookies, verify=False)
 		response.raise_for_status()
 		return response
 	except (RequestException, KeyError, ValueError) as e:
@@ -32,7 +32,7 @@ def send_get_request(url, headers, cookies):
 
 def send_post_request(url, headers, cookies, data=''):
 	try:
-		response = requests.post(url, data=data, headers=headers, cookies=cookies)
+		response = requests.post(url, data=data, headers=headers, cookies=cookies, verify=False)
 		response.raise_for_status()
 		return response
 	except (RequestException, KeyError, ValueError) as e:
@@ -41,7 +41,7 @@ def send_post_request(url, headers, cookies, data=''):
 
 def get_csrf_token(url):
 	try:
-		response = requests.get(url)
+		response = requests.get(url, verify=False)
 		response.raise_for_status()
 		csrf_token = response.cookies.get('csrftoken')
 		if not csrf_token:
@@ -56,7 +56,7 @@ def obtain_jwt_token(base_url, username, password):
 	url = f"https://{base_url}{LOGIN_ROUTE}"
 	data = {'username': username, 'password': password}
 	try:
-		response = requests.post(url, data=data)
+		response = requests.post(url, data=data, verify=False)
 		response.raise_for_status()
 		jwt_token = response.json().get('access')
 		if not jwt_token:
@@ -170,6 +170,7 @@ class TranscendCLI(App):
 
 	async def on_start(self) -> None:
 		self.chat = Chat(self.base_url, self.jwt_token, self.username)
+		print('Connecting to chat...')
 		await self.chat.connect()
 
 	async def on_key(self, event: events.Key) -> None:
@@ -200,6 +201,7 @@ class TranscendCLI(App):
 @click.option('-p', '--password', prompt=True, hide_input=True, help='The password for authentication.')
 @click.option('--url', default='wow.transcend42.online', help='The base URL for the API.')
 @click.version_option("0.0.2", prog_name="transcendCLI")
+
 def startup(username, password, url):
 	"""42Berlin spectacular transcendence CLI"""
 	token = login(url, username, password)

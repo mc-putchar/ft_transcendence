@@ -21,10 +21,13 @@ class AudioController {
 	  this.baseMod = 10;
 	  this.baseAmt = 10;
 	  this.sustain = 0.48;
+	  
 	  // Audio track setup
 	  this.audioTrack = new Audio(audioFilePath);
 	  this.trackSource = this.ctx.createMediaElementSource(this.audioTrack);
-  
+	  	  
+	  window.changeMusicTrack = (music) => { this.changeMusicTrack(music); };
+
 	  this._initializeParameters();
 	  this._connectNodes();
 	}
@@ -73,7 +76,9 @@ class AudioController {
 	}
   
 	playAudioTrack() {
-	  this._startAudioContext();
+	  if (this.ctx.state !== "running")
+	    this._startAudioContext();
+
 	  this.trackSource.connect(this.mainGainNode);
 	  this.audioTrack.play();
 	  this.audioTrack.volume = 0.4;
@@ -85,7 +90,17 @@ class AudioController {
 		this.audioTrack.pause(); // Stopping the track by pausing it
 	  }
 	}
-	
+
+	changeMusicTrack(audioFilePath) {
+	  this.stopAudioTrack();
+	  	  
+	  if (audioFilePath) {
+	    this.audioTrack = new Audio(audioFilePath);
+	    this.trackSource = this.ctx.createMediaElementSource(this.audioTrack);
+	  }
+	  this.playAudioTrack();
+	}
+      
 	playTone(ball_speed) {
 	    
 	    if (!this.ctx) {
