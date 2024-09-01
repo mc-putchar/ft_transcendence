@@ -1,6 +1,5 @@
 "use strict";
 
-import { AudioController } from './audio.js';
 import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
@@ -122,8 +121,7 @@ class Router {
 			setTimeout(() => history.back(), 100);
 		} else if (template.startsWith('pong-')) {
 			if (template === 'pong-classic') {
-				const p1Name = document.getElementById('p1-name')?.value;
-				const p2Name = document.getElementById('p2-name')?.value;
+				const p1Name = document.getElementById('player1-name')?.value;
 				// await this.loadTemplate(template);
 				if (!p1Name) {
 					this.notifyError("Player 1 name is required");
@@ -131,8 +129,13 @@ class Router {
 					return;
 				}
 				const p1 = this.game.makePlayer('right', p1Name);
-				// const p2 = this.game.makeAIPlayer('left', 'Marvin');
-				this.game.startClassicGame(p1);
+				const p2Name = document.getElementById('player2-name')?.value;
+				if (p2Name) {
+					const p2 = this.game.makePlayer('left', p2Name);
+					this.game.startClassicGame(p1, p2);
+				} else {
+					this.game.startClassicGame(p1);
+				}
 			} else
 				this.loadTemplate(template);
 		} else {
@@ -393,6 +396,7 @@ class Router {
 
 	handleRegistrationForm() {
 		const form = document.getElementById('registration-form');
+		if (!form) return;
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const username = document.getElementById('username').value;
@@ -461,6 +465,10 @@ class Router {
 	}
 
 	async logout() {
+		if (!sessionStorage.getItem('access_token')) {
+			this.notifyError("You are not logged in");
+			return;
+		}
 		try {
 			const body = JSON.stringify({ refresh: sessionStorage.getItem('refresh_token') || '' });
 			const response = await postJSON('/api/logout/', this.csrfToken, body);

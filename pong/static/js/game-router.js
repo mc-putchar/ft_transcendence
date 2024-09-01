@@ -57,6 +57,7 @@ class GameRouter {
 	}
 
 	setupGameWebSocket (gameID) {
+		console.log("Setting up game websocket", gameID);
 		if (this.gameSocket) {
 			console.log("Game socket already exists");
 			// this.gameSocket.close();
@@ -144,12 +145,12 @@ class GameRouter {
 	}
 
 	handleInitialSend (msg) {
-		if (this.gameSocket.readyState === WebSocket.OPEN) {
+		if (this.gameSocket?.readyState === WebSocket.OPEN) {
 			this.gameSocket.send(JSON.stringify(msg));
 			if (msg.type === 'decline') {
 				this.gameSocket.close();
 			}
-		} else if (this.gameSocket.readyState === WebSocket.CONNECTING) {
+		} else if (this.gameSocket?.readyState === WebSocket.CONNECTING) {
 			this.gameSocket.addEventListener('open', () => {
 				this.gameSocket.send(JSON.stringify(msg));
 			});
@@ -231,6 +232,7 @@ class GameRouter {
 			"online",
 			playerProfile.client_3d ? "3d" : "2d"
 		);
+		console.log("Starting online game", gameSetup);
 		this.gameData = new GameData();
 		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
 		if (playerProfile.client_3d)

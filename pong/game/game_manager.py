@@ -79,8 +79,8 @@ class GameManager:
         game_state['player1']['x'] += (game_state['player1']['dx'] * self.paddle_speed * timedelta)
         game_state['player2']['x'] += (game_state['player2']['dx'] * self.paddle_speed * timedelta)
 
-        game_state['player1']['x'] = max(-self.arena_height, min(self.arena_height, game_state['player1']['x']))
-        game_state['player2']['x'] = max(-self.arena_height, min(self.arena_height, game_state['player2']['x']))
+        game_state['player1']['x'] = max(-self.arena_height + self.paddle_len, min(self.arena_height - self.paddle_len, game_state['player1']['x']))
+        game_state['player2']['x'] = max(-self.arena_height + self.paddle_len, min(self.arena_height - self.paddle_len, game_state['player2']['x']))
 
         if game_state['status'] == 'running':
             pass

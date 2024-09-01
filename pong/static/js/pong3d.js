@@ -9,9 +9,11 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { BloomPass } from 'three/addons/postprocessing/BloomPass.js';
 import { FilmPass } from 'three/addons/postprocessing/FilmPass.js';
 import { AfterimagePass } from 'three/addons/postprocessing/AfterimagePass.js';
+import { GlitchPass } from 'three/addons/postprocessing/GlitchPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
 import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
@@ -50,6 +52,15 @@ const TEX_PATH = "static/img/textures/";
 const soundExp = 4.0;
 const soundBase = 16.0;
 
+/**
+ * @class Arena
+ * @description Class for the 3D Arena
+ * @param {TextureLoader} texLoader - The TextureLoader instance
+ * @returns {Arena} - The Arena instance
+ * @example
+ * const arena = new Arena(texLoader);
+ * arena.place(scene, -ARENA_HEIGHT / 2, ARENA_HEIGHT / 2);
+ */
 class Arena {
 	constructor(texLoader) {
 		this.ambient_light = new THREE.AmbientLight(0x882288);
@@ -121,8 +132,23 @@ class Arena {
 	}
 };
 
+/**
+ * @class Hud
+ * @description Class for the Heads Up Display
+ * @param {Renderer} renderer - The renderer instance
+ * @param {FontLoader} fontLoader - The FontLoader instance
+ * @param {Object} player1 - The player1 object
+ * @param {Object} player2 - The player2 object
+ * @param {Object} score - The score object
+ * @param {Texture} p1Avatar - The player1 avatar texture
+ * @param {Texture} p2Avatar - The player2 avatar texture
+ * @returns {Hud} - The Hud instance
+ * @example
+ * const hud = new Hud(fontLoader, player1, player2, score, p1avatar, p2avatar);
+ * hud.update();
+ */
 class Hud {
-	constructor (fontLoader, player1, player2, score, p1avatar, p2avatar) {
+	constructor (renderer, fontLoader, player1, player2, score, p1Avatar, p2Avatar) {
 		const frustumSize = 5;
 		const aspect = window.innerWidth / window.innerHeight;
 		this.camera = new THREE.OrthographicCamera(
@@ -139,8 +165,8 @@ class Hud {
 
 		const leftAlias = player1.side === "left" ? player1.alias : player2.alias;
 		const rightAlias = player1.side === "right" ? player1.alias : player2.alias;
-		const leftAvatar = player1.side === "left" ? p1avatar : p2avatar;
-		const rightAvatar = player1.side === "right" ? p1avatar : p2avatar;
+		const leftAvatar = player1.side === "left" ? p1Avatar : p2Avatar;
+		const rightAvatar = player1.side === "right" ? p1Avatar : p2Avatar;
 		this.p1img = new THREE.Mesh(
 			new THREE.BoxGeometry(0.5, 0.5, 0.5),
 			new THREE.MeshLambertMaterial({ map: leftAvatar })
@@ -203,6 +229,32 @@ class Hud {
 			textMesh.rotateX(Math.PI / 6);
 			this.scene.add(textMesh);
 		});
+		fontLoader.load(HUD_FONT, font => {
+			const textGeo = new TextGeometry(`${score.p1} : ${score.p2}`, {
+				font: font,
+				size: 0.42,
+				depth: 0.1,
+				curveSegments: 12,
+				bevelEnabled: true,
+				bevelThickness: 0.01,
+				bevelSize: 0.01
+			});
+			textGeo.computeBoundingBox();
+			// const textTex = new THREE.TextureLoader().load("static/img/textures/verde-guatemala/textures/Verde_Guatemala_Slatted_Marble_baseColor.png");
+			// const textMat = new THREE.MeshStandardMaterial({ map: textTex });
+			const textMat = new THREE.MeshBasicMaterial({ color: 0x2b422b, wireframe: true });
+			this.scoreText = new THREE.Mesh(textGeo, textMat);
+			this.scoreText.position.x = this.camera.left + this.camera.right - textGeo.boundingBox.max.x / 2;
+			this.scoreText.position.y = this.camera.top - 0.5;
+			this.scoreText.rotateX(Math.PI / 8);
+			this.scene.add(this.scoreText);
+		});
+		// this.composer = new EffectComposer(renderer);
+		// this.composer.addPass(new RenderPass(this.scene, this.camera));
+		// const shader = new ShaderPass(RGBShiftShader);
+		// shader.uniforms.amount.value = 0.0015;
+		// this.composer.addPass(shader);
+		// this.composer.addPass(new OutputPass());
 	}
 
 	update () {
@@ -211,8 +263,42 @@ class Hud {
 		this.p2img.rotation.x += 0.01;
 		this.p2img.rotation.y += 0.01;
 	}
+
+	updateScore (score) {
+		this.scene.remove(this.scoreText);
+		const fontLoader = new FontLoader();
+		fontLoader.load(HUD_FONT, font => {
+			const textGeo = new TextGeometry(`${score.p1} : ${score.p2}`, {
+				font: font,
+				size: 0.42,
+				depth: 0.1,
+				curveSegments: 12,
+				bevelEnabled: true,
+				bevelThickness: 0.01,
+				bevelSize: 0.01
+			});
+			textGeo.computeBoundingBox();
+			const textMat = new THREE.MeshBasicMaterial({ color: 0x2b422b, wireframe: true });
+			this.scoreText = new THREE.Mesh(textGeo, textMat);
+			this.scoreText.position.x = this.camera.left + this.camera.right - textGeo.boundingBox.max.x / 2;
+			this.scoreText.position.y = this.camera.top - 0.5;
+			this.scoreText.rotateX(Math.PI / 8);
+			this.scene.add(this.scoreText);
+		});
+	}
 };
 
+/**
+ * @class Ball
+ * @description Class for the Ball
+ * @returns {Ball} - The Ball instance
+ * @example
+ * const ball = new Ball();
+ * ball.place(scene, 0, 0);
+ * ball.doMove();
+ * ball.reset();
+ * ball.sync(ballData, timestamp);
+ */
 class Ball {
 	constructor () {
 		const ball_mat = new THREE.MeshStandardMaterial({ color: 0xf6d32d });
@@ -276,9 +362,22 @@ class Ball {
 	}
 };
 
+/**
+ * @class Paddle
+ * @description Class for the Paddle
+ * @param {Geometry} paddle_geo - The paddle geometry
+ * @param {Material} paddle_mat - The paddle material
+ * @param {Texture} avatar_tex - The avatar texture
+ * @param {String} side - The side of the paddle
+ * @returns {Paddle} - The Paddle instance
+ * @example
+ * const paddle = new Paddle(paddle_geo, paddle_mat, avatar_tex, side);
+ * paddle.place(side, scene);
+ * paddle.doMove();
+ * paddle.sync(pos, dir, timestamp);
+ */
 class Paddle {
-	constructor (paddle_geo, paddle_mat, avatar_tex, side) {
-		this.side = side;
+	constructor (paddle_geo, paddle_mat, avatar_tex) {
 		this.mesh = new THREE.Mesh(paddle_geo, paddle_mat);
 		this.mesh.castShadow = true;
 		this.pos = new THREE.Vector3();
@@ -300,6 +399,7 @@ class Paddle {
 	}
 
 	place (side, scene) {
+		this.side = side;
 		const x = 0;
 		const y = (side === "left") ? -ARENA_WIDTH / 2 + GOAL_LINE : ARENA_WIDTH / 2 - GOAL_LINE;
 		this.mesh.position.set(x, PADDLE_HEIGHT, y);
@@ -470,6 +570,20 @@ class proAI {
 	}
 };
 
+/**
+ * @class Client3DGame
+ * @description Class for the 3D Pong Game
+ * @param {Object} gameSetup - The game setup object
+ * @param {Socket} gameSocket - The game socket (optional)
+ * @param {GameData} gameData - The game data object (optional)
+ * @param {String} gameID - The game ID (optional)
+ * @returns {Client3DGame} - The Client3DGame instance
+ * @example
+ * const game = new Client3DGame(gameSetup); // single player game
+ * const game = new Client3DGame(gameSetup, gameSocket, gameData, gameID); // online game
+ * game.start();
+ * game.stop();
+ */
 class Client3DGame {
 	constructor (gameSetup, gameSocket=null, gameData=null, gameID=null) {
 		this.parent = gameSetup.parentElement;
@@ -551,14 +665,14 @@ class Client3DGame {
 	init (gameSetup) {
 		// setup canvas
 		this.canvas = document.createElement('canvas');
-		this.canvas.width = window.innerWidth;
-		this.canvas.height = window.innerHeight;
+		// this.canvas.width = window.innerWidth;
+		// this.canvas.height = window.innerHeight;
 		this.parent.appendChild(this.canvas);
 
 		// setup renderer
 		this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.canvas });
 		this.renderer.setPixelRatio(window.devicePixelRatio);
-		this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+		this.renderer.setSize(this.parent.clientWidth, this.parent.clientHeight);
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 		this.renderer.autoClear = false;
@@ -578,36 +692,6 @@ class Client3DGame {
 		const cam_h = (this.hasAI || this.isOnline) ? CAM_START_Y : 300;
 		this.camera.position.set(CAM_START_X, cam_h, 0);
 		this.camera.lookAt(0, 0, 0);
-
-		// setup postprocessing
-		this.composer = new EffectComposer(this.renderer);
-		this.composer.addPass(new RenderPass(this.scene, this.camera));
-		const bloom = new BloomPass(1, 25, 4, 256);
-		bloom.enabled = false;
-		this.composer.addPass(bloom);
-		const film = new FilmPass(0.5, false);
-		this.composer.addPass(film);
-		const rgbShift = new ShaderPass(RGBShiftShader);
-		rgbShift.uniforms.amount.value = 0.0015;
-		this.composer.addPass(rgbShift);
-		// const dotScreen = new ShaderPass(DotScreenShader);
-		// dotScreen.uniforms.scale.value = 0.2;
-		// this.composer.addPass(dotScreen);
-		const afterimage = new AfterimagePass();
-		afterimage.uniforms.damp.value = 0.86;
-		afterimage.enabled = true;
-		this.composer.addPass(afterimage);
-		this.composer.addPass(new OutputPass());
-		this.composer.autoClear = false;
-
-		// setup controls
-		this.cam_controls = new OrbitControls(this.camera, this.renderer.domElement);
-		this.cam_controls.enabled = false;
-
-		// this.cam_controls.touches = {
-		// 	ONE: null,
-		// 	TWO: 	THREE.TOUCH.ROTATE
-		// };
 
 		// setup objects
 		this.arena = new Arena(this.texLoader);
@@ -651,7 +735,48 @@ class Client3DGame {
 		this.showScore();
 
 		// setup HUD
-		this.hud = new Hud(this.fontLoader, this.playerOne, this.playerTwo, this.gameData.score, avatar1_texture, avatar2_texture);
+		this.hud = new Hud(this.renderer, this.fontLoader, this.playerOne, this.playerTwo, this.gameData.score, avatar1_texture, avatar2_texture);
+
+		// setup postprocessing
+		this.composer = new EffectComposer(this.renderer);
+		this.composer.addPass(new RenderPass(this.scene, this.camera));
+		const unrealBloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight));
+		unrealBloom.strength = 0.42;
+		unrealBloom.radius = 0.42;
+		unrealBloom.threshold = 0.1;
+		unrealBloom.exposure = 1;
+		unrealBloom.enabled = true;
+		this.composer.addPass(unrealBloom);
+		const bloom = new BloomPass(1, 25, 4, 256);
+		bloom.enabled = false;
+		this.composer.addPass(bloom);
+		const film = new FilmPass(0.5, false);
+		this.composer.addPass(film);
+		const rgbShift = new ShaderPass(RGBShiftShader);
+		rgbShift.uniforms.amount.value = 0.0015;
+		rgbShift.enabled = false;
+		this.composer.addPass(rgbShift);
+		const glitch = new GlitchPass();
+		glitch.enabled = false;
+		this.composer.addPass(glitch);
+		// const dotScreen = new ShaderPass(DotScreenShader);
+		// dotScreen.uniforms.scale.value = 0.2;
+		// this.composer.addPass(dotScreen);
+		const afterimage = new AfterimagePass();
+		afterimage.uniforms.damp.value = 0.75;
+		afterimage.enabled = true;
+		this.composer.addPass(afterimage);
+		this.composer.autoClear = false;
+		this.composer.addPass(new OutputPass());
+
+		// setup controls
+		this.cam_controls = new OrbitControls(this.camera, this.renderer.domElement);
+		this.cam_controls.enabled = false;
+
+		// this.cam_controls.touches = {
+		// 	ONE: null,
+		// 	TWO: 	THREE.TOUCH.ROTATE
+		// };
 
 		// DEV GUI
 		this.gui = new GUI({ autoPlace: false });
@@ -660,26 +785,39 @@ class Client3DGame {
 			folder.add(this.camera.position, 'x').min(-300).max(300).step(1).name('X');
 			folder.add(this.camera.position, 'y').min(0).max(300).step(1).name('Y');
 			folder.add(this.camera.position, 'z').min(-300).max(300).step(1).name('Z');
+			folder.close();
 		}
 		{
-			const folder = this.gui.addFolder('Lighting');
-			folder.add(this.arena.lightbulb1.position, 'x').min(-300).max(300).step(1).name('Light 1 X');
-			folder.add(this.arena.lightbulb1.position, 'y').min(0).max(300).step(1).name('Light 1 Y');
-			folder.add(this.arena.lightbulb1.position, 'z').min(-300).max(300).step(1).name('Light 1 Z');
-			folder.add(this.arena.lightbulb2.position, 'x').min(-300).max(300).step(1).name('Light 2 X');
-			folder.add(this.arena.lightbulb2.position, 'y').min(0).max(300).step(1).name('Light 2 Y');
-			folder.add(this.arena.lightbulb2.position, 'z').min(-300).max(300).step(1).name('Light 2 Z');
-
-			folder.add(this.arena.spotLight.position, 'x').min(-300).max(300).step(1).name('Spot Light X');
-			folder.add(this.arena.spotLight.position, 'y').min(0).max(300).step(1).name('Spot Light Y');
-			folder.add(this.arena.spotLight.position, 'z').min(-300).max(300).step(1).name('Spot Light Z');
-
-			folder.add(this.arena.spotLight, 'angle').min(0).max(Math.PI).step(0.01).name('Spot Light Angle');
-			folder.add(this.arena.spotLight, 'penumbra').min(0).max(1).step(0.01).name('Spot Light Penumbra');
-			folder.add(this.arena.spotLight, 'decay').min(1).max(2).step(0.01).name('Spot Light Decay');
-			folder.add(this.arena.spotLight, 'distance').min(0).max(300).step(1).name('Spot Light Distance');
-
-			folder.add(this.arena.ambient_light, 'intensity').min(0).max(2).step(0.01).name('Ambient Light Intensity');
+			const folder = this.gui.addFolder('Lights');
+			const ambientDir = folder.addFolder('Ambient Light');
+			ambientDir.add(this.arena.ambient_light, 'intensity').min(0).max(2).step(0.01).name('Intensity');
+			ambientDir.addColor(this.arena.ambient_light, 'color').name('Color');
+			ambientDir.close();
+			const lightDir1 = folder.addFolder('Light 1');
+			lightDir1.add(this.arena.lightbulb1.position, 'x').min(-300).max(300).step(1).name('Light 1 X');
+			lightDir1.add(this.arena.lightbulb1.position, 'y').min(0).max(300).step(1).name('Light 1 Y');
+			lightDir1.add(this.arena.lightbulb1.position, 'z').min(-300).max(300).step(1).name('Light 1 Z');
+			lightDir1.add(this.arena.lightbulb1, 'intensity').min(0).max(2).step(0.01).name('Intensity');
+			lightDir1.addColor(this.arena.lightbulb1, 'color').name('Color');
+			lightDir1.close();
+			const lightDir2 = folder.addFolder('Light 2');
+			lightDir2.add(this.arena.lightbulb2.position, 'x').min(-300).max(300).step(1).name('Light 2 X');
+			lightDir2.add(this.arena.lightbulb2.position, 'y').min(0).max(300).step(1).name('Light 2 Y');
+			lightDir2.add(this.arena.lightbulb2.position, 'z').min(-300).max(300).step(1).name('Light 2 Z');
+			lightDir2.add(this.arena.lightbulb2, 'intensity').min(0).max(2).step(0.01).name('Intensity');
+			lightDir2.addColor(this.arena.lightbulb2, 'color').name('Color');
+			lightDir2.close();
+			const spotDir = folder.addFolder('Spot Light');
+			spotDir.add(this.arena.spotLight.position, 'x').min(-300).max(300).step(1).name('Spot Light X');
+			spotDir.add(this.arena.spotLight.position, 'y').min(0).max(300).step(1).name('Spot Light Y');
+			spotDir.add(this.arena.spotLight.position, 'z').min(-300).max(300).step(1).name('Spot Light Z');
+			spotDir.add(this.arena.spotLight, 'intensity').min(0).max(2).step(0.01).name('Spot Light Intensity');
+			spotDir.addColor(this.arena.spotLight, 'color').name('Spot Light Color');
+			spotDir.add(this.arena.spotLight, 'angle').min(0).max(Math.PI).step(0.01).name('Spot Light Angle');
+			spotDir.add(this.arena.spotLight, 'penumbra').min(0).max(1).step(0.01).name('Spot Light Penumbra');
+			spotDir.add(this.arena.spotLight, 'decay').min(1).max(2).step(0.01).name('Spot Light Decay');
+			spotDir.add(this.arena.spotLight, 'distance').min(0).max(300).step(1).name('Spot Light Distance');
+			spotDir.close();
 			folder.close();
 		}
 		{
@@ -699,20 +837,27 @@ class Client3DGame {
 		{
 			const folder = this.gui.addFolder('Post Processing');
 			folder.add(bloom, 'enabled').name('Bloom');
+			folder.add(unrealBloom, 'enabled').name('Unreal Bloom');
+			folder.add(unrealBloom, 'strength').min(0).max(2).step(0.01).name('Unreal Bloom Strength');
+			folder.add(unrealBloom, 'radius').min(0).max(2).step(0.01).name('Unreal Bloom Radius');
+			folder.add(unrealBloom, 'threshold').min(0).max(1).step(0.01).name('Unreal Bloom Threshold');
+			folder.add(unrealBloom, 'exposure').min(0).max(2).step(0.01).name('Unreal Bloom Exposure');
 			folder.add(film, 'enabled').name('Film Grain');
+			folder.add(rgbShift, 'enabled').name('RGB Shift');
 			folder.add(rgbShift.uniforms.amount, 'value').min(0.001).max(0.01).step(0.0001).name('RGB Shift Amount');
 			folder.add(afterimage, 'enabled').name('Afterimage');
 			folder.add(afterimage.uniforms.damp, 'value').min(0.5).max(0.99).step(0.01).name('Afterimage Dampening');
+			folder.add(glitch, 'enabled').name('Glitch');
 		}
 
 		this.gui.domElement.style.position = 'absolute';
 		this.gui.domElement.style.top = '10%';
-		this.gui.domElement.style.right = '0';
-		this.gui.domElement.style.zIndex = '900';
-		this.gui.domElement.style.width = '300px';
-		this.gui.domElement.style.height = '80%';
-		this.gui.domElement.style.overflow = 'auto';
-		this.gui.domElement.style.backgroundColor = 'rgba(200, 200, 200, 0.5)';
+		// this.gui.domElement.style.right = '0';
+		this.gui.domElement.style.zIndex = '199';
+		// this.gui.domElement.style.width = '360px';
+		// this.gui.domElement.style.height = '60%';
+		// this.gui.domElement.style.overflow = 'auto';
+		// this.gui.domElement.style.backgroundColor = 'rgba(200, 200, 200, 0.5)';
 		this.gui.domElement.style.display = 'none';
 		document.body.appendChild(this.gui.domElement);
 
@@ -779,6 +924,8 @@ class Client3DGame {
 		// if (needResize) {
 			this.camera.aspect = width / height;
 			this.camera.updateProjectionMatrix();
+			this.hud.camera.aspect = width / height;
+			this.hud.camera.updateProjectionMatrix();
 			this.renderer.setSize(width, height);
 			this.composer.setSize(width, height);
 		// }
@@ -934,6 +1081,7 @@ class Client3DGame {
 			this.playerTwo.paddle.score = this.gameData.score.p2;
 			this.ball.reset();
 			this.showScore();
+			this.hud.updateScore(this.gameData.score);
 			if (!this.gameover)
 				setTimeout(() => this.sendReady(), 3000);
 			else
@@ -949,6 +1097,7 @@ class Client3DGame {
 				this.playerTwo.paddle.score = this.gameData.score.limit;
 			}
 			this.showScore();
+			this.hud.updateScore(this.gameData.score);
 			this.endGame();
 		}
 	}
@@ -958,7 +1107,9 @@ class Client3DGame {
 		this.hud.update();
 		// this.renderer.render(this.scene, this.camera);
 		this.composer.render();
+		this.renderer.clearDepth();
 		this.renderer.render(this.hud.scene, this.hud.camera);
+		// this.hud.composer.render();
 	}
 
 	repositionBall (ballX, ballY, p2y, p1y) {
@@ -998,6 +1149,7 @@ class Client3DGame {
 			this.playerTwo.paddle.score++;
 			this.scene.remove(this.score);
 			this.showScore();
+			this.hud.updateScore({ p1: this.playerOne.paddle.score, p2: this.playerTwo.paddle.score });
 			this.ball.reset();
 			// this.playerOne.reset();
 			// this.playerTwo.reset();
@@ -1010,6 +1162,7 @@ class Client3DGame {
 			this.playerOne.paddle.score++;
 			this.scene.remove(this.score);
 			this.showScore();
+			this.hud.updateScore({ p1: this.playerOne.paddle.score, p2: this.playerTwo.paddle.score });
 			this.ball.reset();
 			// this.playerOne.reset();
 			// this.playerTwo.reset();

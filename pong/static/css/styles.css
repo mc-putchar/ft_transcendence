@@ -76,6 +76,8 @@ body {
 
 canvas {
   margin-top: auto;
+  height: auto;
+  width: 90%;
   display: block;
   align-content: center;
   background-color: black;

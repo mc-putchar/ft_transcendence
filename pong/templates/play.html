@@ -41,9 +41,8 @@
                                                 <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" height="42">
                                             </button>
                                         </div>
-                                        <div class="col-auto text-center" data-bs-toggle="button" data-bs-target="p2-toggle-btn">
-                                            <button id="p2-toggle-btn" class="btn btn-outline-light" data-bs-toggle="collapse" data-bs-target="#p2-setup" aria-expanded="false" aria-controls="p2-setup"
-                                                onclick="">
+                                        <div class="col-auto text-center">
+                                            <button id="p2-toggle-btn" class="btn btn-outline-light" data-bs-toggle="collapse" data-bs-target="#p2-setup" aria-expanded="false" aria-controls="p2-setup">
                                                 <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" height="42">
                                                 P 2
                                             </button>
@@ -60,8 +59,8 @@
                                                 </div>
                                                 <div class="input-group collapse show my-2" id="p1-setup">
                                                     <div class="form-floating mx-1">
-                                                        <input type="text" class="form-control" name="player1" id="p1-name" autocomplete="nickname" maxlength="20" placeholder="Player 1" autofocus>
-                                                        <label for="player1" class="form-label no-select">Player 1 Name</label>
+                                                        <input type="text" class="form-control" name="player1-name" id="player1-name" value="Player 1" autocomplete="off" maxlength="20" placeholder="Player 1" autofocus>
+                                                        <label for="player1-name" class="form-label no-select">Player 1 Name</label>
                                                     </div>
                                                     <div class="form-floating mx-1">
                                                         <input type="color" class="form-control form-control-color" id="p1-color" value="#42ff42" title="Choose your paddle color">
@@ -73,20 +72,22 @@
                                                     </div> -->
                                                 </div>
                                                 <div class="input-group collapse my-2" id="p2-setup">
-                                                    <div class="form-floating mx-0">
-                                                        <input type="text" class="form-control" name="player2" id="p2-name" autocomplete="nickname" maxlength="20" placeholder="Player 2">
-                                                        <label for="player2" class="form-label no-select">Player 2 Name</label>
+                                                    <div class="form-floating mx-1">
+                                                        <input type="text" class="form-control" name="player2-name" id="player2-name" autocomplete="off" maxlength="20" placeholder="Player 2">
+                                                        <label for="player2-name" class="form-label no-select">Player 2 Name</label>
                                                     </div>
-                                                    <div class="form-floating mx-0">
-                                                        <input type="color" class="form-control form-control-color" id="p2-color" value="#be42cc" title="Choose your paddle color">
+                                                    <div class="form-floating mx-1">
+                                                        <input type="color" class="form-control form-control-color" id="p2-color" value="#563d7c" title="Choose your paddle color">
                                                         <label for="p2-color" class="form-label">Color</label>
                                                     </div>
-                                                    <div class="form-floating mx-0">
-                                                        <div class="form-switch">
-                                                            <input type="checkbox" role="switch" class="btn-check" id="flexProAI2" autocomplete="off" checked aria-checked="true">
-                                                            <label class="btn btn-outline-success" for="flexProAI2">pro AI</label>
+                                                    <span class="input-group-text">
+                                                        <div class="form-floating mx-1">
+                                                            <div class="form-switch">
+                                                                <input type="checkbox" role="switch" class="btn-check" id="flexProAI2" autocomplete="off" checked aria-checked="true">
+                                                                <label class="btn btn-outline-success" for="flexProAI2">pro AI</label>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    </span>
                                                 </div>
                                             </form>
                                             <button id="startGame" class="btn btn-success m-1" onclick="location.hash='/pong-classic'">Start Game</button>
