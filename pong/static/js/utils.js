@@ -5,87 +5,65 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	modal.tabIndex = "-1";
 	modal.role = "dialog";
 	modal.ariaHidden = "false";
-
-	modal.className = "modal";
 	modal.id = modalId;
-	modal.style.display = "block";
-	modal.style.zIndex = "1000";
 
-	let modalBodyContent = "";
-	fields.forEach((field) => {
-		const value = field.key.split(".").reduce((o, i) => o[i], data);
-		modalBodyContent += `<p>${field.label}: ${value}</p>`;
-	});
+	modal.classList.add("modal");
+	modal.setAttribute("aria-labelledby", modalLabelId);
+	modal.setAttribute("aria-hidden", "true");
 
-	modal.innerHTML = `
-		<div class="modal-dialog" role="document">
-			<div class="modal-content">
-				<div class="modal-header">
-					<div class="col-12">
-						<h5 class="modal-title" id="${modalLabelId}">${fields[0].key.split(".").reduce((o, i) => o[i], data)}</h5>
-					</div>
-					<div class="col-12" style="text-align: right; position: absolute; right: 0.2rem; top: 0.2rem;">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="close${modalId}">X</button>
-					</div>
-				</div>
-				<div class="modal-body">
-					${modalBodyContent}
-					${customContent}
-				</div>
-			</div>
-		</div>
-	`;
+	const modalDialog = document.createElement("div");
+	modalDialog.classList.add("modal-dialog", "modal-dialog-centered");
+	modalDialog.role = "document";
+	const modalContent = document.createElement("div");
+	modalContent.classList.add("modal-content");
+	const modalHeader = document.createElement("div");
+	modalHeader.classList.add("modal-header", "bg-info-subtle", "m-1");
+	const closeButtonContainer = document.createElement("div");
+	closeButtonContainer.classList.add("m-0");
+	closeButtonContainer.style.cssText = "text-align: right; position: absolute; right: 0.2rem; top: 0.2rem;";
+	const closeButton = document.createElement("button");
+	closeButton.type = "button";
+	closeButton.classList.add("btn-close");
+	closeButton.classList.add("m-1");
+	closeButton.setAttribute("data-bs-dismiss", "modal");
+	closeButton.id = `close${modalId}`;
+	closeButtonContainer.appendChild(closeButton);
+	modalHeader.appendChild(closeButtonContainer);
 
+	const modalBodyContainer = document.createElement("div");
+	modalBodyContainer.classList.add("container", "bg-transparent", "m-2");
+	if (fields.length !== 0) {
+		fields.forEach((field) => {
+			let elem = document.createElement("p");
+			elem.innerHTML = `<span class="text-primary-emphasis"><b>${field.label}:</b></span>`;
+			const value = field.key.split(".").reduce((o, i) => o[i], data);
+			elem.innerText += ` ${value}`;
+			modalBodyContainer.appendChild(elem);
+		});
+	}
+	modalHeader.appendChild(modalBodyContainer);
+
+	const modalBody = document.createElement("div");
+	modalBody.classList.add("modal-body", "bg-info-subtle", "text-success", "m-1");
+	modalBody.innerHTML = customContent;
+
+	modalContent.appendChild(modalHeader);
+	modalContent.appendChild(modalBody);
+	modalDialog.appendChild(modalContent);
+	modal.appendChild(modalDialog);
 	document.body.appendChild(modal);
-	console.log("Modal created");
 
+	let modalElement = new bootstrap.Modal(document.getElementById(modalId));
+	modalElement.show();
 	if (closeCallback) {
 		document.getElementById(`close${modalId}`).addEventListener("click", closeCallback);
 	}
-	document.getElementById(`close${modalId}`).addEventListener("click", function () {
-		modal.style.display = "none";
-		document.body.removeChild(modal);
+	modal.addEventListener('hidden.bs.modal', function (event) {
+		modal.remove();
 	});
 }
 
-function createCmdPopover(element = "body") {
-	const chatInput = document.querySelector("#chat-message-input");
-	const commands = {
-		"/pm": "Send a private message to a user",
-		"/duel": "Challenge a user to a duel",
-		"/help": "List all available commands",
-	};
-
-	chatInput.setAttribute("data-bs-toggle", "popover");
-	chatInput.setAttribute("data-bs-trigger", "manual");
-
-	const popoverContent = Object.entries(commands)
-		.map(([cmd, desc]) => `<strong>${cmd}</strong>    ${desc}`)
-		.join("<br>");
-
-	const popover = new bootstrap.Popover(chatInput, {
-		content: popoverContent,
-		html: true,
-		placement: "auto",
-		container: element,
-	});
-
-	chatInput.addEventListener("keyup", (event) => {
-		if (event.key === "/") {
-			popover.show();
-		} else if (event.key === "@") {
-			//replace popover content 
-			popover.update();
-			popoverContent = "List of users";
-			popover.show();
-		} else {          // avoid hiding popover when shift key is released
-			if (event.key === "Shift") return;
-			popover.hide();
-		}
-	});
-}
-
-async function getHTML(endpoint, csrftoken) {
+async function getHTML(endpoint) {
 	const accessToken = sessionStorage.getItem('access_token') || "";
 	const response = await fetch(endpoint, {
 		method: "GET",
@@ -93,7 +71,6 @@ async function getHTML(endpoint, csrftoken) {
 		"Content-Type": "text/html",
 		"Accept": "text/html",
 		"X-Requested-With": "XMLHttpRequest",
-		"X-CSRFToken": csrftoken,
 		"Authorization": `Bearer ${accessToken}`,
 		},
 		credentials: "include"
@@ -103,7 +80,7 @@ async function getHTML(endpoint, csrftoken) {
 		return data;
 	} else if (response.status === 401) {
 		if (await refreshToken())
-			return await getHTML(endpoint, csrftoken);
+			return await getHTML(endpoint);
 		return null;
 	} else {
 		console.error("Server returned error response", response);
@@ -111,15 +88,13 @@ async function getHTML(endpoint, csrftoken) {
 	}
 }
 
-async function getJSON(endpoint, csrftoken) {
+async function getJSON(endpoint) {
 	const accessToken = sessionStorage.getItem('access_token') || "";
 	const response = await fetch(endpoint, {
 		method: "GET",
 		headers: {
-		"Content-Type": "application/json",
 		"Accept": "application/json",
 		"X-Requested-With": "XMLHttpRequest",
-		"X-CSRFToken": csrftoken,
 		"Authorization": `Bearer ${accessToken}`,
 		},
 		credentials: "include"
@@ -129,7 +104,7 @@ async function getJSON(endpoint, csrftoken) {
 		return data;
 	} else if (response.status === 401) {
 		if (await refreshToken())
-			return await getJSON(endpoint, csrftoken);
+			return await getJSON(endpoint);
 		return null;
 	} else {
 		console.error("Server returned error response", response);
@@ -256,4 +231,4 @@ function popupCenter(url, title, w, h) {
 	return authWindow;
 }
 
-export { createModal, createCmdPopover, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter };
+export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter };

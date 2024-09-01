@@ -12,7 +12,7 @@ def optin(request):
 	user = get_user_from_token(request)['user']
 	if user is None:
 		return render(request, 'blockchain-optin.html', {'message': 'User not found'})
-	elif user.profile.blockchain_opted_in is not None:
+	elif user.profile.blockchain_address is not None:
 		return render(request, 'blockchain-optin.html', {'message': 'User already opted in'})
 	else:
 		chain = PongBlockchain()

@@ -1,29 +1,14 @@
 "use strict";
 
-import drawBackground from './background.js';
+import { showNotification } from './notification.js';
+import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
-import { startPongGame, stopPongGame } from './pong-game.js';
-import { startPong3DGame, stopPong3DGame } from './pong3d.js';
 import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
-import { showNotification } from './notification.js';
-import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
-
-    function stopAllGames() {
-        // if (this.pongClassicGame) {
-        //     this.pongClassicGame.stop();
-        // }
-        // if (this.pong3DGame) {
-        //     this.pong3DGame.stop();
-        // }
-		stopPongGame();
-		stopPong3DGame();
-		stopPong4PGame();
-    }
 
 class Router {
 	constructor(navElement, appElement, chatElement) {
@@ -34,22 +19,29 @@ class Router {
 		sessionStorage.setItem('friends', '[]');
 		sessionStorage.setItem('blocked', '[]');
 
-		this.chat = new ChatRouter(this.csrfToken, this.chatElement);
-		this.game = new GameRouter(this.csrfToken, this.appElement);
-		this.tournament = new TournamentRouter(this.csrfToken, this.appElement);
+		this.chat = new ChatRouter(this.chatElement);
+		this.game = new GameRouter(this.appElement);
+		this.tournament = new TournamentRouter(this.appElement);
+		this.audioContext = null;
+		window.addEventListener('load', () => this.route());
+		window.addEventListener('hashchange', (e) => this.route(e));
+
+		// PERFORMANCE MONITOR
+		(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
 		this.init();
 	}
 
 	init() {
-		// this.oldHash = window.location.hash;
-		window.addEventListener('load', () => this.route());
-		window.addEventListener('hashchange', (e) => this.route(e));
+		this.oldHash = window.location.hash;
 
+		// Register listeners for custom events
 		this.chatElement.addEventListener('challenge', (event) => {
-			this.game.setupGameWebSocket(event.detail.gameID);
-			const sound = new Audio(CHALLENGE_SOUND);
-			sound.play();
+			if (this.game.setupGameWebSocket(event.detail.gameID)) {
+				const sound = new Audio(CHALLENGE_SOUND);
+				sound.volume = 0.5;
+				sound.play();
+			}
 		});
 		this.chatElement.addEventListener('notification', (event) => {
 			showNotification(
@@ -65,22 +57,27 @@ class Router {
 				event.detail.img,
 				NOTIFICATION_SOUND);
 		});
+		this.appElement.addEventListener('update', (event) => {
+			// this.route();
+		});
 		this.appElement.addEventListener('game', (event) => {
 			this.game.startTournamentGame(event.detail);
 		});
-		this.appElement.addEventListener('update', (event) => {
-			// this.route();
+		this.appElement.addEventListener('announcement', (event) => {
+			this.chat.sendAnnouncement(event.detail);
 		});
 
 		this.loadNav();
 		this.loadCookieConsentFooter();
 		this.updateFriendsAndBlocks();
 		this.loadChat('lobby');
-		// this.route();
+		if (this.oldHash)
+			this.route(this.oldHash);
 	}
 
 	displayError(message) {
-		this.appElement.innerHTML = `<p>${message}</p><button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>`;
+		this.appElement.innerHTML = `<p id='error-message'></p><button class="btn btn-primary btn-sm" onclick="history.back()">Go Back</button>`;
+		document.getElementById('error-message').innerText = message;
 	}
 
 	notifyError(message) {
@@ -88,67 +85,68 @@ class Router {
 	}
 
 	reload() {
+		this.updateFriendsAndBlocks();
 		this.loadNav();
 		this.loadChat();
-		this.updateFriendsAndBlocks();
-		this.route();
+		window.location.hash = '/';
 	}
 
-	async route(e) {
-		this.oldHash = e ? e.oldURL : this.oldHash;
+	async route() {
+		this.oldHash = this.oldHash ?? window.location.hash;
+		this.game?.stopGame();
 		const template = window.location.hash.substring(2) || 'home';
-		if (template.startsWith('auth42')) {
-			const authPopup = popupCenter('/auth42', '42Auth', 420, 420);
-
-			if (authPopup) {
-				const authListener = (event) => {
-					if (event.origin !== window.location.origin) return;
-					const { access, refresh } = event.data;
-					if (access && refresh) {
-						sessionStorage.setItem('access_token', access);
-						sessionStorage.setItem('refresh_token', refresh);
-						this.reload();
-					} else {
-						console.error("Received invalid tokens.");
-					}
-					window.removeEventListener('message', authListener, false);
-					sessionStorage.removeItem('is_popup');
-					window.location.hash = '/home';
-				};
-
-				window.addEventListener('message', authListener, false);
-				authPopup.focus();
-			} else {
-				this.notifyError("Failed to open 42Auth popup");
-			}
-			location.hash = this.oldHash;
-		} else if (template.startsWith('profiles/')) {
+		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
 		} else if (template.startsWith('tournaments/')) {
-			this.loadTemplate(await this.tournament.route(template));
+			const next = await this.tournament.route(template);
+			setTimeout(() => window.location.hash = next ?? this.oldHash, 100);
 		} else if (template.startsWith('chat')) {
 			const roomName = template.substring(5) || 'lobby';
 			this.loadChat(roomName);
+			setTimeout(() => window.location.hash = this.oldHash, 100);
 		} else if (template.startsWith('game/')) {
+			history.back();
 			if (template.startsWith('game/accept/')) {
 				const gameID = template.substring(12);
 				this.game.acceptChallenge(gameID);
-				this.chat.acceptGame();
+				this.chat.sendDuelResponse('accepted');
 			} else if (template.startsWith('game/decline/')) {
-				this.chat.declineGame();
+				this.chat.sendDuelResponse('declined');
 			}
 			this.game.route(template);
 		} else if (template.startsWith('addFriend') || template.startsWith('deleteFriend') || template.startsWith('block') || template.startsWith('unblock')) {
-				const action = template.split('/')[0];
-				const id = template.split('/')[1];
-				this.manageFrenemy(action, id);
+			const action = template.split('/')[0];
+			const id = template.split('/')[1];
+			this.manageFrenemy(action, id);
+			setTimeout(() => history.back(), 100);
+		} else if (template.startsWith('pong-')) {
+			if (template === 'pong-classic') {
+				const p1Name = document.getElementById('player1-name')?.value;
+				// await this.loadTemplate(template);
+				if (!p1Name) {
+					this.notifyError("Player 1 name is required");
+					history.back();
+					return;
+				}
+				const p1 = this.game.makePlayer('right', p1Name);
+				const p2Name = document.getElementById('player2-name')?.value;
+				if (p2Name) {
+					const p2 = this.game.makePlayer('left', p2Name);
+					this.game.startClassicGame(p1, p2);
+				} else {
+					this.game.startClassicGame(p1);
+				}
+			} else
+				this.loadTemplate(template);
 		} else {
 			this.loadTemplate(template);
 		}
+		this.oldHash = window.location.hash;
 	}
 
 	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
 		try {
+			element.innerHTML = '<div class="spinner-border text-success"></div>';
 			element.classList.add("fade-exit");
 			setTimeout(() => {
 				element.innerHTML = newContent;
@@ -175,6 +173,8 @@ class Router {
    			 if (navbarCollapse) {
    			     var collapse = new bootstrap.Collapse(navbarCollapse);
   
+			     collapse.hide();
+
    			     // Hide the navbar when a link inside it is clicked
    			     var navbarLinks = document.querySelectorAll('.navbar-collapse a');
    			     navbarLinks.forEach(function (link) {
@@ -189,13 +189,64 @@ class Router {
    			         var isToggle = event.target.classList.contains('navbar-toggler');
    			         
    			         if (!isClickInside && !isToggle) {
-   			             console.log('click outside');
    			             collapse.hide();
    			         }
    			     });
    			 } else {
-   			     console.error("Navbar collapse element not found.");
+				this.notifyError("Navbar collapse element not found.");
    			 }
+
+			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
+				const audioMuteBtn = document.getElementById('audioMuteBtn');
+
+				if (audioMuteBtn.innerText === '🔊') {
+					audioMuteBtn.innerText = '🔇';
+					if(window.mainOUT) {
+						window.mainOUT.gain.value = 0;
+					}
+				} else if (audioMuteBtn.innerText === '🔇'){
+					audioMuteBtn.innerText = '🔊';
+					if (window.mainOUT) {
+						window.mainOUT.gain.value = 1;
+					}
+				}
+			});
+			document.getElementById('fxMuteBtn').addEventListener('click', (e) => {
+				const fxMuteBtn = document.getElementById('fxMuteBtn');
+
+				if (fxMuteBtn.innerText === '🔊') {
+					fxMuteBtn.innerText = '🔇';
+					if(window.fxGainNode) {
+						window.fxGainNode.gain.value = 0;
+					}
+				} else if(fxMuteBtn.innerText === '🔇'){
+					fxMuteBtn.innerText = '🔊';
+					if (window.fxGainNode) {
+						window.fxGainNode.gain.value = 1;
+					}
+				}
+			});
+
+			let count = 1;
+
+			document.getElementById('changeMusicBtn').addEventListener('click', (e) => {
+				const changeMusicBtn = document.getElementById('changeMusicBtn');
+
+				if (count === 0) {
+					window.changeMusicTrack("/static/assets/music.mp3");
+					count++;
+				} else if (count === 1) {
+					window.changeMusicTrack("/static/assets/music2.mp3");
+					count++;
+				} else if (count === 2) {
+					window.changeMusicTrack("/static/assets/music3.mp3");
+					count++;
+				}
+
+				if (count === 3)
+					count = 0;
+			});
+
 		} catch (error) {
 			console.debug("Error loading nav: ", error);
 			this.navElement.innerHTML = "<p>Error loading navigation</p>";
@@ -211,7 +262,6 @@ class Router {
 			}
 			this.animateContent(this.appElement, response, () => this.handlePostLoad(template));
 		} catch (error) {
-			console.error("Error loading template: ", error);
 			this.displayError("Error loading content");
 		}
 	}
@@ -224,7 +274,6 @@ class Router {
 			}
 			this.animateContent(this.appElement, response);
 		} catch (error) {
-			console.error("Error loading user template: ", error);
 			this.displayError("Error loading content");
 		}
 	}
@@ -242,9 +291,8 @@ class Router {
 		if (await postJSON(`/api/profiles/${endpoint}/`, this.csrfToken, body)) {
 			console.debug("Frenemy action successful:", action, id);
 			this.updateFriendsAndBlocks();
-			history.back();
 		} else {
-			console.error(`Failed to perform action: ${action} with id: ${id}`);
+			this.notifyError(`Failed to perform action: ${action} with id: ${id}`);
 			this.displayError(`Failed to perform action: ${action} with id: ${id}`);
 		}
 	}
@@ -253,20 +301,14 @@ class Router {
 		if (!sessionStorage.getItem('access_token'))
 			return;
 		try {
-			const response = await getJSON('/api/profiles/friends/', this.csrfToken);
+			let response = await getJSON('/api/profiles/friends/', this.csrfToken);
 			if (response) {
 				console.log("Updated friends", response);
 				sessionStorage.setItem('friends', JSON.stringify(response));
 			} else {
 				throw new Error("Failed to update friends");
 			}
-		} catch (error) {
-			console.error("Error updating friends: ", error);
-			this.displayError(error.message);
-			return;
-		}
-		try {
-			const response = await getJSON('/api/profiles/blocked_users/', this.csrfToken);
+			response = await getJSON('/api/profiles/blocked_users/', this.csrfToken);
 			if (response) {
 				console.log("Updated blocked", response);
 				sessionStorage.setItem('blocked', JSON.stringify(response));
@@ -274,7 +316,6 @@ class Router {
 				throw new Error("Failed to update blocked");
 			}
 		} catch (error) {
-			console.error("Error updating blocked: ", error);
 			this.displayError(error.message);
 		}
 	}
@@ -296,21 +337,20 @@ class Router {
 				this.chat.setupChatWebSocket(roomName));
 		} catch (error) {
 			this.chatElement.style.display = 'none';
-			console.error("Error loading chat: ", error);
+			this.notifyError("Error loading chat: ", error);
 		}
 	}
 
 	async loadCookieConsentFooter() {
 		try {
-			const response = await getHTML('/templates/cookie_consent_footer', this.csrfToken);
+			const response = await getHTML('/templates/cookie_consent_footer');
 			if (!response) {
 				throw new Error(`Cannot load cookie consent footer: ${response.status}`);
 			}
 			document.getElementById('cookie-consent-footer').innerHTML = response;
 			this.initCookieConsent();
 		} catch (error) {
-			console.error("Error loading cookie consent footer: ", error);
-			this.notifyError("Error loading cookie consent footer");
+			this.notifyError(`Error loading cookie consent footer: ${error.message}`);
 		}
 	}
 
@@ -327,9 +367,9 @@ class Router {
 			cookieConsentFooter.style.display = 'none';
 		});
 
-		document.getElementById('cookiePreferencesButton').addEventListener('click', () => {
-			alert("No! You don't get to choose.\nIt's only CSRF protection anyway.\nNo tracking cookies here.");
-		});
+		// document.getElementById('cookiePreferencesButton').addEventListener('click', () => {
+		// 	alert("No! You don't get to choose.\nIt's only CSRF protection anyway.\nNo tracking cookies here.");
+		// });
 	}
 
 	handlePostLoad(template) {
@@ -352,16 +392,20 @@ class Router {
 			case 'tournaments':
 				this.handleTournamentPage();
 				break;
-			case 'pong-classic':
-				stopAllGames();
-				startPongGame();
-				break;
+			// case 'pong-classic':
+			// 	const p1 = this.game.makePlayer('left', 'Player 1');
+			// 	const p2 = this.game.makePlayer('right', 'Player 2');
+			// 	this.game.startClassicGame(p1, p2);
+			// 	break;
 			case 'pong-3d':
-				stopAllGames();
-				startPong3DGame();
+				// const pl1 = this.game.makePlayer('left', 'Player 1');
+				// const pl2 = this.game.makePlayer('right', 'Player 2');
+				// this.game.start3DGame(pl1, pl2);
+				const pl1 = this.game.makePlayer('left', 'Player 1', 'YOU', '/static/assets/42Berlin.svg');
+				this.game.start3DGame(pl1);
 				break;
 			case 'pong-4p':
-				stopAllGames();
+				stopPong4PGame();
 				startPong4PGame();
 				break;
 			default:
@@ -371,6 +415,7 @@ class Router {
 
 	handleRegistrationForm() {
 		const form = document.getElementById('registration-form');
+		if (!form) return;
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const username = document.getElementById('username').value;
@@ -379,7 +424,6 @@ class Router {
 			const password_confirmation = document.getElementById('password_confirmation').value;
 	
 			if (password !== password_confirmation) {
-				console.error("Passwords do not match");
 				this.notifyError("Passwords do not match");
 				return;
 			}
@@ -401,14 +445,14 @@ class Router {
 					throw new Error(data.detail || 'Registration failed');
 				}
 			} catch (error) {
-				console.error("Error registering user: ", error);
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
 	}
 
 	handleLoginForm() {
 		const form = document.getElementById('login-form');
+		if (!form) return;
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const username = document.getElementById('username').value;
@@ -434,42 +478,42 @@ class Router {
 					throw new Error(data.error || 'Login failed');
 				}
 			} catch (error) {
-				console.error("Error logging in user: ", error);
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
-		document.getElementById('username').focus();
 	}
 
 	async logout() {
+		if (!sessionStorage.getItem('access_token')) {
+			this.notifyError("You are not logged in");
+			return;
+		}
 		try {
 			const body = JSON.stringify({ refresh: sessionStorage.getItem('refresh_token') || '' });
 			const response = await postJSON('/api/logout/', this.csrfToken, body);
 			if (response) {
 				console.log("Logged out");
-				this.loadNav();
-				this.loadChat();
-				window.location.hash = '/home';
 			} else {
 				throw new Error("Failed to log out");
 			}
 		} catch (error) {
-			console.error("Error logging out: ", error);
 			this.displayError(error.message);
 		}
 		sessionStorage.clear();
-		this.loadNav();
-		this.loadChat();
+		this.chat.chatSocket?.close();
+		this.game.gameSocket?.close();
+		this.tournament.tournamentSocket?.close();
+		this.reload();
 	}
 
 	handleProfilePage() {
-		const accAdminBtn = document.getElementById('account-administration');
 		const anonBtn = document.getElementById('anonymize-data');
 		const deleteBtn = document.getElementById('delete-account');
 		const profileForm = document.getElementById('profile-form');
+		const passwordForm = document.getElementById('password-form');
 		const blockchainBtn = document.getElementById('blockchain-optin');
-		if (!accAdminBtn || !anonBtn || !deleteBtn || !profileForm || !blockchainBtn) return;
-		blockchainBtn.addEventListener('click', async (e) => {
+		if (!anonBtn || !deleteBtn || !profileForm) return;
+		blockchainBtn?.addEventListener('click', async (e) => {
 			const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
 			if (response) {
 				this.animateContent(this.appElement, response);
@@ -477,36 +521,27 @@ class Router {
 				this.notifyError("Failed to opt-in to blockchain");
 			}
 		});
-		accAdminBtn.addEventListener('click', (e) => {
+
+		passwordForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
-			const anonBtn = document.getElementById('anonymize-data');
-			const deleteBtn = document.getElementById('delete-account');
-			anonBtn.style.display = anonBtn.style.display === 'none' ? 'block' : 'none';
-			deleteBtn.style.display = deleteBtn.style.display === 'none' ? 'block' : 'none';
-			const passwordForm = document.getElementById('password-form');
-			passwordForm.style.display = passwordForm.style.display === 'none' ? 'block' : 'none';
-			passwordForm.addEventListener('submit', async (e) => {
-				e.preventDefault();
-				const formData = new FormData(passwordForm);
-				try {
-					const response = await fetch('/api/change-password/', {
-						method: 'POST',
-						headers: {
-							'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
-						},
-						body: formData
-					});
-					if (response.ok) {
-						alert("Password changed successfully");
-					} else {
-						throw new Error("Failed to change password");
-					}
-				} catch (error) {
-					console.error("Error changing password: ", error);
-					this.displayError(error.message);
+			const formData = new FormData(passwordForm);
+			try {
+				const response = await fetch('/api/change-password/', {
+					method: 'POST',
+					headers: {
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
+						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
+					},
+					body: formData
+				});
+				if (response.ok) {
+					alert("Password changed successfully");
+				} else {
+					throw new Error("Failed to change password");
 				}
-			});
+			} catch (error) {
+				this.displayError(error.message);
+			}
 		});
 		document.getElementById('anonymize-data').addEventListener('click', (e) => {
 			e.preventDefault();
@@ -540,44 +575,37 @@ class Router {
 					throw new Error("Failed to update profile");
 				}
 			} catch (error) {
-				console.error("Error updating profile: ", error);
 				this.displayError(error.message);
 			}
 		});
 	}
 
 	handleTournamentPage() {
-		const createTournamentBtn = document.getElementById('create-tournament');
-		if (!createTournamentBtn) return;
-		createTournamentBtn.addEventListener('click', (e) => {
+		const form = document.getElementById('create-tournament-form');
+		const btn = document.getElementById('create-tournament-btn');
+		if (!form || !btn) return;
+		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
-			const form = document.getElementById('create-tournament-form');
-			const btn = document.getElementById('create-tournament-btn');
-			form.style.display = form.style.display === 'none' ? 'block' : 'none';
-			btn.style.display = btn.style.display === 'none' ? 'block' : 'none';
-			form.addEventListener('submit', async (e) => {
-				e.preventDefault();
-				const formData = new FormData(form);
-				try {
-					const response = await fetch('/game/tournaments/create_tournament_form/', {
-						method: 'POST',
-						headers: {
-							'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
-						},
-						body: formData
-					});
-					if (response.ok) {
-						console.log("Tournament created successfully");
-						this.loadTemplate('tournaments');
-					} else {
-						throw new Error("Failed to create tournament");
-					}
-				} catch (error) {
-					console.error("Error creating tournament: ", error);
-					this.displayError(error.message);
+			const formData = new FormData(form);
+			try {
+				const response = await fetch('/game/tournaments/create_tournament_form/', {
+					method: 'POST',
+					headers: {
+						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`,
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
+					},
+					body: formData
+				});
+				if (response.ok) {
+					console.log("Tournament created successfully", response);
+					this.loadTemplate('tournaments');
+				} else {
+					console.log("Failed to create tournament", response);
+					throw new Error("Failed to create tournament");
 				}
-			});
+			} catch (error) {
+				this.notifyError(error.message);
+			}
 		});
 	}
 
@@ -595,14 +623,15 @@ class Router {
 				alert("Your account has been deleted.");
 				sessionStorage.removeItem('access_token');
 				sessionStorage.removeItem('refresh_token');
-				this.loadNav();
-				this.loadChat();
-				window.location.hash = '/home';
+				this.chat.chatSocket?.close();
+				this.game.gameSocket?.close();
+				this.tournament.tournamentSocket?.close();
+				this.reload();
 			} else {
 				throw new Error("Failed to delete account");
 			}
 		} catch (error) {
-			console.error("Error deleting account: ", error);
+			this.notifyError(`Error deleting account: ${error}`);
 		}
 	}
 
@@ -625,14 +654,13 @@ class Router {
 				throw new Error("Failed to anonymize data");
 			}
 		} catch (error) {
-			console.error("Error anonymizing data: ", error);
+			this.notifyError(`Error anonymizing data: ${error}`);
 		}
 	}
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-	drawBackground();
-});
+// document.addEventListener('DOMContentLoaded', () => {
+// });
 
 const navElement = document.getElementById('nav');
 const appElement = document.getElementById('app');

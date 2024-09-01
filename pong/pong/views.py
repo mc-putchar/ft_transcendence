@@ -14,11 +14,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import Profile, PlayerMatch, Tournament, TournamentPlayer
 from game.serializers import PlayerSerializer
-from .forms import ProfileUpdateForm, UserUpdateForm, ChangePasswordForm
+from .forms import ProfileUpdateForm, UserUpdateForm, ChangePasswordForm, UsernameCollisionForm
 from game.forms import CreateTournamentForm
 
 from .auth42 import exchange_code_for_token, get_user_data
-from .context_processors import get_user_from_token
+from .context_processors import get_user_from_token, get_user_from_validated_token
 
 logger = logging.getLogger(__name__)
 
@@ -30,20 +30,16 @@ def templates(request, template_name):
     context = {}
     match template_name:
         case 'home' | 'navbar' | 'chat':
-            template = loader.get_template(f"{template_name}.html")
             context = get_user_from_token(request)
         case 'dashboard' | 'online-game':
-            template = loader.get_template(f"{template_name}.html")
             user = get_user_from_token(request)['user']
             if user:
                 context = get_user_info(request, user.username)
         case 'profile':
-            template = loader.get_template('profile.html')
             user_data = get_user_from_token(request)
             if user_data['user']:
                 context = update_profile(request, user_data['user'])
-        case 'leaderboard':
-            template = loader.get_template('leaderboard.html')
+        case 'scoreboard':
             user_data = get_user_from_token(request)
             if user_data['user']:
                 users = Profile.objects.all()
@@ -56,17 +52,39 @@ def templates(request, template_name):
                 }, users))
                 context = { 'users': users }
         case 'tournaments':
-            template = loader.get_template('tournaments.html')
             user_data = get_user_from_token(request)
             if user_data['user']:
                 context = user_data
                 context['tournaments'] = Tournament.objects.all()
                 context['t_form'] = CreateTournamentForm()
-        case _:
-            try:
-                template = loader.get_template(f"{template_name}.html")
-            except:
-                template = loader.get_template("404.html")
+        case 'username_collision':
+            template_name = 'username_collision'
+            error_html = '<p>Username already exists</p><button onclick="window.history.back()">Go back</button>'
+            if request.method == 'POST':
+                u_form = UsernameCollisionForm(request.POST)
+                if u_form.is_valid():
+                    username = u_form.cleaned_data['username']
+                    email = request.POST['email']
+                    forty_two_id = request.POST['forty_two_id']
+                    image_url = request.POST['image_url']
+                    user, created = create_42user(username, email, forty_two_id, image_url)
+                    if created:
+                        refresh = RefreshToken.for_user(user)
+                        access_token = str(refresh.access_token)
+                        refresh_token = str(refresh)
+                        context = {
+                            'access_token': access_token,
+                            'refresh_token': refresh_token,
+                            'user': get_user_from_validated_token(access_token),
+                        }
+                    else:
+                        return HttpResponse(error_html, status=400)
+                else:
+                    return HttpResponse(error_html, status=400)
+    try:
+        template = loader.get_template(f"{template_name}.html")
+    except:
+        template = loader.get_template("404.html")
     return HttpResponse(template.render(context, request=request))
 
 def profiles(request, username):
@@ -179,6 +197,24 @@ def auth42(request):
     auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=public&state={state}"
     return redirect(auth_url)
 
+def create_42user(username, email, forty_two_id, image_url):
+    user, created = User.objects.get_or_create(
+        username=username, defaults={'email': email})
+    if created:
+        user.set_unusable_password()
+        profile = user.profile
+        profile.forty_two_id = forty_two_id
+        profile.alias = username
+        if profile.image.name == 'profile_images/default.png' and image_url:
+            response = requests.get(image_url)
+            if response.status_code == 200:
+                image_path = f'profile_images/{username}.png'
+                with open(f'media/{image_path}', 'wb') as f:
+                    f.write(response.content)
+                profile.image = image_path
+        profile.save()
+    return user, created
+
 def redirect_view(request):
     code = request.GET.get('code')
     state = request.GET.get('state')
@@ -203,25 +239,17 @@ def redirect_view(request):
                 profile = Profile.objects.get(forty_two_id=forty_two_id)
                 user = profile.user
             except Profile.DoesNotExist:
-                user, created = User.objects.get_or_create(
-                    username=username, defaults={'email': email})
-
-                if created:
-                    user.set_unusable_password()
-                    profile = user.profile
-                    profile.forty_two_id = forty_two_id
-                    profile.alias = username
-                    if profile.image.name == 'profile_images/default.png' and image_url:
-                        response = requests.get(image_url['versions']['medium'])
-                        if response.status_code == 200:
-                            image_path = f'profile_images/{username}.png'
-                            with open(f'media/{image_path}', 'wb') as f:
-                                f.write(response.content)
-                            profile.image = image_path
-                    profile.save()
-                else:
-                    # TODO: handle username collision
-                    return HttpResponse('Username collision', status=400)
+                image_url = image_url['versions']['medium']
+                user, created = create_42user(username, email, forty_two_id, image_url)
+                if not created:
+                    context = {
+                        'username': username,
+                        'email': email,
+                        'forty_two_id': forty_two_id,
+                        'image_url': image_url,
+                        'u_form': UsernameCollisionForm(),
+                    }
+                    return render(request, 'username_collision.html', context)
 
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)

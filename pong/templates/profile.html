@@ -1,34 +1,51 @@
 
 {% if user.is_authenticated %}
-{% load static %}
-<h2>Profile</h2>
-<div class="fluid">
-<h3> {{ username }} </h3>
-<img id="profile-image" src="{{ profilepic }}" class="rounded-circle account-img" alt="Profile Picture" style="width: 100px; height: auto;">
-</div>
-<div class="col-md-18">
-    <div class="row mt-12">
-        <div class="card p-12 shadow-sm">
-            <div class="card-body text-center container-background">
-                <div class="container-fluid">
-                    {% csrf_token %}
-                    <form class="form" id="profile-form" method="POST" enctype="multipart/form-data">
-                        {{ u_form.as_p }}
-                        {{ p_form.as_p }}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow bg-secondary-subtle">
+                <div class="card-header bg-dark text-success d-flex justify-content-between align-items-center">
+                    <button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
+                    <h5 class="mb-0">Edit Profile</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="mb-0"> {{ username }} </h1>
+                </div>
+                <div class="d-flex align-items-start">
+                    <div class="nav flex-column nav-pills m-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                      <button class="nav-link active my-1" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="true">User Profile</button>
+                      <button class="nav-link my-1" id="v-pills-account-tab" data-bs-toggle="pill" data-bs-target="#v-pills-account" type="button" role="tab" aria-controls="v-pills-account" aria-selected="false">Manage Account</button>
+                      <button class="nav-link my-1" id="v-pills-settings-tab" data-bs-toggle="pill" data-bs-target="#v-pills-settings" type="button" role="tab" aria-controls="v-pills-settings" aria-selected="false">Game Settings</button>
+                    </div>
 
-                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                        <button class="btn btn-primary" type="submit">Update</button>
-                    </form>
-                    {% if user.profile.blockchain_opted_in %}
-                        <button id="blockchain-optin" class="btn btn-primary">Blockchain Opt-In</button>
-                    {% endif %}
-                    <button id="account-administration" class="btn btn-warning">Account Administration</button>
-                    <form class="form" id="password-form" method="POST" style="display: none;">
-                        {{ cp_form.as_p }}
-                        <button class="btn btn-primary" type="submit">Change Password</button>
-                    </form>
-                    <button id="anonymize-data" class="btn btn-warning" style="display: none;">Anonymize Data</button>
-                    <button id="delete-account" class="btn btn-danger" style="display: none;">Delete Account</button>
+                    <div class="card-body text-center container-background">
+                        <div class="tab-content" id="v-pills-tabContent">
+                            <div class="tab-pane fade show active" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
+                                <img id="profile-image" src="{{ profilepic }}" class="rounded account-img" alt="Profile Picture" style="width: 210px; height: auto;">
+                                <form class="form" id="profile-form" method="POST" enctype="multipart/form-data">
+                                    {{ u_form.as_p }}
+                                    {{ p_form.as_p }}
+                                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                                    <button class="btn btn-primary my-2" type="submit">Update</button>
+                                </form>
+                            </div>
+
+                            <div class="tab-pane fade" id="v-pills-account" role="tabpanel" aria-labelledby="v-pills-account-tab">
+                                {% if not user.profile.blockchain_address %}
+                                    <button id="blockchain-optin" class="btn btn-primary my-2">Blockchain Opt-In</button>
+                                {% endif %}
+                                <form class="form" id="password-form" method="POST">
+                                    {{ cp_form.as_p }}
+                                    <button class="btn btn-primary" type="submit">Change Password</button>
+                                </form>
+                                <button id="anonymize-data" class="btn btn-warning my-2">Anonymize Data</button>
+                                <button id="delete-account" class="btn btn-danger my-2">Delete Account</button>
+                            </div>
+
+                            <div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">TODO...</div>
+
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -36,6 +53,6 @@
 </div>
 
 {% else %}
-	<p>Log in required to view this page.</p>
-	<button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
+    <p>Log in required to view this page.</p>
+    <button class="btn btn-primary" onclick="location.href='#/login'">Log in</button>
 {% endif %}

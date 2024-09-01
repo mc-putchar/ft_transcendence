@@ -8,13 +8,14 @@ if not on docker first create a virtual env:
    source testenv/bin/activate
    pip install --upgrade pip
    pip install -r requirements.txt
+   python manage.py makemigrations
    python manage.py migrate
 ```
 
 to run the server:
 
 ```bash
-python manage.py runserver 4222
+python manage.py runserver 8000
 ```
 
 Adding users via script:

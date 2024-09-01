@@ -1,20 +1,19 @@
 "use strict";
 
 import { getJSON, postJSON, createModal, getCookie, deleteJSON } from "./utils.js";
-import { Notification } from "./notification.js";
+import { showNotification } from "./notification.js";
 
 class TournamentRouter {
-	constructor(crsfToken, appElement) {
-		this.csrfToken = crsfToken;
+	constructor(appElement) {
 		this.appElement = appElement;
 		this.tournamentSocket = null;
 		this.tournamentID = null;
 		this.username = "";
+		this.csrfToken = getCookie('csrftoken');
 	}
 
 	showError(message) {
-		const notification = new Notification(message, "error");
-		notification.show();
+		showNotification(message, "error");
 	}
 
 	setupTournamentWebSocket(tournamentID) {
@@ -32,9 +31,7 @@ class TournamentRouter {
 			`wss://${window.location.host}/ws/tournament/${tournamentID}/?token=${accessToken}`
 		);
 
-		this.tournamentSocket.addEventListener('open', () => {
-			console.log("Tournament socket opened");
-		});
+		this.tournamentSocket.addEventListener('open', () => console.log("Tournament socket opened"));
 		this.tournamentSocket.addEventListener('error', (e) => console.error("Tournament websocket error:", e));
 		this.tournamentSocket.addEventListener('close', (e) => {
 			if (!e.wasClean) console.error("Tournament socket closed unexpectedly:", e);
@@ -46,8 +43,10 @@ class TournamentRouter {
 	async route(event) {
 		if (event.endsWith('join/')) {
 			this.tournamentID = event.split('/')[1];
-			if (this.tournamentID && await this.joinTournament(this.tournamentID))
-				return `in-tournament/${this.tournamentID}`;
+			if (this.tournamentID && await this.joinTournament(this.tournamentID)) {
+				history.back();
+				return `/in-tournament/${this.tournamentID}`;
+			}
 		} else if (event.endsWith('leave/')) {
 			this.tournamentID = event.split('/')[1];
 			this.leaveTournament(this.tournamentID);
@@ -57,22 +56,15 @@ class TournamentRouter {
 		} else if (event.endsWith('delete_tournament/')) {
 			this.tournamentID = event.split('/')[1];
 			this.deleteTournament(this.tournamentID);
+		} else if (event.endsWith('next_round/')) {
+			this.tournamentID = event.split('/')[1];
+			this.nextRound(this.tournamentID);
 		} else {
-			const data = await getJSON(`/game/${event}`, this.csrfToken);
-			if (data) {
-				const fields = [
-					{ key: 'name', label: 'Name' },
-					{ key: 'player_limit', label: 'Max Players' },
-					{ key: 'status', label: 'Status' },
-				];
-				createModal(data, "tournament-modal", "tournament-modal-content", fields);
-				window.location.hash = '/tournaments';
-			} else {
-				this.showError("Error loading content");
-			}
+			console.debug("Unknown tournament route:", event);
 		}
 		this.tournamentID = null;
-		return 'tournaments';
+		history.back();
+		return "/tournaments";
 	}
 
 	parseMessage(event) {
@@ -86,19 +78,23 @@ class TournamentRouter {
 				case 'match':
 					const matchID = message.split(' ')[1];
 					const player1 = message.split(' ')[2];
-					const player2 = message.split(' ')[4];
-					if (this.username === player1 || this.username === player2) {
-						console.log("Starting match:", matchID);
-						// start game
-						const gameEvent = new CustomEvent('game', {
-							detail: {
-								gameID: matchID,
-								player: (this.username === player1) ? player1 : player2,
-								opponent: (this.username === player1) ? player2 : player1,
-								tournamentID: this.tournamentID,
-							},
-						});
-						this.appElement.dispatchEvent(gameEvent);
+					if (message.split(' ')[3] === 'vs') {
+						const player2 = message.split(' ')[4];
+						if (this.username === player1 || this.username === player2) {
+							const isChallenger = (this.username === player1);
+							console.log("Starting match:", matchID);
+							// start game
+							const gameEvent = new CustomEvent('game', {
+								detail: {
+									tournamentID: this.tournamentID,
+									gameID: matchID,
+									isChallenger: isChallenger,
+									player: isChallenger ? player1 : player2,
+									opponent: isChallenger ? player2 : player1,
+								},
+							});
+							this.appElement.dispatchEvent(gameEvent);
+						}
 					}
 				case 'start':
 					console.log("Starting tournament");
@@ -113,6 +109,13 @@ class TournamentRouter {
 			const action = data.message.split(' ')[0];
 			const username = data.message.split(' ')[1];
 			if (action === 'connected') {
+				const event = new CustomEvent('announcement', {
+					detail: {
+						origin: 'tournament',
+						message: `${username} joined the tournament`,
+					},
+				});
+				this.appElement.dispatchEvent(event);
 				console.log(`${username} joined the tournament`);
 			} else if (action === 'disconnected') {
 				console.log(`${username} left the tournament`);
@@ -169,6 +172,16 @@ class TournamentRouter {
 			this.showError("Failed to delete tournament");
 		}
 		this.tournamentSocket?.close();
+	}
+
+	async nextRound(tournamentID) {
+		const response = await postJSON(`/game/tournaments/${tournamentID}/next_round/`, this.csrfToken);
+		if (response) {
+			console.log("Next round:", tournamentID);
+		} else {
+			console.debug("Failed to start next round");
+			this.showError("Failed to start next round");
+		}
 	}
 
 	closeWebSocket() {

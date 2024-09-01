@@ -30,9 +30,10 @@ class Notification {
 				</button>
 			</div>
 			<div class="toast-body">
-				${this.message}
+				<textarea id="notification-msg" class="form-control" rows="3" readonly></textarea>
 			</div>
 		`;
+		toast.querySelector("#notification-msg").value = this.message;
 		root.appendChild(toast);
 
 		const options = {
@@ -57,6 +58,7 @@ function showNotification(message, type, img=DEFAULT_IMAGE, sound=null) {
 	notification.show();
 	if (sound) {
 		const audio = new Audio(sound);
+		audio.volume = 0.5;
 		audio.play();
 	}
 }
