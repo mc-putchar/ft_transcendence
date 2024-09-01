@@ -8,10 +8,33 @@ import websockets
 import ssl
 import certifi
 
+
+import os
+import time
+
+fifo_in = "/tmp/pong_in"
+fifo_out = "/tmp/pong_out"
+
+
+def movePlayer1():
+	global player1_y
+	# move up and down with sin
+	# get postition from player1
+	player1_y = 12 #TODO;
+
+def movePlayer2():
+	global player2_y
+	
+	# move up and down with sin
+	player2_y = int(10 + 5 * (time.time() % 1.0)) 
+ 
+
 DEBUG = True
 
 LOGIN_ROUTE = '/api/login/'
 
+fifo_in = "/tmp/pong_in"
+fifo_out = "/tmp/pong_out"
 
 console = Console()
 
@@ -99,7 +122,8 @@ class Game:
 					username = data_json.get('message')
 					console.print(f'[bold cyan]{username}[/bold cyan] has connected.')
 				elif msg_type == 'game_state':
-					console.print(data_json.get('game_state'), style='blue')
+					# console.print(data_json.get('game_state'), style='blue')
+					self.game_state = data_json.get('game_state')
 				else:
 					console.print(data_json.get('message'))
 					pass
@@ -155,6 +179,43 @@ class Game:
 				'player': 'player2',
 			}))
 			await asyncio.sleep(1)
+
+	
+	async def update_client(self):
+		with open(fifo_out, 'w') as pipe_out, open(fifo_in, 'r') as pipe_in:
+			try:
+				while True:
+					# get player1 position and player2 position from the named pipe
+	
+					movePlayer1()
+					movePlayer2()
+	
+					p1_pos = int(self.game_state["player1"]["x"])
+					p2_pos = int(self.game_state["player2"]["x"])
+					ball_x = int(self.game_state["ball"]["x"])
+					ball_y = int(self.game_state["ball"]["y"])
+					
+					pipe_out.write(f"{str(p1_pos)}")
+					pipe_out.write(f"{str(p2_pos)})")
+					pipe_out.write(f"{str(ball_x)}")
+					pipe_out.write(f"{str(ball_y)}\n")
+
+					player1_dx = pipe_in.readline().strip()
+					
+					if player1_dx:
+						print(f"Received: {player1_dx}")
+						await self.send_move(player1_dx)
+
+					pipe_out.flush()  # Ensure the data is sent immediately
+	
+					# Receive player1's position from C program
+					player1_pos = pipe_in.readline()
+	
+					if player1_pos:
+						print(f"Received: {player1_pos}")
+	
+			except KeyboardInterrupt:
+				print("Terminated.")
 
 class Chat:
 	def __init__(self, base_url, jwt_token, username):

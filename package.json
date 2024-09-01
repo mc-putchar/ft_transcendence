@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "https-proxy-agent": "^7.0.5",
+    "wscat": "^5.2.1"
+  }
+}
