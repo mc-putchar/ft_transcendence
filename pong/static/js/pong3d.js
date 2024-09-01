@@ -246,7 +246,7 @@ class Hud {
 			this.scoreText = new THREE.Mesh(textGeo, textMat);
 			this.scoreText.position.x = this.camera.left + this.camera.right - textGeo.boundingBox.max.x / 2;
 			this.scoreText.position.y = this.camera.top - 0.5;
-			this.scoreText.rotateX(Math.PI / 6);
+			this.scoreText.rotateX(Math.PI / 8);
 			this.scene.add(this.scoreText);
 		});
 		// this.composer = new EffectComposer(renderer);
@@ -282,7 +282,7 @@ class Hud {
 			this.scoreText = new THREE.Mesh(textGeo, textMat);
 			this.scoreText.position.x = this.camera.left + this.camera.right - textGeo.boundingBox.max.x / 2;
 			this.scoreText.position.y = this.camera.top - 0.5;
-			this.scoreText.rotateX(Math.PI / 6);
+			this.scoreText.rotateX(Math.PI / 8);
 			this.scene.add(this.scoreText);
 		});
 	}
@@ -665,8 +665,8 @@ class Client3DGame {
 	init (gameSetup) {
 		// setup canvas
 		this.canvas = document.createElement('canvas');
-		this.canvas.width = window.innerWidth;
-		this.canvas.height = window.innerHeight;
+		// this.canvas.width = window.innerWidth;
+		// this.canvas.height = window.innerHeight;
 		this.parent.appendChild(this.canvas);
 
 		// setup renderer
@@ -785,26 +785,39 @@ class Client3DGame {
 			folder.add(this.camera.position, 'x').min(-300).max(300).step(1).name('X');
 			folder.add(this.camera.position, 'y').min(0).max(300).step(1).name('Y');
 			folder.add(this.camera.position, 'z').min(-300).max(300).step(1).name('Z');
+			folder.close();
 		}
 		{
-			const folder = this.gui.addFolder('Lighting');
-			folder.add(this.arena.lightbulb1.position, 'x').min(-300).max(300).step(1).name('Light 1 X');
-			folder.add(this.arena.lightbulb1.position, 'y').min(0).max(300).step(1).name('Light 1 Y');
-			folder.add(this.arena.lightbulb1.position, 'z').min(-300).max(300).step(1).name('Light 1 Z');
-			folder.add(this.arena.lightbulb2.position, 'x').min(-300).max(300).step(1).name('Light 2 X');
-			folder.add(this.arena.lightbulb2.position, 'y').min(0).max(300).step(1).name('Light 2 Y');
-			folder.add(this.arena.lightbulb2.position, 'z').min(-300).max(300).step(1).name('Light 2 Z');
-
-			folder.add(this.arena.spotLight.position, 'x').min(-300).max(300).step(1).name('Spot Light X');
-			folder.add(this.arena.spotLight.position, 'y').min(0).max(300).step(1).name('Spot Light Y');
-			folder.add(this.arena.spotLight.position, 'z').min(-300).max(300).step(1).name('Spot Light Z');
-
-			folder.add(this.arena.spotLight, 'angle').min(0).max(Math.PI).step(0.01).name('Spot Light Angle');
-			folder.add(this.arena.spotLight, 'penumbra').min(0).max(1).step(0.01).name('Spot Light Penumbra');
-			folder.add(this.arena.spotLight, 'decay').min(1).max(2).step(0.01).name('Spot Light Decay');
-			folder.add(this.arena.spotLight, 'distance').min(0).max(300).step(1).name('Spot Light Distance');
-
-			folder.add(this.arena.ambient_light, 'intensity').min(0).max(2).step(0.01).name('Ambient Light Intensity');
+			const folder = this.gui.addFolder('Lights');
+			const ambientDir = folder.addFolder('Ambient Light');
+			ambientDir.add(this.arena.ambient_light, 'intensity').min(0).max(2).step(0.01).name('Intensity');
+			ambientDir.addColor(this.arena.ambient_light, 'color').name('Color');
+			ambientDir.close();
+			const lightDir1 = folder.addFolder('Light 1');
+			lightDir1.add(this.arena.lightbulb1.position, 'x').min(-300).max(300).step(1).name('Light 1 X');
+			lightDir1.add(this.arena.lightbulb1.position, 'y').min(0).max(300).step(1).name('Light 1 Y');
+			lightDir1.add(this.arena.lightbulb1.position, 'z').min(-300).max(300).step(1).name('Light 1 Z');
+			lightDir1.add(this.arena.lightbulb1, 'intensity').min(0).max(2).step(0.01).name('Intensity');
+			lightDir1.addColor(this.arena.lightbulb1, 'color').name('Color');
+			lightDir1.close();
+			const lightDir2 = folder.addFolder('Light 2');
+			lightDir2.add(this.arena.lightbulb2.position, 'x').min(-300).max(300).step(1).name('Light 2 X');
+			lightDir2.add(this.arena.lightbulb2.position, 'y').min(0).max(300).step(1).name('Light 2 Y');
+			lightDir2.add(this.arena.lightbulb2.position, 'z').min(-300).max(300).step(1).name('Light 2 Z');
+			lightDir2.add(this.arena.lightbulb2, 'intensity').min(0).max(2).step(0.01).name('Intensity');
+			lightDir2.addColor(this.arena.lightbulb2, 'color').name('Color');
+			lightDir2.close();
+			const spotDir = folder.addFolder('Spot Light');
+			spotDir.add(this.arena.spotLight.position, 'x').min(-300).max(300).step(1).name('Spot Light X');
+			spotDir.add(this.arena.spotLight.position, 'y').min(0).max(300).step(1).name('Spot Light Y');
+			spotDir.add(this.arena.spotLight.position, 'z').min(-300).max(300).step(1).name('Spot Light Z');
+			spotDir.add(this.arena.spotLight, 'intensity').min(0).max(2).step(0.01).name('Spot Light Intensity');
+			spotDir.addColor(this.arena.spotLight, 'color').name('Spot Light Color');
+			spotDir.add(this.arena.spotLight, 'angle').min(0).max(Math.PI).step(0.01).name('Spot Light Angle');
+			spotDir.add(this.arena.spotLight, 'penumbra').min(0).max(1).step(0.01).name('Spot Light Penumbra');
+			spotDir.add(this.arena.spotLight, 'decay').min(1).max(2).step(0.01).name('Spot Light Decay');
+			spotDir.add(this.arena.spotLight, 'distance').min(0).max(300).step(1).name('Spot Light Distance');
+			spotDir.close();
 			folder.close();
 		}
 		{
@@ -839,12 +852,12 @@ class Client3DGame {
 
 		this.gui.domElement.style.position = 'absolute';
 		this.gui.domElement.style.top = '10%';
-		this.gui.domElement.style.right = '0';
+		// this.gui.domElement.style.right = '0';
 		this.gui.domElement.style.zIndex = '199';
-		this.gui.domElement.style.width = '360px';
-		this.gui.domElement.style.height = '60%';
-		this.gui.domElement.style.overflow = 'auto';
-		this.gui.domElement.style.backgroundColor = 'rgba(200, 200, 200, 0.5)';
+		// this.gui.domElement.style.width = '360px';
+		// this.gui.domElement.style.height = '60%';
+		// this.gui.domElement.style.overflow = 'auto';
+		// this.gui.domElement.style.backgroundColor = 'rgba(200, 200, 200, 0.5)';
 		this.gui.domElement.style.display = 'none';
 		document.body.appendChild(this.gui.domElement);
 
@@ -905,8 +918,8 @@ class Client3DGame {
 	}
 
 	resize (ev) {
-		const width = this.parent.clientWidth;
-		const height = this.parent.clientHeight;
+		const width = this.canvas.clientWidth;
+		const height = this.canvas.clientHeight;
 		// const needResize = this.canvas.width !== width || this.canvas.height !== height;
 		// if (needResize) {
 			this.camera.aspect = width / height;

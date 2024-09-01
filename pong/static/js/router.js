@@ -396,6 +396,7 @@ class Router {
 
 	handleRegistrationForm() {
 		const form = document.getElementById('registration-form');
+		if (!form) return;
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const username = document.getElementById('username').value;

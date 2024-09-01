@@ -1,7 +1,13 @@
+#!/usr/bin/env python3
+
 import click
 import requests
 from requests.exceptions import RequestException
 from rich.console import Console
+from textual.app import App, ComposeResult
+from textual.containers import Container, Horizontal, Vertical
+from textual.widgets import Label, Button, Header, Footer, Static, Input, RichLog, Placeholder
+from textual import events, on
 import json
 import asyncio
 import websockets
@@ -40,7 +46,7 @@ def get_csrf_token(url):
 		csrf_token = response.cookies.get('csrftoken')
 		if not csrf_token:
 			raise ValueError('CSRF token not found in cookies.')
-		console.print(f'Retrieved CSRF token: [green]{csrf_token}[/green]', style='purple')
+		console.print(f'Retrieved CSRF token: [green]{csrf_token}[/green]', style='magenta')
 		return csrf_token, response.cookies
 	except (RequestException, KeyError, ValueError) as e:
 		console.print(f'An error occurred: {e}', style='red')
@@ -55,7 +61,7 @@ def obtain_jwt_token(base_url, username, password):
 		jwt_token = response.json().get('access')
 		if not jwt_token:
 			raise ValueError('JWT token not found in response.')
-		console.print(f'Retrieved JWT token: [green]{jwt_token}[/green]', style='purple')
+		console.print(f'Retrieved JWT token: [green]{jwt_token}[/green]', style='magenta')
 		return jwt_token
 	except (RequestException, KeyError, ValueError) as e:
 		console.print(f'An error occurred: {e}', style='red')
@@ -68,8 +74,19 @@ def get_my_profile(base_url, jwt_token, cookies):
 	}
 	response = send_get_request(url, headers, cookies)
 	if response:
-		console.print(response.json(), style='green')
+		profile = response.json()
+		console.print(profile, style='green')
+		return profile
+	return None
 
+def login(base_url, username, password):
+	jwt_token = obtain_jwt_token(base_url, username, password)
+	if not jwt_token:
+		return None
+	cookies = None
+	console.print(f'Logged in as [bold cyan]{username}[/bold cyan]. :thumbs_up:')
+	get_my_profile(base_url, jwt_token, cookies)
+	return jwt_token
 
 class Chat:
 	def __init__(self, base_url, jwt_token, username):
@@ -78,7 +95,7 @@ class Chat:
 		self.username = username
 		self.headers = {
 			'Authorization': f"Bearer {jwt_token}",
-			'Origin': 'https://wow.transcend42.online',
+			'Origin': 'https:/{base_url}',
 		}
 		self.websocket = None
 		self.users_list = []
@@ -134,32 +151,65 @@ class Chat:
 		except Exception as e:
 			console.print(f'WebSocket error: {e}', style='red')
 
+class TranscendCLI(App):
+	TITLE = 'Transcend42 CLI'
+	SUB_TITLE = '42Berlin spectacular transcendence CLI'
+	# BINDINGS = [
+	# 	Binding("ctrl+c", "quit", "Quit", show=False, priority=True),
+	# 	Binding("tab", "focus_next", "Focus Next", show=False),
+	# 	Binding("shift+tab", "focus_previous", "Focus Previous", show=False),
+	# ]
+
+	def __init__(self, username, jwt_token):
+		super().__init__()
+		self.base_url = 'wow.transcend42.online'
+		self.jwt_token = jwt_token
+		self.username = username
+		self.cookies = None
+		self.chat = None
+
+	async def on_start(self) -> None:
+		self.chat = Chat(self.base_url, self.jwt_token, self.username)
+		await self.chat.connect()
+
+	async def on_key(self, event: events.Key) -> None:
+		self.query_one(RichLog).write(event.key)
+		if event.key == 'q':
+			self.exit()
+
+	def compose(self) -> ComposeResult:
+		yield Header()
+		yield Label("Transcendence CLI")
+		yield Label("42Berlin spectacular transcendence CLI")
+		yield Container(
+			Horizontal(
+				Button("Chat", id="chat", variant="primary"),
+				Button("Play", id="play", variant="primary"),
+				Button("Leaderboard", id="leaderboard", variant="primary"),
+				classes="buttons",
+			),
+			id="main",
+		)
+		yield RichLog()
+		yield Input(placeholder="Type your message here", id="chatInput", max_length=100)
+		yield Footer()
+
 
 @click.command()
-@click.option('--base-url', default='wow.transcend42.online', help='The base URL for the server. Default is wow.transcend42.online.')
-@click.option('--username', prompt='Username', help='The username for authentication.')
-@click.option('--password', prompt=True, hide_input=True, help='The password for authentication.')
-@click.version_option("0.0.1", prog_name="transcendAPI")
-def login(base_url, username, password):
-	jwt_token = obtain_jwt_token(base_url, username, password)
-	if not jwt_token:
-		console.print("Unable to obtain JWT token.", style='red')
+@click.option('-u', '--username', prompt='Username', help='The username for authentication.')
+@click.option('-p', '--password', prompt=True, hide_input=True, help='The password for authentication.')
+@click.option('--url', default='wow.transcend42.online', help='The base URL for the API.')
+@click.version_option("0.0.2", prog_name="transcendCLI")
+def startup(username, password, url):
+	"""42Berlin spectacular transcendence CLI"""
+	token = login(url, username, password)
+	if not token:
+		console.print('Authentication failed.', style='red')
 		return
-
-	cookies = None
-	get_my_profile(base_url, jwt_token, cookies)
-
-	console.print(f'Logged in as [bold cyan]{username}[/bold cyan]. :thumbs_up:')
-	# asyncio.run(connect_websocket(f'{base_url}/ws/tournament/1/', jwt_token))
-	chat = Chat(base_url, jwt_token, username)
-	asyncio.run(chat.connect())
-	while True:
-		accept = input('Send to chat: ')
-		if accept.lower() == 'exit':
-			break
+	app = TranscendCLI(username, token)
+	app.run()
+	import sys
+	sys.exit(app.return_code or 0)
 
 if __name__ == '__main__':
-	console.print('Welcome to transcendCLI!', style='bold green')
-	console.print('Please log in to continue.', style='bold green')
-
-	login()
+	startup()
