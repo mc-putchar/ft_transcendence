@@ -116,21 +116,22 @@ class Game:
 				extra_headers=self.headers,
 				ssl=ssl.create_default_context(cafile=certifi.where()),
 			) as self.websocket:
-				console.print('Connected to WebSocket server.')
+				console.print(f'Connected to Game server as {self.username}.')
 				await self.websocket.send(json.dumps({
 					'type': 'accept',
 					'message': f'match_id {match_id} {self.username}',
 				}))
+				await asyncio.sleep(1)
 				await self.websocket.send(json.dumps({
 					'type': 'register',
 					'player': 'player2',
 					'user': self.username,
-					'match_id': game_id,
+					'match_id': match_id,
 				}))
 				await asyncio.gather(
 					self.receive_message(),
-					self.send_message(),
 					self.send_ready(),
+					self.send_message(),
 				)
 		except websockets.exceptions.InvalidStatusCode as e:
 			console.print(f'WebSocket connection failed: {e}', style='red')
@@ -147,9 +148,14 @@ class Game:
 		while True:
 			await self.websocket.send(json.dumps({
 				'type': 'ready',
+				'player': 'player1',
+			}))
+			await self.websocket.send(json.dumps({
+				'type': 'ready',
 				'player': 'player2',
 			}))
-			await asyncio.sleep(3)
+			await asyncio.sleep(1)
+
 class Chat:
 	def __init__(self, base_url, jwt_token, username):
 		self.base_url = base_url
@@ -227,12 +233,16 @@ class Chat:
 			game_id = response.json().get('match_id')
 			if game_id:
 				console.print(f'Game ID: {game_id}')
+		response = send_post_request(f'https://{self.base_url}/game/matches/{game_id}/join/', self.headers)
+		if response:
+			console.print(response.json())
+		else:
+			console.print('Failed to join game.', style='red')
 		await self.websocket.send(json.dumps({
 			'type': 'challenge',
 			'username': self.username,
 			'message': 'accepted',
 		}))
-		response = send_post_request(f'https://{self.base_url}/game/matches/{game_id}/join/', self.headers)
 		await self.game.connect(username, game_id)
 
 	async def connect(self):
