@@ -1,3 +1,5 @@
+import { AudioController } from './audio.js';
+
 const ACTIVE_AI = false;
 
 let animationID = null;
@@ -312,6 +314,9 @@ class Game {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 		window.addEventListener("resize", ev => this.onResize(ev));
+
+		this.audio = new AudioController();
+		this.audio.playAudioTrack();
 	}
 	resize() {
 		this.canvas.width = this.parent.width;
@@ -452,6 +457,7 @@ class Game {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "left";
+						this.audio.playTone(this.ball.speedx);
 					}
 			}
 		} // LEFT PADDLE
@@ -464,6 +470,7 @@ class Game {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "right";
+						this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // RIGHT PADDLE
@@ -480,6 +487,7 @@ class Game {
 					
 					this.ball.speed_up();
 					this.score.lastTouch = "top";
+					this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // TOP PADDLE
@@ -495,6 +503,7 @@ class Game {
 	
 					this.ball.speed_up();
 					this.score.lastTouch = "bottom";
+					this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // BOTTOM PADDLE
@@ -505,19 +514,24 @@ class Game {
 		if (this.ball.x < arenaStartX) {
 			this.score.goal = true;
 			this.score.conceded += "left";
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 		else if (this.ball.x > arenaStartX + arenaWidth) {
 			this.score.goal = true;
 			this.score.conceded += "right";
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 		if (this.ball.y < arenaStartY) {
 			this.score.goal = true;
 			this.score.conceded += "top";
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 		else if (this.ball.y > arenaStartY + arenaHeight) {
+			window.playFx("/static/assets/arcade-alert.wav");
 			this.score.goal = true;
 			this.score.conceded += "bottom";
 		}
+
 	}
 	resetPositions () {
 		this.ball.initBall(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);

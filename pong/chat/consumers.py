@@ -37,12 +37,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if not self.user:
                 raise jwt.InvalidTokenError("User not found")
         except jwt.ExpiredSignatureError:
+            logger.error("Token expired")
             await self.close()
             return
         except jwt.InvalidTokenError:
+            logger.error("Invalid token")
             await self.close()
             return
         except Profile.DoesNotExist:
+            logger.error("Profile does not exist")
             await self.close()
             return
 
