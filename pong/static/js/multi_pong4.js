@@ -288,13 +288,26 @@ class Animation {
 
 let resizeTimeout;
 
-class Game {
-	constructor(parentElement) {
-		this.parent = parentElement;
+class Game4P {
+	constructor() {
+		this.parent = document.getElementById('app');
+
+		console.log("Pong 4P - Starting new game");
+		const nav = document.getElementById('nav');
+		const parent = document.getElementById('app');
+	
+		while (parent.firstChild) {
+			parent.removeChild(parent.lastChild);
+		}
+
+		parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
+		parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
+	
 		this.canvas = document.createElement("canvas");
 		this.parent.appendChild(this.canvas);
 		this.canvas.style.width = Math.min(this.parent.height, this.parent.width);
 		this.canvas.style.height = Math.min(this.parent.height, this.parent.width);
+
 		this.canvas.width = this.parent.width;
 		this.canvas.height = this.parent.height;
 		this.context = this.canvas.getContext("2d");
@@ -564,32 +577,33 @@ class Game {
 		this.playerBottom.drawPaddle(this.context);
 		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
 	}
+	start() {
+		this.loop();
+	}
+	
+	stopGame () {
+		console.log("pong stopped and exited");
+		this.stopPong4PGame();
+		this.audio.stopAudioTrack();
+	}
+
+	stopPong4PGame () {
+		// get animationID
+		const nav = document.getElementById('nav');
+		const parent = document.getElementById('app');
+		//
+
+		// const pong = new Game4P(parent);
+		if(this.animRequestId) {
+			cancelAnimationFrame(this.animRequestId);
+		}
+		this.animRequestId = null;
+		document.removeEventListener("keydown", ev => this.keydown(ev));
+		document.removeEventListener("keyup", ev => this.keyup(ev));
+		window.removeEventListener("resize", ev => this.onResize(ev));
+		return ;
+	}
 };
 
-function startPong4PGame() {
-	console.log("Pong 4P - Starting new game");
-	const parent = document.getElementById('app');
-	const nav = document.getElementById('nav');
-
-	parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
-	parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
-
-	while (parent.firstChild) {
-		parent.removeChild(parent.lastChild);
-	}
-	const pong = new Game(parent);
-	pong.loop();
-}
-
-function stopPong4PGame () {
-	if(animationID) {
-		cancelAnimationFrame(animationID);
-	}
-	animationID = null;
-	document.removeEventListener("keydown", ev => this.keydown(ev));
-	document.removeEventListener("keyup", ev => this.keyup(ev));
-	window.removeEventListener("resize", ev => this.onResize(ev));
-	return ;
-}
-
-export { startPong4PGame, stopPong4PGame };
+// export { startPong4PGame, stopPong4PGame };
+export { Game4P };

@@ -7,14 +7,12 @@ import asyncio
 import websockets
 import ssl
 import certifi
-
-
-import os
 import time
 
 fifo_in = "/tmp/pong_in"
 fifo_out = "/tmp/pong_out"
 
+TESTING = False
 
 def movePlayer1():
 	global player1_y
@@ -30,7 +28,6 @@ def movePlayer2():
  
 
 DEBUG = True
-
 LOGIN_ROUTE = '/api/login/'
 
 fifo_in = "/tmp/pong_in"
@@ -40,7 +37,7 @@ console = Console()
 
 def send_get_request(url, headers, cookies=''):
 	try:
-		response = requests.get(url, headers=headers, cookies=cookies)
+		response = requests.get(url, headers=headers, cookies=cookies, verify=TESTING)
 		response.raise_for_status()
 		return response
 	except (RequestException, KeyError, ValueError) as e:
@@ -49,7 +46,7 @@ def send_get_request(url, headers, cookies=''):
 
 def send_post_request(url, headers, cookies='', data=''):
 	try:
-		response = requests.post(url, data=data, headers=headers, cookies=cookies)
+		response = requests.post(url, data=data, headers=headers, cookies=cookies, verify=TESTING)
 		response.raise_for_status()
 		return response
 	except (RequestException, KeyError, ValueError) as e:
@@ -58,7 +55,7 @@ def send_post_request(url, headers, cookies='', data=''):
 
 def get_csrf_token(url):
 	try:
-		response = requests.get(url)
+		response = requests.get(url, verify=TESTING)
 		response.raise_for_status()
 		csrf_token = response.cookies.get('csrftoken')
 		if not csrf_token:
@@ -73,7 +70,7 @@ def obtain_jwt_token(base_url, username, password):
 	url = f"https://{base_url}{LOGIN_ROUTE}"
 	data = {'username': username, 'password': password}
 	try:
-		response = requests.post(url, data=data)
+		response = requests.post(url, data=data, verify=TESTING)
 		response.raise_for_status()
 		jwt_token = response.json().get('access')
 		if not jwt_token:
@@ -133,7 +130,10 @@ class Game:
 	async def connect(self, game_id = '', match_id = ''):
 		if game_id == '':
 			game_id = self.username
-		self.ws_url = f"wss://{self.base_url}/ws/game/{game_id}/?token={self.jwt_token}"
+		if TESTING:
+			self.ws_url = f"ws://{self.base_url}/ws/game/{game_id}/?token={self.jwt_token}"
+		else:	
+			self.ws_url = f"wss://{self.base_url}/ws/game/{game_id}/?token={self.jwt_token}"
 		try:
 			async with websockets.connect(
 				uri = self.ws_url,
@@ -273,21 +273,6 @@ class Chat:
 				console.print(f'Error decoding JSON: {e}', style='red')
 
 	async def accept_challenge(self, username):
-		# accept = await asyncio.to_thread(input, f'Accept challenge from {username}? [yes/no]: ')
-		# if accept.lower() == 'yes':
-		# 	data = {
-		# 		'message': 'accepted',
-		# 		'username': self.username,
-		# 	}
-		# 	await self.websocket.send(json.dumps(data))
-		# 	console.print(f'[bold cyan]{self.username}[/bold cyan] has accepted the challenge from [bold cyan]{username}[/bold cyan].', style='blue')
-		# else:
-		# 	data = {
-		# 		'message': 'rejected',
-		# 		'username': self.username,
-		# 	}
-		# 	await self.websocket.send(json.dumps(data))
-		# 	console.print(f'[bold cyan]{self.username}[/bold cyan] has rejected the challenge from [bold cyan]{username}[/bold cyan].', style='blue')
 		self.game = Game(self.base_url, self.jwt_token, self.username)
 		response = send_post_request(f'https://{self.base_url}/game/matches/create_match/', self.headers)
 		if response:
@@ -330,7 +315,11 @@ class Chat:
 @click.option('-p', '--password', prompt=True, hide_input=True, help='The password for authentication.')
 @click.option('--url', default='wow.transcend42.online', help='The base URL for the API.')
 @click.version_option("0.0.2", prog_name="transcendCLI")
-def login(url, username, password):
+@click.option('-t', '--test', is_flag=True, help='Testing mode.')
+def login(url, username, password, test):
+	global TESTING
+	TESTING = bool(test)
+
 	jwt_token = obtain_jwt_token(url, username, password)
 	if not jwt_token:
 		console.print("Unable to obtain JWT token.", style='red')
