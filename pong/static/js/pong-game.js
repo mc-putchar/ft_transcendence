@@ -3,8 +3,6 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-import { getAmps, playAudioTrack, stopAudioTrack, playTone } from './audio.js';
-
 const ACTIVE_AI = false;
 
 let animationID = null;
