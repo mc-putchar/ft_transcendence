@@ -81,7 +81,7 @@ schema: # Output OpenAPI3 Schema into pong/schema.yml
 	lolcat -a pong/schema.yml || cat pong/schema.yml
 
 newkey: # Generate a new secret key for Django
-	$(DC) -f $(SRC) run --rm --no-deps django python manage.py shell -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+	$(DC) -f $(SRC) run --rm --no-deps -e SKIP_DEPLOYMENT=true django python manage.py shell -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 
 swapmode: .env stop # Swap online/local mode (requires restart)
 	$(shell \

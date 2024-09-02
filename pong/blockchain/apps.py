@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 from blockchain.blockchain_api import PongBlockchain
+import os
 
 """When you use python manage.py runserver, Django starts two processes, one for the actual development server, the other to reload your application when the code changes.
 You can start the server without the reload option, and you will see only one process running:
@@ -11,6 +12,8 @@ class BlockchainConfig(AppConfig):
     name = 'blockchain'
 
     def ready(self):
+        if os.getenv('SKIP_DEPLOYMENT') == 'true':
+            return
         blockchain = PongBlockchain('http://blockchain:8545')
         if blockchain.is_connected() and not blockchain.is_deployed:
             address = blockchain.deploy()
