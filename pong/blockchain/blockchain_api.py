@@ -39,13 +39,12 @@ class PongBlockchain(metaclass=Singleton):
 	###################
 	def deploy(self):
 		logger.info("Connected") if self.is_connected() else logger.info("Connection failed")
-		if not self.is_deployed:
-			account = self.accounts[0]
-			hardhat_private_key = os.getenv('HARDHAT_PRIVATE_KEY').strip('"')
-			if not hardhat_private_key:
-				raise ValueError("HARDHAT_PRIVATE_KEY environment variable not set")
-			self.deploy_contract(account, hardhat_private_key, "PongTournament.sol")
-			logger.info(f"Contract deployed at address: {self.address}")
+		account = self.accounts[0]
+		hardhat_private_key = os.getenv('HARDHAT_PRIVATE_KEY').strip('"')
+		if not hardhat_private_key:
+			raise ValueError("HARDHAT_PRIVATE_KEY environment variable not set")
+		self.deploy_contract(account, hardhat_private_key, "PongTournament.sol")
+		logger.info(f"Contract deployed at address: {self.address}")
 		return self.address
 
 	def build_params(self, additional_params: dict):

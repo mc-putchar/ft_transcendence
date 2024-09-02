@@ -43,6 +43,11 @@ services:
     networks:
       - transcendeNet
     restart: unless-stopped
+    # healthcheck:
+    #   test: ["CMD", "python", "${PWD}/pong/blockchain/healthcheck.py"]
+    #   interval: 1s
+    #   timeout: 5s
+    #   retries: 5
 
   django:
     build:
@@ -70,6 +75,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      # blockchain:
+        # condition: service_healthy
     restart: unless-stopped
 
   db:
