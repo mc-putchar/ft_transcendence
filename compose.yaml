@@ -24,6 +24,7 @@ services:
 
   server:
     build:
+      image: caddy:2.8.4-alpine
       context: "${PWD}/server"
     configs:
       - source: caddyfile
