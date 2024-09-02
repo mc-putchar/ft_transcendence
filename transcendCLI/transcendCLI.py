@@ -7,17 +7,37 @@ import asyncio
 import websockets
 import ssl
 import certifi
+import time
+
+fifo_in = "/tmp/pong_in"
+fifo_out = "/tmp/pong_out"
+
+TESTING = False
+
+def movePlayer1():
+	global player1_y
+	# move up and down with sin
+	# get postition from player1
+	player1_y = 12 #TODO;
+
+def movePlayer2():
+	global player2_y
+	
+	# move up and down with sin
+	player2_y = int(10 + 5 * (time.time() % 1.0)) 
+ 
 
 DEBUG = True
-
 LOGIN_ROUTE = '/api/login/'
 
+fifo_in = "/tmp/pong_in"
+fifo_out = "/tmp/pong_out"
 
 console = Console()
 
 def send_get_request(url, headers, cookies=''):
 	try:
-		response = requests.get(url, headers=headers, cookies=cookies)
+		response = requests.get(url, headers=headers, cookies=cookies, verify=TESTING)
 		response.raise_for_status()
 		return response
 	except (RequestException, KeyError, ValueError) as e:
@@ -26,7 +46,7 @@ def send_get_request(url, headers, cookies=''):
 
 def send_post_request(url, headers, cookies='', data=''):
 	try:
-		response = requests.post(url, data=data, headers=headers, cookies=cookies)
+		response = requests.post(url, data=data, headers=headers, cookies=cookies, verify=TESTING)
 		response.raise_for_status()
 		return response
 	except (RequestException, KeyError, ValueError) as e:
@@ -35,7 +55,7 @@ def send_post_request(url, headers, cookies='', data=''):
 
 def get_csrf_token(url):
 	try:
-		response = requests.get(url)
+		response = requests.get(url, verify=TESTING)
 		response.raise_for_status()
 		csrf_token = response.cookies.get('csrftoken')
 		if not csrf_token:
@@ -50,7 +70,7 @@ def obtain_jwt_token(base_url, username, password):
 	url = f"https://{base_url}{LOGIN_ROUTE}"
 	data = {'username': username, 'password': password}
 	try:
-		response = requests.post(url, data=data)
+		response = requests.post(url, data=data, verify=TESTING)
 		response.raise_for_status()
 		jwt_token = response.json().get('access')
 		if not jwt_token:
@@ -99,7 +119,8 @@ class Game:
 					username = data_json.get('message')
 					console.print(f'[bold cyan]{username}[/bold cyan] has connected.')
 				elif msg_type == 'game_state':
-					console.print(data_json.get('game_state'), style='blue')
+					# console.print(data_json.get('game_state'), style='blue')
+					self.game_state = data_json.get('game_state')
 				else:
 					console.print(data_json.get('message'))
 					pass
@@ -109,7 +130,10 @@ class Game:
 	async def connect(self, game_id = '', match_id = ''):
 		if game_id == '':
 			game_id = self.username
-		self.ws_url = f"wss://{self.base_url}/ws/game/{game_id}/?token={self.jwt_token}"
+		if TESTING:
+			self.ws_url = f"ws://{self.base_url}/ws/game/{game_id}/?token={self.jwt_token}"
+		else:	
+			self.ws_url = f"wss://{self.base_url}/ws/game/{game_id}/?token={self.jwt_token}"
 		try:
 			async with websockets.connect(
 				uri = self.ws_url,
@@ -155,6 +179,43 @@ class Game:
 				'player': 'player2',
 			}))
 			await asyncio.sleep(1)
+
+	
+	async def update_client(self):
+		with open(fifo_out, 'w') as pipe_out, open(fifo_in, 'r') as pipe_in:
+			try:
+				while True:
+					# get player1 position and player2 position from the named pipe
+	
+					movePlayer1()
+					movePlayer2()
+	
+					p1_pos = int(self.game_state["player1"]["x"])
+					p2_pos = int(self.game_state["player2"]["x"])
+					ball_x = int(self.game_state["ball"]["x"])
+					ball_y = int(self.game_state["ball"]["y"])
+					
+					pipe_out.write(f"{str(p1_pos)}")
+					pipe_out.write(f"{str(p2_pos)})")
+					pipe_out.write(f"{str(ball_x)}")
+					pipe_out.write(f"{str(ball_y)}\n")
+
+					player1_dx = pipe_in.readline().strip()
+					
+					if player1_dx:
+						print(f"Received: {player1_dx}")
+						await self.send_move(player1_dx)
+
+					pipe_out.flush()  # Ensure the data is sent immediately
+	
+					# Receive player1's position from C program
+					player1_pos = pipe_in.readline()
+	
+					if player1_pos:
+						print(f"Received: {player1_pos}")
+	
+			except KeyboardInterrupt:
+				print("Terminated.")
 
 class Chat:
 	def __init__(self, base_url, jwt_token, username):
@@ -212,21 +273,6 @@ class Chat:
 				console.print(f'Error decoding JSON: {e}', style='red')
 
 	async def accept_challenge(self, username):
-		# accept = await asyncio.to_thread(input, f'Accept challenge from {username}? [yes/no]: ')
-		# if accept.lower() == 'yes':
-		# 	data = {
-		# 		'message': 'accepted',
-		# 		'username': self.username,
-		# 	}
-		# 	await self.websocket.send(json.dumps(data))
-		# 	console.print(f'[bold cyan]{self.username}[/bold cyan] has accepted the challenge from [bold cyan]{username}[/bold cyan].', style='blue')
-		# else:
-		# 	data = {
-		# 		'message': 'rejected',
-		# 		'username': self.username,
-		# 	}
-		# 	await self.websocket.send(json.dumps(data))
-		# 	console.print(f'[bold cyan]{self.username}[/bold cyan] has rejected the challenge from [bold cyan]{username}[/bold cyan].', style='blue')
 		self.game = Game(self.base_url, self.jwt_token, self.username)
 		response = send_post_request(f'https://{self.base_url}/game/matches/create_match/', self.headers)
 		if response:
@@ -269,7 +315,11 @@ class Chat:
 @click.option('-p', '--password', prompt=True, hide_input=True, help='The password for authentication.')
 @click.option('--url', default='wow.transcend42.online', help='The base URL for the API.')
 @click.version_option("0.0.2", prog_name="transcendCLI")
-def login(url, username, password):
+@click.option('-t', '--test', is_flag=True, help='Testing mode.')
+def login(url, username, password, test):
+	global TESTING
+	TESTING = bool(test)
+
 	jwt_token = obtain_jwt_token(url, username, password)
 	if not jwt_token:
 		console.print("Unable to obtain JWT token.", style='red')

@@ -1,3 +1,5 @@
+import { AudioController } from './audio.js';
+
 const ACTIVE_AI = false;
 
 let animationID = null;
@@ -286,13 +288,26 @@ class Animation {
 
 let resizeTimeout;
 
-class Game {
-	constructor(parentElement) {
-		this.parent = parentElement;
+class Game4P {
+	constructor() {
+		this.parent = document.getElementById('app');
+
+		console.log("Pong 4P - Starting new game");
+		const nav = document.getElementById('nav');
+		const parent = document.getElementById('app');
+	
+		while (parent.firstChild) {
+			parent.removeChild(parent.lastChild);
+		}
+
+		parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
+		parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
+	
 		this.canvas = document.createElement("canvas");
 		this.parent.appendChild(this.canvas);
 		this.canvas.style.width = Math.min(this.parent.height, this.parent.width);
 		this.canvas.style.height = Math.min(this.parent.height, this.parent.width);
+
 		this.canvas.width = this.parent.width;
 		this.canvas.height = this.parent.height;
 		this.context = this.canvas.getContext("2d");
@@ -312,6 +327,9 @@ class Game {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 		window.addEventListener("resize", ev => this.onResize(ev));
+
+		this.audio = new AudioController();
+		this.audio.playAudioTrack();
 	}
 	resize() {
 		this.canvas.width = this.parent.width;
@@ -452,6 +470,7 @@ class Game {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "left";
+						this.audio.playTone(this.ball.speedx);
 					}
 			}
 		} // LEFT PADDLE
@@ -464,6 +483,7 @@ class Game {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "right";
+						this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // RIGHT PADDLE
@@ -480,6 +500,7 @@ class Game {
 					
 					this.ball.speed_up();
 					this.score.lastTouch = "top";
+					this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // TOP PADDLE
@@ -495,6 +516,7 @@ class Game {
 	
 					this.ball.speed_up();
 					this.score.lastTouch = "bottom";
+					this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // BOTTOM PADDLE
@@ -505,19 +527,24 @@ class Game {
 		if (this.ball.x < arenaStartX) {
 			this.score.goal = true;
 			this.score.conceded += "left";
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 		else if (this.ball.x > arenaStartX + arenaWidth) {
 			this.score.goal = true;
 			this.score.conceded += "right";
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 		if (this.ball.y < arenaStartY) {
 			this.score.goal = true;
 			this.score.conceded += "top";
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 		else if (this.ball.y > arenaStartY + arenaHeight) {
+			window.playFx("/static/assets/arcade-alert.wav");
 			this.score.goal = true;
 			this.score.conceded += "bottom";
 		}
+
 	}
 	resetPositions () {
 		this.ball.initBall(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -550,32 +577,33 @@ class Game {
 		this.playerBottom.drawPaddle(this.context);
 		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
 	}
+	start() {
+		this.loop();
+	}
+	
+	stopGame () {
+		console.log("pong stopped and exited");
+		this.stopPong4PGame();
+		this.audio.stopAudioTrack();
+	}
+
+	stopPong4PGame () {
+		// get animationID
+		const nav = document.getElementById('nav');
+		const parent = document.getElementById('app');
+		//
+
+		// const pong = new Game4P(parent);
+		if(this.animRequestId) {
+			cancelAnimationFrame(this.animRequestId);
+		}
+		this.animRequestId = null;
+		document.removeEventListener("keydown", ev => this.keydown(ev));
+		document.removeEventListener("keyup", ev => this.keyup(ev));
+		window.removeEventListener("resize", ev => this.onResize(ev));
+		return ;
+	}
 };
 
-function startPong4PGame() {
-	console.log("Pong 4P - Starting new game");
-	const parent = document.getElementById('app');
-	const nav = document.getElementById('nav');
-
-	parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
-	parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
-
-	while (parent.firstChild) {
-		parent.removeChild(parent.lastChild);
-	}
-	const pong = new Game(parent);
-	pong.loop();
-}
-
-function stopPong4PGame () {
-	if(animationID) {
-		cancelAnimationFrame(animationID);
-	}
-	animationID = null;
-	document.removeEventListener("keydown", ev => this.keydown(ev));
-	document.removeEventListener("keyup", ev => this.keyup(ev));
-	window.removeEventListener("resize", ev => this.onResize(ev));
-	return ;
-}
-
-export { startPong4PGame, stopPong4PGame };
+// export { startPong4PGame, stopPong4PGame };
+export { Game4P };

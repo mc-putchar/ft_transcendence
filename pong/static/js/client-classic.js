@@ -1,6 +1,7 @@
 "use strict";
 
 import { GameData } from "./game-router.js";
+import { AudioController } from './audio.js';
 
 // Constants
 const CANVAS_PADDING = 2;
@@ -387,8 +388,9 @@ class ClientClassic {
 		this.isChallenger = gameSetup.isChallenger;
 		this.init();
 
-		console.log("Player 1:", this.player);
-		console.log("Player 2:", this.opponent);
+		this.audio = new AudioController();
+		this.audio.playAudioTrack();
+
 	}
 
 	init () {
@@ -518,6 +520,7 @@ class ClientClassic {
 			|| this.ball.y + this.ball.radius >= this.arena.startY + this.arena.height) {
 				this.ball.moveY();
 			}
+			this.audio.playTone(this.ball.speedx);
 			return true;
 		}
 		if (this.ball.y + this.ball.radius >= this.arena.startY + this.arena.height) {
@@ -527,6 +530,7 @@ class ClientClassic {
 			|| this.ball.y + this.ball.radius >= this.arena.startY + this.arena.height) {
 				this.ball.moveY();
 			}
+			this.audio.playTone(this.ball.speedx);
 			return true;
 		}
 		return false;
@@ -545,6 +549,7 @@ class ClientClassic {
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
 					left.onHit();
+					this.audio.playTone(this.ball.speedx);
 			}
 		}
 		if(this.ball.x + this.ball.radius >= right.x - right.width / 2) {
@@ -557,6 +562,7 @@ class ClientClassic {
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
 					right.onHit();
+					this.audio.playTone(this.ball.speedx);
 			}
 		}
 	}
@@ -565,11 +571,13 @@ class ClientClassic {
 		if (this.ball.x < this.arena.startX - this.player1.goalLine) {
 			this.score.hasScored.goal = true;
 			this.score.hasScored.scorer = "right";
+			window.playFx("/static/assets/arcade-alert.wav");
 			return true;
 		}
 		if (this.ball.x > this.arena.startX + this.arena.width + this.player2.goalLine) {
 			this.score.hasScored.goal = true;
 			this.score.hasScored.scorer = "left";
+			window.playFx("/static/assets/pop-alert.wav");
 			return true;
 		}
 		return false;
@@ -661,6 +669,7 @@ class ClientClassic {
 		document.removeEventListener("keyup", ev => this.keyup(ev));
 		window.removeEventListener("resize", ev => this.onResize(ev));
 		console.log("Pong Classic - client stopped");
+		this.audio.stopAudioTrack();
 	}
 }
 

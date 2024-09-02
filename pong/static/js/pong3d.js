@@ -1147,6 +1147,8 @@ class Client3DGame {
 			this.last_scored = 2;
 			this.running = false;
 			this.playerTwo.paddle.score++;
+			// playFx
+			window.playFx("/static/assets/pop-alert.wav");
 			this.scene.remove(this.score);
 			this.showScore();
 			this.hud.updateScore({ p1: this.playerOne.paddle.score, p2: this.playerTwo.paddle.score });
@@ -1160,6 +1162,7 @@ class Client3DGame {
 			this.last_scored = 1;
 			this.running = false;
 			this.playerOne.paddle.score++;
+			window.playFx("/static/assets/arcade-alert.wav");
 			this.scene.remove(this.score);
 			this.showScore();
 			this.hud.updateScore({ p1: this.playerOne.paddle.score, p2: this.playerTwo.paddle.score });

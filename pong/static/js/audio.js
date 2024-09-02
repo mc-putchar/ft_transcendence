@@ -3,10 +3,12 @@ class AudioController {
 	constructor(audioFilePath = "/static/assets/music.mp3") {
 	  this.ctx = new (window.AudioContext || window.webkitAudioContext)();
 	  this.mainOUT = this.ctx.createGain();	  
+	  
 	  window.mainOUT = this.mainOUT;
 	  
 	  this.mainGainNode = this.ctx.createGain();
 	  this.fxGainNode = this.ctx.createGain();
+	
 	  window.fxGainNode = this.fxGainNode;
 	  
 	  this.vca = this.ctx.createGain();
@@ -27,6 +29,8 @@ class AudioController {
 	  this.trackSource = this.ctx.createMediaElementSource(this.audioTrack);
 	  	  
 	  window.changeMusicTrack = (music) => { this.changeMusicTrack(music); };
+	  window.playFx = (fxFile) => { this.playFx(fxFile); };
+
 
 	  this._initializeParameters();
 	  this._connectNodes();
@@ -127,6 +131,13 @@ class AudioController {
 	    this.vca.gain.exponentialRampToValueAtTime(0.00000001, currentTime + this.sustain + 0.2);
 	}
 
+	playFx(fxFile) {
+	  const fx = new Audio(fxFile);
+	  const fxSource = this.ctx.createMediaElementSource(fx);
+	  fxSource.connect(this.fxGainNode);
+	  fx.play();
+	}
+	
 
 	getAverageAmplitude(start, end) {
 	  let sum = 0;
