@@ -1,40 +1,23 @@
+import time, os , certifi , ssl, websockets, json, requests
 import click
-import requests
 from requests.exceptions import RequestException
 from rich.console import Console
-import json
 import asyncio
-import websockets
-import ssl
-import certifi
-import time
 
-fifo_in = "/tmp/pong_in"
-fifo_out = "/tmp/pong_out"
-
-
-def movePlayer1():
-    global player1_y
-    # move up and down with sin
-    # get postition from player1
-    player1_y = 12  # TODO;
-
-
-def movePlayer2():
-    global player2_y
-
-    # move up and down with sin
-    player2_y = int(10 + 5 * (time.time() % 1.0))
-
-
-DEBUG = True
 LOGIN_ROUTE = '/api/login/'
 
-fifo_in = "/tmp/pong_in"
-fifo_out = "/tmp/pong_out"
+fifo_in = "pong_in"
+fifo_out = "pong_out"
 
 console = Console()
 
+for fifo in [fifo_in, fifo_out]:
+    if not os.path.exists(fifo):
+        try:
+            os.mkfifo(fifo, 0o666)
+            console.print(f'Created FIFO: {fifo}', style='green')
+        except OSError as e:
+            console.print(f'Failed to create FIFO {fifo}: {e}', style='red')
 
 def send_get_request(url, headers, cookies=''):
     try:
@@ -46,7 +29,6 @@ def send_get_request(url, headers, cookies=''):
         console.print(f'An error occurred: {e}', style='red')
         return None
 
-
 def send_post_request(url, headers, cookies='', data=''):
     try:
         response = requests.post(
@@ -56,7 +38,6 @@ def send_post_request(url, headers, cookies='', data=''):
     except (RequestException, KeyError, ValueError) as e:
         console.print(f'An error occurred: {e}', style='red')
         return None
-
 
 def get_csrf_token(url):
     try:
@@ -71,7 +52,6 @@ def get_csrf_token(url):
     except (RequestException, KeyError, ValueError) as e:
         console.print(f'An error occurred: {e}', style='red')
         return None, None
-
 
 def obtain_jwt_token(base_url, username, password):
     url = f"https://{base_url}{LOGIN_ROUTE}"
@@ -129,7 +109,6 @@ class Game:
                     console.print(
                         f'[bold cyan]{username}[/bold cyan] has connected.')
                 elif msg_type == 'game_state':
-                    # console.print(data_json.get('game_state'), style='blue')
                     self.game_state = data_json.get('game_state')
                 else:
                     console.print(data_json.get('message'))
@@ -140,7 +119,9 @@ class Game:
     async def connect(self, game_id='', match_id=''):
         if game_id == '':
             game_id = self.username
-            self.ws_url = f"wss://{self.base_url}/ws/game/{game_id}/?token={self.jwt_token}"
+    
+        self.ws_url = f"wss://{self.base_url}/ws/game/{game_id}/?token={self.jwt_token}"
+        
         try:
             async with websockets.connect(
                     uri=self.ws_url,
@@ -148,6 +129,7 @@ class Game:
                     ssl=ssl.create_default_context(cafile=certifi.where()),
             ) as self.websocket:
                 console.print(f'Connected to Game server as {self.username}.')
+                
                 await self.websocket.send(json.dumps({
                     'type': 'accept',
                     'message': f'match_id {match_id} {self.username}',
@@ -159,10 +141,14 @@ class Game:
                     'user': self.username,
                     'match_id': match_id,
                 }))
+                
+                update_task = asyncio.create_task(self.update_client())
+                
                 await asyncio.gather(
                     self.receive_message(),
                     self.send_ready(),
                     self.send_message(),
+                    update_task,  # Include update_client in the gather
                 )
         except websockets.exceptions.InvalidStatusCode as e:
             console.print(f'WebSocket connection failed: {e}', style='red')
@@ -185,44 +171,40 @@ class Game:
                 'type': 'ready',
                 'player': 'player2',
             }))
-            await asyncio.sleep(1)
-
+            await asyncio.sleep(2)
+ 
     async def update_client(self):
-        with open(fifo_out, 'w') as pipe_out, open(fifo_in, 'r') as pipe_in:
-            try:
+        try:
+            if not os.path.exists(fifo_out) or not os.path.exists(fifo_in):
+                raise FileNotFoundError("FIFO files not found")
+
+            pipe_out_fd = os.open(fifo_out, os.O_WRONLY )#| os.O_NONBLOCK)
+            pipe_in_fd = os.open(fifo_in, os.O_RDONLY | os.O_NONBLOCK)
+            
+            with os.fdopen(pipe_out_fd, 'w') as pipe_out, os.fdopen(pipe_in_fd, 'r') as pipe_in:
                 while True:
-                    # get player1 position and player2 position from the named pipe
+                    if hasattr(self, 'game_state'):
+                        score_p1 = self.game_state['score']['p1']
+                        score_p2 = self.game_state['score']['p2']
+                        # compose a number by concatenating the score in hex 0xXY
+                        score = int(f'0x{score_p1:02x}{score_p2:02x}', 16)
+                        data = f'{score}\n'
+                        try:
+                            pipe_out.write(data)
+                            pipe_out.flush()
+                        except BlockingIOError:
+                            console.print('fifo_out is not ready for writing', style='yellow')
 
-                    movePlayer1()
-                    movePlayer2()
+                    # try:
+                    #     player1_dx = pipe_in.readline().strip()
+                    #     if player1_dx:
+                    #         await self.send_move(player1_dx)
+                    # except BlockingIOError:
+                    #     console.print('fifo_in is not ready for reading', style='yellow')
 
-                    p1_pos = int(self.game_state["player1"]["x"])
-                    p2_pos = int(self.game_state["player2"]["x"])
-                    ball_x = int(self.game_state["ball"]["x"])
-                    ball_y = int(self.game_state["ball"]["y"])
-
-                    pipe_out.write(f"{str(p1_pos)}")
-                    pipe_out.write(f"{str(p2_pos)})")
-                    pipe_out.write(f"{str(ball_x)}")
-                    pipe_out.write(f"{str(ball_y)}\n")
-
-                    player1_dx = pipe_in.readline().strip()
-
-                    if player1_dx:
-                        print(f"Received: {player1_dx}")
-                        await self.send_move(player1_dx)
-
-                    pipe_out.flush()  # Ensure the data is sent immediately
-
-                    # Receive player1's position from C program
-                    player1_pos = pipe_in.readline()
-
-                    if player1_pos:
-                        print(f"Received: {player1_pos}")
-
-            except KeyboardInterrupt:
-                print("Terminated.")
-
+                    await asyncio.sleep(0.03)  # Small delay to prevent busy-waiting
+        except Exception as e:
+            console.print(f'Error in update_client: {e}', style='red')
 
 class Chat:
     def __init__(self, base_url, jwt_token, username):
@@ -344,7 +326,6 @@ def login(url, username, password):
     # asyncio.run(connect_websocket(f'{base_url}/ws/tournament/1/', jwt_token))
     chat = Chat(url, jwt_token, username)
     asyncio.run(chat.connect())
-    # asyncio.get_event_loop().run_until_complete(chat.connect())
 
 
 if __name__ == '__main__':
