@@ -68,12 +68,19 @@ class UserUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['alias', 'image', 'client_3d']
+        fields = ['alias', 'image', 'client_3d', 'blockchain_address']
         widgets = {
             'alias': forms.TextInput(attrs={'class': 'form-control'}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
             'client_3d': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'blockchain_address': forms.TextInput(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+            super(ProfileUpdateForm, self).__init__(*args, **kwargs)
+            user = kwargs.get('instance').user
+            if not user.profile.blockchain_address:
+                self.fields.pop('blockchain_address')
 
     def clean(self):
         cleaned_data = super().clean()
