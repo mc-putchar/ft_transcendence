@@ -1171,7 +1171,7 @@ class Client3DGame {
 			// this.playerTwo.reset();
 			if(this.hasAI)
 				this.ai.resetTimes();
-		} else if (ballY + BALL_SIZE >window= p2y - (PADDLE_WIDTH / 2)
+		} else if (ballY + BALL_SIZE > p2y - (PADDLE_WIDTH / 2)
 		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
 		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) {
 			if(ballY > p2y + PADDLE_WIDTH) {
