@@ -81,7 +81,7 @@ class PongBlockchain(metaclass=Singleton):
 
 	def signAndSendTransaction(self, txn, private_key: str):
 		signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
-		tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+		tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
 		return self.web3.eth.wait_for_transaction_receipt(tx_hash)
 
 	#########################
