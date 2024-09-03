@@ -63,8 +63,8 @@ re: # Re-create containers
 
 migrate: # Make and run DB migrations
 	$(DC) -f $(SRC) stop
-	$(DC) -f $(SRC) run --build --rm django python manage.py makemigrations $(APPS)
-	$(DC) -f $(SRC) run --rm django python manage.py migrate
+	$(DC) -f $(SRC) run --build --rm -e SKIP_DEPLOYMENT=true django python manage.py makemigrations $(APPS)
+	$(DC) -f $(SRC) run --rm -e SKIP_DEPLOYMENT=true django python manage.py migrate
 	$(DC) -f $(SRC) stop
 
 clean: # DROP database (Warning: all database data will be irreversibly lost! Consider making backup)
@@ -74,10 +74,10 @@ clean: # DROP database (Warning: all database data will be irreversibly lost! Co
 	@echo -e "$(COLOUR_GREEN)^^Here^^$(COLOUR_END) is a new Django key for you, if you need it"
 
 collect: # Collect static files to be served
-	$(DC) -f $(SRC) run --rm --no-deps django python manage.py collectstatic --noinput --clear
+	$(DC) -f $(SRC) run --rm --no-deps -e SKIP_DEPLOYMENT=true django python manage.py collectstatic --noinput --clear
 
 schema: # Output OpenAPI3 Schema into pong/schema.yml
-	$(DC) -f $(SRC) run --rm --no-deps django python manage.py spectacular --validate --color --file schema.yml
+	$(DC) -f $(SRC) run --rm --no-deps -e SKIP_DEPLOYMENT=true django python manage.py spectacular --validate --color --file schema.yml
 	lolcat -a pong/schema.yml || cat pong/schema.yml
 
 newkey: # Generate a new secret key for Django
