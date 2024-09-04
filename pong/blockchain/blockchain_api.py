@@ -33,6 +33,8 @@ class PongBlockchain(metaclass=Singleton):
 			'gasPrice': self.web3.to_wei('50', 'gwei')
 		}
 		self.accounts = self.web3.eth.accounts
+		self.contract = None
+		self.address = None
 
 	###################
 	# CLASS UTILITIES #
