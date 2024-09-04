@@ -22,18 +22,22 @@ def optin(request):
 	else:
 		chain = PongBlockchain()
 		sender = chain.accounts[0]
+		player_hash = hash_player([user.email, user.id])
 		try:
 			# the first n players get assigned an ETH address with some money
 			if user.profile.id <= len(chain.accounts):
-				status = chain.addPlayerFull(sender, os.getenv('HARDHAT_PRIVATE_KEY'), hash_player([user.email, user.id]), user.username, chain.accounts[user.profile.id])
+				status = chain.addPlayerFull(sender, os.getenv('HARDHAT_PRIVATE_KEY'), player_hash, user.username, chain.accounts[user.profile.id])
 				profile.blockchain_address = chain.accounts[user.profile.id]
-				profile.save()
 			else:
-				status = chain.addPlayerSimple(sender, os.getenv('HARDHAT_PRIVATE_KEY'), hash_player([user.email, user.id]), user.username)
+				status = chain.addPlayerSimple(sender, os.getenv('HARDHAT_PRIVATE_KEY'), player_hash, user.username)
 				profile.blockchain_address = "0x0000000000000000000000000000000000000000"
+			profile.save()
 			if status['status'] == 1:
+				logger.info(f"Added player '{user.username}' to blockchain")
 				return render(request, 'blockchain-optin.html', {'message': 'Opted in successfully'})
 			else:
+				logger.error(f"Failed to add player '{user.username}' to blockchain")
 				return render(request, 'blockchain-optin.html', {'message': 'Opt in failed'})
 		except ValueError as e:
+			logger.error(f"Failed to add player '{user.username}' to blockchain")
 			return render(request, 'blockchain-optin.html', {'message': 'Opt in failed'})
