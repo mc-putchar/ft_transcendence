@@ -354,16 +354,17 @@ class Match(models.Model):
 
     def get_players(self):
         """Returns a QuerySet of players in the match."""
-        return self.players.all()
+        # return self.players.all()
+        return PlayerMatch.objects.filter(match=self)
 
     def is_player(self, user):
         """Returns True if the user is participating in the match, False otherwise."""
-        return self.players.filter(player__user=user).exists()
+        return self.get_players().filter(player__user=user).exists()
 
     def get_winner(self):
         """Returns the winner of the match."""
         try:
-            winner =  self.players.get(winner=True).player
+            winner =  self.get_players().get(winner=True).player
         except PlayerMatch.DoesNotExist:
             return None
         return winner.user
@@ -371,7 +372,7 @@ class Match(models.Model):
     def get_scores(self):
         """Returns a dictionary of players and their scores in the match."""
         scores = {}
-        for player in self.players.all():
+        for player in self.get_players():
             scores[player.player.alias] = player.score
         return scores
 
@@ -390,7 +391,7 @@ class PlayerMatch(models.Model):
     def get_opponent(self):
         """Returns the opponent of the player in the match."""
         try:
-            opponent = self.match.players.exclude(player=self.player).first()
+            opponent = self.match.get_players().exclude(player=self.player).first()
         except PlayerMatch.DoesNotExist:
             return None
         if opponent:

@@ -41,3 +41,7 @@ def optin(request):
 		except ValueError as e:
 			logger.error(f"Failed to add player '{user.username}' to blockchain")
 			return render(request, 'blockchain-optin.html', {'message': 'Opt in failed'})
+
+def connect_wallet(request):
+    logger.info(f"Received data from the wallet: '{request}'")
+    return render(request, 'blockchain/blockchain.html', {'message': 'Connected wallet successfully'})

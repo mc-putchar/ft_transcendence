@@ -514,12 +514,35 @@ class Router {
 		const blockchainBtn = document.getElementById('blockchain-optin');
 		if (!anonBtn || !deleteBtn || !profileForm) return;
 		blockchainBtn?.addEventListener('click', async (e) => {
-			const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
-			if (response) {
-				this.animateContent(this.appElement, response);
-			} else {
-				this.notifyError("Failed to opt-in to blockchain");
-			}
+            if (typeof window.ethereum !== 'undefined') {
+                console.log("Providers: ", window.ethereum.providers);
+                try {
+                    const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
+                    console.log("Connected account: ", accounts[0]);
+					const response = fetch('web3/connect_wallet', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'X-CSRFToken': this.csrfToken,
+						},
+						body: JSON.stringify({account: accounts[0]})
+					});
+					if (response.ok) {
+						const responseData = (await response).json();
+						console.log("Response from backend: ", responseData);
+					}
+                } catch (error) {
+                    console.log("User denied account access");
+                }
+            } else {
+                console.log("Wallet not installed");
+            }
+			// const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
+			// if (response) {
+			// 	this.animateContent(this.appElement, response);
+			// } else {
+			// 	this.notifyError("Failed to opt-in to blockchain");
+			// }
 		});
 
 		passwordForm.addEventListener('submit', async (e) => {
@@ -555,6 +578,7 @@ class Router {
 				this.deleteAccount();
 			}
 		});
+
 		profileForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const formData = new FormData(profileForm);
