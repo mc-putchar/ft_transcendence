@@ -36,6 +36,9 @@ class Profile(models.Model):
         # if self.image and self.image.name != 'profile_images/default.png':
         #     self.resize_image()
 
+    def has_blockchain(self):
+        return self.blockchain_address is not None and self.blockchain_address != "0x0000000000000000000000000000000000000000"
+
     def resize_image(self):
         img = Image.open(self.image.path)
         if img.height > 420 or img.width > 420:
