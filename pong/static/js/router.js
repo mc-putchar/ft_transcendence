@@ -6,6 +6,7 @@ import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
 import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
+import { handle_wallet_button } from './web3_wallet.js'
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
@@ -512,37 +513,16 @@ class Router {
 		const profileForm = document.getElementById('profile-form');
 		const passwordForm = document.getElementById('password-form');
 		const blockchainBtn = document.getElementById('blockchain-optin');
+		const connectWalletBtn = document.getElementById('connect-wallet');
 		if (!anonBtn || !deleteBtn || !profileForm) return;
+        handle_wallet_button(connectWalletBtn);
 		blockchainBtn?.addEventListener('click', async (e) => {
-            if (typeof window.ethereum !== 'undefined') {
-                console.log("Providers: ", window.ethereum.providers);
-                try {
-                    const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
-                    console.log("Connected account: ", accounts[0]);
-					const response = fetch('web3/connect_wallet', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							'X-CSRFToken': this.csrfToken,
-						},
-						body: JSON.stringify({account: accounts[0]})
-					});
-					if (response.ok) {
-						const responseData = (await response).json();
-						console.log("Response from backend: ", responseData);
-					}
-                } catch (error) {
-                    console.log("User denied account access");
-                }
-            } else {
-                console.log("Wallet not installed");
-            }
-			// const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
-			// if (response) {
-			// 	this.animateContent(this.appElement, response);
-			// } else {
-			// 	this.notifyError("Failed to opt-in to blockchain");
-			// }
+			const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
+			if (response) {
+				this.animateContent(this.appElement, response);
+			} else {
+				this.notifyError("Failed to opt-in to blockchain");
+			}
 		});
 
 		passwordForm.addEventListener('submit', async (e) => {
