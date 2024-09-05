@@ -6,8 +6,7 @@ import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
 import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
-import { handle_wallet_button } from './web3_wallet.js'
-
+import { handle_wallet_button, disconnect_wallet } from './web3_wallet.js';
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
 
@@ -504,6 +503,7 @@ class Router {
 		this.chat.chatSocket?.close();
 		this.game.gameSocket?.close();
 		this.tournament.tournamentSocket?.close();
+        disconnect_wallet();
 		this.reload();
 	}
 

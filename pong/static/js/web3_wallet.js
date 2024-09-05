@@ -1,3 +1,5 @@
+import { getCookie } from './utils.js';
+
 /**
  * Connects to the wallet
  * @returns {Promise<string>} - The account address
@@ -19,6 +21,22 @@ async function get_account() {
     return account
 }
 
+async function connect_wallet() {
+    const accessToken = sessionStorage.getItem('access_token') || '';
+    get_account().then(account => {
+        console.log("Account: ", account);
+        fetch('/web3/connect_wallet/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ account }),
+        });
+    });
+}
+
 async function disconnect_wallet() {
     await window.ethereum
     .request({
@@ -29,7 +47,7 @@ async function disconnect_wallet() {
         },
     ],
   })
-  console.log("Wallet status: ", wallet_is_connected()); // TODO remove
+  console.log("Wallet status: ", await wallet_is_connected()); // TODO remove
 }
 
 /**
@@ -84,7 +102,7 @@ function update_to_connect(button) {
         connectWalletBtn.disabled = true;
         const loadingWalletIndicator = document.getElementById('loading-wallet-indicator');
         if (loadingWalletIndicator) loadingWalletIndicator.style.display = 'inline';
-        const account = await get_account();
+        const account = await connect_wallet();
         console.log("Connected to ", account);
         if (loadingWalletIndicator) loadingWalletIndicator.style.display = 'none';       
         connectWalletBtn.disabled = false;
@@ -105,4 +123,4 @@ async function handle_wallet_button(connectWalletBtn) {
     });
 }
 
-export { handle_wallet_button }
+export { handle_wallet_button, disconnect_wallet }

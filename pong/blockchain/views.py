@@ -5,6 +5,9 @@ from .blockchain_api import PongBlockchain, hash_player
 from pong.context_processors import get_user_from_token
 from api.models import Profile
 from logging import getLogger
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import api_view, permission_classes
+import json
 
 logger = getLogger(__name__)
 
@@ -42,10 +45,14 @@ def optin(request):
             logger.error(f"Failed to add player '{user.username}' to blockchain")
             return render(request, 'blockchain-optin.html', {'message': 'Opt in failed'})
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def connect_wallet(request):
     logger.info("Received request to connect_wallet")
-    if request.method == 'POST':
-        logger.info(f"Received data from the wallet: '{request.POST}'")
-    else:
-        logger.info("Received GET request to connect_wallet")
+    user = request.user
+    data = json.loads(request.body)
+    account = data.get('account')
+    logger.info(f"Received data from the wallet: '{request.POST}'")
+    logger.info(f"User: '{user.username} - {user.profile.blockchain_address}'")
+    logger.info(f"Account: '{account}'")
     return render(request, 'blockchain/blockchain.html', {'message': 'Connected wallet successfully'})
