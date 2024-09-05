@@ -6,18 +6,10 @@ import asyncio
 
 LOGIN_ROUTE = '/api/login/'
 
-fifo_in = "pong_in"
-fifo_out = "pong_out"
+fifo_in = "/tmp/pong_in"
+fifo_out = "/tmp/pong_out"
 
 console = Console()
-
-for fifo in [fifo_in, fifo_out]:
-    if not os.path.exists(fifo):
-        try:
-            os.mkfifo(fifo, 0o666)
-            console.print(f'Created FIFO: {fifo}', style='green')
-        except OSError as e:
-            console.print(f'Failed to create FIFO {fifo}: {e}', style='red')
 
 def send_get_request(url, headers, cookies=''):
     try:
@@ -91,7 +83,18 @@ class Game:
         }
         self.websocket = None
         self.users_list = []
+    
+        if not os.path.exists(fifo_out) or not os.path.exists(fifo_in):
+            raise FileNotFoundError("FIFO files not found")
 
+        self.pipe_out_fd = os.open(fifo_out, os.O_WRONLY)
+        self.pipe_in_fd = os.open(fifo_in, os.O_RDONLY | os.O_NONBLOCK)
+
+        if self.pipe_out_fd < 0 or self.pipe_in_fd < 0:
+            raise OSError("Failed to open FIFO files")
+    
+        self.player1_dx = -2
+    
     async def send_message(self, message=''):
         while True:
             message = await asyncio.to_thread(input, 'Send to chat: ')
@@ -157,8 +160,9 @@ class Game:
 
     async def send_move(self, move):
         await self.websocket.send(json.dumps({
-            'type': 'move',
-            'move': move,
+            'type': 'player1_move',
+            'player': 'player1',
+            'direction': move,
         }))
 
     async def send_ready(self):
@@ -175,37 +179,45 @@ class Game:
  
     async def update_client(self):
         try:
-            if not os.path.exists(fifo_out) or not os.path.exists(fifo_in):
-                raise FileNotFoundError("FIFO files not found")
-
-            pipe_out_fd = os.open(fifo_out, os.O_WRONLY )#| os.O_NONBLOCK)
-            pipe_in_fd = os.open(fifo_in, os.O_RDONLY | os.O_NONBLOCK)
-            
-            with os.fdopen(pipe_out_fd, 'w') as pipe_out, os.fdopen(pipe_in_fd, 'r') as pipe_in:
+            with open(self.pipe_out_fd, 'w') as pipe_out, open(self.pipe_in_fd, 'r') as pipe_in:
                 while True:
                     if hasattr(self, 'game_state'):
-                        score_p1 = self.game_state['score']['p1']
-                        score_p2 = self.game_state['score']['p2']
-                        # compose a number by concatenating the score in hex 0xXY
-                        score = int(f'0x{score_p1:02x}{score_p2:02x}', 16)
-                        data = f'{score}\n'
-                        try:
-                            pipe_out.write(data)
-                            pipe_out.flush()
-                        except BlockingIOError:
-                            console.print('fifo_out is not ready for writing', style='yellow')
+                            score_p1 = int(self.game_state['score']['p1'])
+                            score_p2 = int(self.game_state['score']['p2'])
+                            p1y = self.game_state['player1']['x']
+                            p2y = self.game_state['player2']['x']
+                            ball_x = self.game_state['ball']['x']
+                            ball_y = self.game_state['ball']['y']
 
-                    # try:
-                    #     player1_dx = pipe_in.readline().strip()
-                    #     if player1_dx:
-                    #         await self.send_move(player1_dx)
-                    # except BlockingIOError:
-                    #     console.print('fifo_in is not ready for reading', style='yellow')
+                            p1y = int((p1y + 5) * 12)
+                            p2y = int((p2y + 5) * 12)
+                            # from -150 to 150 max to 0 to 100
+                            ball_x = int((ball_x + 150) * 2)
+                            ball_y = int((ball_y + 150) * 2)
+        
+                            data = f"{score_p1} {score_p2} {p1y} {p2y} {ball_x} {ball_y}\n"
 
-                    await asyncio.sleep(0.03)  # Small delay to prevent busy-waiting
+                            try:
+                                pipe_out.write(data)
+                                pipe_out.flush()
+
+                            except BlockingIOError:
+                                console.print('fifo_out is not ready for writing', style='yellow')
+
+                    try:
+                        recv_dx = pipe_in.readline().strip()
+                        if recv_dx != self.player1_dx:
+                            console.print(f'player1_dx: {self.player1_dx}')
+                            self.player1_dx = recv_dx
+
+                            await self.send_move(self.player1_dx)
+                    
+                    except BlockingIOError:
+                        console.print('fifo_in is not ready for reading', style='yellow')
+                    finally:
+                        await asyncio.sleep(0.03)  # Small delay to prevent busy-waiting
         except Exception as e:
             console.print(f'Error in update_client: {e}', style='red')
-
 class Chat:
     def __init__(self, base_url, jwt_token, username):
         self.base_url = base_url
@@ -329,7 +341,19 @@ def login(url, username, password):
 
 
 if __name__ == '__main__':
+ 
+    for fifo in [fifo_in, fifo_out]:
+        if not os.path.exists(fifo):
+            try:
+                os.mkfifo(fifo, 0o666)
+                console.print(f'Created FIFO: {fifo}', style='green')
+            except OSError as e:
+                console.print(f'Failed to create FIFO {fifo}: {e}', style='red')
+
     console.print('Welcome to transcendCLI!', style='bold green')
     console.print('Please log in to continue.', style='bold green')
 
     login()
+
+# End of transcendCLI.py
+
