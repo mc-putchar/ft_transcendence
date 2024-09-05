@@ -1,3 +1,7 @@
+/**
+ * Connects to the wallet
+ * @returns {Promise<string>} - The account address
+ */
 async function get_account() {
     const accounts = await window.ethereum
     .request({ method: "eth_requestAccounts" })
@@ -25,16 +29,18 @@ async function disconnect_wallet() {
         },
     ],
   })
-  console.log("Wallet status: ", wallet_is_connected());
+  console.log("Wallet status: ", wallet_is_connected()); // TODO remove
 }
 
+/**
+ * Checks if the wallet is connected.
+ * @returns {Promise<boolean>}
+ */
 async function wallet_is_connected() {
     const permission = await window.ethereum.request({
         "method": "wallet_getPermissions",
         "params": []
       });
-    //   console.log(typeof(permission));
-    //   console.log(permission.length);
       if (permission.length) {
           console.log("Wallet connected");
           return true;
@@ -43,6 +49,13 @@ async function wallet_is_connected() {
     return false;
 }
 
+/**
+ * Updates the button text and functionality to disconnect the wallet.
+ * @note Using a clone to remove all previous eventListeners and update functionality
+ * without reloading page
+ * @param {HTMLElement} button - The button element to update.
+ * @returns {void}
+ */
 function update_to_disconnect(button) {
     button.textContent = "Disconnect wallet";
     const connectWalletBtn = button.cloneNode(true);
@@ -54,7 +67,15 @@ function update_to_disconnect(button) {
     });
 }
 
+/**
+ * Updates the button text and functionality to connect the wallet.
+ * @note Using a clone to remove all previous eventListeners and update functionality
+ * without reloading page
+ * @param {HTMLElement} button - The button element to update.
+ * @returns {void}
+ */
 function update_to_connect(button) {
+    
     button.textContent = "Connect Wallet";
     const connectWalletBtn = button.cloneNode(true);
     button.parentNode.replaceChild(connectWalletBtn, button);
@@ -72,6 +93,7 @@ function update_to_connect(button) {
         }
     });
 }
+
 
 async function handle_wallet_button(connectWalletBtn) {
     wallet_is_connected().then(isConnected => {
