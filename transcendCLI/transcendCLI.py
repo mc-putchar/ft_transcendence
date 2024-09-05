@@ -11,9 +11,15 @@ fifo_out = "/tmp/pong_out"
 
 console = Console()
 
-# remap range to only positive with min a max values 
+def remap_inverted(value, low, high, new_low, new_high):
+    remapped_value = (value - low) * (new_low - new_high) / (high - low) + new_high
+    return max(new_low, remapped_value)
+
+# Remap range to only positive values with min and max bounds
 def remap(value, low, high, new_low, new_high):
-    return (value - low) * (new_high - new_low) / (high - low) + new_low
+    remapped_value = (value - low) * (new_high - new_low) / (high - low) + new_low
+    
+    return max(new_low, remapped_value)
 
 def send_get_request(url, headers, cookies=''):
     try:
@@ -97,7 +103,7 @@ class Game:
         if self.pipe_out_fd < 0 or self.pipe_in_fd < 0:
             raise OSError("Failed to open FIFO files")
     
-        self.player1_dx = -2
+        self.player1_dx = 0
     
     async def send_message(self, message=''):
         while True:
@@ -193,11 +199,12 @@ class Game:
                             ball_x = self.game_state['ball']['x']
                             ball_y = self.game_state['ball']['y']
 
-                            p1y = remap(p1y, -50, 150, 4, 50)
-                            p2y = remap(p2y, -50, 150, 4, 50)    
+                            p1y = remap(p1y, -50, 150, 4, 30)
+                            p2y = remap(p2y, -50, 150, 4, 30)    
 
-                            ball_x = remap(ball_x, -154, 154, 4, 100)
-                            ball_y = remap(ball_y, -154, 154, 4, 60)
+                            ball_x = remap_inverted(ball_x, -154, 154, 0, 173)
+                            # ball_y = remap(ball_y, -154, 154, 4, 60)
+                            ball_y = remap_inverted(ball_y, -154, 154, 0, 30)
 
                             data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
 
@@ -213,13 +220,20 @@ class Game:
                         if recv_dx != self.player1_dx:
                             console.print(f'player1_dx: {self.player1_dx}')
                             self.player1_dx = recv_dx
+                            send_dir = 0
+                            if recv_dx == b'0':
+                                send_dir = -1
+                            elif recv_dx == b'1':
+                                send_dir = 0
+                            elif recv_dx == b'2':
+                                send_dir = 1
+                            await self.send_move(send_dir)
 
-                            await self.send_move(self.player1_dx)
-                    
+                        await asyncio.sleep(0.03)  # Small delay to prevent busy-waiting
+
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
-                    finally:
-                        await asyncio.sleep(0.03)  # Small delay to prevent busy-waiting
+
         except Exception as e:
             console.print(f'Error in update_client: {e}', style='red')
 class Chat:
