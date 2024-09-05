@@ -11,6 +11,10 @@ fifo_out = "/tmp/pong_out"
 
 console = Console()
 
+# remap range to only positive with min a max values 
+def remap(value, low, high, new_low, new_high):
+    return (value - low) * (new_high - new_low) / (high - low) + new_low
+
 def send_get_request(url, headers, cookies=''):
     try:
         response = requests.get(url, headers=headers,
@@ -189,13 +193,13 @@ class Game:
                             ball_x = self.game_state['ball']['x']
                             ball_y = self.game_state['ball']['y']
 
-                            p1y = int((p1y + 5) * 12)
-                            p2y = int((p2y + 5) * 12)
-                            # from -150 to 150 max to 0 to 100
-                            ball_x = int((ball_x + 150) * 2)
-                            ball_y = int((ball_y + 150) * 2)
-        
-                            data = f"{score_p1} {score_p2} {p1y} {p2y} {ball_x} {ball_y}\n"
+                            p1y = remap(p1y, -150, 150, 4, 60)
+                            p2y = remap(p2y, -150, 150, 4, 60)    
+
+                            ball_x = remap(ball_x, -154, 154, 4, 60)
+                            ball_y = remap(ball_y, -154, 154, 4, 80)
+
+                            data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
 
                             try:
                                 pipe_out.write(data)
