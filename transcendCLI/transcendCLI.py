@@ -180,7 +180,7 @@ class Game:
                 'player': 'player2',
             }))
             await asyncio.sleep(2)
- 
+
     async def update_client(self):
         try:
             with open(self.pipe_out_fd, 'w') as pipe_out, open(self.pipe_in_fd, 'r') as pipe_in:
@@ -193,11 +193,11 @@ class Game:
                             ball_x = self.game_state['ball']['x']
                             ball_y = self.game_state['ball']['y']
 
-                            p1y = remap(p1y, -150, 150, 4, 60)
-                            p2y = remap(p2y, -150, 150, 4, 60)    
+                            p1y = remap(p1y, -50, 150, 4, 50)
+                            p2y = remap(p2y, -50, 150, 4, 50)    
 
-                            ball_x = remap(ball_x, -154, 154, 4, 60)
-                            ball_y = remap(ball_y, -154, 154, 4, 80)
+                            ball_x = remap(ball_x, -154, 154, 4, 100)
+                            ball_y = remap(ball_y, -154, 154, 4, 60)
 
                             data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
 
