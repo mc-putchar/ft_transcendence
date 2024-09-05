@@ -8,33 +8,39 @@ async function get_account() {
     const accounts = await window.ethereum
     .request({ method: "eth_requestAccounts" })
     .catch((err) => {
-      if (err.code === 4001) {
-        // EIP-1193 userRejectedRequest error.
-        // If this happens, the user rejected the connection request.
-        console.log("Please connect your wallet")
-      } else {
-        console.error(err)
-    }
-        return null
+        console.error(err);
+        return null;
     })
+    if (!accounts) return null;
     const account = accounts[0];
     return account
 }
 
-async function connect_wallet() {
+async function connect_wallet() { 
+    console.log("Taking a nap...");
+    await new Promise(resolve => setTimeout(resolve, 5000)); // Simulated 5s sleep
+    console.log("Waking up...");
     const accessToken = sessionStorage.getItem('access_token') || '';
-    get_account().then(account => {
-        console.log("Account: ", account);
-        fetch('/web3/connect_wallet/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-            body: JSON.stringify({ account }),
+    try {
+        await get_account().then(account => {
+            console.log("Account: ", account);
+            if (account === null) return null;
+            const chainId = window.ethereum.request({ method: 'eth_chainId' });
+            fetch('/web3/connect_wallet/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({ account, chainId }),
+            });
         });
-    });
+        return account;
+    } catch (error) {
+        console.error("Failed to connect wallet", error);
+        return null;
+    }
 }
 
 async function disconnect_wallet() {
@@ -47,7 +53,7 @@ async function disconnect_wallet() {
         },
     ],
   })
-  console.log("Wallet status: ", await wallet_is_connected()); // TODO remove
+  console.log("Wallet connected: ", await wallet_is_connected()); // TODO remove
 }
 
 /**
@@ -60,10 +66,10 @@ async function wallet_is_connected() {
         "params": []
       });
       if (permission.length) {
-          console.log("Wallet connected");
+          console.log("Wallet connected"); // TODO remove
           return true;
       }
-    console.log("Wallet disconnected");
+    console.log("Wallet disconnected"); // TODO remove
     return false;
 }
 
@@ -92,8 +98,7 @@ function update_to_disconnect(button) {
  * @param {HTMLElement} button - The button element to update.
  * @returns {void}
  */
-function update_to_connect(button) {
-    
+function update_to_connect(button) {  
     button.textContent = "Connect Wallet";
     const connectWalletBtn = button.cloneNode(true);
     button.parentNode.replaceChild(connectWalletBtn, button);
@@ -108,8 +113,8 @@ function update_to_connect(button) {
         connectWalletBtn.disabled = false;
         if (account !== null) {
             update_to_disconnect(connectWalletBtn);
-        }
-    });
+    }
+});
 }
 
 
