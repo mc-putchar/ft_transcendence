@@ -107,14 +107,9 @@ class Game:
             raise OSError("Failed to open FIFO files")
     
         self.player1_dx = 0
-    
-    async def send_message(self, message=''):
-        while True:
-            message = await asyncio.to_thread(input, 'Send to chat: ')
-            if message.lower() == 'exit':
-                await self.websocket.close()
-                return
-
+        self.prev_score1 = 0
+        self.prev_score2 = 0
+        
     async def receive_message(self):
         async for data in self.websocket:
             try:
@@ -145,7 +140,8 @@ class Game:
                     ssl=ssl.create_default_context(cafile=certifi.where()),
             ) as self.websocket:
                 console.print(f'Connected to Game server as {self.username}.')
-                
+                console.print(f'Game ID: {match_id}')
+
                 await self.websocket.send(json.dumps({
                     'type': 'accept',
                     'message': f'match_id {match_id} {self.username}',
@@ -160,84 +156,91 @@ class Game:
                 
                 update_task = asyncio.create_task(self.update_client())
                 
+                await self.send_ready()
                 await asyncio.gather(
                     self.receive_message(),
-                    self.send_ready(),
-                    self.send_message(),
                     update_task,  # Include update_client in the gather
                 )
+
         except websockets.exceptions.InvalidStatusCode as e:
             console.print(f'WebSocket connection failed: {e}', style='red')
+
         except Exception as e:
             console.print(f'WebSocket error: {e}', style='red')
 
     async def send_move(self, move):
-        await self.websocket.send(json.dumps({
-            'type': 'player1_move',
-            'player': 'player1',
-            'direction': move,
+        self.websocket.send(json.dumps({
+            'type': 'player2_move',
+            'direction': str(move),
         }))
 
     async def send_ready(self):
-        while True:
-            await self.websocket.send(json.dumps({
-                'type': 'ready',
-                'player': 'player1',
-            }))
-            await self.websocket.send(json.dumps({
-                'type': 'ready',
-                'player': 'player2',
-            }))
-            await asyncio.sleep(3)
+        await self.websocket.send(json.dumps({
+            'type': 'ready',
+            'player': 'player2',
+        }))
+
+    async def update_movement(self):
+        
+        if self.player1_dx == '0':
+            send_dir = str('-1')
+        elif self.player1_dx == '1':
+            send_dir = str('0')
+        elif self.player1_dx == '2':
+            send_dir = str('1')
+        else:
+            send_dir = str('0')
+        console.print(f'Player 1 direction: {send_dir}')
+        await self.send_move(send_dir)
 
     async def update_client(self):
         try:
             with open(self.pipe_out_fd, 'w') as pipe_out, open(self.pipe_in_fd, 'r') as pipe_in:
                 while True:
                     if hasattr(self, 'game_state'):
-                            score_p1 = int(self.game_state['score']['p1'])
-                            score_p2 = int(self.game_state['score']['p2'])
-                            p1y = self.game_state['player1']['x']
-                            p2y = self.game_state['player2']['x']
-                            ball_x = self.game_state['ball']['x']
-                            ball_y = self.game_state['ball']['y']
+                        score_p1 = int(self.game_state['score']['p1'])
+                        score_p2 = int(self.game_state['score']['p2'])
+                        p1y = self.game_state['player1']['x']
+                        p2y = self.game_state['player2']['x']
+                        ball_x = self.game_state['ball']['x']
+                        ball_y = self.game_state['ball']['y']
 
-                            p1y = remap(p1y, -50, 150, 0, CLI_H)
-                            p2y = remap(p2y, -50, 150, 0, CLI_H)
+                        p1y = remap(p1y, -50, 150, 0, CLI_H)
+                        p2y = remap(p2y, -50, 150, 0, CLI_H)
 
-                            ball_x = remap_inverted(ball_x, -154, 154, 0, CLI_W)
-                            ball_y = remap_inverted(ball_y, -154, 154, 0, CLI_H)
+                        ball_x = remap(ball_x, -154, 154, 0, CLI_W)
+                        ball_y = remap(ball_y, -154, 154, 0, CLI_H)
 
-                            data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
+                        data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
 
-                            try:
-                                pipe_out.write(data)
-                                pipe_out.flush()
+                        try:
+                            pipe_out.write(data)
+                            pipe_out.flush()
 
-                            except BlockingIOError:
-                                console.print('fifo_out is not ready for writing', style='yellow')
-
+                        except BlockingIOError:
+                            console.print('fifo_out is not ready for writing', style='yellow')
+                        
+                        if self.game_state['score']['p1'] != self.prev_score1:
+                            self.prev_score1 = self.game_state['score']['p1']
+                            await self.send_ready()
+                        if self.game_state['score']['p2'] != self.prev_score2:
+                            self.prev_score2 = self.game_state['score']['p2']
+                            await self.send_ready()
+         
                     try:
                         recv_dx = pipe_in.readline().strip()
                         if recv_dx != self.player1_dx:
-                            # console.print(f'player1_dx: {self.player1_dx}')
                             self.player1_dx = recv_dx
-                            send_dir = 0
-                            if recv_dx == b'0':
-                                send_dir = -1
-                            elif recv_dx == b'1':
-                                send_dir = 0
-                            elif recv_dx == b'2':
-                                send_dir = 1
-                            await self.send_move(send_dir)
-
-                        await asyncio.sleep(0.01)
+                            await self.update_movement()
+                        await asyncio.sleep(0.02)
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
-
+                        
         except Exception as e:
             console.print(f'Error in update_client: {e}', style='red')
+
+        
 class Chat:
     def __init__(self, base_url, jwt_token, username):
         self.base_url = base_url
@@ -301,21 +304,25 @@ class Chat:
         self.game = Game(self.base_url, self.jwt_token, self.username)
         response = send_post_request(
             f'https://{self.base_url}/game/matches/create_match/', self.headers)
+
         if response:
             game_id = response.json().get('match_id')
             if game_id:
                 console.print(f'Game ID: {game_id}')
         response = send_post_request(
             f'https://{self.base_url}/game/matches/{game_id}/join/', self.headers)
+        
         if response:
             console.print(response.json())
         else:
             console.print('Failed to join game.', style='red')
+        
         await self.websocket.send(json.dumps({
             'type': 'challenge',
             'username': self.username,
             'message': 'accepted',
         }))
+        
         await self.game.connect(username, game_id)
 
     async def connect(self):
