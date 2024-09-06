@@ -70,8 +70,8 @@ class GameRouter4P {
 		};
 	}
 	launchGame() {
-		// this.game = new Game4P(this.chat_websocket);
-		this.game = new Game4P();
+		this.game = new Game4P(this.chat_websocket, this.player);
+		// this.game = new Game4P();
 		this.game.start();
 	}
 }
