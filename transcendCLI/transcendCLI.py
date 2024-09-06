@@ -6,6 +6,9 @@ import asyncio
 
 LOGIN_ROUTE = '/api/login/'
 
+CLI_W = 120
+CLI_H = 42
+
 fifo_in = "/tmp/pong_in"
 fifo_out = "/tmp/pong_out"
 
@@ -89,7 +92,7 @@ class Game:
         self.username = username
         self.headers = {
             'Authorization': f"Bearer {jwt_token}",
-            'Origin': 'https://pong42.ktano-studio.com',
+            'Origin': 'https://' + self.base_url,
         }
         self.websocket = None
         self.users_list = []
@@ -185,7 +188,7 @@ class Game:
                 'type': 'ready',
                 'player': 'player2',
             }))
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
 
     async def update_client(self):
         try:
@@ -199,12 +202,11 @@ class Game:
                             ball_x = self.game_state['ball']['x']
                             ball_y = self.game_state['ball']['y']
 
-                            p1y = remap(p1y, -50, 150, 4, 30)
-                            p2y = remap(p2y, -50, 150, 4, 30)    
+                            p1y = remap(p1y, -50, 150, 0, CLI_H)
+                            p2y = remap(p2y, -50, 150, 0, CLI_H)
 
-                            ball_x = remap_inverted(ball_x, -154, 154, 0, 173)
-                            # ball_y = remap(ball_y, -154, 154, 4, 60)
-                            ball_y = remap_inverted(ball_y, -154, 154, 0, 30)
+                            ball_x = remap_inverted(ball_x, -154, 154, 0, CLI_W)
+                            ball_y = remap_inverted(ball_y, -154, 154, 0, CLI_H)
 
                             data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
 
@@ -218,7 +220,7 @@ class Game:
                     try:
                         recv_dx = pipe_in.readline().strip()
                         if recv_dx != self.player1_dx:
-                            console.print(f'player1_dx: {self.player1_dx}')
+                            # console.print(f'player1_dx: {self.player1_dx}')
                             self.player1_dx = recv_dx
                             send_dir = 0
                             if recv_dx == b'0':
@@ -229,7 +231,7 @@ class Game:
                                 send_dir = 1
                             await self.send_move(send_dir)
 
-                        await asyncio.sleep(0.03)  # Small delay to prevent busy-waiting
+                        await asyncio.sleep(0.01)
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
@@ -243,7 +245,7 @@ class Chat:
         self.username = username
         self.headers = {
             'Authorization': f"Bearer {jwt_token}",
-            'Origin': 'https://pong42.ktano-studio.com',
+            'Origin': 'https://' + self.base_url,
         }
         self.websocket = None
         self.users_list = []
