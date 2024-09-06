@@ -26,7 +26,7 @@ async function connect_wallet() {
     try {
         const account = await get_account();
         if (account === null) return null;
-        const chainId = get_chainId();
+        const chainId = await get_chainId();
         fetch('/web3/connect_wallet/', {
             method: 'POST',
             headers: {

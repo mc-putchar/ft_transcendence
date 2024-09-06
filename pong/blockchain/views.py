@@ -52,7 +52,6 @@ def connect_wallet(request):
     user = request.user
     data = json.loads(request.body)
     account = data.get('account')
-    logger.info(f"Received data from the wallet: '{request.POST}'")
     logger.info(f"User: '{user.username} - {user.profile.blockchain_address}'")
-    logger.info(f"Account: '{account}'")
+    logger.info(f"Wallet connected to '{account}' on the chain {data.get('chainId')}")
     return render(request, 'blockchain/blockchain.html', {'message': 'Connected wallet successfully'})
