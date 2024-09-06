@@ -1,0 +1,24 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pong Game</title>
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    </head>
+    <body>
+        <div id="nav">Pong Game</div>
+        <div id="app"></div>
+
+        <script type="module">
+
+            import { Game4P } from '{% static 'js/clean4P.js' %}';
+
+            let game = new Game4P();
+            game.start();
+
+        </script>
+    </body>
+</html>
