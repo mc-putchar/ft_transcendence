@@ -146,7 +146,6 @@ class Game:
                     'type': 'accept',
                     'message': f'match_id {match_id} {self.username}',
                 }))
-                await asyncio.sleep(1)
                 await self.websocket.send(json.dumps({
                     'type': 'register',
                     'player': 'player2',
@@ -156,9 +155,9 @@ class Game:
                 
                 update_task = asyncio.create_task(self.update_client())
                 
-                await self.send_ready()
-                await asyncio.sleep(1)
+                # await self.send_ready()
                 await asyncio.gather(
+                    self.send_ready(),
                     self.receive_message(),
                     update_task,  # Include update_client in the gather
                 )
@@ -172,19 +171,22 @@ class Game:
     async def send_move(self, move):
         self.websocket.send(json.dumps({
             'type': 'player2_move',
-            'direction': str(move),
+            'direction': move,
         }))
 
     async def send_ready(self):
-        await self.websocket.send(json.dumps({
-            'type': 'ready',
-            'player': 'player1',
-        }))
+        while True:
+            # await self.websocket.send(json.dumps({
+            #     'type': 'ready',
+            #     'player': 'player1',
+            # }))
 
-        await self.websocket.send(json.dumps({
-            'type': 'ready',
-            'player': 'player2',
-        }))
+            await self.websocket.send(json.dumps({
+                'type': 'ready',
+                'player': 'player2',
+            }))
+
+            await asyncio.sleep(3)
 
     async def update_movement(self):
         if self.player1_dx == '0':
@@ -197,7 +199,6 @@ class Game:
             send_dir = str('0')
 
         await self.send_move(send_dir)
-        await asyncio.sleep(0.03)
 
     async def update_client(self):
         try:
@@ -228,27 +229,21 @@ class Game:
                         
                         if self.game_state['score']['p1'] != self.prev_score1:
                             self.prev_score1 = self.game_state['score']['p1']
-                            await self.send_ready()
                         if self.game_state['score']['p2'] != self.prev_score2:
                             self.prev_score2 = self.game_state['score']['p2']
-                            await self.send_ready()
          
                     try:
                         recv_dx = pipe_in.readline().strip()
                         if recv_dx != self.player1_dx:
                             self.player1_dx = recv_dx
-                            await self.update_movement()
-                        await asyncio.sleep(0.03)
+                            # await self.update_movement()
+                        await asyncio.sleep(0.008)
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
                         
         except Exception as e:
             console.print(f'Error in update_client: {e}', style='red')
-
-        # exit to the Chat back if ctrl+c or the game is over
-        await self.websocket.close()
-        await asyncio.sleep(1)
 
 class Chat:
     def __init__(self, base_url, jwt_token, username):
