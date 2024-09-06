@@ -6,7 +6,7 @@ import asyncio
 
 LOGIN_ROUTE = '/api/login/'
 
-CLI_W = 120
+CLI_W = 84
 CLI_H = 42
 
 fifo_in = "/tmp/pong_in"
@@ -16,13 +16,13 @@ console = Console()
 
 def remap_inverted(value, low, high, new_low, new_high):
     remapped_value = (value - low) * (new_low - new_high) / (high - low) + new_high
-    return max(new_low, remapped_value)
-
+    return int(max(new_low, remapped_value))
 # Remap range to only positive values with min and max bounds
 def remap(value, low, high, new_low, new_high):
+
     remapped_value = (value - low) * (new_high - new_low) / (high - low) + new_low
     
-    return max(new_low, remapped_value)
+    return int(max(new_low, remapped_value))
 
 def send_get_request(url, headers, cookies=''):
     try:
@@ -176,11 +176,6 @@ class Game:
 
     async def send_ready(self):
         while True:
-            # await self.websocket.send(json.dumps({
-            #     'type': 'ready',
-            #     'player': 'player1',
-            # }))
-
             await self.websocket.send(json.dumps({
                 'type': 'ready',
                 'player': 'player2',
@@ -209,14 +204,16 @@ class Game:
                         score_p2 = int(self.game_state['score']['p2'])
                         p1y = self.game_state['player1']['x']
                         p2y = self.game_state['player2']['x']
-                        ball_x = self.game_state['ball']['x']
-                        ball_y = self.game_state['ball']['y']
+                        ball_x = self.game_state['ball']['y']
+                        ball_y = self.game_state['ball']['x']
 
-                        p1y = remap(p1y, -50, 150, 0, CLI_H)
-                        p2y = remap(p2y, -50, 150, 0, CLI_H)
+                        p1y = remap(p1y, -50, 150, 4, CLI_H)
+                        p2y = remap(p2y, -50, 150, 4, CLI_H)
 
-                        ball_x = remap(ball_x, -154, 154, 0, CLI_W)
-                        ball_y = remap(ball_y, -154, 154, 0, CLI_H)
+                        # console.print(f'p1y: {p1y}, p2y: {p2y}, ball_x: {ball_x}, ball_y: {ball_y}', style='green')
+
+                        ball_x = remap_inverted(ball_x, -160, 160, 4, CLI_W - 4)
+                        ball_y = remap(ball_y, -160, 160, 4, CLI_H - 4)
 
                         data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
 
@@ -236,8 +233,8 @@ class Game:
                         recv_dx = pipe_in.readline().strip()
                         if recv_dx != self.player1_dx:
                             self.player1_dx = recv_dx
-                            # await self.update_movement()
-                        await asyncio.sleep(0.008)
+                            await self.update_movement()
+                        await asyncio.sleep(0.03)
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
