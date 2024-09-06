@@ -2,6 +2,6 @@ from django.contrib import admin
 from django.urls import path, include
 from . import consumers
 
-urlpatterns = [
-	path("/websocket/<str:username>"),
+ASGI_urlpatterns = [
+	path("websocket/<str:username>", consumers.handle4PGame.as_asgi()),
 ]

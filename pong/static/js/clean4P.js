@@ -1,5 +1,10 @@
 // import { AudioController } from './audio.js';
 
+// chat_websocket.onmessage = function(event) {
+// 	console.log(event);
+// 	console.log("message from server:", event.data);
+// };
+
 const ACTIVE_AI = false;
 
 let animationID = null;
