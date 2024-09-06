@@ -1196,6 +1196,8 @@ class Client3DGame {
 			this.ball.speed += BALL_INCR_SPEED;
 			// this.repositionBall(ballX, ballY, p2y, p1y);
 		}
+		console.log("this.playerOne", this.playerOne);
+		console.log("this.playerTwo", this.playerTwo);
 	}
 
 	showScore () {

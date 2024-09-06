@@ -157,6 +157,7 @@ class Game:
                 update_task = asyncio.create_task(self.update_client())
                 
                 await self.send_ready()
+                await asyncio.sleep(1)
                 await asyncio.gather(
                     self.receive_message(),
                     update_task,  # Include update_client in the gather
@@ -169,12 +170,17 @@ class Game:
             console.print(f'WebSocket error: {e}', style='red')
 
     async def send_move(self, move):
-        await self.websocket.send(json.dumps({
+        self.websocket.send(json.dumps({
             'type': 'player2_move',
             'direction': str(move),
         }))
 
     async def send_ready(self):
+        await self.websocket.send(json.dumps({
+            'type': 'ready',
+            'player': 'player1',
+        }))
+
         await self.websocket.send(json.dumps({
             'type': 'ready',
             'player': 'player2',
@@ -189,7 +195,9 @@ class Game:
             send_dir = str('1')
         else:
             send_dir = str('0')
+
         await self.send_move(send_dir)
+        await asyncio.sleep(0.03)
 
     async def update_client(self):
         try:
@@ -230,7 +238,7 @@ class Game:
                         if recv_dx != self.player1_dx:
                             self.player1_dx = recv_dx
                             await self.update_movement()
-                        await asyncio.sleep(0.01)
+                        await asyncio.sleep(0.03)
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
@@ -241,7 +249,6 @@ class Game:
         # exit to the Chat back if ctrl+c or the game is over
         await self.websocket.close()
         await asyncio.sleep(1)
-        return
 
 class Chat:
     def __init__(self, base_url, jwt_token, username):
@@ -268,7 +275,7 @@ class Chat:
 
             if message.startswith('/duel'):
                 self.game = Game(self.base_url, self.jwt_token, self.username)
-
+                
             await self.websocket.send(json.dumps(data))
             console.print(f'[bold cyan]{self.username}[/bold cyan]: {message}')
 
