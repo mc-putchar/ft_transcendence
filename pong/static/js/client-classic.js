@@ -572,12 +572,16 @@ class ClientClassic {
 			this.score.hasScored.goal = true;
 			this.score.hasScored.scorer = "right";
 			window.playFx("/static/assets/arcade-alert.wav");
+			console.log("this.player1", this.player1);
+			console.log("this.player2", this.player2);
 			return true;
 		}
 		if (this.ball.x > this.arena.startX + this.arena.width + this.player2.goalLine) {
 			this.score.hasScored.goal = true;
 			this.score.hasScored.scorer = "left";
 			window.playFx("/static/assets/pop-alert.wav");
+			console.log("this.player1", this.player1);
+			console.log("this.player2", this.player2);
 			return true;
 		}
 		return false;

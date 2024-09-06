@@ -169,7 +169,7 @@ class Game:
             console.print(f'WebSocket error: {e}', style='red')
 
     async def send_move(self, move):
-        self.websocket.send(json.dumps({
+        await self.websocket.send(json.dumps({
             'type': 'player2_move',
             'direction': str(move),
         }))
@@ -181,7 +181,6 @@ class Game:
         }))
 
     async def update_movement(self):
-        
         if self.player1_dx == '0':
             send_dir = str('-1')
         elif self.player1_dx == '1':
@@ -190,7 +189,6 @@ class Game:
             send_dir = str('1')
         else:
             send_dir = str('0')
-        console.print(f'Player 1 direction: {send_dir}')
         await self.send_move(send_dir)
 
     async def update_client(self):
@@ -232,7 +230,7 @@ class Game:
                         if recv_dx != self.player1_dx:
                             self.player1_dx = recv_dx
                             await self.update_movement()
-                        await asyncio.sleep(0.02)
+                        await asyncio.sleep(0.01)
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
@@ -240,7 +238,11 @@ class Game:
         except Exception as e:
             console.print(f'Error in update_client: {e}', style='red')
 
-        
+        # exit to the Chat back if ctrl+c or the game is over
+        await self.websocket.close()
+        await asyncio.sleep(1)
+        return
+
 class Chat:
     def __init__(self, base_url, jwt_token, username):
         self.base_url = base_url
@@ -263,6 +265,10 @@ class Chat:
                 'message': message,
                 'username': self.username,
             }
+
+            if message.startswith('/duel'):
+                self.game = Game(self.base_url, self.jwt_token, self.username)
+
             await self.websocket.send(json.dumps(data))
             console.print(f'[bold cyan]{self.username}[/bold cyan]: {message}')
 
@@ -280,6 +286,11 @@ class Chat:
                     username = data_json.get('username')
                     console.print(
                         f'[bold cyan]{username}[/bold cyan] has {message} the challenge.', style='blue')
+                elif msg_type == 'accept':
+                    console.print(data_json.get('message'))
+                    msg = data_json.get('message')
+                    self.match_id = msg.split(' ')[1]
+                    console.print(f'Match ID: {self.match_id} against {msg.split(" ")[2]}')
                 else:
                     message = data_json.get('message')
                     if message and message.startswith('/duel'):
