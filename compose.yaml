@@ -23,9 +23,9 @@ services:
     restart: unless-stopped
 
   server:
-    build:
-      image: caddy:2.8.4-alpine
-      context: "${PWD}/server"
+    image: caddy:2.8.4-alpine
+    # build:
+    #   context: "${PWD}/server"
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
