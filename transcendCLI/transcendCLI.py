@@ -169,7 +169,7 @@ class Game:
             console.print(f'WebSocket error: {e}', style='red')
 
     async def send_move(self, move):
-        self.websocket.send(json.dumps({
+        await self.websocket.send(json.dumps({
             'type': 'player2_move',
             'direction': move,
         }))
@@ -185,13 +185,13 @@ class Game:
 
     async def update_movement(self):
         if self.player1_dx == '0':
-            send_dir = str('-1')
+            send_dir = -1
         elif self.player1_dx == '1':
-            send_dir = str('0')
+            send_dir = 0
         elif self.player1_dx == '2':
-            send_dir = str('1')
+            send_dir = 1
         else:
-            send_dir = str('0')
+            send_dir = 0
 
         await self.send_move(send_dir)
 

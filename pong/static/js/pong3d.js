@@ -64,7 +64,7 @@ const soundBase = 16.0;
 class Arena {
 	constructor(texLoader) {
 		this.ambient_light = new THREE.AmbientLight(0x882288);
-	
+
 		this.lightbulb1 = new THREE.SpotLight(0xffaa99, 420);
 		this.lightbulb2 = new THREE.SpotLight(0xaa99ff, 420);
 		this.lightbulb1.position.set(0, 42, -160);
@@ -77,8 +77,8 @@ class Arena {
 		this.lightbulb2.shadow.camera.far = 80;
 		this.lightbulb2.shadow.focus = 1;
 
-		this.spotLight = new THREE.SpotLight( 0xffffff, 300);
-		this.spotLight.position.set( 0, 200, 0 );
+		this.spotLight = new THREE.SpotLight(0xffffff, 300);
+		this.spotLight.position.set(0, 200, 0);
 		this.spotLight.angle = Math.PI / 4;
 		this.spotLight.penumbra = 1;
 		this.spotLight.decay = 1;
@@ -120,13 +120,13 @@ class Arena {
 	}
 
 	place(scene, topWallPos, bottomWallPos) {
-		for (let i = 0; i<8; ++i) {
+		for (let i = 0; i < 8; ++i) {
 			this.bottomWalls[i].position.set(bottomWallPos + WALL_THICKNESS / 2, WALL_HEIGHT / 2, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
 			this.topWalls[7 - i].position.set(topWallPos - WALL_THICKNESS / 2, WALL_HEIGHT / 2, -ARENA_WIDTH / 2 + (i * ARENA_WIDTH / 8) + ARENA_WIDTH / 16);
 			scene.add(this.bottomWalls[i], this.topWalls[i]);
 		}
 		scene.add(this.lightbulb1, this.lightbulb2);
-		scene.add( this.spotLight );
+		scene.add(this.spotLight);
 		scene.add(this.ambient_light);
 		scene.add(this.floor);
 	}
@@ -148,7 +148,7 @@ class Arena {
  * hud.update();
  */
 class Hud {
-	constructor (renderer, fontLoader, player1, player2, score, p1Avatar, p2Avatar) {
+	constructor(renderer, fontLoader, player1, player2, score, p1Avatar, p2Avatar) {
 		const frustumSize = 5;
 		const aspect = window.innerWidth / window.innerHeight;
 		this.camera = new THREE.OrthographicCamera(
@@ -257,14 +257,14 @@ class Hud {
 		// this.composer.addPass(new OutputPass());
 	}
 
-	update () {
+	update() {
 		this.p1img.rotation.x += 0.01;
 		this.p1img.rotation.y += 0.01;
 		this.p2img.rotation.x += 0.01;
 		this.p2img.rotation.y += 0.01;
 	}
 
-	updateScore (score) {
+	updateScore(score) {
 		this.scene.remove(this.scoreText);
 		const fontLoader = new FontLoader();
 		fontLoader.load(HUD_FONT, font => {
@@ -300,12 +300,12 @@ class Hud {
  * ball.sync(ballData, timestamp);
  */
 class Ball {
-	constructor () {
+	constructor() {
 		const ball_mat = new THREE.MeshStandardMaterial({ color: 0xf6d32d });
 		ball_mat.metalness = 0.8;
 		ball_mat.roughness = 0.19;
 
-		const ball_geo = new THREE.SphereGeometry( BALL_SIZE, 32, 32 )
+		const ball_geo = new THREE.SphereGeometry(BALL_SIZE, 32, 32)
 		this.mesh = new THREE.Mesh(ball_geo, ball_mat);
 		this.mesh.castShadow = true;
 		this.mesh.receiveShadow = true;
@@ -316,21 +316,21 @@ class Ball {
 		this.lastMove = 0;
 	}
 
-	place (scene, x, z) {
+	place(scene, x, z) {
 		this.mesh.position.set(x, BALL_SIZE, z);
 		scene.add(this.mesh);
 	}
 
-	get position () {
+	get position() {
 		this.mesh.getWorldPosition(this.pos);
 		return [this.pos.x, this.pos.z];
 	}
 
-	get direction () {
+	get direction() {
 		return [this.dir.x, this.dir.z];
 	}
 
-	doMove (online=false) {
+	doMove(online = false) {
 		const now = Date.now();
 		if (online) {
 			const elapsedTime = (now - this.lastUpdateTime) / 1000;
@@ -340,7 +340,7 @@ class Ball {
 			this.mesh.translateZ(this.dir.z * this.speed * elapsedTime);
 			return;
 		}
-		if(this.lastMove == 0 || now - this.lastMove > 100 || now - this.lastMove <= 4)
+		if (this.lastMove == 0 || now - this.lastMove > 100 || now - this.lastMove <= 4)
 			this.lastMove = now;
 		this.time = now - this.lastMove;
 		this.mesh.translateX(this.dir.x * this.speed * this.time);
@@ -348,13 +348,13 @@ class Ball {
 		this.lastMove = now;
 	}
 
-	reset () {
+	reset() {
 		this.mesh.position.set(0, BALL_SIZE, 0);
 		this.dir.set(0, 0, 0);
 		this.speed = 0;
 	}
 
-	sync (ballData, timestamp) {
+	sync(ballData, timestamp) {
 		this.mesh.position.set(ballData.x, BALL_SIZE, ballData.y);
 		this.dir.set(ballData.dx, 0, ballData.dy);
 		this.speed = ballData.v;
@@ -377,7 +377,7 @@ class Ball {
  * paddle.sync(pos, dir, timestamp);
  */
 class Paddle {
-	constructor (paddle_geo, paddle_mat, avatar_tex) {
+	constructor(paddle_geo, paddle_mat, avatar_tex) {
 		this.mesh = new THREE.Mesh(paddle_geo, paddle_mat);
 		this.mesh.castShadow = true;
 		this.pos = new THREE.Vector3();
@@ -390,7 +390,7 @@ class Paddle {
 		this.avatar = new THREE.Mesh(
 			new THREE.BoxGeometry(10, 10, 10),
 			new THREE.MeshLambertMaterial({ map: avatar_tex, })
-			);
+		);
 		const wire_material = new THREE.MeshLambertMaterial({ color: 0x42FF42, wireframe: true });
 		this.avatar_box = new THREE.Mesh(
 			new THREE.BoxGeometry(11, 11, 11),
@@ -398,7 +398,7 @@ class Paddle {
 		);
 	}
 
-	place (side, scene) {
+	place(side, scene) {
 		this.side = side;
 		const x = 0;
 		const y = (side === "left") ? -ARENA_WIDTH / 2 + GOAL_LINE : ARENA_WIDTH / 2 - GOAL_LINE;
@@ -414,7 +414,7 @@ class Paddle {
 		return [this.pos.x, this.pos.z];
 	}
 
-	doMove (online=false) {
+	doMove(online = false) {
 		const limit = (ARENA_HEIGHT / 2 - (PADDLE_LEN / 2));
 		if (online) {
 			const now = Date.now();
@@ -433,7 +433,7 @@ class Paddle {
 		}
 	}
 
-	sync (pos, dir, timestamp) {
+	sync(pos, dir, timestamp) {
 		this.direction = dir;
 		this.mesh.position.x = pos;
 
@@ -442,12 +442,12 @@ class Paddle {
 };
 
 class proAI {
-	constructor (player) {
+	constructor(player) {
 		this.player = player;
 		this.lastMove = 0;
 		this.objective = 0;
 		this.msc = 21;
-		this.time = {x : null, z : null};
+		this.time = { x: null, z: null };
 		this.distance;
 		this.randomMargin = 10;
 		this.wait = 0; // time before it hits left paddle
@@ -463,21 +463,21 @@ class proAI {
 		this.endZ;
 
 		this.endX = - (ARENA_HEIGHT / 2);
-		if(simBall.dirX > 0)
+		if (simBall.dirX > 0)
 			this.endX = ARENA_HEIGHT / 2;
 		this.time.x = Math.abs((this.endX - simBall.posX) / simBall.dirX);
 
-		if(simBall.dirZ > 0)
+		if (simBall.dirZ > 0)
 			this.time.z = Math.abs((ARENA_WIDTH / 2 - simBall.posZ) / simBall.dirZ);
-		
-		if(this.time.x < this.time.z) {
+
+		if (this.time.x < this.time.z) {
 			this.endZ = this.time.x * simBall.dirZ + simBall.posZ;
 			simBall.dirX *= - 1;
 			this.distance = Math.abs(simBall.posX - this.endX);
 		}
 		else {
 			this.endX = this.time.z * simBall.dirX + simBall.posX;
-			if(simBall.dirZ > 0)
+			if (simBall.dirZ > 0)
 				this.endZ = ARENA_WIDTH / 2;
 			else {
 				this.endZ = - ARENA_WIDTH / 2;
@@ -494,7 +494,7 @@ class proAI {
 		let rounds = 0;
 		let rand = Math.random();
 		this.timeOfImpact = 0;
-		while(simBall.posZ != ARENA_WIDTH / 2 && rounds < 8) {
+		while (simBall.posZ != ARENA_WIDTH / 2 && rounds < 8) {
 			this.nextCollision(simBall);
 			this.timeOfImpact += this.distance / simBall.speed;
 			rounds++;
@@ -507,8 +507,8 @@ class proAI {
 		this.wait = 0;
 		let rounds = 0;
 
-		if(simBall.dirZ > 0) { // hits AI paddle first so then we want to reposition the paddle strategically in anticipation and estimate when ball will hit the left paddle
-			while(simBall.posZ < (ARENA_WIDTH / 2) && rounds < 9) {
+		if (simBall.dirZ > 0) { // hits AI paddle first so then we want to reposition the paddle strategically in anticipation and estimate when ball will hit the left paddle
+			while (simBall.posZ < (ARENA_WIDTH / 2) && rounds < 9) {
 				this.nextCollision(simBall);
 				this.wait += this.distance / simBall.speed;
 				rounds++;
@@ -516,56 +516,56 @@ class proAI {
 			let refAngle = (this.objective - this.player.pos.x) / (PADDLE_LEN / 2) * (Math.PI / 4);
 			simBall.dirZ = -1 * Math.cos(refAngle);
 			simBall.dirX = Math.sin(refAngle);
-			
+
 			rounds = 0;
-			while(simBall.posZ != - (ARENA_WIDTH / 2) && rounds < 9) {
+			while (simBall.posZ != - (ARENA_WIDTH / 2) && rounds < 9) {
 				this.nextCollision(simBall);
 				this.wait += this.distance / simBall.speed;
 				rounds++;
 			}
 		}
-		if(simBall.dirZ < 0) { // we want to know when it will hit the left paddle
-			while(simBall.posZ != - (ARENA_WIDTH / 2) && rounds < 9) {
+		if (simBall.dirZ < 0) { // we want to know when it will hit the left paddle
+			while (simBall.posZ != - (ARENA_WIDTH / 2) && rounds < 9) {
 				this.nextCollision(simBall);
 				this.wait += this.distance / simBall.speed;
 				rounds++;
 			}
-			if(rounds > 5) {
+			if (rounds > 5) {
 				this.wait = 0;
 			}
 		}
 	}
 	stopMove() {
-		if(this.player.direction == 1 && this.player.pos.x >= this.objective) {
+		if (this.player.direction == 1 && this.player.pos.x >= this.objective) {
 			this.player.direction = 0;
 		}
-		else if(this.player.direction == -1 && this.player.pos.x <= this.objective) {
+		else if (this.player.direction == -1 && this.player.pos.x <= this.objective) {
 			this.player.direction = 0;
 		}
 	}
 	setDirection() {
-		if(this.player.pos.x < this.objective)
+		if (this.player.pos.x < this.objective)
 			this.player.direction = 1;
 		else
 			this.player.direction = -1;
 	}
 	executeMove(ball) {
-		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
+		this.simBall = { posX: ball.pos.x, posZ: ball.pos.z, dirX: ball.dir.x, dirZ: ball.dir.z, speed: ball.speed };
 		this.setObjective(this.simBall);
 		this.setDirection();
 	}
 	update(ball) {
-		if(this.timeOfImpact != 0 && Date.now() > this.timeOfImpact + (ARENA_WIDTH / 2) / ball.speed && this.player.direction == 0) {
+		if (this.timeOfImpact != 0 && Date.now() > this.timeOfImpact + (ARENA_WIDTH / 2) / ball.speed && this.player.direction == 0) {
 			this.timeOfImpact = 0;
 			this.objective = 0;
 			this.setDirection();
 		}
 		this.stopMove();
-		if(Date.now() < this.lastMove + 1000 || (Date.now() < this.lastMove + this.wait + 1 / ball.speed))
-			return ;
+		if (Date.now() < this.lastMove + 1000 || (Date.now() < this.lastMove + this.wait + 1 / ball.speed))
+			return;
 		this.lastMove = Date.now();
 		this.executeMove(ball);
-		this.simBall = { posX : ball.pos.x, posZ : ball.pos.z, dirX : ball.dir.x, dirZ : ball.dir.z, speed : ball.speed};
+		this.simBall = { posX: ball.pos.x, posZ: ball.pos.z, dirX: ball.dir.x, dirZ: ball.dir.z, speed: ball.speed };
 		this.setWait(this.simBall);
 	}
 };
@@ -585,7 +585,7 @@ class proAI {
  * game.stop();
  */
 class Client3DGame {
-	constructor (gameSetup, gameSocket=null, gameData=null, gameID=null) {
+	constructor(gameSetup, gameSocket = null, gameData = null, gameID = null) {
 		this.parent = gameSetup.parentElement;
 		this.gameSocket = gameSocket;
 		this.isOnline = gameSocket !== null;
@@ -594,7 +594,7 @@ class Client3DGame {
 		this.gameID = gameID;
 		const nav = document.getElementById('nav');
 		const footer = document.getElementById('footer');
-	
+
 		this.parent.height = window.innerHeight - nav.offsetHeight - footer.offsetHeight - CANVAS_PADDING;
 		this.parent.width = window.innerWidth - CANVAS_PADDING;
 		while (this.parent.firstChild) {
@@ -630,15 +630,15 @@ class Client3DGame {
 		this.parent.appendChild(progressBar);
 
 		this.loadManager = new THREE.LoadingManager();
-		this.loadManager.onStart = function ( url, itemsLoaded, itemsTotal ) {
-			console.debug( 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+		this.loadManager.onStart = function(url, itemsLoaded, itemsTotal) {
+			console.debug('Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
 		};
 		this.loadManager.onLoad = () => {
-			console.debug( 'Loading complete!' );
+			console.debug('Loading complete!');
 			progressBar.style.display = "none";
 		};
 		this.loadManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-			console.debug( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+			console.debug('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
 			progress.style.width = (itemsLoaded / itemsTotal * 100) + "%";
 			progress.innerText = Math.floor(itemsLoaded / itemsTotal * 100) + "%";
 		};
@@ -662,7 +662,7 @@ class Client3DGame {
 		this.init(gameSetup);
 	}
 
-	init (gameSetup) {
+	init(gameSetup) {
 		// setup canvas
 		this.canvas = document.createElement('canvas');
 		// this.canvas.width = window.innerWidth;
@@ -882,7 +882,7 @@ class Client3DGame {
 		}
 	}
 
-	sendRegisterPlayer () {
+	sendRegisterPlayer() {
 		this.gameSocket?.send(JSON.stringify({
 			type: 'register',
 			player: this.myPlayer,
@@ -891,21 +891,21 @@ class Client3DGame {
 		}));
 	}
 
-	sendReady () {
+	sendReady() {
 		this.gameSocket?.send(JSON.stringify({
 			type: 'ready',
 			player: this.myPlayer,
 		}));
 	}
 
-	sendPlayerUpdate (direction) {
+	sendPlayerUpdate(direction) {
 		this.gameSocket?.send(JSON.stringify({
 			type: `${this.myPlayer}_move`,
 			direction: direction
 		}));
 	}
 
-	toggleFullScreen () {
+	toggleFullScreen() {
 		if (this.renderer.domElement.requestFullscreen) {
 			this.renderer.domElement.requestFullscreen();
 		} else if (this.renderer.domElement.webkitRequestFullscreen) {
@@ -917,22 +917,22 @@ class Client3DGame {
 		}
 	}
 
-	resize (ev) {
+	resize(ev) {
 		const width = this.canvas.clientWidth;
 		const height = this.canvas.clientHeight;
 		// const needResize = this.canvas.width !== width || this.canvas.height !== height;
 		// if (needResize) {
-			this.camera.aspect = width / height;
-			this.camera.updateProjectionMatrix();
-			this.hud.camera.aspect = width / height;
-			this.hud.camera.updateProjectionMatrix();
-			this.renderer.setSize(width, height);
-			this.composer.setSize(width, height);
+		this.camera.aspect = width / height;
+		this.camera.updateProjectionMatrix();
+		this.hud.camera.aspect = width / height;
+		this.hud.camera.updateProjectionMatrix();
+		this.renderer.setSize(width, height);
+		this.composer.setSize(width, height);
 		// }
 	}
 
-	keydown (key) {
-		if (this.gameover)	return;
+	keydown(key) {
+		if (this.gameover) return;
 		if (this.isOnline) {
 			if (this.gameData.status == "paused")
 				setTimeout(() => this.sendReady(), 1000);
@@ -945,26 +945,26 @@ class Client3DGame {
 			this.ball.dir.x = 1;
 			this.ball.speed = BALL_START_SPEED;
 		}
-		switch(key.code) {
+		switch (key.code) {
 			case this.playerOne.controls?.up:
-				if(this.playerOne.paddle.direction != 1)
+				if (this.playerOne.paddle.direction != 1)
 					this.playerOne.paddle.keys_active++;
 				this.playerOne.paddle.direction = 1;
 				if (this.isOnline) this.sendPlayerUpdate(1);
 				break;
 			case this.playerOne.controls?.down:
-				if(this.playerOne.paddle.direction != -1)
+				if (this.playerOne.paddle.direction != -1)
 					this.playerOne.paddle.keys_active++;
 				this.playerOne.paddle.direction = -1;
 				if (this.isOnline) this.sendPlayerUpdate(-1);
 				break;
 			case this.playerTwo.controls?.up:
-				if(this.playerTwo.paddle.direction != 1)
+				if (this.playerTwo.paddle.direction != 1)
 					this.playerTwo.paddle.keys_active++;
 				this.playerTwo.paddle.direction = 1;
 				break;
 			case this.playerTwo.controls?.down:
-				if(this.playerTwo.paddle.direction != -1)
+				if (this.playerTwo.paddle.direction != -1)
 					this.playerTwo.paddle.keys_active++;
 				this.playerTwo.paddle.direction = -1;
 				break;
@@ -973,39 +973,39 @@ class Client3DGame {
 		}
 	}
 
-	keyup (key) {
-		if (this.gameover)	return;
+	keyup(key) {
+		if (this.gameover) return;
 		if (key.code == this.playerOne.controls?.up || key.code == this.playerOne.controls?.down) {
 			this.playerOne.paddle.keys_active--;
-			if(this.playerOne.paddle.keys_active == 0)
+			if (this.playerOne.paddle.keys_active == 0)
 				this.playerOne.paddle.direction = 0;
 			if (this.isOnline) this.sendPlayerUpdate(0);
 		} else if (key.code == this.playerTwo.controls?.up || key.code == this.playerTwo.controls?.down) {
 			this.playerTwo.paddle.keys_active--;
-			if(this.playerTwo.paddle.keys_active == 0)
+			if (this.playerTwo.paddle.keys_active == 0)
 				this.playerTwo.paddle.direction = 0;
 		} else if (key.key === "`") {
 			this.gui.domElement.style.display = this.gui.domElement.style.display === 'none' ? 'block' : 'none';
 		}
 	}
 
-	button_right_onmousedown () {
+	button_right_onmousedown() {
 		this.playerOne.paddle.direction = 1;
 	}
 
-	button_left_onmousedown () {
+	button_left_onmousedown() {
 		this.playerOne.paddle.direction = -1;
 	}
 
-	button_right_onmouseup () {
+	button_right_onmouseup() {
 		this.playerOne.paddle.direction = 0;
 	}
 
-	button_left_onmouseup () {
+	button_left_onmouseup() {
 		this.playerOne.paddle.direction = 0;
 	}
 
-	endGame () {
+	endGame() {
 		this.gameover = true;
 		this.scene.remove(this.ball);
 		this.cam_controls.autoRotate = true;
@@ -1017,7 +1017,7 @@ class Client3DGame {
 		this.cam_controls.autoRotateSpeed = 6;
 	}
 
-	loop () {
+	loop() {
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		if (!this.gameover) {
 			let now = Date.now();
@@ -1043,28 +1043,28 @@ class Client3DGame {
 		}
 		this.amps = this.audio.getAmps();
 		for (let i = 0; i < 8; ++i) {
-			this.arena.topWalls[i].position.y = WALL_HEIGHT / 2 + (50 - this.amps[i + 1])/-5;
-			this.arena.bottomWalls[i].position.y = WALL_HEIGHT / 2 + (50 - this.amps[i + 1])/-5;
+			this.arena.topWalls[i].position.y = WALL_HEIGHT / 2 + (50 - this.amps[i + 1]) / -5;
+			this.arena.bottomWalls[i].position.y = WALL_HEIGHT / 2 + (50 - this.amps[i + 1]) / -5;
 			if (i === 6) {
 				this.arena.lightbulb1.intensity = this.amps[i + 1] * 50;
 			} else if (i === 5) {
 				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
 			}
 		}
-		if(this.hasAI)
+		if (this.hasAI)
 			this.ai.update(this.ball);
 		this.draw();
 	}
 
-	update () {
-		if (!this.running)	return;
+	update() {
+		if (!this.running) return;
 		this.playerOne.paddle.doMove();
 		this.playerTwo.paddle.doMove();
 		this.ball.doMove();
 		this.checkCollisions();
 	}
 
-	syncData () {
+	syncData() {
 		const now = Date.now();
 
 		this.running = (this.gameData.status === 'running');
@@ -1100,9 +1100,13 @@ class Client3DGame {
 			this.hud.updateScore(this.gameData.score);
 			this.endGame();
 		}
+
+		console.log("this.playerOne", this.playerOne);
+		console.log("this.playerTwo", this.playerTwo);
+
 	}
 
-	draw () {
+	draw() {
 		this.cam_controls.update();
 		this.hud.update();
 		// this.renderer.render(this.scene, this.camera);
@@ -1112,18 +1116,18 @@ class Client3DGame {
 		// this.hud.composer.render();
 	}
 
-	repositionBall (ballX, ballY, p2y, p1y) {
+	repositionBall(ballX, ballY, p2y, p1y) {
 		let distance;
-		
-		if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)){
+
+		if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)) {
 
 			distance = (ballY + BALL_SIZE) - (p2y - (PADDLE_WIDTH / 2));
 			console.log("LEFT collision distance: ", distance);
 			this.ball.pos.x -= this.ball.dir.x * distance;
 			this.ball.pos.z -= this.ball.dir.z * distance;
 		}
-	
-		if(ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)){
+
+		if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)) {
 
 			distance = (p1y + (PADDLE_WIDTH / 2)) - (ballY - BALL_SIZE);
 			console.log("RIGHT collision distance: ", distance);
@@ -1131,11 +1135,12 @@ class Client3DGame {
 			this.ball.pos.z += this.ball.dir.z * distance;
 		}
 	}
-	
-	checkCollisions () {
+
+	checkCollisions() {
+
 		const [ballX, ballY] = this.ball.position;
 		if (ballX <= -(ARENA_HEIGHT / 2) + BALL_SIZE / 2
-		|| ballX >= (ARENA_HEIGHT / 2) - BALL_SIZE / 2) {
+			|| ballX >= (ARENA_HEIGHT / 2) - BALL_SIZE / 2) {
 			this.audio.playTone(this.ball.speed);
 			this.ball.dir.x *= (-1.1);
 			Math.min(Math.max(this.ball.dir.x, -1), 1);
@@ -1155,7 +1160,7 @@ class Client3DGame {
 			this.ball.reset();
 			// this.playerOne.reset();
 			// this.playerTwo.reset();
-			if(this.hasAI)
+			if (this.hasAI)
 				this.ai.resetTimes();
 		} else if (ballY > ARENA_WIDTH / 2 + GOAL_LINE) {
 			this.audio.playTone(this.ball.speed);
@@ -1169,13 +1174,13 @@ class Client3DGame {
 			this.ball.reset();
 			// this.playerOne.reset();
 			// this.playerTwo.reset();
-			if(this.hasAI)
+			if (this.hasAI)
 				this.ai.resetTimes();
 		} else if (ballY + BALL_SIZE >= p2y - (PADDLE_WIDTH / 2)
-		&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
-		&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) {
-			if(ballY > p2y + PADDLE_WIDTH) {
-				return ;
+			&& (ballY + BALL_SIZE < (ARENA_WIDTH / 2))
+			&& (ballX < p2x + (PADDLE_LEN / 2) && ballX > p2x - (PADDLE_LEN / 2))) {
+			if (ballY > p2y + PADDLE_WIDTH) {
+				return;
 			}
 			this.audio.playTone(this.ball.speed);
 			let refAngle = (ballX - p2x) / (PADDLE_LEN / 2) * (Math.PI / 4);
@@ -1184,10 +1189,10 @@ class Client3DGame {
 			this.ball.speed += BALL_INCR_SPEED;
 			// this.repositionBall(ballX, ballY, p2y, p1y);
 		} else if (ballY - BALL_SIZE <= p1y + (PADDLE_WIDTH / 2)
-		&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
-		&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
-			if(ballY < p1y - PADDLE_WIDTH) {
-				return ;
+			&& (ballY + BALL_SIZE > -ARENA_WIDTH / 2)
+			&& (ballX < p1x + (PADDLE_LEN / 2) && ballX > p1x - (PADDLE_LEN / 2))) {
+			if (ballY < p1y - PADDLE_WIDTH) {
+				return;
 			}
 			this.audio.playTone(this.ball.speed);
 			let refAngle = (ballX - p1x) / (PADDLE_LEN / 2) * (Math.PI / 4);
@@ -1196,26 +1201,24 @@ class Client3DGame {
 			this.ball.speed += BALL_INCR_SPEED;
 			// this.repositionBall(ballX, ballY, p2y, p1y);
 		}
-		console.log("this.playerOne", this.playerOne);
-		console.log("this.playerTwo", this.playerTwo);
 	}
 
-	showScore () {
+	showScore() {
 		this.scene.remove(this.score);
 		this.fontLoader.load(SCORE_FONT, font => {
-			const textGeo = new TextGeometry (
-					this.playerOne.paddle.score + ' : ' + this.playerTwo.paddle.score, {
-					font: font,
-					size: 80,
-					height: 10,
-					depth: 5,
-					curveSegments: 12,
-					bevelEnabled: true,
-					bevelThickness: 10,
-					bevelSize: 8,
-					bevelOffset: 0,
-					bevelSegments: 5
-				}
+			const textGeo = new TextGeometry(
+				this.playerOne.paddle.score + ' : ' + this.playerTwo.paddle.score, {
+				font: font,
+				size: 80,
+				height: 10,
+				depth: 5,
+				curveSegments: 12,
+				bevelEnabled: true,
+				bevelThickness: 10,
+				bevelSize: 8,
+				bevelOffset: 0,
+				bevelSegments: 5
+			}
 			);
 			textGeo.computeBoundingBox();
 			const centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
@@ -1226,7 +1229,7 @@ class Client3DGame {
 					opacity: 0.66,
 					side: THREE.FrontSide,
 					wireframe: true
-				} );
+				});
 			this.score = new THREE.Mesh(textGeo, score_mat);
 			this.score.position.x = ARENA_HEIGHT;
 			this.score.position.y = SCORE_HEIGHT;
@@ -1235,25 +1238,25 @@ class Client3DGame {
 			this.score.castShadow = true;
 			this.score.receiveShadow = true;
 			this.scene.add(this.score);
-		} );
+		});
 	}
 
-	showText (text) {
+	showText(text) {
 		this.scene.remove(this.score);
 		this.fontLoader.load(WIN_FONT, font => {
 			const textGeo = new TextGeometry(
-					text, {
-					font: font,
-					size: 42,
-					height: 10,
-					depth: 2,
-					curveSegments: 8,
-					bevelEnabled: true,
-					bevelThickness: 1,
-					bevelSize: 1,
-					bevelOffset: 1,
-					bevelSegments: 1
-				}
+				text, {
+				font: font,
+				size: 42,
+				height: 10,
+				depth: 2,
+				curveSegments: 8,
+				bevelEnabled: true,
+				bevelThickness: 1,
+				bevelSize: 1,
+				bevelOffset: 1,
+				bevelSegments: 1
+			}
 			);
 			textGeo.computeBoundingBox();
 			const centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
@@ -1262,7 +1265,7 @@ class Client3DGame {
 					color: 0x2bee2b,
 					opacity: 0.85,
 					side: THREE.FrontSide
-				} );
+				});
 			this.score = new THREE.Mesh(textGeo, score_mat);
 			this.score.position.x = ARENA_HEIGHT / 2;
 			this.score.position.y = SCORE_HEIGHT;
@@ -1271,10 +1274,10 @@ class Client3DGame {
 			this.score.castShadow = true;
 			this.score.receiveShadow = true;
 			this.scene.add(this.score);
-		} );
+		});
 	}
 
-	start () {
+	start() {
 		console.log("Pong 3D - Starting new game");
 		this.audio = new AudioController();
 		this.audio.playAudioTrack();
@@ -1282,7 +1285,7 @@ class Client3DGame {
 		this.loop();
 	}
 
-	stop () {
+	stop() {
 		console.log("Pong 3D - Stopping game");
 		if (this.animRequestId) {
 			window.cancelAnimationFrame(this.animRequestId);
