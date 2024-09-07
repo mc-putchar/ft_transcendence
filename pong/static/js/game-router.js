@@ -4,6 +4,7 @@ import { getJSON, postJSON, getCookie } from "./utils.js";
 // import { initGame } from "./pong-online.js";
 import { ClientClassic } from "./client-classic.js";
 import { Client3DGame } from "./pong3d.js";
+import { Game4P } from './multi_pong4.js';
 
 class GameSetup {
 	constructor (parentElement, player1, player2, isChallenger, mode="single", client="2d") {
@@ -243,7 +244,7 @@ class GameRouter {
 	}
 
 	async startTournamentGame (data) {
-		this.setupGameWebSocket(`${data.tournamentID}#${data.gameID}#${data.player}`);
+		this.setupGameWebSocket(`${data.tournamentID}#${data.gameID}#${data.player}`); // TODO: reflect backend changes
 		if (await this.joinGame(data.gameID) == null) {
 			console.error("Error joining game");
 			return;
@@ -277,6 +278,11 @@ class GameRouter {
 			gameSetup.player1.controls = { up: "ArrowLeft", down: "ArrowRight" };
 		}
 		this.client = new Client3DGame(gameSetup);
+		this.client.start();
+	}
+
+	start4PGame () {
+		this.client = new Game4P(this.appElement);
 		this.client.start();
 	}
 
