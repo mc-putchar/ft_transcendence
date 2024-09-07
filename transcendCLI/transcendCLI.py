@@ -3,11 +3,12 @@ import click
 from requests.exceptions import RequestException
 from rich.console import Console
 import asyncio
+import subprocess
 
 LOGIN_ROUTE = '/api/login/'
 
-CLI_W = 84
-CLI_H = 42
+CLI_W = 96
+CLI_H = 31
 
 fifo_in = "/tmp/pong_in"
 fifo_out = "/tmp/pong_out"
@@ -231,9 +232,9 @@ class Game:
          
                     try:
                         recv_dx = pipe_in.readline().strip()
-                        if recv_dx != self.player1_dx:
-                            self.player1_dx = recv_dx
-                            await self.update_movement()
+                        self.player1_dx = recv_dx
+
+                        await self.update_movement()
                         await asyncio.sleep(0.03)
 
                     except BlockingIOError:
@@ -311,7 +312,9 @@ class Chat:
                 console.print(f'Error decoding JSON: {e}', style='red')
 
     async def accept_challenge(self, username):
+        subprocess.Popen(["../ft_ascii/start.sh"], shell=True)
         self.game = Game(self.base_url, self.jwt_token, self.username)
+
         response = send_post_request(
             f'https://{self.base_url}/game/matches/create_match/', self.headers)
 
