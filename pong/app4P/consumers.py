@@ -40,7 +40,6 @@ class handle4PGame(WebsocketConsumer):
 		# except Exception as e:
 			# print("EXCEPTION data = json.loads(): ", e)
 
-
 	def disconnect(self, message):
 		print("websocket disconnection")
 		handle4PGame.active_connections -= 1

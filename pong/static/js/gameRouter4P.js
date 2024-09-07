@@ -17,8 +17,6 @@ class Player {
 		let options = ["left", "top", "bottom", "right"];
 		for (let i = 0; i < options.length; i++) {
 			for (let key in used_paddles) {
-				console.log("options[i]: ", options[i]);
-				console.log("used_paddles[key]: ", used_paddles[key]);
 				if (options[i] == used_paddles[key]) {
 					options.splice(i, 1);
 					i--;
@@ -26,10 +24,8 @@ class Player {
 				}
 			}
 		}
-		console.log(options);
 		let rand = Math.round(Math.random() * 20);
 		rand = rand % options.length;
-		console.log("returned paddle: ", options[rand]);
 		return (options[rand]);
 	}
 }
@@ -49,7 +45,7 @@ class GameRouter4P {
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_active_connections'}));
 		});
-		
+
 		this.chat_websocket.onmessage = (event) => {
 
 			const data = JSON.parse(event.data);
@@ -77,10 +73,11 @@ class GameRouter4P {
 		};
 	}
 	initDirection(data) {
-		// console.log("PRE:",this.gameData[data.side].dir = this.data.dir);
-		// console.log("POST:",this.gameData[data.side].dir = this.data.dir);
+		console.log("MOVE: ", data.dir);
+		console.log("PRE:",this.gameData[data.side].dir);
 		
 		this.gameData[data.side].dir = data.dir;
+		console.log("POST:",this.gameData[data.side].dir);
 		this.gameData[data.side].pos.x = data.x;
 		this.gameData[data.side].pos.y = data.y;
 	}

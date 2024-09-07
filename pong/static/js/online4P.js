@@ -351,10 +351,17 @@ class Online4P {
 			this.resize();
 		}, 200);
 	}
+	convertPosX() {
+		this.arenaStartX
+	}
+	convertPosY() {
+		
+	}
 	sendPlayerDirection() {
+		console.log("SENDING 1: ", this.player.direction);
 		let ret_x;
 		let ret_y;
-		if(this.player.direction = 0) {
+		if(this.player.direction == 0) {
 			ret_x = this.player.x;
 			ret_y = this.player.y;
 		}
@@ -362,6 +369,7 @@ class Online4P {
 			ret_x = NaN;
 			ret_y = NaN;
 		}
+		console.log("SENDING 2: ", this.player.direction);
 		this.ws?.send(JSON.stringify({
 			"type": "player_direction",
 			"side": this.player.side,
@@ -407,6 +415,7 @@ class Online4P {
 			default:
 				break;
 		}
+		console.log("PRE SENDING: ", this.player.direction);
 		this.sendPlayerDirection();
 	}
 	keyup(key) {
