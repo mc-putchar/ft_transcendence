@@ -200,7 +200,7 @@ class Router {
 			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
 				const audioMuteBtn = document.getElementById('audioMuteBtn');
 
-				if (audioMuteBtn.innerText === '🔊') {
+				if (audioMuteBtn.innerText === '🔊 Music') {
 					audioMuteBtn.innerText = '🔇 Music';
 					if(window.mainOUT) {
 						window.mainOUT.gain.value = 0;
@@ -215,7 +215,7 @@ class Router {
 			document.getElementById('fxMuteBtn').addEventListener('click', (e) => {
 				const fxMuteBtn = document.getElementById('fxMuteBtn');
 
-				if (fxMuteBtn.innerText === '🔊') {
+				if (fxMuteBtn.innerText === '🔊 FX') {
 					fxMuteBtn.innerText = '🔇 FX';
 					if(window.fxGainNode) {
 						window.fxGainNode.gain.value = 0;

@@ -5,6 +5,8 @@ from rich.console import Console
 import asyncio
 import subprocess
 
+import errno
+
 LOGIN_ROUTE = '/api/login/'
 
 CLI_W = 94
@@ -85,7 +87,7 @@ def get_my_profile(base_url, jwt_token, cookies):
 
 
 class Game:
-    def __init__(self, base_url, jwt_token, username):
+    def __init__(self, base_url, jwt_token, username, game_creator=False):
         self.base_url = base_url
         self.jwt_token = jwt_token
         self.username = username
@@ -96,10 +98,8 @@ class Game:
         self.websocket = None
         self.users_list = []
 
-
         if not os.path.exists(fifo_out) or not os.path.exists(fifo_in):
             raise FileNotFoundError("FIFO files not found")
-
 
         subprocess.run(['bash ../ft_ascii/start.sh'], shell=True)
 
@@ -112,6 +112,11 @@ class Game:
         self.player1_dx = 0
         self.prev_score1 = 0
         self.prev_score2 = 0
+        
+        if (game_creator):
+            self.game_index = 'player1'
+        else:
+            self.game_index = 'player2'
         
 
     async def receive_message(self):
@@ -130,6 +135,7 @@ class Game:
                     pass
             except json.JSONDecodeError as e:
                 console.print(f'Error decoding JSON: {e}', style='red')
+
 
     async def connect(self, game_id='', match_id=''):
         if game_id == '':
@@ -165,24 +171,31 @@ class Game:
                     update_task,  # Include update_client in the gather
                 )
 
+
         except websockets.exceptions.InvalidStatusCode as e:
             console.print(f'WebSocket connection failed: {e}', style='red')
 
         except Exception as e:
-            console.print(f'WebSocket error: {e}', style='red')
+            console.print(f'WebSocket: {e}', style='green')
         
 
     async def send_move(self, move):
         await self.websocket.send(json.dumps({
-            'type': 'player2_move',
+            'type': self.game_index + '_move',
             'direction': move,
         }))
 
     async def send_ready(self):
-        await self.websocket.send(json.dumps({
-            'type': 'ready',
-            'player': 'player2',
-        }))
+        while True:
+            await self.websocket.send(json.dumps({
+                'type': 'ready',
+                'player': self.game_index,
+            }))
+            await self.websocket.send(json.dumps({
+                'type': 'ready',
+                'player': self.game_index,
+            }))
+            await asyncio.sleep(3)
 
     async def update_movement(self):
         if self.player1_dx == '0':
@@ -203,8 +216,8 @@ class Game:
                     if hasattr(self, 'game_state'):
                         score_p1 = int(self.game_state['score']['p1'])
                         score_p2 = int(self.game_state['score']['p2'])
-                        p1y = self.game_state['player1']['x']
-                        p2y = self.game_state['player2']['x']
+                        p1y = self.game_state[self.game_index]['x']
+                        p2y = self.game_state[self.game_index]['x']
                         ball_x = self.game_state['ball']['y']
                         ball_y = self.game_state['ball']['x']
 
@@ -213,7 +226,7 @@ class Game:
                         # console.print(f'p1y: {p1y}, p2y: {p2y}, ball_x: {ball_x}, ball_y: {ball_y}', style='green')
 
                         ball_x = remap_inverted(ball_x, -158, 158, 0, CLI_W)
-                        ball_y = remap(ball_y, -100, 100, 0, CLI_H - 2)
+                        ball_y = remap(ball_y, -100, 100, 0, CLI_H - 4)
 
                         data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
 
@@ -231,14 +244,19 @@ class Game:
          
                     try:
                         recv_dx = pipe_in.readline().strip()
-                        self.player1_dx = recv_dx
-
-                        await self.update_movement()
+                        if recv_dx != self.player1_dx:
+                            self.player1_dx = recv_dx
+                            await self.update_movement()
                         await asyncio.sleep(0.02)
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
-                        
+            
+        except OSError as e:
+            if e.errno == errno.EPIPE:
+                console.print('Client pipe exited', style='green')
+                await self.websocket.close()
+
         except Exception as e:
             console.print(f'Error in update_client: {e}', style='red')
 
@@ -266,7 +284,8 @@ class Chat:
             }
 
             if message.startswith('/duel'):
-                self.game = Game(self.base_url, self.jwt_token, self.username)
+                # await self.accept_challenge(message.split(' ')[1])
+                self.game = Game(self.base_url, self.jwt_token, self.username, game_creator=True)
                 
             await self.websocket.send(json.dumps(data))
 
@@ -277,28 +296,33 @@ class Chat:
             try:
                 data_json = json.loads(data)
                 msg_type = data_json.get('type')
+
                 if msg_type == 'connect':
                     username = data_json.get('username')
                     console.print(
                         f'[bold cyan]{username}[/bold cyan] has connected.')
+                
                 elif msg_type == 'challenge':
                     message = data_json.get('message')
                     username = data_json.get('username')
                     console.print(
                         f'[bold cyan]{username}[/bold cyan] has {message} the challenge.', style='blue')
+                
                 elif msg_type == 'accept':
                     console.print(data_json.get('message'))
                     msg = data_json.get('message')
                     self.match_id = msg.split(' ')[1]
                     console.print(f'Match ID: {self.match_id} against {msg.split(" ")[2]}')
+                
                 else:
                     message = data_json.get('message')
+                
                     if message and message.startswith('/duel'):
                         username = data_json.get('username')
-                        # if username == self.username:
-                        #     continue
                         await self.accept_challenge(username)
+                    
                     username = data_json.get('username')
+                    
                     if message:
                         if username:
                             console.print(
@@ -307,14 +331,16 @@ class Chat:
                             console.print(
                                 f'PONG announce: {message}', style='blue')
                     users_list = data_json.get('users_list')
+                    
                     if users_list:
                         self.users_list = users_list
                         console.print(f'Online users: {", ".join(users_list)}')
+
             except json.JSONDecodeError as e:
                 console.print(f'Error decoding JSON: {e}', style='red')
 
     async def accept_challenge(self, username):
-        self.game = Game(self.base_url, self.jwt_token, self.username)
+        self.game = Game(self.base_url, self.jwt_token, self.username, game_creator=False)
 
         response = send_post_request(
             f'https://{self.base_url}/game/matches/create_match/', self.headers)
