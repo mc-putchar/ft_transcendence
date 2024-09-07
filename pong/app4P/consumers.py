@@ -27,6 +27,7 @@ class handle4PGame(WebsocketConsumer):
 			elif(type == "added_paddle"):
 				handle4PGame.used_paddles.append(data.get("added_paddle"))
 			elif(type == "get_used_paddles"):
+				print("PRINT: ", str(handle4PGame.used_paddles))
 				self.send(text_data=json.dumps({
 					"type":"used_paddles",
 					"used_paddles": ' '.join(handle4PGame.used_paddles

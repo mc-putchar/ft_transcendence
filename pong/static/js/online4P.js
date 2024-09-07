@@ -363,11 +363,11 @@ class Online4P {
 			ret_y = NaN;
 		}
 		this.ws?.send(JSON.stringify({
-			type: "player_direction",
-			side: this.player.side,
-			dir: this.player.direction,
-			x: ret_x,
-			y: ret_y,
+			"type": "player_direction",
+			"side": this.player.side,
+			"dir": this.player.direction,
+			"x": ret_x,
+			"y": ret_y,
 		}))
 	}
 	keydown(key) {

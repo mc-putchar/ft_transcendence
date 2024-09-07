@@ -17,6 +17,8 @@ class Player {
 		let options = ["left", "top", "bottom", "right"];
 		for (let i = 0; i < options.length; i++) {
 			for (let key in used_paddles) {
+				console.log("options[i]: ", options[i]);
+				console.log("used_paddles[key]: ", used_paddles[key]);
 				if (options[i] == used_paddles[key]) {
 					options.splice(i, 1);
 					i--;
@@ -24,6 +26,7 @@ class Player {
 				}
 			}
 		}
+		console.log(options);
 		let rand = Math.round(Math.random() * 20);
 		rand = rand % options.length;
 		console.log("returned paddle: ", options[rand]);
@@ -48,16 +51,15 @@ class GameRouter4P {
 		});
 		
 		this.chat_websocket.onmessage = (event) => {
-			console.log("Event data: ", event.data);
 
 			const data = JSON.parse(event.data);
 			const type = data.type;
 
 			if(type == "player_direction") {
-				initDirection(data);
+				this.initDirection(data);
 			}
 			else if(type == "collision") {
-				initCollision(data);
+				this.initCollision(data);
 			}
 
 			else if(type == "active_connections") {
@@ -68,15 +70,19 @@ class GameRouter4P {
 				return;
 			}
 			else if(type == "used_paddles") {
-				this.used_paddles = data.used_paddles;
+				this.used_paddles = data.used_paddles.split(' ');
+				console.log("this.used_paddles: ", this.used_paddles);
 				return;
 			}
 		};
 	}
 	initDirection(data) {
-		this.gameData[data.side].dir = this.data.dir;
-		this.gameData[data.side].pos.x = this.data.x;
-		this.gameData[data.side].pos.y = this.data.y;
+		// console.log("PRE:",this.gameData[data.side].dir = this.data.dir);
+		// console.log("POST:",this.gameData[data.side].dir = this.data.dir);
+		
+		this.gameData[data.side].dir = data.dir;
+		this.gameData[data.side].pos.x = data.x;
+		this.gameData[data.side].pos.y = data.y;
 	}
 	initCollision(data) {
 		data;
