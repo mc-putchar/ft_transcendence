@@ -205,7 +205,7 @@ class Router {
 					if(window.mainOUT) {
 						window.mainOUT.gain.value = 0;
 					}
-				} else if (audioMuteBtn.innerText === '🔇'){
+				} else if (audioMuteBtn.innerText === '🔇 Music'){
 					audioMuteBtn.innerText = '🔊 Music';
 					if (window.mainOUT) {
 						window.mainOUT.gain.value = 1;
