@@ -1,10 +1,5 @@
 // import { AudioController } from './audio.js';
 
-// chat_websocket.onmessage = function(event) {
-// 	console.log(event);
-// 	console.log("message from server:", event.data);
-// };
-
 const ACTIVE_AI = false;
 
 let animationID = null;
@@ -65,6 +60,11 @@ class Arena {
 class Player {
 	constructor(side, arenaWidth, arenaHeight, startX, startY) {
 		this.side = side;
+		this.keys = {};
+		if(this.side == "top" || this.side == "bottom")
+			this.keys = {key_decr: "ArrowLeft", key_incr: "ArrowRight"}
+		else
+			this.keys = {key_decr: "ArrowUp", key_incr: "ArrowDown"}
 		this.init(arenaWidth, arenaHeight, startX, startY);
 	}
 	init(arenaWidth, arenaHeight, startX, startY)
@@ -293,11 +293,14 @@ class Animation {
 
 let resizeTimeout;
 
-class Game4P {
-	constructor() {
+class Online4P {
+	constructor(ws, gameData, param_player) {
+		this.gameData = gameData;
+		console.log("SECOND: ", this.gameData);
+		console.log("Pong 4P - Starting new game");
+		this.ws = ws;
 		this.parent = document.getElementById('app');
 
-		console.log("Pong 4P - Starting new game");
 		const nav = document.getElementById('nav');
 		const parent = document.getElementById('app');
 	
@@ -317,10 +320,11 @@ class Game4P {
 		this.canvas.height = this.parent.height;
 		this.context = this.canvas.getContext("2d");
 		this.arena = new Arena(this.canvas.width, this.canvas.height);
+		this.player = new Player(param_player.paddle_side, this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerLeft = new Player("left", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerRight = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		this.playerTop = new Player("top", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerBottom = new Player("bottom", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerTop = new Player("top", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.ball = new Ball(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.score = new Scores(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.kickOff = true;
@@ -347,81 +351,92 @@ class Game4P {
 			this.resize();
 		}, 200);
 	}
+	sendPlayerDirection() {
+		let ret_x;
+		let ret_y;
+		if(this.player.direction = 0) {
+			ret_x = this.player.x;
+			ret_y = this.player.y;
+		}
+		else {
+			ret_x = NaN;
+			ret_y = NaN;
+		}
+		this.ws?.send(JSON.stringify({
+			type: "player_direction",
+			side: this.player.side,
+			dir: this.player.direction,
+			x: ret_x,
+			y: ret_y,
+		}))
+	}
 	keydown(key) {
 		if(key.code == "KeyC") {
 			debugger;
 		}
+		if(!(key.code == this.player.keys.key_decr || key.code == this.player.keys.key_incr)) {
+			return;
+		}
 		switch(key.code) {
-			case "KeyQ":
-				if(this.playerLeft.direction != -1)
-					this.playerLeft.keys_active++;
-				this.playerLeft.direction = -1; // -1 goes up
+			case this.player.keys.key_decr:
+				if(this.player.direction != -1)
+					this.player.keys_active++;
+				this.player.direction = -1; // -1 goes up
 				break;
-			case "KeyA":
-				if(this.playerLeft.direction != 1)
-					this.playerLeft.keys_active++;
-				this.playerLeft.direction = 1;
-				break;
-			case "ArrowUp":
-				if(this.playerRight.direction != -1)
-					this.playerRight.keys_active++;
-				this.playerRight.direction = -1;
-				break;
-			case "ArrowDown":
-				if(this.playerRight.direction != 1)
-					this.playerRight.keys_active++;
-				this.playerRight.direction = 1;
-				break;
-			case "KeyF":
-				if(this.playerTop.direction != -1)
-					this.playerTop.keys_active++;
-				this.playerTop.direction = -1; // -1 goes left
-				break;
-			case "KeyG":
-				if(this.playerTop.direction != 1)
-					this.playerTop.keys_active++;
-				this.playerTop.direction = 1;
-				break;
-			case "KeyK":
-				if(this.playerBottom.direction != -1)
-					this.playerBottom.keys_active++;
-				this.playerBottom.direction = -1; // -1 goes left
-				break;
-			case "KeyL":
-				if(this.playerBottom.direction != 1)
-					this.playerBottom.keys_active++;
-				this.playerBottom.direction = 1;
+			case this.player.keys.key_incr:
+				if(this.player.direction != 1)
+					this.player.keys_active++;
+				this.player.direction = 1;
 				break;
 			default:
 				break;
 		}
+		switch(this.player.side) {
+			case "left":
+				this.playerLeft.direction = this.player.direction;
+				break;
+			case "right":
+				this.playerRight.direction = this.player.direction;
+				break;
+			case "top":
+				this.playerTop.direction = this.player.direction;
+				break;
+			case "bottom":
+				this.playerBottom.direction = this.player.direction;
+				break;
+			default:
+				break;
+		}
+		this.sendPlayerDirection();
 	}
 	keyup(key) {
 		if (this.gameover)	return;
-		if (key.code == "KeyQ" || key.code == "KeyA") {
-			if(this.playerLeft.keys_active > 0)
-				this.playerLeft.keys_active--;
-			if(this.playerLeft.keys_active == 0)
-				this.playerLeft.direction = 0;
+		if(!(key.code == this.player.keys.key_decr || key.code == this.player.keys.key_incr)) {
+			return;
 		}
-		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
-			if(this.playerRight.keys_active > 0)
-				this.playerRight.keys_active--;
-			if(this.playerRight.keys_active == 0)
-				this.playerRight.direction = 0;
+		
+		if(this.player.keys_active > 0)
+			this.player.keys_active--;
+		if(this.player.keys_active == 0)
+			this.player.direction = 0;
+		this.sendPlayerDirection();
+
+		switch(this.player.side) {
+			case "left":
+				this.playerLeft.direction = this.player.direction;
+				break;
+			case "right":
+				this.playerRight.direction = this.player.direction;
+				break;
+			case "top":
+				this.playerTop.direction = this.player.direction;
+				break;
+			case "bottom":
+				this.playerBottom.direction = this.player.direction;
+				break;
+			default:
+				break;
 		}
-		if (key.code == "KeyF" || key.code == "KeyG") {
-			if(this.playerTop.keys_active > 0)
-				this.playerTop.keys_active--;
-			if(this.playerTop.keys_active == 0)
-				this.playerTop.direction = 0;
-		} 
-		if (key.code == "KeyK" || key.code == "KeyL") {
-			if(this.playerBottom.keys_active > 0)
-				this.playerBottom.keys_active--;
-			if(this.playerBottom.keys_active == 0)
-				this.playerBottom.direction = 0;
-		} 
 	}
 	goalAnimation(now) {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -466,7 +481,7 @@ class Game4P {
 		animationID = this.animRequestId;
 	}
 	paddleCollision() {
-		if(this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width / 2) {
+		if(this.player.side == "left" && this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width / 2) {
 			if(!(this.score.lastTouch == "left"  || this.ball.x - this.ball.radius < this.playerLeft.x - this.playerLeft.width)) {
 				if(this.ball.y + this.ball.radius >= this.playerLeft.y - this.playerLeft.len / 2
 					&& this.ball.y - this.ball.radius <= this.playerLeft.y + this.playerLeft.len / 2) {
@@ -479,7 +494,7 @@ class Game4P {
 					}
 			}
 		} // LEFT PADDLE
-		if(this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
+		if(this.player.side == "right" && this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
 			if(!(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {				
 				if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
 					&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
@@ -493,7 +508,7 @@ class Game4P {
 			}
 		} // RIGHT PADDLE
 		// it can hit left and bottom so no else here
-		if (this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
+		if (this.player.side == "top" && this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
 			if (!(this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width))) {
 				if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
 					this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
@@ -509,7 +524,7 @@ class Game4P {
 				}
 			}
 		} // TOP PADDLE
-		if (this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
+		if (this.player.side == "bottom" && this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
 			if (!(this.score.lastTouch == "bottom" || (this.ball.y + this.ball.radius > this.playerBottom.y + this.playerBottom.width))) {
 				if (this.ball.x + this.ball.radius >= this.playerBottom.x - this.playerBottom.len / 2 &&
 					this.ball.x - this.ball.radius <= this.playerBottom.x + this.playerBottom.len / 2) {
@@ -558,6 +573,48 @@ class Game4P {
 		this.playerTop.init (this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerBottom.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 	}
+	fetchAndUpdateFromGameData() {
+		if(this.player.side != "left" && this.gameData.left.dir != this.playerLeft.direction) {
+			console.log("update left");
+			this.gameData.left.dir = this.playerLeft.direction;
+			if(this.gameData.left.x != NaN && this.gameData.left.y != NaN) { // would only be called if direction is set to 0, that's when positions are set
+				this.playerLeft.x = this.gameData.left.x;
+				this.playerLeft.y = this.gameData.left.y;
+				this.gameData.left.x = NaN; 
+				this.gameData.left.y = NaN;
+			}
+		}
+		else if(this.player.side != "right" && this.gameData.right.dir != this.playerRight.direction) {
+			console.log("update right");
+			this.gameData.right.dir = this.playerRight.direction;
+			if(this.gameData.right.x != NaN && this.gameData.right.y != NaN) {
+				this.playerRight.x = this.gameData.right.x;
+				this.playerRight.y = this.gameData.right.y;
+				this.gameData.right.x = NaN;
+				this.gameData.right.y = NaN;
+			}
+		}
+		else if(this.player.side != "top" && this.gameData.top.dir != this.playerTop.direction) {
+			console.log("update top");
+			this.gameData.top.dir = this.playerTop.direction;
+			if(this.gameData.top.x != NaN && this.gameData.top.y != NaN) {
+				this.playerTop.x = this.gameData.top.x;
+				this.playerTop.y = this.gameData.top.y;
+				this.gameData.top.x = NaN;
+				this.gameData.top.y = NaN;
+			}
+		}
+		else if(this.player.side != "bottom" && this.gameData.bottom.dir != this.playerBottom.direction) {
+			console.log("update bottom");
+			this.gameData.bottom.dir = this.playerBottom.direction;
+			if(this.gameData.bottom.x != NaN && this.gameData.bottom.y != NaN) {
+				this.playerBottom.x = this.gameData.bottom.x;
+				this.playerBottom.y = this.gameData.bottom.y;
+				this.gameData.bottom.x = NaN;
+				this.gameData.bottom.y = NaN;
+			}
+		}
+	}
 	update() {
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		if(this.score.goal == true) {
@@ -566,6 +623,7 @@ class Game4P {
 			this.score.updateScore();
 			return ;
 		}
+		this.fetchAndUpdateFromGameData();
 		this.paddleCollision();
 		this.ball.doMove();
 		this.playerLeft.doMove(this.arena);
@@ -585,7 +643,6 @@ class Game4P {
 	start() {
 		this.loop();
 	}
-	
 	stopGame () {
 		console.log("pong stopped and exited");
 		this.stopPong4PGame();
@@ -593,12 +650,9 @@ class Game4P {
 	}
 
 	stopPong4PGame () {
-		// get animationID
 		const nav = document.getElementById('nav');
 		const parent = document.getElementById('app');
-		//
 
-		// const pong = new Game4P(parent);
 		if(this.animRequestId) {
 			cancelAnimationFrame(this.animRequestId);
 		}
@@ -610,5 +664,4 @@ class Game4P {
 	}
 };
 
-// export { startPong4PGame, stopPong4PGame };
-export { Game4P };
+export { Online4P };
