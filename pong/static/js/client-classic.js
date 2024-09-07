@@ -612,8 +612,10 @@ class ClientClassic {
 	}
 
 	transposePosition (x, y) {
-		const tx = (this.arena.width * y / ARENA_WIDTH) + this.arena.startX + (this.arena.width / 2);
-		const ty = (this.arena.height * x / ARENA_HEIGHT) + this.arena.startY + (this.arena.height / 2);
+		// const tx = (this.arena.width * y / ARENA_WIDTH) + this.arena.startX + (this.arena.width / 2);
+		// const ty = (this.arena.height * x / ARENA_HEIGHT) + this.arena.startY + (this.arena.height / 2);
+		const tx = y + this.arena.startX + (this.arena.width / 2);
+		const ty = x + this.arena.startY + (this.arena.height / 2);
 		return [tx, ty];
 	}
 
@@ -629,13 +631,10 @@ class ClientClassic {
 			this.ball = null;
 			return;
 		}
-		// this.player1.y = (this.gameData.player1.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
-		// this.player2.y = (this.gameData.player2.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
-		[ , this.player1.y] = this.transposePosition(this.gameData.player1.x, 0);
-		[ , this.player2.y] = this.transposePosition(this.gameData.player2.x, 0);
-		// this.ball.y = this.gameData.ball.x + this.arena.startY + this.arena.height / 2;
-		// this.ball.x = this.gameData.ball.y + this.arena.startX + this.arena.width / 2;
-		[this.ball.x, this.ball.y] = this.transposePosition(this.gameData.ball.x, this.gameData.ball.y);
+		const ratio = (this.arena.height + this.arena.width) / (ARENA_HEIGHT * 2 + ARENA_WIDTH * 2);
+		[ , this.player1.y] = this.transposePosition(-this.gameData.player1.x * ratio, 0);
+		[ , this.player2.y] = this.transposePosition(-this.gameData.player2.x * ratio, 0);
+		[this.ball.x, this.ball.y] = this.transposePosition(-this.gameData.ball.x * ratio, this.gameData.ball.y * ratio);
 		this.ball.vx = this.gameData.ball.dx;
 		this.ball.vy = this.gameData.ball.dy;
 	}
