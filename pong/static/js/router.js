@@ -199,12 +199,12 @@ class Router {
 				const audioMuteBtn = document.getElementById('audioMuteBtn');
 
 				if (audioMuteBtn.innerText === '🔊') {
-					audioMuteBtn.innerText = '🔇';
+					audioMuteBtn.innerText = '🔇 Music';
 					if(window.mainOUT) {
 						window.mainOUT.gain.value = 0;
 					}
 				} else if (audioMuteBtn.innerText === '🔇'){
-					audioMuteBtn.innerText = '🔊';
+					audioMuteBtn.innerText = '🔊 Music';
 					if (window.mainOUT) {
 						window.mainOUT.gain.value = 1;
 					}
@@ -214,12 +214,12 @@ class Router {
 				const fxMuteBtn = document.getElementById('fxMuteBtn');
 
 				if (fxMuteBtn.innerText === '🔊') {
-					fxMuteBtn.innerText = '🔇';
+					fxMuteBtn.innerText = '🔇 FX';
 					if(window.fxGainNode) {
 						window.fxGainNode.gain.value = 0;
 					}
-				} else if(fxMuteBtn.innerText === '🔇'){
-					fxMuteBtn.innerText = '🔊';
+				} else if(fxMuteBtn.innerText === '🔇 FX'){
+					fxMuteBtn.innerText = '🔊 FX';
 					if (window.fxGainNode) {
 						window.fxGainNode.gain.value = 1;
 					}
