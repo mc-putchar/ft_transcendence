@@ -1,0 +1,19 @@
+[env]
+TERM = "xterm-256color"
+
+[font]
+offset = { x = 0, y = -4 }
+size = 10
+[font.normal]
+# family = "JetBrainsMonoNerdFont"
+family = "Hack"
+# family = "FiraCode Nerd Font"
+
+[window]
+opacity = 0.95
+decorations = "none"
+dimensions = { lines = 32 , columns = 80}
+
+[window.padding]
+x = 0
+y = 0

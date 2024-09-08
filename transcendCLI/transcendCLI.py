@@ -10,7 +10,7 @@ import errno
 LOGIN_ROUTE = '/api/login/'
 
 CLI_W = 80
-CLI_H = 42
+CLI_H = 32
 
 fifo_in = "/tmp/pong_in"
 fifo_out = "/tmp/pong_out"
@@ -134,7 +134,6 @@ class Game:
                     join_url = f'https://{self.base_url}/game/matches/{match_id}/join/'
                     response = send_post_request(join_url, self.headers)
                     if response:
-                        console.print(response.json())
                         console.print(f'Joined match ID: {match_id}')
                     await self.websocket.send(json.dumps({
                         'type': 'register',
@@ -177,7 +176,6 @@ class Game:
                         'match_id': match_id,
                     }))
  
-                console.print(f'Game index: {self.game_index} !', style='green')
                 update_task = asyncio.create_task(self.update_client())
                 
                 await asyncio.gather(
@@ -209,7 +207,7 @@ class Game:
                 'type': 'ready',
                 'player': 'player1',
             }))
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
 
     async def update_movement(self):
         if self.player1_dx == '0':
@@ -271,7 +269,7 @@ class Game:
 
                         try:
                             pipe_out.write(data)
-                            pipe_out.flush()
+                            pipe_out.flush() 
 
                         except BlockingIOError:
                             console.print('fifo_out is not ready for writing', style='yellow')
@@ -281,11 +279,12 @@ class Game:
                         if recv_dx != self.player1_dx:
                             self.player1_dx = recv_dx
                             await self.update_movement()
-                        await asyncio.sleep(0.03)
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
             
+                    await asyncio.sleep(0.03)
+
         except OSError as e:
             if e.errno == errno.EPIPE:
                 console.print('Client pipe exited', style='green')
@@ -328,7 +327,6 @@ class Chat:
     async def receive_message(self):
         async for data in self.websocket:
             try:
-                console.print(data, style='green')
                 data_json = json.loads(data)
                 msg_type = data_json.get('type')
 
