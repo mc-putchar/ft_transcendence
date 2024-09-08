@@ -316,6 +316,9 @@ class Chat:
                 'username': self.username,
             }
 
+            if (message == '' or message.isspace()):
+                continue
+
             await self.websocket.send(json.dumps(data))
  
             if message.startswith('/duel'):
@@ -356,17 +359,16 @@ class Chat:
                         username = data_json.get('username')
                         if username == self.username:
                             continue
-                        await self.accept_challenge(username, False)
+                        if message.split(' ')[1] == self.username:
+                            await self.accept_challenge(username, False)
                     
                     username = data_json.get('username')
                     
                     if message:
                         if username:
-                            console.print(
-                                f'[bold cyan]{username}[/bold cyan]: {message}')
+                            console.print(f'[bold cyan]{username}[/bold cyan]: {message}')
                         else:
-                            console.print(
-                                f'PONG announce: {message}', style='blue')
+                            console.print(f'PONG announce: {message}', style='blue')
                     users_list = data_json.get('users_list')
 
                     if users_list:
