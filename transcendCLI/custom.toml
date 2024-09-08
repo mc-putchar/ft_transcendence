@@ -12,7 +12,7 @@ family = "Hack"
 [window]
 opacity = 0.95
 decorations = "none"
-dimensions = { lines = 32 , columns = 80}
+dimensions = { lines = 64, columns = 150}
 
 [window.padding]
 x = 0

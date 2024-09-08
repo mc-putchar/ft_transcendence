@@ -9,8 +9,8 @@ import errno
 
 LOGIN_ROUTE = '/api/login/'
 
-CLI_W = 80
-CLI_H = 32
+CLI_W = 150
+CLI_H = 64
 
 fifo_in = "/tmp/pong_in"
 fifo_out = "/tmp/pong_out"
