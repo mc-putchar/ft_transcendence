@@ -1102,10 +1102,6 @@ class Client3DGame {
 			this.hud.updateScore(this.gameData.score);
 			this.endGame();
 		}
-
-		console.log("this.playerOne", this.playerOne);
-		console.log("this.playerTwo", this.playerTwo);
-
 	}
 
 	draw() {
