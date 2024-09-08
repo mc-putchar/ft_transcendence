@@ -21,6 +21,7 @@ const SCORE_LIMIT = 10;
 
 const BALL_COLOR = "red";
 const PADDLE_COLOR = "green";
+const DEBUG_KEY = false;
 
 class Arena {
 	constructor(ctxwidth, ctxheight) {
@@ -130,34 +131,19 @@ class Player {
 };
 
 class Ball {
-	constructor(arenaWidth, arenaHeight, startX, startY) {
+	constructor(arenaWidth, arenaHeight, startX, startY, ball_vx, ball_vy) {
 		this.radius = (BALL_SIZE / 2 / 200 * arenaWidth);
 		this.color = BALL_COLOR;
-		this.initBall(arenaWidth, arenaHeight, startX, startY);
+		this.initBall(arenaWidth, arenaHeight, startX, startY, ball_vx, ball_vy);
 	}
-	initBall(arenaWidth, arenaHeight, startX, startY)
+	initBall(arenaWidth, arenaHeight, startX, startY, ball_vx, ball_vy)
 	{
 		this.x = startX + arenaWidth / 2;
 		this.y = startY + arenaHeight / 2;
 		this.lastMove = 0;
+		this.vx = ball_vx;
+		this.vy = ball_vy;
 		let rand = Math.random();
-		if(rand < 0.25) {
-			this.vx = 1;
-			this.vy = 1;
-		}
-		else if(rand < 0.5) {
-			this.vx = 1;
-			this.vy = -1;
-		}
-		else if(rand < 0.75) {
-			this.vx = -1;
-			this.vy = 1;
-		}
-		else {
-			this.vx = -1;
-			this.vy = -1;
-		}
-		rand = Math.random();
 		if(rand < 0.5) {
 			this.speedx = BALL_START_SPEED * arenaWidth / 300;
 			this.speedy = BALL_START_SPEED * arenaHeight / 200;
@@ -296,8 +282,8 @@ let resizeTimeout;
 class Online4P {
 	constructor(ws, gameData, param_player) {
 		this.gameData = gameData;
-		console.log("SECOND: ", this.gameData);
 		console.log("Pong 4P - Starting new game");
+		console.log("SECOND: ", this.gameData);
 		this.ws = ws;
 		this.parent = document.getElementById('app');
 
@@ -325,7 +311,7 @@ class Online4P {
 		this.playerRight = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerBottom = new Player("bottom", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerTop = new Player("top", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		this.ball = new Ball(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.ball = new Ball(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY, this.gameData.vx, this.gameData.vy);
 		this.score = new Scores(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.kickOff = true;
 		this.animation = new Animation();
@@ -351,25 +337,49 @@ class Online4P {
 			this.resize();
 		}, 200);
 	}
-	convertPosX() {
-		this.arenaStartX
+	denormPosX(preX) {
+		let ret_x = preX / 100 * this.arena._width;
+		ret_x = ret_x + this.arena._startX;
+		return ret_x;
 	}
-	convertPosY() {
-		
+	denormPosY(preY) {
+		let ret_y = preY / 100 * this.arena._height;
+		ret_y = ret_y + this.arena._startY;
+		return ret_y;
+	}
+	normalizedPosX(preX) {
+		let ret_x = preX - this.arena._startX;
+		ret_x = ret_x / this.arena._width * 100;
+		return ret_x;
+	}
+	normalizedPosY(preY) {
+		let ret_y = preY - this.arena._startY;
+		ret_y = ret_y / this.arena._height * 100;
+		return ret_y;
+	}
+	sendPaddleCollision() {
+		console.log("sending ball_x: ", this.normalizedPosX(this.ball.x));
+		console.log("sending ball_y: ", this.normalizedPosX(this.ball.y));
+		this.ws?.send(JSON.stringify({
+			"type": "paddle_collision",
+			"last_touch": this.score.lastTouch,
+			"ball_x":this.normalizedPosX(this.ball.x),
+			"ball_y":this.normalizedPosY(this.ball.y),
+			"ball_vx":this.ball.vx,
+			"ball_vy":this.ball.vy,
+		}))
 	}
 	sendPlayerDirection() {
-		console.log("SENDING 1: ", this.player.direction);
 		let ret_x;
 		let ret_y;
 		if(this.player.direction == 0) {
-			ret_x = this.player.x;
-			ret_y = this.player.y;
+			ret_x = this.normalizedPosX(this.player.x);
+			ret_y = this.normalizedPosY(this.player.y);
 		}
 		else {
 			ret_x = NaN;
 			ret_y = NaN;
 		}
-		console.log("SENDING 2: ", this.player.direction);
 		this.ws?.send(JSON.stringify({
 			"type": "player_direction",
 			"side": this.player.side,
@@ -415,7 +425,9 @@ class Online4P {
 			default:
 				break;
 		}
-		console.log("PRE SENDING: ", this.player.direction);
+		// console.log("PRE SENDING: ", this.player.direction);
+		if(DEBUG_KEY == true)
+			console.log("key down: ", this.player.keys_active);
 		this.sendPlayerDirection();
 	}
 	keyup(key) {
@@ -446,6 +458,8 @@ class Online4P {
 			default:
 				break;
 		}
+		if(DEBUG_KEY == true)
+			console.log("key up: ", this.player.keys_active);
 	}
 	goalAnimation(now) {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -499,6 +513,7 @@ class Online4P {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "left";
+						this.sendPaddleCollision();
 						// this.audio.playTone(this.ball.speedx);
 					}
 			}
@@ -512,6 +527,7 @@ class Online4P {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "right";
+						this.sendPaddleCollision();
 						// this.audio.playTone(this.ball.speedx);
 				}
 			}
@@ -529,6 +545,7 @@ class Online4P {
 					
 					this.ball.speed_up();
 					this.score.lastTouch = "top";
+					this.sendPaddleCollision();
 					// this.audio.playTone(this.ball.speedx);
 				}
 			}
@@ -545,6 +562,7 @@ class Online4P {
 	
 					this.ball.speed_up();
 					this.score.lastTouch = "bottom";
+					this.sendPaddleCollision();
 					// this.audio.playTone(this.ball.speedx);
 				}
 			}
@@ -569,9 +587,9 @@ class Online4P {
 			// window.playFx("/static/assets/arcade-alert.wav");
 		}
 		else if (this.ball.y > arenaStartY + arenaHeight) {
-			// window.playFx("/static/assets/arcade-alert.wav");
 			this.score.goal = true;
 			this.score.conceded += "bottom";
+			// window.playFx("/static/assets/arcade-alert.wav");
 		}
 
 	}
@@ -582,47 +600,99 @@ class Online4P {
 		this.playerTop.init (this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerBottom.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 	}
+	resetGameData() {
+		this.gameData.ball = {x: NaN, y: NaN, vx : NaN, vy: NaN};
+		this.gameData.left = { dir: NaN, pos: { x: NaN, y: NaN } };
+		this.gameData.right = { dir: NaN, pos: { x: NaN, y: NaN } };
+		this.gameData.top = { dir: NaN, pos: { x: NaN, y: NaN } };
+		this.gameData.bottom = { dir: NaN, pos: { x: NaN, y: NaN } };
+		this.gameData.update = false;
+	}
+	fetchBall() {
+		console.log("PRE BALL FETCH: ");
+		console.log("ball.x: ", this.ball.x);
+		console.log("ball.y: ", this.ball.y);
+		if(!isNaN(this.gameData.ball.x))
+			this.ball.x = this.denormPosX(this.gameData.ball.x);
+		if(!isNaN(this.gameData.ball.y))
+			this.ball.y = this.denormPosY(this.gameData.ball.y);
+		if(!isNaN(this.gameData.ball.vx))
+			this.ball.vx = this.gameData.ball.vx;
+		if(!isNaN(this.gameData.ball.vy))
+			this.ball.vy = this.gameData.ball.vy;
+		console.log("POST BALL FETCH: ");
+		console.log("ball.x: ", this.ball.x);
+		console.log("ball.y: ", this.ball.y);
+	}
 	fetchAndUpdateFromGameData() {
-		if(this.player.side != "left" && this.gameData.left.dir != this.playerLeft.direction) {
-			console.log("update left");
+
+		this.fetchBall();
+
+		if(this.player.side != "left" && !isNaN(this.gameData.left.dir)) {
+			console.log("fetching left");
+			console.log("data dir: ", this.gameData.left.dir);
+			console.log("player dir: ", this.playerLeft.direction);
+			console.log("pos x: ", this.playerLeft.x);
+			console.log("pos y: ", this.playerLeft.y);
 			this.gameData.left.dir = this.playerLeft.direction;
-			if(this.gameData.left.x != NaN && this.gameData.left.y != NaN) { // would only be called if direction is set to 0, that's when positions are set
+			if(!isNaN(this.gameData.left.x)  && isNaN(this.gameData.left.y)) { // would only be called if direction is set to 0, that's when positions are set
 				this.playerLeft.x = this.gameData.left.x;
 				this.playerLeft.y = this.gameData.left.y;
+				console.log("changed pos x: ", this.playerLeft.x);
+				console.log("changed pos y: ", this.playerLeft.y);
 				this.gameData.left.x = NaN; 
 				this.gameData.left.y = NaN;
 			}
 		}
-		else if(this.player.side != "right" && this.gameData.right.dir != this.playerRight.direction) {
-			console.log("update right");
+		else if(this.player.side != "right" && !isNaN(this.gameData.right.dir)) {
+			console.log("fetching right");
+			console.log("data dir: ", this.gameData.right.dir);
+			console.log("player dir: ", this.playerRight.direction);
+			console.log("pos x: ", this.playerRight.x);
+			console.log("pos y: ", this.playerRight.y);
 			this.gameData.right.dir = this.playerRight.direction;
-			if(this.gameData.right.x != NaN && this.gameData.right.y != NaN) {
+			if(!isNaN(this.gameData.right.x)  && isNaN(this.gameData.right.y)) {
 				this.playerRight.x = this.gameData.right.x;
 				this.playerRight.y = this.gameData.right.y;
+				console.log("changed pos x: ", this.playerRight.x);
+				console.log("changed pos y: ", this.playerRight.y);
 				this.gameData.right.x = NaN;
 				this.gameData.right.y = NaN;
 			}
 		}
-		else if(this.player.side != "top" && this.gameData.top.dir != this.playerTop.direction) {
-			console.log("update top");
+		else if(this.player.side != "top" && !isNaN(this.gameData.top.dir)) {
+			console.log("fetching top");
+			console.log("data dir: ", this.gameData.right.dir);
+			console.log("player dir: ", this.playerRight.direction);
+			console.log("pos x: ", this.playerTop.x);
+			console.log("pos y: ", this.playerTop.y);
 			this.gameData.top.dir = this.playerTop.direction;
-			if(this.gameData.top.x != NaN && this.gameData.top.y != NaN) {
+			if(!isNaN(this.gameData.top.x)  && isNaN(this.gameData.top.y)) {
 				this.playerTop.x = this.gameData.top.x;
 				this.playerTop.y = this.gameData.top.y;
+				console.log("changed pos x: ", this.playerTop.x);
+				console.log("changed pos y: ", this.playerTop.y);
 				this.gameData.top.x = NaN;
 				this.gameData.top.y = NaN;
 			}
 		}
-		else if(this.player.side != "bottom" && this.gameData.bottom.dir != this.playerBottom.direction) {
-			console.log("update bottom");
+		else if(this.player.side != "bottom" && !isNaN(this.gameData.bottom.dir)) {
+			console.log("fetching bottom");
+			console.log("data dir: ", this.gameData.right.dir);
+			console.log("player dir: ", this.playerRight.direction);
+			console.log("pos x: ", this.playerBottom.x);
+			console.log("pos y: ", this.playerBottom.y);
 			this.gameData.bottom.dir = this.playerBottom.direction;
-			if(this.gameData.bottom.x != NaN && this.gameData.bottom.y != NaN) {
+			if(!isNaN(this.gameData.bottom.x)  && isNaN(this.gameData.bottom.y)) {
 				this.playerBottom.x = this.gameData.bottom.x;
 				this.playerBottom.y = this.gameData.bottom.y;
+				console.log("changed pos x: ", this.playerBottom.x);
+				console.log("changed pos y: ", this.playerBottom.y);
 				this.gameData.bottom.x = NaN;
 				this.gameData.bottom.y = NaN;
 			}
 		}
+		this.resetGameData();
 	}
 	update() {
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -630,10 +700,16 @@ class Online4P {
 			this.animation.setTimeStamps();
 			this.resetPositions();
 			this.score.updateScore();
+			console.log("GOOAL");
 			return ;
 		}
-		this.fetchAndUpdateFromGameData();
+		if(this.gameData.update == true)
+			this.fetchAndUpdateFromGameData();
 		this.paddleCollision();
+		console.log("ball x", this.ball.x);
+		console.log("ball y", this.ball.y);
+		console.log("ball vx", this.ball.vx);
+		console.log("ball vy", this.ball.vy);
 		this.ball.doMove();
 		this.playerLeft.doMove(this.arena);
 		this.playerRight.doMove(this.arena);
