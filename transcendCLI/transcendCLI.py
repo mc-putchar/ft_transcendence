@@ -101,7 +101,7 @@ class Game:
         if not os.path.exists(fifo_out) or not os.path.exists(fifo_in):
             raise FileNotFoundError("FIFO files not found")
 
-        subprocess.run(['bash ../ft_ascii/start.sh'], shell=True)
+        # subprocess.run(['bash ../ft_ascii/start.sh'], shell=True)
 
         self.pipe_out_fd = os.open(fifo_out, os.O_WRONLY)
         self.pipe_in_fd = os.open(fifo_in, os.O_RDONLY | os.O_NONBLOCK)
@@ -244,8 +244,8 @@ class Game:
                         ball_x = self.game_state['ball']['y']
                         ball_y = self.game_state['ball']['x']
                         
-                        p1y = remap_inverted(p1y, -80, 80, 0, CLI_H - 4)
-                        p2y = remap_inverted(p2y, -80, 80, 0, CLI_H - 4)
+                        p1y = remap_inverted(p1y, -80, 80, 0, CLI_H + 4)
+                        p2y = remap_inverted(p2y, -80, 80, 0, CLI_H + 4)
                         
                         # console.print(f'p1y: {p1y}, p2y: {p2y}, ball_x: {ball_x}, ball_y: {ball_y}', style='green')
 
