@@ -1,12 +1,10 @@
 "use strict";
 
 import { showNotification } from './notification.js';
-import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
+import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
-// import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
-import { Game4P } from './multi_pong4.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
@@ -406,11 +404,7 @@ class Router {
 				this.game.start3DGame(pl1);
 				break;
 			case 'pong-4p':
-				// pass the parent element to the game constructor
-				this.game = new Game4P(this.appElement);
-				this.game.start();
-				// stopPong4PGame();
-				// startPong4PGame();
+				this.game.start4PGame();
 				break;
 			default:
 				break;

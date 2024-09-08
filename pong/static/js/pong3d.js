@@ -601,12 +601,13 @@ class Client3DGame {
 			this.parent.removeChild(this.parent.lastChild);
 		}
 
-		// this.fsButton = document.createElement('div');
-		// this.fsButton.id = "fullscreenButton";
-		// this.fsButton.classList.add("game-ui", "btn", "bg-transparent", "btn-outline-light");
-		// this.fsButton.innerText = "♐";
-		// this.fsButton.addEventListener("pointerup", () => this.toggleFullScreen());
-		// this.parent.appendChild(this.fsButton);
+		this.fsButton = document.createElement('div');
+		this.fsButton.id = "fsButton";
+		this.fsButton.classList.add("btn", "btn-outline-success", "btn-sm", "float-right");
+		this.fsButton.style.zIndex = "100";
+		this.fsButton.innerText = "\u2922";
+		this.fsButton.addEventListener("click", () => this.toggleFullScreen());
+		this.parent.appendChild(this.fsButton);
 
 		const progressBar = document.createElement('div');
 		progressBar.id = "progressBar";
@@ -711,9 +712,9 @@ class Client3DGame {
 		const paddle_mat = new THREE.MeshStandardMaterial({ map: paddle_texture });
 		const paddle_geo = new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 2, 2, 2);
 
+		this.isChallenger = gameSetup.isChallenger;
 		this.playerOne = gameSetup.player1;
 		this.playerTwo = gameSetup.player2;
-		this.isChallenger = gameSetup.isChallenger;
 
 		const avatar1_texture = this.texLoader.load(this.playerOne.avatar);
 		const avatar2_texture = this.texLoader.load(this.playerTwo.avatar);
@@ -852,12 +853,7 @@ class Client3DGame {
 
 		this.gui.domElement.style.position = 'absolute';
 		this.gui.domElement.style.top = '10%';
-		// this.gui.domElement.style.right = '0';
 		this.gui.domElement.style.zIndex = '199';
-		// this.gui.domElement.style.width = '360px';
-		// this.gui.domElement.style.height = '60%';
-		// this.gui.domElement.style.overflow = 'auto';
-		// this.gui.domElement.style.backgroundColor = 'rgba(200, 200, 200, 0.5)';
 		this.gui.domElement.style.display = 'none';
 		document.body.appendChild(this.gui.domElement);
 
@@ -915,6 +911,7 @@ class Client3DGame {
 			/* IE11 */
 			this.renderer.domElement.msRequestFullscreen();
 		}
+		this.resize();
 	}
 
 	resize(ev) {
@@ -931,10 +928,9 @@ class Client3DGame {
 		// }
 	}
 
-	keydown(key) {
-		if (this.gameover) return;
-		if (this.isOnline) {
-			if (this.gameData.status == "paused")
+	keydown (key) {
+		// if (this.gameover)	return;
+		if (this.isOnline && this.gameData?.status == "paused") {
 				setTimeout(() => this.sendReady(), 1000);
 		} else if (this.running === false) {
 			this.running = true;
@@ -961,12 +957,14 @@ class Client3DGame {
 			case this.playerTwo.controls?.up:
 				if (this.playerTwo.paddle.direction != 1)
 					this.playerTwo.paddle.keys_active++;
-				this.playerTwo.paddle.direction = 1;
+				this.playerTwo.paddle.direction = -1;
+				if (this.isOnline) this.sendPlayerUpdate(-1);
 				break;
 			case this.playerTwo.controls?.down:
 				if (this.playerTwo.paddle.direction != -1)
 					this.playerTwo.paddle.keys_active++;
-				this.playerTwo.paddle.direction = -1;
+				this.playerTwo.paddle.direction = 1;
+				if (this.isOnline) this.sendPlayerUpdate(1);
 				break;
 			default:
 				break;
@@ -984,6 +982,7 @@ class Client3DGame {
 			this.playerTwo.paddle.keys_active--;
 			if (this.playerTwo.paddle.keys_active == 0)
 				this.playerTwo.paddle.direction = 0;
+			if (this.isOnline) this.sendPlayerUpdate(0);
 		} else if (key.key === "`") {
 			this.gui.domElement.style.display = this.gui.domElement.style.display === 'none' ? 'block' : 'none';
 		}
@@ -1015,6 +1014,7 @@ class Client3DGame {
 			this.showText(`${this.playerTwo.alias} WINS`);
 		}
 		this.cam_controls.autoRotateSpeed = 6;
+		console.log("Game Over", this.playerOne.alias, this.playerOne.paddle.score, this.playerTwo.alias, this.playerTwo.paddle.score);
 	}
 
 	loop() {
@@ -1043,12 +1043,12 @@ class Client3DGame {
 		}
 		this.amps = this.audio.getAmps();
 		for (let i = 0; i < 8; ++i) {
-			this.arena.topWalls[i].position.y = WALL_HEIGHT / 2 + (50 - this.amps[i + 1]) / -5;
-			this.arena.bottomWalls[i].position.y = WALL_HEIGHT / 2 + (50 - this.amps[i + 1]) / -5;
+			this.arena.topWalls[i].position.y = WALL_HEIGHT / 2 - (50 - this.amps[i + 1])/4;
+			this.arena.bottomWalls[i].position.y = WALL_HEIGHT / 2 - (50 - this.amps[i + 1])/4;
 			if (i === 6) {
-				this.arena.lightbulb1.intensity = this.amps[i + 1] * 50;
+				this.arena.lightbulb1.intensity = this.amps[i + 1] * 64;
 			} else if (i === 5) {
-				this.arena.lightbulb2.intensity = this.amps[i + 1] * 50;
+				this.arena.lightbulb2.intensity = this.amps[i + 1] * 64;
 			}
 		}
 		if (this.hasAI)
@@ -1066,19 +1066,21 @@ class Client3DGame {
 
 	syncData() {
 		const now = Date.now();
+		const left = this.isChallenger ? this.playerOne : this.playerTwo;
+		const right = this.isChallenger ? this.playerTwo : this.playerOne;
 
 		this.running = (this.gameData.status === 'running');
 		this.gameover = (this.gameData.status === 'finished' || this.gameData.status === 'forfeited');
 		this.scoreLimit = this.gameData.score.limit;
 
-		this.playerTwo.paddle.sync(this.gameData.player2.x, this.gameData.player2.dx, now);
-		this.playerOne.paddle.sync(this.gameData.player1.x, this.gameData.player1.dx, now);
+		left.paddle.sync(this.gameData.player1.x, this.gameData.player1.dx, now);
+		right.paddle.sync(this.gameData.player2.x, this.gameData.player2.dx, now);
 
 		this.ball.sync(this.gameData.ball, now);
 
-		if (this.playerOne.paddle.score != this.gameData.score.p1 || this.playerTwo.paddle.score != this.gameData.score.p2) {
-			this.playerOne.paddle.score = this.gameData.score.p1;
-			this.playerTwo.paddle.score = this.gameData.score.p2;
+		if (left.paddle.score != this.gameData.score.p1 || right.paddle.score != this.gameData.score.p2) {
+			left.paddle.score = this.gameData.score.p1;
+			right.paddle.score = this.gameData.score.p2;
 			this.ball.reset();
 			this.showScore();
 			this.hud.updateScore(this.gameData.score);
@@ -1090,11 +1092,11 @@ class Client3DGame {
 
 		if (this.gameData.status === 'forfeited') {
 			if (this.isChallenger) {
-				this.playerOne.paddle.score = this.gameData.score.limit;
-				this.playerTwo.paddle.score = 0;
+				left.paddle.score = this.gameData.score.limit;
+				right.paddle.score = 0;
 			} else {
-				this.playerOne.paddle.score = 0;
-				this.playerTwo.paddle.score = this.gameData.score.limit;
+				left.paddle.score = 0;
+				right.paddle.score = this.gameData.score.limit;
 			}
 			this.showScore();
 			this.hud.updateScore(this.gameData.score);
@@ -1113,7 +1115,6 @@ class Client3DGame {
 		this.composer.render();
 		this.renderer.clearDepth();
 		this.renderer.render(this.hud.scene, this.hud.camera);
-		// this.hud.composer.render();
 	}
 
 	repositionBall(ballX, ballY, p2y, p1y) {

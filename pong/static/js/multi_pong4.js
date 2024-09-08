@@ -581,19 +581,13 @@ class Game4P {
 		this.loop();
 	}
 	
-	stopGame () {
+	stop () {
 		console.log("pong stopped and exited");
 		this.stopPong4PGame();
 		this.audio.stopAudioTrack();
 	}
 
 	stopPong4PGame () {
-		// get animationID
-		const nav = document.getElementById('nav');
-		const parent = document.getElementById('app');
-		//
-
-		// const pong = new Game4P(parent);
 		if(this.animRequestId) {
 			cancelAnimationFrame(this.animRequestId);
 		}
