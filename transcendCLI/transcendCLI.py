@@ -234,14 +234,24 @@ class Game:
 
                         ball_x = self.game_state['ball']['y']
                         ball_y = self.game_state['ball']['x']
-
-                        p1y = remap(p1y, -50, 154, 0, CLI_H + 12)
-                        p2y = remap(p2y, -50, 154, 0, CLI_H + 12)
+                        
+                        p1y = remap_inverted(p1y, -80, 80, 0, CLI_H + 12)
+                        p2y = remap_inverted(p2y, -80, 50, 0, CLI_H + 12)
                         
                         # console.print(f'p1y: {p1y}, p2y: {p2y}, ball_x: {ball_x}, ball_y: {ball_y}', style='green')
 
-                        ball_x = remap_inverted(ball_x, -158, 158, 0, CLI_W)
-                        ball_y = remap(ball_y, -100, 100, 0, CLI_H - 4)
+                        if ball_x > 150:
+                            ball_x = 150
+                        elif ball_x < -150:
+                            ball_x = -150
+
+                        if ball_y > 100:
+                            ball_y = 100
+                        elif ball_y < -100:
+                            ball_y = -100
+
+                        ball_x = remap(ball_x, -150, 150, 0, CLI_W)
+                        ball_y = remap_inverted(ball_y, -100, 100, 0, CLI_H)
 
                         data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
 
