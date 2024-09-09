@@ -26,13 +26,14 @@ def optin(request):
         chain = PongBlockchain()
         sender = chain.accounts[0]
         player_hash = hash_player([user.email, user.id])
+        pk = os.getenv('HARDHAT_PRIVATE_KEY').strip('"')
         try:
             # the first n players get assigned an ETH address with some money
             if user.profile.id <= len(chain.accounts):
-                status = chain.addPlayerFull(sender, os.getenv('HARDHAT_PRIVATE_KEY'), player_hash, user.username, chain.accounts[user.profile.id])
+                status = chain.addPlayerFull(sender, pk, player_hash, user.username, chain.accounts[user.profile.id])
                 profile.blockchain_address = chain.accounts[user.profile.id]
             else:
-                status = chain.addPlayerSimple(sender, os.getenv('HARDHAT_PRIVATE_KEY'), player_hash, user.username)
+                status = chain.addPlayerSimple(sender, pk, player_hash, user.username)
                 profile.blockchain_address = "0x0000000000000000000000000000000000000000"
             profile.save()
             if status['status'] == 1:

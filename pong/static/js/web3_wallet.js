@@ -101,14 +101,14 @@ function update_to_connect(button) {
     connectWalletBtn?.addEventListener('click', async (e) => {
         e.preventDefault();
         connectWalletBtn.disabled = true;
-        const loadingWalletIndicator = document.getElementById('loading-wallet-indicator');
-        if (loadingWalletIndicator) loadingWalletIndicator.style.display = 'inline';
-        const account = await connect_wallet();
-        if (loadingWalletIndicator) loadingWalletIndicator.style.display = 'none';       
+        connectWalletBtn.textContent = "Connecting...";
+        const account = await connect_wallet();     
         connectWalletBtn.disabled = false;
         if (account !== null) {
             update_to_disconnect(connectWalletBtn);
-    }
+        } else {
+            connectWalletBtn.textContent = "Connect Wallet";
+        }
 });
 }
 

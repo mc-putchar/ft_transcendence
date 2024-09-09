@@ -36,7 +36,6 @@
                                 {% endif %}
                                 {% if user.profile.blockchain_address %}
                                     <button id="connect-wallet" class="btn btn-primary my-2">Connect Wallet</button>
-                                    <span id="loading-wallet-indicator" style="display: none;">Connecting...</span>
                                 {% endif %}
                                 <form class="form" id="password-form" method="POST">
                                     {{ cp_form.as_p }}
