@@ -110,7 +110,8 @@ class DeleteAccountView(generics.DestroyAPIView):
         """Delete the user's account."""
         user = request.user
         profile = user.profile
-        profile.image.delete()
+        if profile.image and profile.image.name != 'profile_images/default.png':
+            profile.image.delete() # issue: it seems to delete the file, not only the database entry
         profile.delete()
         user.delete()
         return Response({"detail": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
