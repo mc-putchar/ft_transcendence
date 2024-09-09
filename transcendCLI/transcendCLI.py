@@ -1,11 +1,9 @@
-import time, os , certifi , ssl, websockets, json, requests
+import subprocess, signal, sys, errno
+import os , certifi , ssl, websockets, json, requests
 import click
 from requests.exceptions import RequestException
 from rich.console import Console
 import asyncio
-import subprocess
-
-import errno
 
 LOGIN_ROUTE = '/api/login/'
 
@@ -85,6 +83,37 @@ def get_my_profile(base_url, jwt_token, cookies):
     if response:
         console.print(response.json(), style='green')
 
+def signal_handler(signal, frame):
+    console.print("\nClosing connections and exiting gracefully...", style="red")
+    
+    if asyncio.get_event_loop().is_running():
+        asyncio.get_event_loop().stop()
+
+    if os.system("ps aux | grep './pong_cli' | grep -v grep &> /dev/null") == 0:
+        os.system("pkill -f './pong_cli' > /dev/null 2>&1")
+
+    if os.path.exists(fifo_out):
+        os.remove(fifo_out)
+    if os.path.exists(fifo_in):
+        os.remove(fifo_in)
+
+    sys.exit(0)  
+
+signal.signal(signal.SIGINT, signal_handler)
+
+def show_help():
+    console.print('\n-----\nHELP - COMMANDS AVAILABLE \n--------------------------------------', style='bold')
+    console.print('Commands:', style='green')
+    console.print('/duel <username> - Challenge a user to a game.', style='bold')
+    console.print('/pm <username> <message> - Send a private message.', style='bold')
+    console.print('/help - Show this help message.', style='bold')
+    console.print('exit - Exit the app.', style='bold')
+    console.print('--------------------------------------\n', style='bold')
+    console.print('Game Controls:', style='green')
+    console.print('w - Move up', style='green')
+    console.print('s - Move down', style='green')
+    console.print('\np - quit', style='red')
+    console.print('--------------------------------------\n', style='bold')
 
 class Game:
     def __init__(self, base_url, jwt_token, username, game_creator):
@@ -98,10 +127,10 @@ class Game:
         self.websocket = None
         self.users_list = []
 
+        subprocess.run(['bash ../ft_ascii/start.sh'], shell=True)
+        
         if not os.path.exists(fifo_out) or not os.path.exists(fifo_in):
-            raise FileNotFoundError("FIFO files not found")
-
-        # subprocess.run(['bash ../ft_ascii/start.sh'], shell=True)
+            raise FileNotFoundError("FIFO files not found")   
 
         self.pipe_out_fd = os.open(fifo_out, os.O_WRONLY)
         self.pipe_in_fd = os.open(fifo_in, os.O_RDONLY | os.O_NONBLOCK)
@@ -175,7 +204,7 @@ class Game:
                         'user': self.username,
                         'match_id': match_id,
                     }))
- 
+                
                 update_task = asyncio.create_task(self.update_client())
                 
                 await asyncio.gather(
@@ -307,10 +336,18 @@ class Chat:
 
     async def send_message(self, message=''):
         while True:
-            message = await asyncio.to_thread(input, 'Send to chat: ')
+            message = await asyncio.to_thread(input, '')
             if message.lower() == 'exit':
                 await self.websocket.close()
                 return
+            if message.lower() == 'clear':
+                console.clear()
+                console.print('Chat:', style='bold green')
+                continue
+            if message.lower() == 'ls':
+                console.print('Online users: ' + ', '.join(self.users_list))
+                continue
+
             data = {
                 'message': message,
                 'username': self.username,
@@ -321,11 +358,11 @@ class Chat:
 
             await self.websocket.send(json.dumps(data))
  
-            if message.startswith('/duel'):
+            if message.split(' ')[0] == '/duel':
                 self.game = Game(self.base_url, self.jwt_token, self.username, True)
                 await self.game.connect() 
-
-            console.print(f'[bold cyan]{self.username}[/bold cyan]: {message}')
+            if message.startswith('/help'):
+                show_help()
 
     async def receive_message(self):
         async for data in self.websocket:
@@ -371,7 +408,7 @@ class Chat:
                             console.print(f'PONG announce: {message}', style='blue')
                     users_list = data_json.get('users_list')
 
-                    if users_list:
+                    if users_list != self.users_list:
                         self.users_list = users_list
                         console.print(f'Online users: {", ".join(users_list)}')
 
@@ -413,6 +450,7 @@ class Chat:
                     ssl=ssl.create_default_context(cafile=certifi.where()),
             ) as self.websocket:
                 console.print('Connected to WebSocket server.')
+
                 await asyncio.gather(
                     self.receive_message(),
                     self.send_message(),
@@ -439,9 +477,8 @@ def login(url, username, password):
     cookies = None
     get_my_profile(url, jwt_token, cookies)
 
-    console.print(
-        f'Logged in as [bold cyan]{username}[/bold cyan]. :thumbs_up:')
-    # asyncio.run(connect_websocket(f'{base_url}/ws/tournament/1/', jwt_token))
+    console.print(f'Logged in as [bold cyan]{username}[/bold cyan]. :thumbs_up:')
+
     chat = Chat(url, jwt_token, username)
     asyncio.run(chat.connect())
 
@@ -457,8 +494,10 @@ if __name__ == '__main__':
                 console.print(f'Failed to create FIFO {fifo}: {e}', style='red')
 
     console.print('Welcome to transcendCLI!', style='bold green')
-    console.print('Please log in to continue.', style='bold green')
-
+    console.print('Please log in to continue.\n', style='bold green')
+    console.print('--------------------------------------', style='blue')
+    console.print('Type /help for a list of commands.', style='bold green')
+    console.print('You need to have an account registered via the web interface', style='green')
     login()
 
 # End of transcendCLI.py
