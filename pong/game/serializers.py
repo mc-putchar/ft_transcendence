@@ -18,10 +18,9 @@ class TournamentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TournamentPlayerSerializer(serializers.ModelSerializer):
-    tournament = TournamentSerializer()
     class Meta:
         model = TournamentPlayer
-        fields = ['tournament']
+        fields = ['player', 'place']
 
 class PlayerSerializer(serializers.ModelSerializer):
     matches_played = PlayerMatchSerializer(source='playermatch_set', many=True, read_only=True)

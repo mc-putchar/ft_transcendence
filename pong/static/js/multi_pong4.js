@@ -1,672 +1,595 @@
-function startPong4PGame() {
-  const parent = document.getElementById("app");
-  const canvas = document.createElement("canvas");
-
-  // delete all previous children
-  while (parent.firstChild) {
-    parent.removeChild(parent.firstChild);
-  }
-
-  const nav = document.getElementById("nav");
-
-  parent.height =
-    screen.availHeight -
-    (window.outerHeight - window.innerHeight) -
-    nav.offsetHeight -
-    20;
-
-  parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
-
-  parent.appendChild(canvas);
-
-  let canvas_old_width = null;
-  let canvas_old_height = null;
-  const ctx = canvas.getContext("2d");
-
-  const player_top_colour = "blue";
-  const player_bottom_colour = "orange";
-  const player_left_colour = "green";
-  const player_right_colour = "purple";
-
-  const left_ai = true;
-  const right_ai = true;
-  const top_ai = true;
-  const bottom_ai = false;
-
-  const ball_velocity_div = 500;
-
-  let button_up = document.createElement("button_up");
-  let button_down = document.createElement("button_down"); // tried putting them both in the same class and using getElementByClassName(), but it somehow doesn't work
-
-  button_up.className = "Buttons";
-  button_down.className = "Buttons";
-
-  parent.appendChild(button_up);
-  parent.appendChild(button_down);
-
-  let format;
-
-  let font_size;
-  let position;
-  let paddle_pace;
-  let last_touch = "none";
-  let conceder = "none";
-
-  // const single_player = false;
-
-  const preSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  const realSleep = async (ms) => {
-    await preSleep(ms);
-  };
-
-  function init() {
-    canvas.width = parent.width;
-    canvas.height = parent.height;
-
-    paddle_pace = Math.abs(canvas.width / 60);
-    canvas_old_width = canvas.width;
-    canvas_old_height = canvas.height;
-    if (parent.width <= parent.height) {
-      canvas.width = parent.width - parent.width / 20;
-      canvas.height = canvas.width;
-      format = "width";
-    } else {
-      canvas.width = parent.height - parent.height / 20;
-      canvas.height = canvas.width;
-      format = "height";
-    }
-    if (format == "height") {
-      console.log("here height");
-      position = (parent.width - canvas.width) / 6;
-      font_size = canvas.height / 60;
-
-      [button_up, button_down].forEach((button) => {
-        button.style.backgroundColor = "rgb(2, 2, 27)";
-        button.style.color = "white";
-        button.style.cursor = "pointer";
-        button.style.margin = "5px 0"; // somehow modifying border-width and some other border params doesn't work here, so it's in the css file
-
-        button.style.position = "absolute";
-
-        button.style.left = position;
-
-        button.style.height = "10%";
-        button.style.width = "5%";
-        button.style.fontSize = font_size;
-      });
-
-      button_up.style.top = "45%";
-      button_up.innerText = "UP / RIGHT";
-
-      button_down.style.top = "55%";
-      button_down.innerText = "DOWN / LEFT";
-    }
-
-    if (format == "width") {
-      console.log("here width");
-      position = (parent.height - canvas.height) / 6;
-      font_size = canvas.height / 60;
-
-      [button_up, button_down].forEach((button) => {
-        button.style.backgroundColor = "rgb(2, 2, 27)";
-        button.style.color = "white";
-        button.style.cursor = "pointer";
-        button.style.margin = "5px 0";
-
-        button.style.position = "absolute";
-
-        button.style.bottom = position;
-
-        button.style.height = "5%";
-        button.style.width = "10%";
-        button.style.fontSize = font_size;
-      });
-
-      button_down.style.right = "45%";
-      button_down.innerText = "DOWN / LEFT";
-
-      button_up.style.right = "55%";
-      button_up.innerText = "UP / RIGHT";
-    }
-  }
-
-  init();
-
-  // FUNCTION constructors
-
-  let ball;
-  let paddle_left = new make_paddle("left");
-  let paddle_right = new make_paddle("right");
-  let paddle_top = new make_paddle("top");
-  let paddle_bottom = new make_paddle("bottom");
-  let paddles = {
-    left: paddle_left,
-    right: paddle_right,
-    top: paddle_top,
-    bottom: paddle_bottom,
-  };
-  let isGoal = false;
-  let first = true;
-  let empty_score = { left: 0, right: 0, top: 0, bottom: 0 };
-  let scores = new make_scores(empty_score);
-  let prev_scores = new make_scores(empty_score);
-
-  function make_paddle(player) {
-    (this.player = player), (this.width = canvas.width / 75);
-    this.height = canvas.height / 8;
-
-    this.init_position = function (player) {
-      if (player == "top") {
-        this.pos_x = canvas.width / 2 - this.height / 2;
-        this.pos_y = 0;
-        this.player_color = player_top_colour;
-      }
-      if (player == "bottom") {
-        this.pos_x = canvas.width / 2 - this.height / 2;
-        this.pos_y = canvas.height - this.width;
-        this.player_color = player_bottom_colour;
-      }
-      if (player == "left") {
-        this.pos_x = 0;
-        this.pos_y = canvas.height / 2 - this.height / 2;
-        this.player_color = player_left_colour;
-      }
-      if (player == "right") {
-        this.pos_x = canvas.width - this.width;
-        this.pos_y = canvas.height / 2 - this.height / 2;
-        this.player_color = player_right_colour;
-      }
-    };
-    this.resize_paddle = function () {
-      this.pos_x = (this.pos_x * canvas.width) / canvas_old_width;
-      this.pos_y = (this.pos_y * canvas.height) / canvas_old_height;
-      this.height = (this.height * canvas.width) / canvas_old_width;
-      this.width = (this.width * canvas.height) / canvas_old_height;
-    };
-    this.draw_paddle = function () {
-      ctx.fillStyle = this.player_color;
-      ctx.strokeStyle = this.player_color;
-      if (this.player == "top" || this.player == "bottom")
-        ctx.fillRect(this.pos_x, this.pos_y, this.height, this.width);
-      if (this.player == "left" || this.player == "right")
-        ctx.fillRect(this.pos_x, this.pos_y, this.width, this.height);
-    };
-    this.delete_paddle = function () {
-      if (this.player == "top" || this.player == "bottom")
-        ctx.clearRect(this.pos_x, this.pos_y, this.height, this.width);
-      if (this.player == "left" || this.player == "right")
-        ctx.clearRect(this.pos_x, this.pos_y, this.width, this.height);
-    };
-    this.init_position(player);
-    this.draw_paddle();
-  }
-
-  function resize_paddle(paddle) {}
-
-  function make_ball(previous) {
-    (this.min_y = canvas.width / 4), (this.max_y = (canvas.width / 4) * 3);
-    this.radius = canvas.width / 60;
-    if (previous == null) {
-      (this.pos_x = canvas.height / 2),
-        (this.pos_y =
-          Math.random() * ((canvas.width / 4) * 3 - canvas.width / 4) +
-          canvas.width / 4);
-      this.direction = Math.random();
-    } else {
-      this.pos_x = (previous.pos_x * canvas.width) / canvas_old_width;
-      this.pos_y = (previous.pos_y * canvas.height) / canvas_old_height;
-      (this.ball_velocity_x =
-        (previous.ball_velocity_x * canvas.width) / canvas_old_width),
-        (this.ball_velocity_y =
-          (previous.ball_velocity_y * canvas.height) / canvas_old_height);
-    }
-    this.setVelocity = function () {
-      if (this.direction <= 0.25) {
-        (this.ball_velocity_x = canvas.width / ball_velocity_div),
-          (this.ball_velocity_y = canvas.height / ball_velocity_div);
-      } else if (this.direction <= 0.5) {
-        (this.ball_velocity_x = -canvas.width / ball_velocity_div),
-          (this.ball_velocity_y = canvas.height / ball_velocity_div);
-      } else if (this.direction <= 0.75) {
-        (this.ball_velocity_x = canvas.width / ball_velocity_div),
-          (this.ball_velocity_y = -canvas.height / ball_velocity_div);
-      } else {
-        (this.ball_velocity_x = -canvas.width / ball_velocity_div),
-          (this.ball_velocity_y = -canvas.height / ball_velocity_div);
-      }
-      this.ball_velocity_y = Math.abs(this.ball_velocity_y);
-      this.pos_y = (canvas.width / 4) * 3;
-    };
-    this.move_ball = function () {
-      this.pos_x += this.ball_velocity_x;
-      this.pos_y += this.ball_velocity_y;
-    };
-    this.draw_ball = function () {
-      ctx.fillStyle = "red";
-      ctx.beginPath();
-      ctx.arc(this.pos_x, this.pos_y, this.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "red";
-      ctx.stroke();
-    };
-    this.speed_up = function () {
-      this.ball_velocity_x += (0.08 * canvas.width) / ball_velocity_div;
-      this.ball_velocity_y += (0.08 * canvas.width) / ball_velocity_div;
-      this.ball_velocity_x += 0.08 * this.ball_velocity_x;
-      this.ball_velocity_y += 0.08 * this.ball_velocity_y;
-    };
-    this.reposition_ball_above_paddle = function (last_touch) {
-      if (last_touch == "left") this.pos_x += Math.abs(this.ball_velocity_x);
-      if (last_touch == "right") this.pos_x -= Math.abs(this.ball_velocity_x);
-      if (last_touch == "top") this.pos_y += Math.abs(this.ball_velocity_y);
-      if (last_touch == "bottom") this.pos_y -= Math.abs(this.ball_velocity_y);
-    };
-    if (previous == null) this.setVelocity(this.direction);
-  }
-
-  function make_scores(cpy_goals) {
-    this.goals = {
-      left: cpy_goals.left,
-      right: cpy_goals.right,
-      top: cpy_goals.top,
-      bottom: cpy_goals.bottom,
-    };
-    this.colour = {
-      left: player_left_colour,
-      right: player_right_colour,
-      top: player_top_colour,
-      bottom: player_bottom_colour,
-    };
-    this.scores_width = canvas.width / 10;
-    this.scores_height = canvas.height / 10;
-    this.pos_y = canvas.height / 2;
-    this.pos_x = {
-      left: canvas.width / 2 - canvas.width / 6,
-      top: canvas.width / 2 - canvas.width / 16,
-      right: canvas.width / 2 + canvas.width / 6,
-      bottom: canvas.width / 2 + canvas.width / 16,
-    };
-    this.draw_scores = function () {
-      for (let key in this.goals) {
-        ctx.fillStyle = this.colour[key];
-        ctx.font = `${canvas.width / 20}px Orbitron`;
-        ctx.fillText(this.goals[key], this.pos_x[key], this.pos_y, 100);
-      }
-    };
-    this.draw_big_scores1 = function (prev_scores) {
-      for (let key in this.goals) {
-        ctx.fillStyle = this.colour[key];
-        if (prev_scores.goals[key] == this.goals[key]) {
-          ctx.font = `${canvas.width / 20}px Orbitron`;
-          ctx.fillText(this.goals[key], this.pos_x[key], this.pos_y, 100);
-        } else {
-          ctx.font = `${canvas.width / 15}px Orbitron`;
-          ctx.fillText(
-            prev_scores.goals[key],
-            this.pos_x[key],
-            this.pos_y,
-            100,
-          );
-        }
-      }
-    };
-    this.draw_big_scores2 = function (prev_scores) {
-      for (let key in this.goals) {
-        if (key == "none") return;
-        ctx.fillStyle = this.colour[key];
-        if (prev_scores.goals[key] == this.goals[key]) {
-          ctx.font = `${canvas.width / 20}px Orbitron`;
-          ctx.fillText(this.goals[key], this.pos_x[key], this.pos_y, 100);
-        } else {
-          ctx.font = `${canvas.width / 15}px Orbitron`;
-          ctx.fillText(this.goals[key], this.pos_x[key], this.pos_y, 200);
-        }
-      }
-    };
-  }
-
-  function init_paddle_scores() {
-    ball = new make_ball(ball);
-    paddle_left.resize_paddle();
-    paddle_right.resize_paddle();
-    paddle_top.resize_paddle();
-    paddle_bottom.resize_paddle();
-    paddles = {
-      left: paddle_left,
-      right: paddle_right,
-      top: paddle_top,
-      bottom: paddle_bottom,
-    };
-    scores = new make_scores(scores.goals);
-    prev_scores = new make_scores(prev_scores.goals);
-  }
-
-  function colliding_goal(ball) {
-    if (
-      ball.pos_x <= ball.radius ||
-      ball.pos_y <= ball.radius ||
-      ball.pos_x + ball.radius >= canvas.width ||
-      ball.pos_y + ball.radius >= canvas.height
-    ) {
-      scores.goals[last_touch]++;
-      if (ball.pos_x <= ball.radius) scores.goals["left"]--;
-      if (ball.pos_y <= ball.radius) scores.goals["top"]--;
-      if (ball.pos_x + ball.radius >= canvas.width) scores.goals["right"]--;
-      if (ball.pos_y + ball.radius >= canvas.height) scores.goals["bottom"]--;
-      return true;
-    }
-    return false;
-  }
-
-  function colliding_ball_paddle(ball, paddles) {
-    if (
-      ball.pos_x <= ball.radius + paddles.left.width && // LEFT PADDLE
-      ball.pos_y >= paddles.left.pos_y - ball.radius &&
-      ball.pos_y <= paddles.left.pos_y + paddles.left.height + ball.radius
-    ) {
-      // left paddle
-      ball.ball_velocity_x = -ball.ball_velocity_x;
-
-      if (ball.pos_y - ball.radius / 2 <= paddles.left.pos_y)
-        // ball hits left paddle upper edge
-        ball.ball_velocity_y = -Math.abs(ball.ball_velocity_y);
-      if (
-        ball.pos_y + ball.radius / 2 >=
-        paddles.left.pos_y + paddles.left.height
-      )
-        ball.ball_velocity_y = Math.abs(ball.ball_velocity_y);
-      last_touch = "left";
-      return true;
-    } else if (
-      ball.pos_y <= ball.radius + paddles.top.width && // TOP PADDLE
-      ball.pos_x >= paddles.top.pos_x - ball.radius &&
-      ball.pos_x <= paddles.top.pos_x + paddles.top.height + ball.radius
-    ) {
-      // top paddle
-      ball.ball_velocity_y = -ball.ball_velocity_y;
-
-      if (ball.pos_x - ball.radius / 2 <= paddles.top.pos_x)
-        // left edge
-        ball.ball_velocity_x = -Math.abs(ball.ball_velocity_x);
-      if (
-        ball.pos_x + ball.radius / 2 >=
-        paddles.top.pos_x + paddles.top.height
-      )
-        ball.ball_velocity_x = Math.abs(ball.ball_velocity_x);
-      last_touch = "top";
-      return true;
-    } else if (
-      ball.pos_x >= canvas.width - (ball.radius + paddles.right.width) && // RIGHT PADDLE
-      ball.pos_y >= paddles.right.pos_y - ball.radius &&
-      ball.pos_y <= paddles.right.pos_y + paddles.right.height + ball.radius
-    ) {
-      // right paddle
-      ball.ball_velocity_x = -ball.ball_velocity_x;
-
-      if (ball.pos_y - ball.radius / 2 <= paddles.right.pos_y)
-        // upper edge
-        ball.ball_velocity_y = -Math.abs(ball.ball_velocity_y);
-      if (
-        ball.pos_y + ball.radius / 2 >=
-        paddles.right.pos_y + paddles.right.height
-      )
-        ball.ball_velocity_y = Math.abs(ball.ball_velocity_y);
-      last_touch = "right";
-      return true;
-    } else if (
-      ball.pos_y >= canvas.height - (ball.radius + paddles.bottom.width) && // BOTTOM PADDLE
-      ball.pos_x >= paddles.bottom.pos_x - ball.radius &&
-      ball.pos_x <= paddles.bottom.pos_x + paddles.bottom.height + ball.radius
-    ) {
-      // bottom paddle
-      ball.ball_velocity_y = -ball.ball_velocity_y;
-
-      if (ball.pos_x - ball.radius / 2 <= paddles.bottom.pos_x)
-        // left edge
-        ball.ball_velocity_x = -Math.abs(ball.ball_velocity_x);
-      if (
-        ball.pos_x + ball.radius / 2 >=
-        paddles.bottom.pos_x + paddles.bottom.height
-      )
-        ball.ball_velocity_x = Math.abs(ball.ball_velocity_x);
-      last_touch = "bottom";
-      return true;
-    }
-    return false;
-  }
-
-  // PLAY
-
-  function goal_animation_text(scorer) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (scorer !== "none") {
-      ctx.fillStyle = scores.colour[scorer];
-      ctx.font = `${canvas.width / 40}px Orbitron`;
-      let text = "Beautiful Goal by " + scorer;
-      ctx.fillText(
-        text,
-        canvas.width / 2 - canvas.width / 7,
-        (canvas.height / 4) * 3,
-      );
-    } else {
-      ctx.fillStyle = "white";
-      ctx.font = `${canvas.width / 40}px Orbitron`;
-      ctx.fillText(
-        "OMG how did that go in ?!",
-        canvas.width / 2 - canvas.width / 7,
-        (canvas.height / 4) * 3,
-      );
-    }
-  }
-
-  // MOVING PADDLES
-
-  let bottom_direction = 0;
-  let top_direction = 0;
-  let left_direction = 0;
-  let right_direction = 0;
-
-  function key_up(event) {
-    if (event.key == "ArrowUp" || event.key == "ArrowRight") {
-      if (bottom_ai == false) bottom_direction = 0;
-      if (top_ai == false) top_direction = 0;
-      if (left_ai == false) left_direction = 0;
-      if (right_ai == false) right_direction = 0;
-    } else if (event.key == "ArrowDown" || event.key == "ArrowLeft") {
-      if (bottom_ai == false) bottom_direction = 0;
-      if (top_ai == false) top_direction = 0;
-      if (left_ai == false) left_direction = 0;
-      if (right_ai == false) right_direction = 0;
-    }
-  }
-
-  function key_down(event) {
-    if (event.key == "ArrowUp" || event.key == "ArrowRight") {
-      // if user plays online best option is ArrowUp and ArrowRight work the same,
-      // and ArrowLeft and ArrowDown work the same
-      if (bottom_ai == false) bottom_direction = 1;
-      if (top_ai == false) top_direction = 1;
-      if (left_ai == false) left_direction = 1;
-      if (right_ai == false) right_direction = 1;
-    } else if (event.key == "ArrowDown" || event.key == "ArrowLeft") {
-      if (bottom_ai == false) bottom_direction = -1;
-      if (top_ai == false) top_direction = -1;
-      if (left_ai == false) left_direction = -1;
-      if (right_ai == false) right_direction = -1;
-    }
-  }
-
-  function simple_AI(ball) {
-    if (left_ai == true && ball.ball_velocity_x < 0) {
-      // ball is moving LEFT
-      if (ball.pos_y <= paddle_left.pos_y)
-        // ball is above the paddle
-        paddle_left.pos_y -= paddle_pace;
-      if (ball.pos_y >= paddle_left.pos_y + paddle_left.height)
-        // ball is below the paddle
-        paddle_left.pos_y += paddle_pace;
-    } else if (right_ai == true && ball.ball_velocity_x > 0) {
-      // ball is moving RIGHT
-      if (ball.pos_y <= paddle_right.pos_y)
-        // ball is above the paddle
-        paddle_right.pos_y -= paddle_pace;
-      if (ball.pos_y >= paddle_right.pos_y + paddle_right.height)
-        // ball is below the paddle
-        paddle_right.pos_y += paddle_pace;
-    }
-    if (top_ai == true && ball.ball_velocity_y < 0) {
-      // ball is moving TOP
-      if (ball.pos_x <= paddle_top.pos_x)
-        // ball is left of the paddle
-        paddle_top.pos_x -= paddle_pace;
-      if (ball.pos_x >= paddle_top.pos_x + paddle_top.height)
-        // ball is below the paddle
-        paddle_top.pos_x += paddle_pace;
-    } else if (bottom_ai == true && ball.ball_velocity_y > 0) {
-      // ball is moving BOTTOM
-      if (ball.pos_x <= paddle_bottom.pos_x)
-        // ball is left of the paddle
-        paddle_bottom.pos_x -= paddle_pace;
-      if (ball.pos_x >= paddle_bottom.pos_x + paddle_bottom.height)
-        // ball is below the paddle
-        paddle_bottom.pos_x += paddle_pace;
-    }
-  }
-
-  function move_paddle() {
-    if (bottom_direction != 0) {
-      if (paddle_bottom.pos_x + paddle_bottom.height <= canvas.width)
-        paddle_bottom.pos_x += bottom_direction * paddle_pace;
-      if (paddle_bottom.pos_x + paddle_bottom.height > canvas.width)
-        paddle_bottom.pos_x = canvas.width - paddle_bottom.height;
-      if (paddle_bottom.pos_x < 0) paddle_bottom.pos_x = 0;
-    }
-    if (top_direction != 0) {
-      if (paddle_top.pos_x + paddle_top.height <= canvas.width)
-        paddle_top.pos_x += top_direction * paddle_pace;
-      if (paddle_top.pos_x + paddle_top.height > canvas.width)
-        paddle_top.pos_x = canvas.width - paddle_top.height;
-      if (paddle_top.pos_x < 0) paddle_top.pos_x = 0;
-    }
-    if (left_direction != 0) {
-      if (paddle_left.pos_y + paddle_left.height <= canvas.width)
-        paddle_left.pos_y -= left_direction * paddle_pace;
-      if (paddle_left.pos_y + paddle_left.height > canvas.width)
-        paddle_left.pos_y = canvas.width - paddle_left.height;
-      if (paddle_left.pos_y < 0) paddle_left.pos_y = 0;
-    }
-    if (right_direction != 0) {
-      if (paddle_right.pos_y + paddle_right.height <= canvas.width)
-        paddle_right.pos_y -= right_direction * paddle_pace;
-      if (paddle_right.pos_y + paddle_right.height > canvas.width)
-        paddle_right.pos_y = canvas.width - paddle_right.height;
-      if (paddle_right.pos_y < 0) paddle_right.pos_y = 0;
-    }
-  }
-
-  // 42 COMPLIENT AI
-
-  // complex_AI = function ()
-  // {
-  // 	let	last_move = {left: 0, top: 0, right: 0, bottom: 0};
-  // 	let	objective = {left: height / 2, top: width / 2, right: height / 2, bottom: width / 2};
-
-  // }
-
-  async function gameLoop() {
-    // init();
-    // init_paddle_scores();
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    for (let key in paddles) paddles[key].draw_paddle();
-    if (isGoal == true || first == true) {
-      if (first != true) {
-        goal_animation_text(last_touch);
-        prev_scores.draw_scores();
-        await realSleep(300);
-
-        goal_animation_text(last_touch);
-        scores.draw_big_scores1(prev_scores);
-        await realSleep(500);
-
-        goal_animation_text(last_touch);
-        scores.draw_big_scores2(prev_scores);
-        await realSleep(500);
-      }
-      ball = new make_ball(null);
-      for (let key in paddles) paddles[key].init_position(paddles[key].player);
-      first = false;
-      isGoal = false;
-      last_touch = "none";
-      for (let key in scores.goals) prev_scores.goals[key] = scores.goals[key];
-    }
-    simple_AI(ball);
-    scores.draw_scores();
-    move_paddle();
-    ball.move_ball();
-    ball.draw_ball();
-    if (colliding_ball_paddle(ball, paddles) == true) {
-      ball.speed_up();
-      ball.move_ball();
-      while (colliding_ball_paddle(ball, paddles) == true)
-        ball.reposition_ball_above_paddle(last_touch); // in case the paddle hits the ball right before it hits the wall or else ball lags and sticks to paddle
-      requestAnimationFrame(gameLoop); // handles case where it hits both the goal and the paddle at the same time
-      return; // return required for the above case or game speed is doubled
-    }
-    isGoal = colliding_goal(ball);
-    requestAnimationFrame(gameLoop);
-    return;
-  }
-
-  // EVENTS
-
-  button_up.onmousedown = function () {
-    if (bottom_ai == false) bottom_direction = 1;
-    if (top_ai == false) top_direction = 1;
-    if (left_ai == false) left_direction = 1;
-    if (right_ai == false) right_direction = 1;
-  };
-
-  button_down.onmousedown = function () {
-    if (bottom_ai == false) bottom_direction = -1;
-    if (top_ai == false) top_direction = -1;
-    if (left_ai == false) left_direction = -1;
-    if (right_ai == false) right_direction = -1;
-  };
-
-  button_up.onmouseup = function () {
-    if (bottom_ai == false) bottom_direction = 0;
-    if (top_ai == false) top_direction = 0;
-    if (left_ai == false) left_direction = 0;
-    if (right_ai == false) right_direction = 0;
-  };
-
-  button_down.onmouseup = function () {
-    if (bottom_ai == false) bottom_direction = 0;
-    if (top_ai == false) top_direction = 0;
-    if (left_ai == false) left_direction = 0;
-    if (right_ai == false) right_direction = 0;
-  };
-
-  window.addEventListener("resize", function () {
-    init();
-    init_paddle_scores();
-  });
-
-  document.addEventListener("keydown", function (event) {
-    key_down(event);
-    return;
-  });
-
-  document.addEventListener("keyup", function (event) {
-    key_up(event);
-    return;
-  });
-
-  gameLoop();
-  //requestAnimationFrame(gameLoop);
+import { AudioController } from './audio.js';
+
+const ACTIVE_AI = false;
+
+let animationID = null;
+
+const CANVAS_PADDING = 10;
+const BALL_SIZE = 8;
+const ARENA_COLOR = "white";
+const SCORE_COLOR = "white";
+const GOAL_COLOR = "grey";
+const GOAL_LINE = 10;
+const BALL_START_SPEED = 2 / 12;
+const BALL_INCR_SPEED = 1 / 64;
+const PADDLE_SPEED = 5;
+const PADDLE_LEN = 42;
+const PADDLE_WIDTH = 6;
+const TARGET_FPS = 120;
+const SCORE_LIMIT = 10;
+// const WALL_THICKNESS = 10;
+
+const BALL_COLOR = "red";
+const PADDLE_COLOR = "green";
+
+class Arena {
+	constructor(ctxwidth, ctxheight) {
+		this.resize(ctxwidth, ctxheight);
+	}
+	resize(ctxwidth, ctxheight) {
+		const size = Math.min(ctxwidth, ctxheight) * 0.9;
+    
+		this.width = size;
+		this.height = size;
+		this.startX = ctxwidth / 2 - this.width / 2;
+		this.startY = 0.05 * this.height;
+	}
+	drawArena(ctx) {
+		ctx.fillStyle = ARENA_COLOR;
+		ctx.strokeStyle = ARENA_COLOR;
+		ctx.fillRect(this.startX, this.startY, this.width, 1);
+		ctx.fillRect(this.startX, this.startY + this.height, this.width, 1);
+		ctx.fillStyle = GOAL_COLOR;
+		ctx.fillRect(this.startX, this.startY, 1, this.height);
+		ctx.fillRect(this.startX + this.width, this.startY, 1, this.height);
+	}
+	get _startX() {
+		return this.startX;
+	}
+	get _startY() {
+		return this.startY;
+	}
+	get _height() {
+		return this.height;
+	}
+	get _width() {
+		return this.width;
+	}
+};
+
+class Player {
+	constructor(side, arenaWidth, arenaHeight, startX, startY) {
+		this.side = side;
+		this.init(arenaWidth, arenaHeight, startX, startY);
+	}
+	init(arenaWidth, arenaHeight, startX, startY)
+	{
+		this.color = PADDLE_COLOR;
+		this.len = PADDLE_LEN / 200 * arenaHeight;
+		this.width = PADDLE_WIDTH / 300 * arenaWidth;
+		this.score = 0;
+		this.keys_active = 0;
+		this.direction = 0;
+		this.speed = PADDLE_SPEED / 200 * arenaHeight;
+		this.goalLine = GOAL_LINE / 200 * arenaHeight;
+
+		switch (this.side) {
+			case "left":
+				this.x = startX + this.goalLine + this.width / 2;
+				this.y = startY + arenaHeight / 2;
+				break;
+			case "right":
+				this.x = startX + arenaWidth - this.goalLine - this.width /2;
+				this.y = startY + arenaHeight / 2;
+				break;
+			case "top":
+				this.y = startY + this.goalLine + this.width/ 2;
+				this.x = startX + arenaWidth / 2;
+				break;
+			case "bottom":
+				this.y = startY + arenaHeight - this.goalLine - this.width / 2;
+				this.x = startX + arenaWidth / 2;
+				break;
+		}
+	}
+	doMove(arena) {
+		if(this.side == "left" || this.side == "right") {
+			const limitMin = arena.startY + this.len / 2;
+			const limitMax = arena.startY + arena.height - this.len / 2;
+			if (this.direction) {
+				let new_pos = this.y + this.direction * this.speed;
+				if(new_pos > limitMin && new_pos < limitMax)
+					this.y = new_pos;
+			}
+		}
+		else {
+			const limitMin = arena.startX + this.len / 2;
+			const limitMax = arena.startX + arena.width - this.len / 2;
+			if (this.direction) {
+				let new_pos = this.x + this.direction * this.speed;
+				if(new_pos > limitMin && new_pos < limitMax)
+					this.x = new_pos;
+			}
+		}
+	}
+	drawPaddle(ctx) {
+		ctx.fillStyle = PADDLE_COLOR;
+		ctx.strokeStyle = PADDLE_COLOR;
+		if(this.side == "left" || this.side == "right") {
+			ctx.fillRect(this.x - this.width / 2, this.y - this.len / 2, this.width, this.len);
+		}
+		else {
+			ctx.fillRect(this.x - this.len / 2, this.y - this.width / 2, this.len, this.width);
+		}
+	}
+};
+
+class Ball {
+	constructor(arenaWidth, arenaHeight, startX, startY) {
+		this.radius = (BALL_SIZE / 2 / 200 * arenaWidth);
+		this.color = BALL_COLOR;
+		this.initBall(arenaWidth, arenaHeight, startX, startY);
+	}
+	initBall(arenaWidth, arenaHeight, startX, startY)
+	{
+		this.x = startX + arenaWidth / 2;
+		this.y = startY + arenaHeight / 2;
+		this.lastMove = 0;
+		let rand = Math.random();
+		if(rand < 0.25) {
+			this.vx = 1;
+			this.vy = 1;
+		}
+		else if(rand < 0.5) {
+			this.vx = 1;
+			this.vy = -1;
+		}
+		else if(rand < 0.75) {
+			this.vx = -1;
+			this.vy = 1;
+		}
+		else {
+			this.vx = -1;
+			this.vy = -1;
+		}
+		rand = Math.random();
+		if(rand < 0.5) {
+			this.speedx = BALL_START_SPEED * arenaWidth / 300;
+			this.speedy = BALL_START_SPEED * arenaHeight / 200;
+		}
+		else {
+			this.speedx = BALL_START_SPEED * arenaHeight / 200;
+			this.speedy = BALL_START_SPEED * arenaWidth / 300;
+		}
+		this.incr_speed = BALL_INCR_SPEED / 200 * arenaHeight;
+	}
+	get position() {
+		return ([this.x, this.y]);
+	}
+	moveY() {
+		this.y += this.vy * this.speedy;
+	}
+	doMove() {
+		if(this.lastMove == 0 || Date.now() - this.lastMove > 100 || Date.now() - this.lastMove <= 4)
+			this.lastMove = Date.now();
+		this.time = Date.now() - this.lastMove;
+		if(this.time < 3 || this.time > 100)
+			return;
+		this.x += this.vx * this.speedx * this.time;
+		this.y += this.vy * this.speedy * this.time;
+		this.lastMove = this.time;
+	}
+	speed_up () {
+		this.speedx += this.incr_speed;
+		this.speedy += this.incr_speed;
+	}
+	drawBall(ctx, start_x, start_y, arenaWidth, arenaHeight) {
+		ctx.fillStyle = BALL_COLOR;
+		ctx.beginPath();
+		ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = BALL_COLOR;
+		ctx.stroke();
+	}
+};
+
+class Scores {
+	constructor (arenaWidth, arenaHeight, startX, startY) {
+		this.goal = false;
+		this.lastTouch = "none";
+		this.conceded = "none";
+		this.goals = {left : 0, right : 0, top : 0, bottom : 0};
+		this.prevScore = {left : 0, right : 0, top : 0, bottom : 0};
+		this.init(arenaWidth, arenaHeight, startX, startY);
+	}
+	init(arenaWidth, arenaHeight, startX, startY) {
+		this.pos_y = {left: arenaHeight / 2, right: arenaHeight / 2, top: arenaHeight / 2 - arenaHeight / 8, bottom: arenaHeight / 2 + arenaHeight / 8};
+		this.pos_x = {left: arenaWidth / 2 - arenaWidth / 8, right: arenaWidth / 2 + arenaWidth / 8, top: arenaWidth / 2, bottom: arenaWidth / 2};
+		this.arenaWidth = arenaWidth;
+		this.arenaHeight = arenaHeight;
+		this.startX = startX;
+		this.startY = startY;
+	}
+	updateScore() {
+		for(let key in this.goals) {
+			this.prevScore[key] = this.goals[key];
+			if(this.conceded.includes(key)) {
+				this.goals[key]--;
+			}
+		}
+		if(this.lastTouch != "none")
+			this.goals[this.lastTouch]++;
+	}
+	resetGoalTracker() {
+		this.lastTouch = "none";
+		this.conceded = "none";
+	}
+	drawGolazo(ctx) {
+		ctx.fillStyle = SCORE_COLOR;
+		let font_size = this.arenaHeight / 10;
+		ctx.font = `${font_size}px Orbitron`;
+		let text = "GOLAZO";
+		if(this.lastTouch != "none")
+			text += " " + this.lastTouch;
+		let textSize = ctx.measureText(text);
+		ctx.fillText(text, this.startX + this.arenaWidth / 2 - textSize.width / 2.2, this.arenaHeight / 4 + font_size / 2);
+	}
+	drawScore(ctx, arenaHeight, start_x, start_y) {
+		for (let key in this.goals) {
+			ctx.fillStyle = SCORE_COLOR;
+			let font_size = arenaHeight / 20;
+			ctx.font = `${font_size}px Orbitron`;
+			ctx.fillText(this.goals[key], start_x + this.pos_x[key], start_y + this.pos_y[key] + font_size / 2, 100);
+		}
+	}
+	drawPrevScore(ctx) {
+		let font_size = this.arenaHeight / 20;
+		ctx.font = `${font_size}px Orbitron`;
+		for (let key in this.goals) {
+			ctx.fillText(this.prevScore[key], this.startX + this.pos_x[key], this.startY + this.pos_y[key] + font_size / 2, 100);
+		}
+	}
+	drawBigPrevScore(ctx) {
+		let font_size = this.arenaHeight / 20;
+		ctx.font = `${font_size}px Orbitron`;
+		for (let key in this.goals) {
+			if(this.prevScore[key] != this.goals[key])
+				ctx.font = `${font_size * 1.5}px Orbitron`;
+			else
+				ctx.font = `${font_size}px Orbitron`;
+			ctx.fillText(this.prevScore[key], this.startX + this.pos_x[key], this.startY + this.pos_y[key] + font_size / 2, 100);
+		}
+	}
+	drawBigCurrScore(ctx) {
+		let font_size = this.arenaHeight / 20;
+		ctx.font = `${font_size}px Orbitron`;
+		for (let key in this.goals) {
+			if(this.prevScore[key] != this.goals[key])
+				ctx.font = `${font_size * 1.5}px Orbitron`;
+			else
+				ctx.font = `${font_size}px Orbitron`;
+			ctx.fillText(this.goals[key], this.startX + this.pos_x[key], this.startY + this.pos_y[key] + font_size / 2, 100);
+		}
+	}
 }
 
-export { startPong4PGame };
+class Animation {
+	constructor() {
+		this.times = {first: 0, second: 0, third: 0};
+	}
+	setTimeStamps() {
+		this.times = {first: 500, second: 1000, third: 1500};
+		let now = Date.now();
+		for (let key in this.times) {
+			this.times[key] += now;
+		}
+	}
+}
+
+let resizeTimeout;
+
+class Game {
+	constructor(parentElement) {
+		this.parent = parentElement;
+		this.canvas = document.createElement("canvas");
+		this.parent.appendChild(this.canvas);
+		this.canvas.style.width = Math.min(this.parent.height, this.parent.width);
+		this.canvas.style.height = Math.min(this.parent.height, this.parent.width);
+		this.canvas.width = this.parent.width;
+		this.canvas.height = this.parent.height;
+		this.context = this.canvas.getContext("2d");
+		this.arena = new Arena(this.canvas.width, this.canvas.height);
+		this.playerLeft = new Player("left", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerRight = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerTop = new Player("top", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerBottom = new Player("bottom", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.ball = new Ball(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.score = new Scores(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.kickOff = true;
+		this.animation = new Animation();
+		this.gameover = false;
+		this.animRequestId = 0;
+		this.lastUpdate = Date.now();
+		this.fpsInterval = 1000 / TARGET_FPS;
+		document.addEventListener("keydown", ev => this.keydown(ev));
+		document.addEventListener("keyup", ev => this.keyup(ev));
+		window.addEventListener("resize", ev => this.onResize(ev));
+
+		this.audio = new AudioController();
+		this.audio.playAudioTrack();
+	}
+	resize() {
+		this.canvas.width = this.parent.width;
+		this.canvas.height = this.parent.height;
+		this.arena.resize(this.canvas.width, this.canvas.height);
+	}
+	onResize() {
+		if (resizeTimeout) clearTimeout(resizeTimeout);
+		resizeTimeout = setTimeout(() => {
+			this.resize();
+		}, 200);
+	}
+	keydown(key) {
+		if(key.code == "KeyC") {
+			debugger;
+		}
+		switch(key.code) {
+			case "KeyQ":
+				if(this.playerLeft.direction != -1)
+					this.playerLeft.keys_active++;
+				this.playerLeft.direction = -1; // -1 goes up
+				break;
+			case "KeyA":
+				if(this.playerLeft.direction != 1)
+					this.playerLeft.keys_active++;
+				this.playerLeft.direction = 1;
+				break;
+			case "ArrowUp":
+				if(this.playerRight.direction != -1)
+					this.playerRight.keys_active++;
+				this.playerRight.direction = -1;
+				break;
+			case "ArrowDown":
+				if(this.playerRight.direction != 1)
+					this.playerRight.keys_active++;
+				this.playerRight.direction = 1;
+				break;
+			case "KeyF":
+				if(this.playerTop.direction != -1)
+					this.playerTop.keys_active++;
+				this.playerTop.direction = -1; // -1 goes left
+				break;
+			case "KeyG":
+				if(this.playerTop.direction != 1)
+					this.playerTop.keys_active++;
+				this.playerTop.direction = 1;
+				break;
+			case "KeyK":
+				if(this.playerBottom.direction != -1)
+					this.playerBottom.keys_active++;
+				this.playerBottom.direction = -1; // -1 goes left
+				break;
+			case "KeyL":
+				if(this.playerBottom.direction != 1)
+					this.playerBottom.keys_active++;
+				this.playerBottom.direction = 1;
+				break;
+			default:
+				break;
+		}
+	}
+	keyup(key) {
+		if (this.gameover)	return;
+		if (key.code == "KeyQ" || key.code == "KeyA") {
+			if(this.playerLeft.keys_active > 0)
+				this.playerLeft.keys_active--;
+			if(this.playerLeft.keys_active == 0)
+				this.playerLeft.direction = 0;
+		}
+		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
+			if(this.playerRight.keys_active > 0)
+				this.playerRight.keys_active--;
+			if(this.playerRight.keys_active == 0)
+				this.playerRight.direction = 0;
+		}
+		if (key.code == "KeyF" || key.code == "KeyG") {
+			if(this.playerTop.keys_active > 0)
+				this.playerTop.keys_active--;
+			if(this.playerTop.keys_active == 0)
+				this.playerTop.direction = 0;
+		} 
+		if (key.code == "KeyK" || key.code == "KeyL") {
+			if(this.playerBottom.keys_active > 0)
+				this.playerBottom.keys_active--;
+			if(this.playerBottom.keys_active == 0)
+				this.playerBottom.direction = 0;
+		} 
+	}
+	goalAnimation(now) {
+		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		if(this.animation.times.first != null && now < this.animation.times.first) {
+			this.score.drawGolazo(this.context);
+			this.score.drawPrevScore(this.context);
+		}
+		else if(this.animation.times.second != null && now < this.animation.times.second) {
+			this.score.drawGolazo(this.context);
+			this.score.drawBigPrevScore(this.context);
+		}
+		else if(this.animation.times.third != null && now < this.animation.times.third) {
+			this.score.drawGolazo(this.context);
+			this.score.drawBigCurrScore(this.context);
+		}
+		this.arena.drawArena(this.context);
+		this.playerLeft.drawPaddle(this.context);
+		this.playerRight.drawPaddle(this.context);
+		this.playerTop.drawPaddle(this.context);
+		this.playerBottom.drawPaddle(this.context);
+	}
+	loop() {
+		let now = Date.now();
+		if(now < this.animation.times.third) {
+			this.kickOff = true;
+			this.goalAnimation(now);
+		}
+		else if(this.kickOff == true) {
+			this.kickOff = false;
+			this.score.resetGoalTracker();
+		}
+		else {
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			this.update();
+			if(this.score.goal == false) {
+				this.draw();
+			}
+			else
+				this.goalAnimation(now);
+		}
+		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
+		animationID = this.animRequestId;
+	}
+	paddleCollision() {
+		if(this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width / 2) {
+			if(!(this.score.lastTouch == "left"  || this.ball.x - this.ball.radius < this.playerLeft.x - this.playerLeft.width)) {
+				if(this.ball.y + this.ball.radius >= this.playerLeft.y - this.playerLeft.len / 2
+					&& this.ball.y - this.ball.radius <= this.playerLeft.y + this.playerLeft.len / 2) {
+						let refAngle = (this.ball.y - this.playerLeft.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
+						this.ball.vx = 1 * Math.cos(refAngle);
+						this.ball.vy = Math.sin(refAngle);
+						this.ball.speed_up();
+						this.score.lastTouch = "left";
+						this.audio.playTone(this.ball.speedx);
+					}
+			}
+		} // LEFT PADDLE
+		if(this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
+			if(!(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {				
+				if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
+					&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
+						let refAngle = (this.ball.y - this.playerRight.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
+						this.ball.vx = -1 * Math.cos(refAngle);
+						this.ball.vy = Math.sin(refAngle);
+						this.ball.speed_up();
+						this.score.lastTouch = "right";
+						this.audio.playTone(this.ball.speedx);
+				}
+			}
+		} // RIGHT PADDLE
+		// it can hit left and bottom so no else here
+		if (this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
+			if (!(this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width))) {
+				if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
+					this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
+					
+					let refAngle = (this.ball.x - this.playerTop.x) / (this.playerTop.len / 2) * (Math.PI / 4);
+					
+					this.ball.vx = Math.sin(refAngle);
+					this.ball.vy = Math.cos(refAngle);
+					
+					this.ball.speed_up();
+					this.score.lastTouch = "top";
+					this.audio.playTone(this.ball.speedx);
+				}
+			}
+		} // TOP PADDLE
+		if (this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
+			if (!(this.score.lastTouch == "bottom" || (this.ball.y + this.ball.radius > this.playerBottom.y + this.playerBottom.width))) {
+				if (this.ball.x + this.ball.radius >= this.playerBottom.x - this.playerBottom.len / 2 &&
+					this.ball.x - this.ball.radius <= this.playerBottom.x + this.playerBottom.len / 2) {
+					
+					let refAngle = (this.ball.x - this.playerBottom.x) / (this.playerBottom.len / 2) * (Math.PI / 4);
+	
+					this.ball.vx = Math.sin(refAngle);
+					this.ball.vy = -Math.cos(refAngle);
+	
+					this.ball.speed_up();
+					this.score.lastTouch = "bottom";
+					this.audio.playTone(this.ball.speedx);
+				}
+			}
+		} // BOTTOM PADDLE
+	}
+	checkGoal(arenaWidth, arenaHeight, arenaStartX, arenaStartY) {
+		this.score.conceded = "";
+		this.score.goal = false;
+		if (this.ball.x < arenaStartX) {
+			this.score.goal = true;
+			this.score.conceded += "left";
+			window.playFx("/static/assets/arcade-alert.wav");
+		}
+		else if (this.ball.x > arenaStartX + arenaWidth) {
+			this.score.goal = true;
+			this.score.conceded += "right";
+			window.playFx("/static/assets/arcade-alert.wav");
+		}
+		if (this.ball.y < arenaStartY) {
+			this.score.goal = true;
+			this.score.conceded += "top";
+			window.playFx("/static/assets/arcade-alert.wav");
+		}
+		else if (this.ball.y > arenaStartY + arenaHeight) {
+			window.playFx("/static/assets/arcade-alert.wav");
+			this.score.goal = true;
+			this.score.conceded += "bottom";
+		}
+
+	}
+	resetPositions () {
+		this.ball.initBall(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerLeft.init (this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerRight.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerTop.init (this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerBottom.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+	}
+	update() {
+		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		if(this.score.goal == true) {
+			this.animation.setTimeStamps();
+			this.resetPositions();
+			this.score.updateScore();
+			return ;
+		}
+		this.paddleCollision();
+		this.ball.doMove();
+		this.playerLeft.doMove(this.arena);
+		this.playerRight.doMove(this.arena);
+		this.playerTop.doMove(this.arena);
+		this.playerBottom.doMove(this.arena);
+	}
+	draw() {
+		this.arena.drawArena(this.context);
+		this.score.drawScore(this.context, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerLeft.drawPaddle(this.context);
+		this.playerRight.drawPaddle(this.context);
+		this.playerTop.drawPaddle(this.context);
+		this.playerBottom.drawPaddle(this.context);
+		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
+	}
+};
+
+function startPong4PGame() {
+	console.log("Pong 4P - Starting new game");
+	const parent = document.getElementById('app');
+	const nav = document.getElementById('nav');
+
+	parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
+	parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
+
+	while (parent.firstChild) {
+		parent.removeChild(parent.lastChild);
+	}
+	const pong = new Game(parent);
+	pong.loop();
+}
+
+function stopPong4PGame () {
+	if(animationID) {
+		cancelAnimationFrame(animationID);
+	}
+	animationID = null;
+	document.removeEventListener("keydown", ev => this.keydown(ev));
+	document.removeEventListener("keyup", ev => this.keyup(ev));
+	window.removeEventListener("resize", ev => this.onResize(ev));
+	return ;
+}
+
+export { startPong4PGame, stopPong4PGame };

@@ -1,134 +1,356 @@
 "use strict";
 
-import drawBackground from './background.js';
+import { showNotification } from './notification.js';
+import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
-import { startPongGame } from './pong-game.js';
-import { startPong3DGame } from './pong3d.js';
-import { startPong4PGame } from './multi_pong4.js';
+import { TournamentRouter } from './tournament-router.js';
+import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
+
+const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
+const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
 
 class Router {
-	constructor(navElement, appElement) {
+	constructor(navElement, appElement, chatElement) {
 		this.navElement = navElement;
 		this.appElement = appElement;
-		this.csrfToken = this.getCookie('csrftoken');
-		this.chat = new ChatRouter(this.csrfToken);
-		this.game = new GameRouter(this.csrfToken);
+		this.chatElement = chatElement;
+		this.csrfToken = getCookie('csrftoken');
+		sessionStorage.setItem('friends', '[]');
+		sessionStorage.setItem('blocked', '[]');
+
+		this.chat = new ChatRouter(this.chatElement);
+		this.game = new GameRouter(this.appElement);
+		this.tournament = new TournamentRouter(this.appElement);
+		this.audioContext = null;
+		window.addEventListener('load', () => this.route());
+		window.addEventListener('hashchange', (e) => this.route(e));
+
+		// PERFORMANCE MONITOR
+		(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
+
 		this.init();
 	}
 
 	init() {
-		window.addEventListener('load', () => this.route());
-		window.addEventListener('hashchange', () => this.route());
+		this.oldHash = window.location.hash;
+
+		// Register listeners for custom events
+		this.chatElement.addEventListener('challenge', (event) => {
+			if (this.game.setupGameWebSocket(event.detail.gameID)) {
+				const sound = new Audio(CHALLENGE_SOUND);
+				sound.volume = 0.5;
+				sound.play();
+			}
+		});
+		this.chatElement.addEventListener('notification', (event) => {
+			showNotification(
+				event.detail.message,
+				event.detail.type,
+				event.detail.img,
+				NOTIFICATION_SOUND);
+		});
+		this.appElement.addEventListener('notification', (event) => {
+			showNotification(
+				event.detail.message,
+				event.detail.type,
+				event.detail.img,
+				NOTIFICATION_SOUND);
+		});
+		this.appElement.addEventListener('update', (event) => {
+			// this.route();
+		});
+		this.appElement.addEventListener('game', (event) => {
+			this.game.startTournamentGame(event.detail);
+		});
+		this.appElement.addEventListener('announcement', (event) => {
+			this.chat.sendAnnouncement(event.detail);
+		});
+
 		this.loadNav();
 		this.loadCookieConsentFooter();
-		this.route();
+		this.updateFriendsAndBlocks();
+		this.loadChat('lobby');
+		if (this.oldHash)
+			this.route(this.oldHash);
 	}
 
 	displayError(message) {
-		this.appElement.innerHTML = `<p>${message}</p><button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>`;
+		this.appElement.innerHTML = `<p id='error-message'></p><button class="btn btn-primary btn-sm" onclick="history.back()">Go Back</button>`;
+		document.getElementById('error-message').innerText = message;
 	}
 
-	route() {
-		const hash = window.location.hash.substring(2);
-		const template = hash || 'home';
+	notifyError(message) {
+		showNotification(message, 'error');
+	}
+
+	reload() {
+		this.updateFriendsAndBlocks();
+		this.loadNav();
+		this.loadChat();
+		window.location.hash = '/';
+	}
+
+	async route() {
+		this.oldHash = this.oldHash ?? window.location.hash;
+		this.game?.stopGame();
+		const template = window.location.hash.substring(2) || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
+		} else if (template.startsWith('tournaments/')) {
+			const next = await this.tournament.route(template);
+			setTimeout(() => window.location.hash = next ?? this.oldHash, 100);
+		} else if (template.startsWith('chat')) {
+			const roomName = template.substring(5) || 'lobby';
+			this.loadChat(roomName);
+			setTimeout(() => window.location.hash = this.oldHash, 100);
+		} else if (template.startsWith('game/')) {
+			history.back();
+			if (template.startsWith('game/accept/')) {
+				const gameID = template.substring(12);
+				this.game.acceptChallenge(gameID);
+				this.chat.sendDuelResponse('accepted');
+			} else if (template.startsWith('game/decline/')) {
+				this.chat.sendDuelResponse('declined');
+			}
+			this.game.route(template);
+		} else if (template.startsWith('addFriend') || template.startsWith('deleteFriend') || template.startsWith('block') || template.startsWith('unblock')) {
+			const action = template.split('/')[0];
+			const id = template.split('/')[1];
+			this.manageFrenemy(action, id);
+			setTimeout(() => history.back(), 100);
+		} else if (template.startsWith('pong-')) {
+			if (template === 'pong-classic') {
+				const p1Name = document.getElementById('player1-name')?.value;
+				// await this.loadTemplate(template);
+				if (!p1Name) {
+					this.notifyError("Player 1 name is required");
+					history.back();
+					return;
+				}
+				const p1 = this.game.makePlayer('right', p1Name);
+				const p2Name = document.getElementById('player2-name')?.value;
+				if (p2Name) {
+					const p2 = this.game.makePlayer('left', p2Name);
+					this.game.startClassicGame(p1, p2);
+				} else {
+					this.game.startClassicGame(p1);
+				}
+			} else
+				this.loadTemplate(template);
 		} else {
 			this.loadTemplate(template);
 		}
+		this.oldHash = window.location.hash;
 	}
 
-	animateContent(newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
-		this.appElement.classList.add("fade-exit");
-		setTimeout(() => {
-			this.appElement.innerHTML = newContent;
-			this.appElement.classList.remove("fade-exit");
-			this.appElement.classList.add("fade-enter");
-			setTimeout(() => this.appElement.classList.remove("fade-enter"), fadeInDuration);
-			if (callback) callback();
-		}, fadeOutDuration);
+	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
+		try {
+			element.innerHTML = '<div class="spinner-border text-success"></div>';
+			element.classList.add("fade-exit");
+			setTimeout(() => {
+				element.innerHTML = newContent;
+				element.classList.remove("fade-exit");
+				element.classList.add("fade-enter");
+				setTimeout(() => element.classList.remove("fade-enter"), fadeInDuration);
+				if (callback) callback();
+			}, fadeOutDuration);
+		} catch (error) {
+			console.debug("Error animating content: ", error);
+			this.notifyError("Error animating content");
+		}
 	}
 
 	async loadNav() {
 		try {
-			const accessToken = sessionStorage.getItem('access_token') || '';
-			const response = await fetch('/templates/navbar', {
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
-					'Authorization': `Bearer ${accessToken}`,
-				}
-			});
-			if (!response.ok) {
+			const response = await getHTML('/templates/navbar', this.csrfToken);
+			if (!response) {
 				throw new Error(`Cannot load nav: ${response.status}`);
 			}
-			const html = await response.text();
-			this.navElement.innerHTML = html;
+			this.navElement.innerHTML = response;
+
+			var navbarCollapse = document.querySelector('#navbarNav');
+   			 if (navbarCollapse) {
+   			     var collapse = new bootstrap.Collapse(navbarCollapse);
+  
+			     collapse.hide();
+
+   			     // Hide the navbar when a link inside it is clicked
+   			     var navbarLinks = document.querySelectorAll('.navbar-collapse a');
+   			     navbarLinks.forEach(function (link) {
+   			         link.addEventListener('click', function () {
+   			             collapse.hide();
+   			         });
+   			     });
+  
+   			     // Hide the navbar when clicking outside of it
+   			     document.addEventListener('click', function (event) {
+   			         var isClickInside = navbarCollapse.contains(event.target);
+   			         var isToggle = event.target.classList.contains('navbar-toggler');
+   			         
+   			         if (!isClickInside && !isToggle) {
+   			             collapse.hide();
+   			         }
+   			     });
+   			 } else {
+				this.notifyError("Navbar collapse element not found.");
+   			 }
+
+			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
+				const audioMuteBtn = document.getElementById('audioMuteBtn');
+
+				if (audioMuteBtn.innerText === '🔊') {
+					audioMuteBtn.innerText = '🔇';
+					if(window.mainOUT) {
+						window.mainOUT.gain.value = 0;
+					}
+				} else if (audioMuteBtn.innerText === '🔇'){
+					audioMuteBtn.innerText = '🔊';
+					if (window.mainOUT) {
+						window.mainOUT.gain.value = 1;
+					}
+				}
+			});
+			document.getElementById('fxMuteBtn').addEventListener('click', (e) => {
+				const fxMuteBtn = document.getElementById('fxMuteBtn');
+
+				if (fxMuteBtn.innerText === '🔊') {
+					fxMuteBtn.innerText = '🔇';
+					if(window.fxGainNode) {
+						window.fxGainNode.gain.value = 0;
+					}
+				} else if(fxMuteBtn.innerText === '🔇'){
+					fxMuteBtn.innerText = '🔊';
+					if (window.fxGainNode) {
+						window.fxGainNode.gain.value = 1;
+					}
+				}
+			});
+
+			let count = 1;
+
+			document.getElementById('changeMusicBtn').addEventListener('click', (e) => {
+				const changeMusicBtn = document.getElementById('changeMusicBtn');
+
+				if (count === 0) {
+					window.changeMusicTrack("/static/assets/music.mp3");
+					count++;
+				} else if (count === 1) {
+					window.changeMusicTrack("/static/assets/music2.mp3");
+					count++;
+				} else if (count === 2) {
+					window.changeMusicTrack("/static/assets/music3.mp3");
+					count++;
+				}
+
+				if (count === 3)
+					count = 0;
+			});
+
 		} catch (error) {
-			console.error("Error loading nav: ", error);
+			console.debug("Error loading nav: ", error);
 			this.navElement.innerHTML = "<p>Error loading navigation</p>";
 		}
 	}
 
 	async loadTemplate(template) {
+		console.debug("Loading template: ", template);
 		try {
-			const accessToken = sessionStorage.getItem('access_token');
-			const response = await fetch(`/templates/${template}`, {
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
-					'Authorization': `Bearer ${accessToken || ''}`,
-				}
-			});
-			if (!response.ok) {
-				throw new Error(`Cannot load ${template}: ${response.status}`);
+			const response = await getHTML(`/templates/${template}`, this.csrfToken);
+			if (!response) {
+				throw new Error(`Cannot load ${template}`);
 			}
-			const html = await response.text();
-			this.animateContent(html, () => this.handlePostLoad(template));
+			this.animateContent(this.appElement, response, () => this.handlePostLoad(template));
 		} catch (error) {
-			console.error("Error loading template: ", error);
 			this.displayError("Error loading content");
 		}
 	}
 
 	async loadProfileTemplate(template) {
 		try {
-			const accessToken = sessionStorage.getItem('access_token') || '';
-			const response = await fetch(`/${template}`, {
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
-					'Authorization': `Bearer ${accessToken || ''}`,
-				}
-			});
-			if (!response.ok) {
-				throw new Error(`Cannot load ${template}: ${response.status}`);
+			const response = await getHTML(`/${template}`, this.csrfToken);
+			if (!response) {
+				throw new Error(`Cannot load ${template}`);
 			}
-			const html = await response.text();
-			this.animateContent(html);
+			this.animateContent(this.appElement, response);
 		} catch (error) {
-			console.error("Error loading user template: ", error);
 			this.displayError("Error loading content");
+		}
+	}
+
+	async manageFrenemy(action, id) {
+		const actions = ['addFriend', 'deleteFriend', 'block', 'unblock'];
+		if (!actions.includes(action)) {
+			console.debug("Invalid action: ", action);
+			this.notifyError("Invalid action. This incident will be reported.");
+			return;
+		}
+		const endpoints = ['add_friend', 'remove_friend', 'block_user', 'unblock_user'];
+		const endpoint = endpoints[actions.indexOf(action)];
+		const body = JSON.stringify({user_id: id});
+		if (await postJSON(`/api/profiles/${endpoint}/`, this.csrfToken, body)) {
+			console.debug("Frenemy action successful:", action, id);
+			this.updateFriendsAndBlocks();
+		} else {
+			this.notifyError(`Failed to perform action: ${action} with id: ${id}`);
+			this.displayError(`Failed to perform action: ${action} with id: ${id}`);
+		}
+	}
+
+	async updateFriendsAndBlocks() {
+		if (!sessionStorage.getItem('access_token'))
+			return;
+		try {
+			let response = await getJSON('/api/profiles/friends/', this.csrfToken);
+			if (response) {
+				console.log("Updated friends", response);
+				sessionStorage.setItem('friends', JSON.stringify(response));
+			} else {
+				throw new Error("Failed to update friends");
+			}
+			response = await getJSON('/api/profiles/blocked_users/', this.csrfToken);
+			if (response) {
+				console.log("Updated blocked", response);
+				sessionStorage.setItem('blocked', JSON.stringify(response));
+			} else {
+				throw new Error("Failed to update blocked");
+			}
+		} catch (error) {
+			this.displayError(error.message);
+		}
+	}
+
+	async loadChat(roomName='lobby') {
+		try {
+			const accessToken = sessionStorage.getItem('access_token') || '';
+			if (!accessToken) {
+				console.log("You need to login to access the chat");
+				this.chatElement.style.display = 'none';
+				return;
+			}
+			const response = await getHTML(`/templates/chat`, this.csrfToken);
+			if (!response) {
+				throw new Error(`Cannot load chat: ${response.status}`);
+			}
+			this.chatElement.style.display = 'block';
+			this.animateContent(this.chatElement, response, () =>
+				this.chat.setupChatWebSocket(roomName));
+		} catch (error) {
+			this.chatElement.style.display = 'none';
+			this.notifyError("Error loading chat: ", error);
 		}
 	}
 
 	async loadCookieConsentFooter() {
 		try {
-			const response = await fetch('/templates/cookie_consent_footer', {
-				headers: {
-					'X-Requested-With': 'XMLHttpRequest',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
-				}
-			});
-			if (!response.ok) {
+			const response = await getHTML('/templates/cookie_consent_footer');
+			if (!response) {
 				throw new Error(`Cannot load cookie consent footer: ${response.status}`);
 			}
-			const html = await response.text();
-			document.getElementById('cookie-consent-footer').innerHTML = html;
+			document.getElementById('cookie-consent-footer').innerHTML = response;
 			this.initCookieConsent();
 		} catch (error) {
-			console.error("Error loading cookie consent footer: ", error);
+			this.notifyError(`Error loading cookie consent footer: ${error.message}`);
 		}
 	}
 
@@ -145,9 +367,9 @@ class Router {
 			cookieConsentFooter.style.display = 'none';
 		});
 
-		document.getElementById('cookiePreferencesButton').addEventListener('click', () => {
-			alert("No! You don't get to choose.\nIt's only CSRF protection anyway.\nNo tracking cookies here.");
-		});
+		// document.getElementById('cookiePreferencesButton').addEventListener('click', () => {
+		// 	alert("No! You don't get to choose.\nIt's only CSRF protection anyway.\nNo tracking cookies here.");
+		// });
 	}
 
 	handlePostLoad(template) {
@@ -165,18 +387,25 @@ class Router {
 				this.handleProfilePage();
 				break;
 			case 'game':
-				this.game.setupGameWebSocket();
+				// this.game.setupGameWebSocket();
 				break;
-			case 'chat':
-				this.chat.setupChatWebSocket();
+			case 'tournaments':
+				this.handleTournamentPage();
 				break;
-			case 'pong-classic':
-				startPongGame();
-				break;
+			// case 'pong-classic':
+			// 	const p1 = this.game.makePlayer('left', 'Player 1');
+			// 	const p2 = this.game.makePlayer('right', 'Player 2');
+			// 	this.game.startClassicGame(p1, p2);
+			// 	break;
 			case 'pong-3d':
-				startPong3DGame();
+				// const pl1 = this.game.makePlayer('left', 'Player 1');
+				// const pl2 = this.game.makePlayer('right', 'Player 2');
+				// this.game.start3DGame(pl1, pl2);
+				const pl1 = this.game.makePlayer('left', 'Player 1', 'YOU', '/static/assets/42Berlin.svg');
+				this.game.start3DGame(pl1);
 				break;
 			case 'pong-4p':
+				stopPong4PGame();
 				startPong4PGame();
 				break;
 			default:
@@ -186,6 +415,7 @@ class Router {
 
 	handleRegistrationForm() {
 		const form = document.getElementById('registration-form');
+		if (!form) return;
 		form.addEventListener('submit', async (e) => {
             e.preventDefault();
 			const username = document.getElementById('username').value;
@@ -195,19 +425,19 @@ class Router {
 			// TODO Add blockchain address field
             // const evm_address = document.getElementById('evm_addr').value;
 			if (password !== password_confirmation) {
-				console.error("Passwords do not match");
-				alert("Passwords do not match");
+				this.notifyError("Passwords do not match");
 				return;
 			}
-	
+
 			try {
+				const body = JSON.stringify({ username, email, password, password_confirmation });
 				const response = await fetch('/api/register/', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
 					},
-					body: JSON.stringify({ username, email, password, password_confirmation })
+					body: body,
 				});
 				const data = await response.json();
 				if (response.ok) {
@@ -216,14 +446,14 @@ class Router {
 					throw new Error(data.detail || 'Registration failed');
 				}
 			} catch (error) {
-				console.error("Error registering user: ", error);
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
 	}
 
 	handleLoginForm() {
 		const form = document.getElementById('login-form');
+		if (!form) return;
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const username = document.getElementById('username').value;
@@ -233,7 +463,7 @@ class Router {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
 					},
 					body: JSON.stringify({ username, password })
 				});
@@ -241,82 +471,84 @@ class Router {
 				if (response.ok) {
 					sessionStorage.setItem('access_token', data.access);
 					sessionStorage.setItem('refresh_token', data.refresh);
-					this.csrfToken = this.getCookie('csrftoken');
+					this.csrfToken = getCookie('csrftoken');
 					this.loadNav();
+					this.loadChat('lobby');
 					window.location.hash = '/home';
 				} else {
 					throw new Error(data.error || 'Login failed');
 				}
 			} catch (error) {
-				console.error("Error logging in user: ", error);
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
 	}
 
 	async logout() {
+		if (!sessionStorage.getItem('access_token')) {
+			this.notifyError("You are not logged in");
+			return;
+		}
 		try {
-			const accessToken = sessionStorage.getItem('access_token') || '';
-			const refreshToken = sessionStorage.getItem('refresh_token') || '';
-			const response = await fetch('/api/logout/', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
-					'Authorization': `Bearer ${accessToken}`
-				},
-				body: JSON.stringify({ refresh: refreshToken })
-			});
-			if (response.ok) {
+			const body = JSON.stringify({ refresh: sessionStorage.getItem('refresh_token') || '' });
+			const response = await postJSON('/api/logout/', this.csrfToken, body);
+			if (response) {
 				console.log("Logged out");
-				sessionStorage.removeItem('access_token');
-				sessionStorage.removeItem('refresh_token');
-				this.loadNav();
-				window.location.hash = '/home';
 			} else {
 				throw new Error("Failed to log out");
 			}
 		} catch (error) {
-			console.error("Error logging out: ", error);
 			this.displayError(error.message);
 		}
+		sessionStorage.clear();
+		this.chat.chatSocket?.close();
+		this.game.gameSocket?.close();
+		this.tournament.tournamentSocket?.close();
+		this.reload();
 	}
 
 	handleProfilePage() {
-		document.getElementById('account-administration').addEventListener('click', (e) => {
+		const anonBtn = document.getElementById('anonymize-data');
+		const deleteBtn = document.getElementById('delete-account');
+		const profileForm = document.getElementById('profile-form');
+		const passwordForm = document.getElementById('password-form');
+		const blockchainBtn = document.getElementById('blockchain-optin');
+		if (!anonBtn || !deleteBtn || !profileForm) return;
+		blockchainBtn?.addEventListener('click', async (e) => {
+			const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
+			if (response) {
+				this.animateContent(this.appElement, response);
+			} else {
+				this.notifyError("Failed to opt-in to blockchain");
+			}
+		});
+
+		passwordForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
-			const anonBtn = document.getElementById('anonymize-data');
-			const deleteBtn = document.getElementById('delete-account');
-			anonBtn.style.display = anonBtn.style.display === 'none' ? 'block' : 'none';
-			deleteBtn.style.display = deleteBtn.style.display === 'none' ? 'block' : 'none';
-			const passwordForm = document.getElementById('password-form');
-			passwordForm.style.display = passwordForm.style.display === 'none' ? 'block' : 'none';
-			passwordForm.addEventListener('submit', async (e) => {
-				e.preventDefault();
-				const formData = new FormData(passwordForm);
-				try {
-					const response = await fetch('/api/change-password/', {
-						method: 'POST',
-						headers: {
-							'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
-							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
-						},
-						body: formData
-					});
-					if (response.ok) {
-						alert("Password changed successfully");
-					} else {
-						throw new Error("Failed to change password");
-					}
-				} catch (error) {
-					console.error("Error changing password: ", error);
-					this.displayError(error.message);
+			const formData = new FormData(passwordForm);
+			try {
+				const response = await fetch('/api/change-password/', {
+					method: 'POST',
+					headers: {
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
+						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
+					},
+					body: formData
+				});
+				if (response.ok) {
+					alert("Password changed successfully");
+				} else {
+					throw new Error("Failed to change password");
 				}
-			});
+			} catch (error) {
+				this.displayError(error.message);
+			}
 		});
 		document.getElementById('anonymize-data').addEventListener('click', (e) => {
 			e.preventDefault();
-			this.handleAnonymization();
+			if (confirm("Are you sure you want to anonymize your data? This action is irreversible.")) {
+				this.handleAnonymization();
+			}
 		});
 		document.getElementById('delete-account').addEventListener('click', (e) => {
 			e.preventDefault();
@@ -324,7 +556,6 @@ class Router {
 				this.deleteAccount();
 			}
 		});
-		const profileForm = document.getElementById('profile-form');
 		profileForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const formData = new FormData(profileForm);
@@ -332,14 +563,14 @@ class Router {
 				const response = await fetch('/templates/profile', {
 					method: 'POST',
 					headers: {
-						'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken'),
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
 						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
 					},
 					body: formData
 				});
 				if (response.ok) {
-					let html = await response.text();
-					this.animateContent(html, () => this.handlePostLoad("profile"));
+					const html = await response.text();
+					this.animateContent(this.appElement, html, () => this.handlePostLoad("profile"));
 					this.loadNav();
                     const newUsername = formData.get('alias');
                     console.log(newUsername);
@@ -347,8 +578,36 @@ class Router {
 					throw new Error("Failed to update profile");
 				}
 			} catch (error) {
-				console.error("Error updating profile: ", error);
 				this.displayError(error.message);
+			}
+		});
+	}
+
+	handleTournamentPage() {
+		const form = document.getElementById('create-tournament-form');
+		const btn = document.getElementById('create-tournament-btn');
+		if (!form || !btn) return;
+		form.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const formData = new FormData(form);
+			try {
+				const response = await fetch('/game/tournaments/create_tournament_form/', {
+					method: 'POST',
+					headers: {
+						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`,
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
+					},
+					body: formData
+				});
+				if (response.ok) {
+					console.log("Tournament created successfully", response);
+					this.loadTemplate('tournaments');
+				} else {
+					console.log("Failed to create tournament", response);
+					throw new Error("Failed to create tournament");
+				}
+			} catch (error) {
+				this.notifyError(error.message);
 			}
 		});
 	}
@@ -360,20 +619,22 @@ class Router {
 				method: 'DELETE',
 				headers: {
 					'Authorization': `Bearer ${accessToken}`,
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
 				}
 			});
 			if (response.ok) {
 				alert("Your account has been deleted.");
 				sessionStorage.removeItem('access_token');
 				sessionStorage.removeItem('refresh_token');
-				this.loadNav();
-				window.location.hash = '/home';
+				this.chat.chatSocket?.close();
+				this.game.gameSocket?.close();
+				this.tournament.tournamentSocket?.close();
+				this.reload();
 			} else {
 				throw new Error("Failed to delete account");
 			}
 		} catch (error) {
-			console.error("Error deleting account: ", error);
+			this.notifyError(`Error deleting account: ${error}`);
 		}
 	}
 
@@ -385,39 +646,27 @@ class Router {
 				headers: {
 					'Content-Type': 'application/json',
 					'Authorization': `Bearer ${accessToken}`,
-					'X-CSRFToken': this.csrfToken || this.getCookie('csrftoken')
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
 				}
 			});
 			if (response.ok) {
 				alert("Your data has been anonymized.");
 				this.loadNav();
+				this.loadChat();
 			} else {
 				throw new Error("Failed to anonymize data");
 			}
 		} catch (error) {
-			console.error("Error anonymizing data: ", error);
+			this.notifyError(`Error anonymizing data: ${error}`);
 		}
-	}
-
-	getCookie(name) {
-		let cookieValue = null;
-		if (document.cookie && document.cookie !== '') {
-			const cookies = document.cookie.split(';');
-			for (let i = 0; i < cookies.length; i++) {
-				const cookie = cookies[i].trim();
-				if (cookie.substring(0, name.length + 1) === (name + '=')) {
-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-					break;
-				}
-			}
-		}
-		return cookieValue;
 	}
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-	drawBackground();
-	const navElement = document.getElementById('nav');
-	const appElement = document.getElementById('app');
-	new Router(navElement, appElement);
-});
+// document.addEventListener('DOMContentLoaded', () => {
+// });
+
+const navElement = document.getElementById('nav');
+const appElement = document.getElementById('app');
+const chatElement = document.getElementById('chat');
+
+new Router(navElement, appElement, chatElement);

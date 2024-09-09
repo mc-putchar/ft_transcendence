@@ -1,10 +1,13 @@
+"use strict";
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-import { getAmps, playAudioTrack, playTone } from './audio.js';
-import { getJSON, postJSON, GameData } from './game-router.js';
+import { getAmps, playAudioTrack, playTone, stopAudioTrack } from './audio.js';
+import { GameData } from './game-router.js';
+import { getJSON, getCookie } from './utils.js';
 
 
 const SCORE_FONT = "../../static/fonts/helvetiker_regular.typeface.json";
@@ -12,12 +15,13 @@ const WIN_FONT = "../../static/fonts/optimer_regular.typeface.json";
 const BALL_TEX_IMG = "../../static/img/green-texture.avif"
 const WALL_TEX_IMG = "../../static/img/matrix-purple.jpg"
 const FLOOR_TEX_IMG = "../../static/img/login-install.jpg"
+const PADDLE_TEX_IMG = "../../static/img/wickerWeaves.jpg"
 
 const CANVAS_PADDING = 10;
 const CAM_START_X = -250;
 const CAM_START_Y = 70;
 const CAM_START_Z = 0;
-const TARGET_FPS = 60;
+const TARGET_FPS = 64;
 const DRAW_DISTANCE = 1000;
 const ARENA_WIDTH = 300;
 const ARENA_HEIGHT = 200;
@@ -129,21 +133,21 @@ class Ball {
 		this.speed = 0;
 	}
 
-	sync(pos, dir, speed, timestamp) {
-		this.mesh.position.set(pos.x, BALL_SIZE, pos.y);
-		this.dir.set(dir.dx, 0, dir.dy);
-		this.speed = speed;
-		this.lastUpdateTime = timestamp;
+	sync(ballData, timestamp) {
+		this.mesh.position.set(ballData.x, BALL_SIZE, ballData.y);
+		this.dir.set(ballData.dx, 0, ballData.dy);
+		this.speed = ballData.v;
+		// this.lastUpdateTime = timestamp;
 	}
 };
 
 class Player {
-	constructor(user, name, avatar_tex) {
+	constructor(user, name, paddle_tex, avatar_tex) {
 		this.user = user;
 		this.name = name;
 		this.mesh = new THREE.Mesh(
 			new THREE.BoxGeometry(PADDLE_LEN, PADDLE_HEIGHT, PADDLE_WIDTH, 8, 2, 2),
-			new THREE.MeshPhongMaterial({ color: 0x42FF42, wireframe: true })
+			new THREE.MeshPhongMaterial({ map: paddle_tex })
 		);
 		this.mesh.castShadow = true;
 		this.pos = new THREE.Vector3();
@@ -195,13 +199,16 @@ class Player {
 };
 
 class Game {
-	constructor(gameData, rootElement, player1, player2, isChallenger, matchId) {
+	constructor(gameData, gameSocket, rootElement, player1, player2, isChallenger, matchId) {
 		this.gameData = gameData;
+		this.gameSocket = gameSocket;
 		this.matchId = matchId;
 		this.root = rootElement;
 
 		window.addEventListener("resize", ev => this.resize(ev), true);
 		window.addEventListener("fullscreenchange", (e) => this.resize(e));
+
+		window.addEventListener("onhashchange", () => this.destructor());
 
 		this.fsButton = document.createElement('div');
 		this.fsButton.id = "fullscreenButton";
@@ -212,6 +219,7 @@ class Game {
 		this.root.appendChild(this.fsButton);
 
 		this.canvas = document.createElement('canvas');
+		this.canvas.classList.add("w-100", "h-100");
 		this.canvas.width = window.innerWidth;
 		this.canvas.height = window.innerHeight;
 		this.root.appendChild(this.canvas);
@@ -246,6 +254,7 @@ class Game {
 		this.arena.place(this.scene, -ARENA_HEIGHT / 2, ARENA_HEIGHT / 2);
 
 		this.isChallenger = isChallenger;
+		this.myPlayer = this.isChallenger ? "player1" : "player2";
 		this.playerOne = player1;
 		this.playerTwo = player2;
 		this.playerOne.place(this.scene, 0, -ARENA_WIDTH / 2 + GOAL_LINE);
@@ -266,6 +275,16 @@ class Game {
 		this.intro();
 	}
 
+	destructor() {
+		this.gameSocket.close();
+		window.cancelAnimationFrame(this.animRequestId);
+		// stop audio
+		stopAudioTrack();
+		window.removeEventListener("resize", ev => this.resize(ev), true);
+		window.removeEventListener("fullscreenchange", (e) => this.resize(e));
+		location.hash = '/dashboard';
+	}
+
 	intro() {
 		this.cam_controls.autoRotate = true;
 		if (this.isChallenger) {
@@ -281,33 +300,31 @@ class Game {
 	}
 
 	send_register_player() {
-		const thisPlayer = this.isChallenger ? "player1" : "player2";
 		const username = this.isChallenger ? this.playerOne.user : this.playerTwo.user;
-		window.gameSocket.send(JSON.stringify({
+		this.gameSocket.send(JSON.stringify({
 			type: 'register',
-			player: thisPlayer,
+			player: this.myPlayer,
 			user: username,
 			match_id: this.matchId,
 		}));
 	}
 
 	send_ready() {
-		const thisPlayer = this.isChallenger ? "player1" : "player2"
-		window.gameSocket.send(JSON.stringify({
+		this.gameSocket.send(JSON.stringify({
 			type: 'ready',
-			player: thisPlayer,
+			player: this.myPlayer,
 		}));
+		console.log("Sent ready", this.myPlayer);
 	}
 
 	sendPlayerUpdate(player) {
-		const [position, _] = player.position;
 		const direction = player.direction;
-		const msgType = this.isChallenger ? "player1_position" : "player2_position";
-		window.gameSocket.send(JSON.stringify({
+		const msgType = `${this.myPlayer}_move`;
+		this.gameSocket.send(JSON.stringify({
 			type: msgType,
-			position: position,
 			direction: direction
 		}));
+		// console.log("Sent player update", msgType, direction);
 	}
 
 	toggleFullScreen() {
@@ -339,14 +356,16 @@ class Game {
 		switch(key.code) {
 			case "KeyW":
 				player.direction = 1;
+				this.sendPlayerUpdate(player);
 				break;
 			case "KeyS":
 				player.direction = -1;
+				this.sendPlayerUpdate(player);
 				break;
 			default:
 				break;
 		}
-		this.sendPlayerUpdate(player);
+		// this.sendPlayerUpdate(player);
 	}
 
 	keyup(key) {
@@ -354,8 +373,8 @@ class Game {
 		const player = this.isChallenger ? this.playerOne : this.playerTwo;
 		if (key.code === "KeyW" || key.code === "KeyS") {
 			player.direction = 0;
+			this.sendPlayerUpdate(player);
 		}
-		this.sendPlayerUpdate(player);
 	}
 
 	endGame() {
@@ -369,10 +388,15 @@ class Game {
 		this.scene.remove(this.ball);
 		this.cam_controls.autoRotate = true;
 		if (this.isChallenger) {
-			this.cam_controls.autoRotateSpeed = -10;
+			this.cam_controls.autoRotateSpeed = -5;
 		} else {
-			this.cam_controls.autoRotateSpeed = 10;
+			this.cam_controls.autoRotateSpeed = 5;
 		}
+		const iWon = this.isChallenger ? this.playerOne.score > this.playerTwo.score : this.playerTwo.score > this.playerOne.score;
+		if (iWon) {;} // play tone
+		setTimeout(() => {
+			this.destructor();
+		}, 30000);
 	}
 
 	loop() {
@@ -381,7 +405,7 @@ class Game {
 		if (!this.gameover) {
 			let now = Date.now();
 			let elapsed = now - this.lastUpdate;
-			if (elapsed > this.fpsInterval) {
+			if (elapsed * 2 > this.fpsInterval) {
 				this.lastUpdate = now;
 				this.syncData();
 			}
@@ -410,34 +434,34 @@ class Game {
 
 		this.running = (this.gameData.status === 'running');
 		this.gameover = (this.gameData.status === 'finished' || this.gameData.status === 'forfeited');
-		this.scoreLimit = this.gameData.scoreLimit;
+		this.scoreLimit = this.gameData.score.limit;
 
-		if (this.isChallenger) {
-			this.playerTwo.sync(this.gameData.player2Position, this.gameData.player2Direction, now);
-		} else {
-			this.playerOne.sync(this.gameData.player1Position, this.gameData.player1Direction, now);
-		}
+		// if (this.isChallenger) {
+			this.playerTwo.sync(this.gameData.player2.x, this.gameData.player2.dx, now);
+		// } else {
+			this.playerOne.sync(this.gameData.player1.x, this.gameData.player1.dx, now);
+		// }
 
-		this.ball.sync(this.gameData.ballPosition, this.gameData.ballDirection, this.gameData.ballSpeed, now);
+		this.ball.sync(this.gameData.ball, now);
 
-		if (this.playerOne.score != this.gameData.player1Score || this.playerTwo.score != this.gameData.player2Score) {
-			this.playerOne.score = this.gameData.player1Score;
-			this.playerTwo.score = this.gameData.player2Score;
+		if (this.playerOne.score != this.gameData.score.p1 || this.playerTwo.score != this.gameData.score.p2) {
+			this.playerOne.score = this.gameData.score.p1;
+			this.playerTwo.score = this.gameData.score.p2;
 			this.ball.reset();
 			this.showScore();
 			if (!this.gameover)
-				this.send_ready();
+				setTimeout(() => this.send_ready(), 3000);
 			else
 				this.endGame();
 		}
 
 		if (this.gameData.status === 'forfeited') {
 			if (this.isChallenger) {
-				this.playerOne.score = this.gameData.scoreLimit;
+				this.playerOne.score = this.gameData.score.limit;
 				this.playerTwo.score = 0;
 			} else {
 				this.playerOne.score = 0;
-				this.playerTwo.score = this.gameData.scoreLimit;
+				this.playerTwo.score = this.gameData.score.limit;
 			}
 			this.showScore();
 			this.endGame();
@@ -532,10 +556,9 @@ class Game {
 	}
 }
 
-function startGame(gameData, player1, player2, isChallenger, matchId) {
-	const nav = document.getElementById('nav');
-	const root = document.getElementById("game-container");
-	root.style = "display: block";
+function startGame(gameData, gameSocket, player1, player2, isChallenger, matchId) {
+	const nav = document.getElementById("nav");
+	const root = document.getElementById("app");
 	root.classList.add("game-container");
 	root.height = window.innerHeight - nav.offsetHeight;
 	root.width = window.innerWidth - CANVAS_PADDING;
@@ -543,14 +566,15 @@ function startGame(gameData, player1, player2, isChallenger, matchId) {
 		root.removeChild(root.lastChild);
 	}
 	root.innerText = `${player1.name} vs ${player2.name}\n`;
-	(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
-	const pong = new Game(gameData, root, player1, player2, isChallenger, matchId);
+	const pong = new Game(gameData, gameSocket, root, player1, player2, isChallenger, matchId);
 	pong.loop();
 }
 
-async function initGame(gameData, matchId, playerName, opponentName, isChallenger) {
-	const playerProfile = await getJSON(`/api/profile/${playerName}/`);
-	const opponentProfile = await getJSON(`/api/profile/${opponentName}/`);
+async function initGame(gameData, gameSocket, matchId, playerName, opponentName, isChallenger) {
+	console.log("Starting game", gameData, gameSocket, matchId, playerName, opponentName, isChallenger);
+	const csrftoken = getCookie('csrftoken');
+	const playerProfile = await getJSON(`/api/profiles/user/${playerName}/`, csrftoken)
+	const opponentProfile = await getJSON(`/api/profiles/user/${opponentName}/`, csrftoken);
 	if (playerProfile === null || opponentProfile === null) {
 		console.error("Error fetching player profiles");
 		return;
@@ -566,13 +590,16 @@ async function initGame(gameData, matchId, playerName, opponentName, isChallenge
 	imgURL = opponentProfile.image.replace("http://", "https://");
 	const opponentAvatarTexture = texLoader.load(imgURL);
 
-	const player = new Player(playerProfile.user.username, playerProfile.alias, playerAvatarTexture);
-	const opponent = new Player(opponentProfile.user.username, opponentProfile.alias, opponentAvatarTexture);
+	const paddle_tex = texLoader.load(PADDLE_TEX_IMG);
+	paddle_tex.wrapS = THREE.RepeatWrapping;
+
+	const player = new Player(playerProfile.user.username, playerProfile.alias, paddle_tex, playerAvatarTexture);
+	const opponent = new Player(opponentProfile.user.username, opponentProfile.alias, paddle_tex, opponentAvatarTexture);
 
 	if (isChallenger)
-		startGame(gameData, player, opponent, isChallenger, matchId);
+		startGame(gameData, gameSocket, player, opponent, isChallenger, matchId);
 	else
-		startGame(gameData, opponent, player, isChallenger, matchId);
+		startGame(gameData, gameSocket, opponent, player, isChallenger, matchId);
 }
 
 

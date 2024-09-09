@@ -8,71 +8,49 @@ networks:
 
 configs:
   caddyfile:
-    file: "${PWD}/server/Caddyfile"
+    file: "${PWD}/server/Caddyfile${DEPLOY:+_deploy}"
 
 services:
-  blockchain:
-    image: blockchain
-    build:
-      context: "${PWD}/pong/blockchain"
-    environment:
-      - INFURA_TESTNET
+  cloudflared:
+    image: cloudflare/cloudflared:2024.8.2
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
       - transcendeNet
+    volumes:
+      - ./cloudflared:/etc/cloudflared:ro
+    profiles:
+      - tunnel
     restart: unless-stopped
+    
   server:
-    image: caddy:2.8.4-alpine
+    build:
+      context: "${PWD}/server"
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
-    environment:
-      - DOMAIN
-      - ACME_AGREE="true"
     volumes:
-    - "${PWD}/pong/static:/usr/share/caddy/static:rw"
+    - "${PWD}/pong/static:/usr/share/caddy/static:ro"
     - "${PWD}/pong/media:/usr/share/caddy/media:rw"
+    networks:
+      - transcendeNet
     ports:
-      - "8080:80"
-      - "4243:443"
-    networks:
-      - transcendeNet
-    depends_on:
-      django:
-        condition: service_started
-      db:
-        condition: service_healthy
+      - "127.0.0.1:4243:443"
     restart: unless-stopped
 
-  db:
-    image: postgres:16.3-alpine3.20
-    environment:
-      - POSTGRES_DB
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-    volumes:
-      - "${PWD}/postgres_data:/var/lib/postgresql/data:rw"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  blockchain:
+    build:
+      context: "${PWD}/pong/blockchain"
     networks:
       - transcendeNet
     restart: unless-stopped
-
-  redis:
-    image: redis:7.2.5-alpine
-    networks:
-      - transcendeNet
-    restart: unless-stopped
+    ports:
+      - "8545:8545"
 
   django:
     build:
       context: "${PWD}/pong"
     command: sh -c "
-      python manage.py makemigrations &&
-      python manage.py migrate &&
-      python manage.py runserver 0.0.0.0:8000"
+      python manage.py runserver 0.0.0.0:8000" # add -noreaload flag to avoid double deployment to the blockchain
     volumes:
       - "${PWD}/pong:/code:rw"
     environment:
@@ -85,8 +63,8 @@ services:
       - CLIENT_ID
       - CLIENT_SECRET
       - REDIRECT_URI
-    expose:
-      - 8000
+      - HARDHAT_PRIVATE_KEY
+      - DEBUG
     networks:
       - transcendeNet
     depends_on:
@@ -95,3 +73,29 @@ services:
       redis:
         condition: service_started
     restart: unless-stopped
+
+  db:
+    image: postgres:16.3-alpine3.20
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    volumes:
+      - "dbdata:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.0-alpine
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+volumes:
+  dbdata:

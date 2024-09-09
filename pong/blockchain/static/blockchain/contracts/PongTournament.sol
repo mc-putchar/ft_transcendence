@@ -13,6 +13,11 @@ contract PongTournament {
         _;
     }
 
+	modifier ownerOrSelf (uint256 _hash) {
+		require (msg.sender == owner || msg.sender == players[_hash].addr, "Caller is not the owner");
+		_;
+	}
+
     struct Player {
         uint256 hash;
         uint32 totalScore;
@@ -110,6 +115,21 @@ contract PongTournament {
         player.aliasName = _alias;
     }
 
+    function addPlayer(uint256 _hash, string calldata _alias, address _address) public {
+        require(!playerExists[_hash], "Player already exists");
+        Player storage player = players[_hash];
+        playerExists[_hash] = true;
+        player.totalScore = 0;
+        player.matchWon = 0;
+        player.tournamentWon = 0;
+        player.aliasName = _alias;
+        player.addr = _address;
+    }
+
+	function updatePlayerAddress(uint256 _hash, address _addr) public ownerOrSelf(_hash) {
+		players[_hash].addr = _addr;
+	}
+
     function getMatchWinner(uint256 _matchId) public view returns(Player memory) {
         return players[matches[_matchId].winnerID];
     }
@@ -130,6 +150,10 @@ contract PongTournament {
         uint256 winner = matches[_id].winnerID;
         return players[winner].aliasName; 
     }
+
+	function getMatchPlayers(uint256 _id) public view returns(uint256[] memory) {
+		return matches[_id].players;
+	}
 
     function getTournamentWinnerName(uint256 _id) public view returns(string memory) {
         uint256 winner = tournaments[_id].winnerID;

@@ -1,5 +1,7 @@
 __pycache__
-.env
+*.env
+.env_local
+.env_deploy
 .venv/
 venv/
 testenv/
@@ -9,7 +11,7 @@ migrations
 staticfiles
 .venv
 __pycache__
-.env
+*.env
 pong/testenv
 testenv
 tags
@@ -19,4 +21,8 @@ generate.py
 node_modules
 en.subject*
 subject.*
-debug.log
+*.log
+cloudflared/config.yml
+/pong/blockchain/hardhat/artifacts/
+/pong/blockchain/hardhat/cache/
+/pong/blockchain/hardhat/experimental/

@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'api',
-	'blockchain',
+    'blockchain',
     'chat',
     'game',
     'pong',
@@ -68,6 +68,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
+LOGIN_URL = '#/login'
+LOGIN_REDIRECT_URL = '#/home'
+LOGOUT_URL = '#/logout'
+LOGOUT_REDIRECT_URL = '#/home'
 
 TEMPLATES = [
     {
@@ -94,6 +98,8 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [("redis", 6379)],
+            "capacity": 1024,
+            "expiry": 5,
         },
     },
 }
@@ -172,6 +178,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
@@ -204,6 +211,8 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760 # 10MB
 
 # Content Security Policy, XSS Protection, etc.
 X_FRAME_OPTIONS = 'DENY'

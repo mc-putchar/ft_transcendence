@@ -1,7 +1,7 @@
 POST https://localhost:4243/api/register/
 Content-Type: application/json
 
-{ "username": "foo", "password": "foo", "email": "foo@foo.com" }
+{ "username": "foo", "password": "foo", "password_confirmation": "foo", "email": "foo@foo.com" }
 
 ###
 
@@ -12,10 +12,11 @@ Content-Type: application/json
 
 ###
 
-POST https://localhost:4243/api/token/
+POST https://localhost:4243/api/token/refresh/
 Content-Type: application/json
+Authorization: Bearer 
 
-{ "username": "foo", "password": "foo" }
+{ "refresh": "" }
 
 ###
 

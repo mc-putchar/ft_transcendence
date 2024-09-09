@@ -1,0 +1,21 @@
+:80 {
+	encode zstd gzip
+	@maintenanceModeActive file /usr/share/caddy/static/maintenance.on
+	handle @maintenanceModeActive {
+		try_files /usr/share/caddy/static/maintenance.html
+		file_server {
+			status 503
+		}
+	}
+	handle_path /static/* {
+		root * /usr/share/caddy/static
+		file_server
+	}
+	handle_path /media/* {
+		root * /usr/share/caddy/media
+		file_server
+	}
+	handle {
+		reverse_proxy django:8000
+	}
+}
