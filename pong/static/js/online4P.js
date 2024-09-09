@@ -1,5 +1,11 @@
 // import { AudioController } from './audio.js';
 
+let audio = new Audio('./music.mp3'); // Path to your MP3 file
+audio.loop = true; // Enable looping
+audio.play().catch(function(error) {
+    console.log('Audio playback failed:', error); // Handle any potential errors
+});
+
 const ACTIVE_AI = false;
 
 let animationID = null;

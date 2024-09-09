@@ -2,7 +2,7 @@ import { Online4P } from './online4P.js';
 import { getJSON, postJSON, getCookie } from './utils.js';
 
 function find_paddle(used_paddles) {
-		
+
 	let options = ["left", "top", "bottom", "right"];
 	for (let i = 0; i < options.length; i++) {
 		for (let key in used_paddles) {
@@ -28,14 +28,15 @@ class Player {
 class GameData {
 	constructor() {
 		this.last_touch = "none";
-		this.ball = {x: NaN, y: NaN, vx : NaN, vy: NaN}
+		this.ball = {x: NaN, y: NaN, vx : NaN, vy: NaN};
 		this.left = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.right = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.top = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.bottom = { dir: NaN, pos: { x: NaN, y: NaN } };
-		this.update = false;
+		this.update = true;
+		this.initBallVectors();
 	}
-	initBallVectors(){
+	initBallVectors() {
 		let rand = Math.random();
 		if(rand < 0.25) {
 			this.ball.vx = 1;
@@ -92,6 +93,7 @@ class GameRouter4P {
 				this.active_connect = parseInt(data.active_connections, 10);
 				console.log("!!!!!!!!this.active_connect", this.active_connect);
 				if (this.active_connect == 4) {
+					// this.setBallVector()
 					this.launchGame();
 				}
 				return;
@@ -99,17 +101,25 @@ class GameRouter4P {
 			else if(type == "used_paddles") {
 				this.used_paddles = data.used_paddles.split(' ');
 				console.log("this.used_paddles: ", this.used_paddles);
-				this.my_paddle = find_paddle(this.used_paddles);
+				if(!this.my_paddle) {
+					this.my_paddle = find_paddle(this.used_paddles);
+					console.log("paddle: ", this.my_paddle);
+					this.chat_websocket?.send(JSON.stringify(
+						{
+							type: 'added_paddle',
+							added_paddle: this.my_paddle,
+						}));
+				}
 				return;
 			}
 		};
 	}
 	initDirection(data) {
-		// console.log("MOVE: ", data.dir);
-		// console.log("PRE: ",this.gameData[data.side].dir);
+		console.log("MOVE: ", data.side);
+		console.log("PRE: ",this.gameData[data.side].dir);
 
 		this.gameData[data.side].dir = data.dir;
-		// console.log("POST: ",this.gameData[data.side].dir);
+		console.log("POST: ",this.gameData[data.side].dir);
 		this.gameData[data.side].pos.x = data.x;
 		this.gameData[data.side].pos.y = data.y;
 		this.gameData.update = true;
@@ -146,13 +156,13 @@ class GameRouter4P {
 	launchGame() {
 		this.player = new Player(this.used_paddles, this.my_paddle); // Initialize player if connections are okay
 		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
-		console.log("paddle: ", this.player.paddle_side);
-		this.chat_websocket?.send(JSON.stringify(
-			{
-				type: 'added_paddle',
-				added_paddle: this.player.paddle_side,
-			}));
-
+		
+		let audio = new Audio('music.mp3'); // Assuming the music.mp3 is in the same directory
+		audio.loop = true; // Optional: loop the music
+		audio.play().catch(function(error) {
+			console.log('Audio playback failed:', error); // Handle potential errors
+		});
+		
 		this.game.start();
 	}
 }
