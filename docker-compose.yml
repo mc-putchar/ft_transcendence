@@ -6,9 +6,8 @@ networks:
 
 services:
   blockchain:
-    image: trufflesuite/ganache
-    environment:
-      - INFURA_TESTNET
+    build:
+      context: "${PWD}/pong/blockchain"
     networks:
       - transcendeNet
     ports:
@@ -51,6 +50,7 @@ services:
       - CLIENT_ID
       - CLIENT_SECRET
       - REDIRECT_URI
+      - HARDHAT_PRIVATE_KEY
     ports:
       - "4222:8000"
     networks:

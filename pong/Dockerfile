@@ -10,7 +10,7 @@ RUN apt-get update && \
 RUN pip install --upgrade pip wheel && \
     pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# COPY . .
 
 EXPOSE 8000
 
