@@ -18,18 +18,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @database_sync_to_async
 def get_user_by_id(user_id):
     User = get_user_model()
     return User.objects.get(id=user_id)
 
+
 @database_sync_to_async
 def get_profile(username):
     return Profile.objects.get(user__username=username)
 
+
 @database_sync_to_async
 def get_match(match_id):
     return Match.objects.get(pk=match_id)
+
 
 @database_sync_to_async
 def update_player_match(match, player, score, win=False):
@@ -80,7 +84,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         self.match_group_name = f"match_{self.challenger}"
         self.token = self.scope['query_string'].decode().split('=')[1]
         try:
-            decoded_token = jwt.decode(self.token, settings.SECRET_KEY, algorithms=["HS256"])
+            decoded_token = jwt.decode(
+                self.token, settings.SECRET_KEY, algorithms=["HS256"])
             self.user = await get_user_by_id(decoded_token['user_id'])
             if not self.user:
                 raise jwt.InvalidTokenError("User not found")
@@ -105,8 +110,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         )
 
         await self.send(text_data=json.dumps({
-                "type": "connection",
-                "message": f"Joined channel: {self.challenger}",
+            "type": "connection",
+            "message": f"Joined channel: {self.challenger}",
         }))
         self.game_task = asyncio.create_task(self.game_update_loop())
 
@@ -119,7 +124,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         self.cancel_tasks()
         if self.channel_name in self.connection_player_map:
-            disconnected_player = self.connection_player_map.pop(self.channel_name)
+            disconnected_player = self.connection_player_map.pop(
+                self.channel_name)
             if disconnected_player and not self.gameover:
                 await game_manager.forfeit_game(self.game_id, disconnected_player)
                 await self.handle_forfeit(disconnected_player)
@@ -147,7 +153,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             }))
             return
         if player_username != self.user.username:
-            logger.warn(f"Username mismatch: {player_username} != {self.user.username}")
+            logger.warn(
+                f"Username mismatch: {player_username} != {self.user.username}")
             await self.send(text_data=json.dumps({
                 "type": "error",
                 "message": "Username not recognized",
@@ -159,12 +166,14 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             profile = await get_profile(player_username)
             self.players[player] = profile
             self.connection_player_map[self.channel_name] = player
-            logger.debug(f"Player {player} registered with username {player_username}")
+            logger.debug(
+                f"Player {player} registered with username {player_username}")
 
             player_match_exists = await sync_to_async(PlayerMatch.objects.filter(match=self.match, player=profile).exists)()
             if not player_match_exists:
                 raise Exception("PlayerMatch entry does not exist")
-            logger.debug(f"PlayerMatch entry found for {player_username} in match {match_id}")
+            logger.debug(
+                f"PlayerMatch entry found for {player_username} in match {match_id}")
             await self.send(text_data=json.dumps({
                 "type": "registration",
                 "message": f"{player} registered successfully",
@@ -175,7 +184,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             return
 
         except Profile.DoesNotExist:
-            logger.debug(f"Error: User Profile '{player_username}' does not exist")
+            logger.debug(
+                f"Error: User Profile '{player_username}' does not exist")
             await self.send(text_data=json.dumps({
                 "type": "error",
                 "message": "User profile does not exist",
@@ -198,6 +208,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             del self.connection_player_map[self.channel_name]
 
     async def receive(self, text_data):
+        logger.info(f"{text_data}")
         if self.gameover:
             return
         try:
@@ -281,7 +292,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         if not self.gameover:
             game_state = game_manager.get_game_state(self.game_id)
             if not game_state or game_state["status"] == "starting":
-                winner = self.username
+                winner = self.connection_player_map.get(self.channel_name)
                 await self.win_by_timeout(winner)
 
     async def game_update_loop(self):
@@ -323,7 +334,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             elif player2:
                 await update_player_match(self.match, player2, p2_score, p2_score > p1_score)
             else:
-                logger.warn("Error saving match results: Player is not registered.")
+                logger.warn(
+                    "Error saving match results: Player is not registered.")
 
         except Exception as e:
             logger.error(f"Error saving match results: {e}")
@@ -331,11 +343,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 
     async def win_by_timeout(self, winner):
         try:
-            loser = self.match.get_players().exclude(username=winner.username).first()
-            await update_player_match(self.match, winner, self.score_limit, True)
-            await update_player_match(self.match, loser, 0, False)
-            logger.info("Match won by timeout")
-
+            loser = "player1" if winner == "player2" else "player2"
+            await self.handle_forfeit(loser)
         except Exception as e:
             logger.error(f"Error handling win by timeout: {e}")
 
@@ -383,6 +392,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
     async def set_player_ready(self, player):
         await game_manager.set_player_ready(self.game_id, player)
 
+
 class PongTournamentConsumer(AsyncWebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
@@ -394,7 +404,8 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
         self.tournament_group_name = f'tournament_{self.tournament_id}'
         self.token = self.scope['query_string'].decode().split('=')[1]
         try:
-            decoded_token = jwt.decode(self.token, settings.SECRET_KEY, algorithms=["HS256"])
+            decoded_token = jwt.decode(
+                self.token, settings.SECRET_KEY, algorithms=["HS256"])
             self.user = await get_user_by_id(decoded_token['user_id'])
             if not self.user:
                 raise jwt.InvalidTokenError("User not found")

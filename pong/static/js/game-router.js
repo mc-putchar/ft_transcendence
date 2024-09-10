@@ -4,6 +4,7 @@ import { getJSON, postJSON, getCookie } from "./utils.js";
 // import { initGame } from "./pong-online.js";
 import { ClientClassic } from "./client-classic.js";
 import { Client3DGame } from "./pong3d.js";
+import { Game4P } from './multi_pong4.js';
 
 class GameSetup {
 	constructor (parentElement, player1, player2, isChallenger, mode="single", client="2d") {
@@ -234,7 +235,6 @@ class GameRouter {
 		);
 		console.log("Starting online game", gameSetup);
 		this.gameData = new GameData();
-		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
 		if (playerProfile.client_3d)
 			this.client = new Client3DGame(gameSetup, this.gameSocket, this.gameData, data.gameID);
 		else
@@ -243,12 +243,13 @@ class GameRouter {
 	}
 
 	async startTournamentGame (data) {
-		this.setupGameWebSocket(`${data.tournamentID}#${data.gameID}#${data.player}`);
+		const challenger = data.isChallenger ? data.player : data.opponent;
+		this.setupGameWebSocket(`${data.tournamentID}-${data.gameID}-${challenger}`);
 		if (await this.joinGame(data.gameID) == null) {
 			console.error("Error joining game");
 			return;
 		}
-		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
+		await this.startOnlineGame(data);
 	}
 
 	startClassicGame (player1, player2=null) {
@@ -277,6 +278,11 @@ class GameRouter {
 			gameSetup.player1.controls = { up: "ArrowLeft", down: "ArrowRight" };
 		}
 		this.client = new Client3DGame(gameSetup);
+		this.client.start();
+	}
+
+	start4PGame () {
+		this.client = new Game4P(this.appElement);
 		this.client.start();
 	}
 

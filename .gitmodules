@@ -1,5 +1,0 @@
-[submodule "ft_ascii"]
-	path = ft_ascii
-	url = git@github.com:CarloCattano/ft_ascii
-	branch = pong
-

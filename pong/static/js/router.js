@@ -1,11 +1,10 @@
 "use strict";
 
 import { showNotification } from './notification.js';
-import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
+import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
-import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
@@ -199,13 +198,13 @@ class Router {
 			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
 				const audioMuteBtn = document.getElementById('audioMuteBtn');
 
-				if (audioMuteBtn.innerText === '🔊') {
-					audioMuteBtn.innerText = '🔇';
+				if (audioMuteBtn.innerText === '🔊 Music') {
+					audioMuteBtn.innerText = '🔇 Music';
 					if(window.mainOUT) {
 						window.mainOUT.gain.value = 0;
 					}
-				} else if (audioMuteBtn.innerText === '🔇'){
-					audioMuteBtn.innerText = '🔊';
+				} else if (audioMuteBtn.innerText === '🔇 Music'){
+					audioMuteBtn.innerText = '🔊 Music';
 					if (window.mainOUT) {
 						window.mainOUT.gain.value = 1;
 					}
@@ -214,13 +213,13 @@ class Router {
 			document.getElementById('fxMuteBtn').addEventListener('click', (e) => {
 				const fxMuteBtn = document.getElementById('fxMuteBtn');
 
-				if (fxMuteBtn.innerText === '🔊') {
-					fxMuteBtn.innerText = '🔇';
+				if (fxMuteBtn.innerText === '🔊 FX') {
+					fxMuteBtn.innerText = '🔇 FX';
 					if(window.fxGainNode) {
 						window.fxGainNode.gain.value = 0;
 					}
-				} else if(fxMuteBtn.innerText === '🔇'){
-					fxMuteBtn.innerText = '🔊';
+				} else if(fxMuteBtn.innerText === '🔇 FX'){
+					fxMuteBtn.innerText = '🔊 FX';
 					if (window.fxGainNode) {
 						window.fxGainNode.gain.value = 1;
 					}
@@ -405,8 +404,7 @@ class Router {
 				this.game.start3DGame(pl1);
 				break;
 			case 'pong-4p':
-				stopPong4PGame();
-				startPong4PGame();
+				this.game.start4PGame();
 				break;
 			default:
 				break;
