@@ -1,4 +1,4 @@
-#version: '42'
+version: '42'
 
 name: ft_transcendence
 
