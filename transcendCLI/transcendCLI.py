@@ -157,7 +157,7 @@ class Game:
         self.websocket = None
         self.users_list = []
 
-        subprocess.run(['bash ../ft_ascii/start.sh'], shell=True)
+        self.subproc = subprocess.run(['bash ../ft_ascii/start.sh'], shell=True)
         
         if not os.path.exists(fifo_out) or not os.path.exists(fifo_in):
             raise FileNotFoundError("FIFO files not found")   
@@ -176,12 +176,21 @@ class Game:
         elif game_creator == False:
             self.game_index = 'player2'
         
+        self.last_activity = asyncio.create_task(self.close_socket())
+
+    async def close_socket(self):
+        await asyncio.sleep(8)
+        if self.websocket:
+            console.print('Closing game socket due to inactivity', style='red')
+            await self.websocket.close()
 
     async def receive_message(self):
         if not self.websocket:
             return
+        
         async for data in self.websocket:
             try:
+                self.last_activity.cancel()
                 data_json = json.loads(data)
                 msg_type = data_json.get('type')
 
@@ -192,6 +201,11 @@ class Game:
 
                 elif msg_type == 'game_state':
                     self.game_state = data_json.get('game_state')
+                    if self.game_state['status'] == "finished" or self.game_state['status'] == "forfeited":
+                        console.print(f"SCORE:\nPLAYER 1:\t{self.game_state['score']['p1']} \nPLAYER 2:\t{self.game_state['score']['p2']}", style='green')
+                        console.print('Game Over', style='green')
+                        await self.websocket.close()
+                        return
 
                 elif msg_type == 'accept':
                     match_id = data_json.get('message').split(' ')[1]
@@ -344,24 +358,24 @@ class Game:
                         
                     try:
                         recv_dx = pipe_in.readline().strip()
-                        # if recv_dx != self.player1_dx:
                         self.player1_dx = recv_dx
                         await self.update_movement()
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
             
-                    await asyncio.sleep(0.04)
+                    await asyncio.sleep(0.03)
+        
 
         except OSError as e:
             if e.errno == errno.EPIPE:
                 console.print('Client pipe exited', style='green')
-                if (self.websocket):
-                    await self.websocket.close()
-                return
+                # if (self.websocket):
+                    # await self.websocket.close()
+                # return
 
         except Exception as e:
-            console.print(f'Error in update_client: {e}', style='red')
+            console.print(f'update_client: {e}', style='green')
 
 
 class Chat:
