@@ -358,6 +358,7 @@ class Game:
                 console.print('Client pipe exited', style='green')
                 if (self.websocket):
                     await self.websocket.close()
+                return
 
         except Exception as e:
             console.print(f'Error in update_client: {e}', style='red')
@@ -402,8 +403,11 @@ class Chat:
             await self.websocket.send(json.dumps(data))
  
             if message.split(' ')[0] == '/duel':
-                self.game = Game(self.base_url, self.jwt_token, self.username, True)
-                await self.game.connect() 
+                if message.split(' ')[1] != self.username:
+                    self.game = Game(self.base_url, self.jwt_token, self.username, True)
+                    await self.game.connect() 
+                elif message.split(' ')[1] == self.username:
+                    console.print('You cannot challenge yourself.', style='red')
 
             if message.startswith('/help'):
                 show_help()
