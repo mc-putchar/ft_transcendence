@@ -235,7 +235,6 @@ class GameRouter {
 		);
 		console.log("Starting online game", gameSetup);
 		this.gameData = new GameData();
-		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
 		if (playerProfile.client_3d)
 			this.client = new Client3DGame(gameSetup, this.gameSocket, this.gameData, data.gameID);
 		else
@@ -244,12 +243,13 @@ class GameRouter {
 	}
 
 	async startTournamentGame (data) {
-		this.setupGameWebSocket(`${data.tournamentID}#${data.gameID}#${data.player}`); // TODO: reflect backend changes
+		const challenger = data.isChallenger ? data.player : data.opponent;
+		this.setupGameWebSocket(`${data.tournamentID}-${data.gameID}-${challenger}`);
 		if (await this.joinGame(data.gameID) == null) {
 			console.error("Error joining game");
 			return;
 		}
-		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
+		await this.startOnlineGame(data);
 	}
 
 	startClassicGame (player1, player2=null) {

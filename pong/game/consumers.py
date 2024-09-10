@@ -37,7 +37,6 @@ def update_player_match(match, player, score, win=False):
     PlayerMatch.objects.filter(match=match, player=player).update(
         score=score, winner=win)
 
-
 class PongGameConsumer(AsyncWebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
@@ -264,7 +263,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         if not self.gameover:
             game_state = game_manager.get_game_state(self.game_id)
             if not game_state or game_state["status"] == "starting":
-                winner = self.username
+                winner = self.connection_player_map.get(self.channel_name)
                 await self.win_by_timeout(winner)
 
     async def game_update_loop(self):
@@ -315,11 +314,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 
     async def win_by_timeout(self, winner):
         try:
-            loser = self.match.get_players().exclude(player=winner).first()
-            await update_player_match(self.match, winner, self.score_limit, True)
-            await update_player_match(self.match, loser, 0, False)
-            logger.info("Match won by timeout")
-
+            loser = "player1" if winner == "player2" else "player2"
+            await self.handle_forfeit(loser)
         except Exception as e:
             logger.error(f"Error handling win by timeout: {e}")
 
