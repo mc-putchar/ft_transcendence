@@ -28,35 +28,12 @@ class Player {
 class GameData {
 	constructor() {
 		this.last_touch = "none";
-		this.ball = {x: NaN, y: NaN, vx : NaN, vy: NaN};
+		this.ball = {x: NaN, y: NaN, vx : NaN, vy: NaN, speedx : NaN, speedy: NaN};
 		this.left = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.right = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.top = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.bottom = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.update = true;
-		this.initBallVectors();
-	}
-	initBallVectors() {
-		let rand = Math.random();
-		if(rand < 0.25) {
-			this.ball.vx = 1;
-			this.ball.vy = 1;
-		}
-		else if(rand < 0.5) {
-			this.ball.vx = 1;
-			this.ball.vy = -1;
-		}
-		else if(rand < 0.75) {
-			this.ball.vx = -1;
-			this.ball.vy = 1;
-		}
-		else {
-			this.ball.vx = -1;
-			this.ball.vy = -1;
-		}
-		rand = Math.random();
-		console.log("INITIAL vx", this.ball.vx);
-		console.log("INITIAL vy", this.ball.vy);
 	}
 }
 
