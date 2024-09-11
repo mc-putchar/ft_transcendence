@@ -27,6 +27,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         User = get_user_model()
         return User.objects.get(id=user_id)
 
+    @database_sync_to_async
+    def get_id_from_username(self, username):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        return User.objects.get(username=username).id
+
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
@@ -92,20 +98,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json["message"]
         username = text_data_json["username"]
         if text_data_json.get("type") == "challenge":
-
-            if await self.is_user_playing(self.user):
-                logger.info("User is already playing another game")
-                return
-            else:
-                logger.info("User joining challenge --- - - -- -- - - -")
-                await self.channel_layer.group_send(
-                    self.room_group_name, {
-                        "type": "challenge",
-                        "message": message,
-                        "username": username,
-                    }
-                )
-                return
+            await self.channel_layer.group_send(
+                self.room_group_name, {
+                    "type": "challenge",
+                    "message": message,
+                    "username": username,
+                }
+            )
+            return
         
         usersList = await self.get_online_users() 
 
@@ -143,7 +143,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def challenge(self, event):
         if await self.is_user_playing(event["username"]):
-            logger.info(f"\nUser   {event["username"]}is already playing another game\n------\n")
+            logger.info(f"\n ------- User { event["username"] } is already playing another game\n------\n")
             return
         else: 
             await self.send(text_data=json.dumps({
@@ -155,8 +155,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     # check if a given user is currently_playing
     async def is_user_playing(self, user):
         try:
-            profile = await sync_to_async(Profile.objects.get)(user=user)
+            userid = await self.get_id_from_username(user)
+            profile = await sync_to_async(Profile.objects.get)(user=userid)
             return profile.currently_playing
+
         except Exception as e:
             logger.error(f"Error checking if user is playing: {e}")
             return False

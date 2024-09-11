@@ -109,6 +109,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             self.spectators.remove(self.channel_name)
         
 
+        # avoid dueling while in game
         profile = await get_profile(self.username)
         profile.currently_playing = False
         await sync_to_async(profile.save)()
