@@ -185,8 +185,7 @@ class Router {
 			var navbarCollapse = document.querySelector('#navbarNav');
    			 if (navbarCollapse) {
    			     var collapse = new bootstrap.Collapse(navbarCollapse);
-  
-			     collapse.hide();
+						 collapse.hide();
 
    			     // Hide the navbar when a link inside it is clicked
    			     var navbarLinks = document.querySelectorAll('.navbar-collapse a');
@@ -206,7 +205,7 @@ class Router {
    			         }
    			     });
    			 } else {
-				this.notifyError("Navbar collapse element not found.");
+						this.notifyError("Navbar collapse element not found.");
    			 }
 
 			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
@@ -224,6 +223,7 @@ class Router {
 					}
 				}
 			});
+
 			document.getElementById('fxMuteBtn').addEventListener('click', (e) => {
 				const fxMuteBtn = document.getElementById('fxMuteBtn');
 

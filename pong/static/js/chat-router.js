@@ -211,11 +211,11 @@ class ChatRouter {
 
 	handleDuelRequest(data) {
 		const challengedUser = data.message.split(' ')[1];
-        if (!challengedUser && data.username === this.username) {
-            this.chatElement.dispatchEvent(new CustomEvent(
-                'notification', 
-                { detail: { message: 'Please specify a user to challenge', type: 'Error' } }));
-        }
+		if (!challengedUser && data.username === this.username) {
+		    this.chatElement.dispatchEvent(new CustomEvent(
+			'notification', 
+			{ detail: { message: 'Please specify a user to challenge', type: 'Error' } }));
+		}
 		else if (this.users.includes(challengedUser)) {
 			if (data.username === this.username) {
 				this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');

@@ -11,7 +11,6 @@ from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
-# abstracted into a function
 class ChatConsumer(AsyncWebsocketConsumer):
     
     async def set_online_status(self, status):
@@ -56,7 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         self.username = self.user.username
-        # set user online status
+
         await self.set_online_status(True)
 
         if self.room_name == "lobby":
@@ -162,7 +161,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": event["message"],
             }))
 
-    # check if a given user is currently_playing
     async def is_user_playing(self, user):
         try:
             userid = await self.get_id_from_username(user)
