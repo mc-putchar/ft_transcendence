@@ -75,6 +75,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name, {"type": "connection", "username": self.username}
         )
 
+        # Set user as not playing on start
+        profile = await sync_to_async(Profile.objects.get)(user=self.user)
+        profile.currently_playing = False
+        await sync_to_async(profile.save)()
+
     async def disconnect(self, close_code):
         try:
             if not self.user:
@@ -97,6 +102,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
         username = text_data_json["username"]
+
         if text_data_json.get("type") == "challenge":
             await self.channel_layer.group_send(
                 self.room_group_name, {
@@ -121,6 +127,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
        
         usersList = await self.get_online_users()
         
+        if message.startswith("/duel") and await self.is_user_playing(message.split(" ")[1]):
+            logger.info(f"------- User {message.split(" ")[1]} Already playing, cant duel -------")
+            return
+
         await self.send(text_data=json.dumps({
             "message": message,
             "username": username,
@@ -143,8 +153,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def challenge(self, event):
         if await self.is_user_playing(event["username"]):
-            logger.info(f"\n ------- User { event["username"] } is already playing another game\n------\n")
-            return
+            logger.info("------- User") 
+            logger.info(f"{ event["username"] } is already playing another game\n------\n")
         else: 
             await self.send(text_data=json.dumps({
                 "type": "challenge",

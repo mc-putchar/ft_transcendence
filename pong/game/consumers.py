@@ -77,15 +77,16 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+        # avoid dueling while in game
+        profile = await get_profile(self.username)
+        profile.currently_playing = True
+        await sync_to_async(profile.save)()
+
         await self.send(text_data=json.dumps({
             "type": "connection",
             "message": f"Joined channel: {self.challenger}",
         }))
 
-        # avoid dueling while in game
-        profile = await get_profile(self.username)
-        profile.currently_playing = True
-        await sync_to_async(profile.save)()
 
         self.game_task = asyncio.create_task(self.game_update_loop())
 
@@ -390,11 +391,14 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
 
         self.username = self.user.username
         self.player_ready = False
+
         await self.accept()
+        
         await self.channel_layer.group_add(
             self.tournament_group_name,
             self.channel_name
         )
+        
         await self.channel_layer.group_send(
             self.tournament_group_name,
             {
