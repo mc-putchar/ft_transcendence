@@ -4,7 +4,7 @@ import { getJSON, postJSON, getCookie } from "./utils.js";
 // import { initGame } from "./pong-online.js";
 import { ClientClassic } from "./client-classic.js";
 import { Client3DGame } from "./pong3d.js";
-import { Game4P } from './multi_pong4.js';
+import { Game4P } from './pong4P.js';
 
 class GameSetup {
 	constructor (parentElement, player1, player2, isChallenger, mode="single", client="2d") {

@@ -24,6 +24,9 @@
                             <li class="nav-item" role="presentation">
                             <button class="nav-link m-1 btn btn-primary" id="pills-4ppong-tab" data-bs-toggle="pill" data-bs-target="#pills-4ppong" type="button" role="tab" aria-controls="pills-4ppong" aria-selected="false">4P</button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                            <button class="nav-link m-1 btn btn-primary" id="pills-tour-tab" data-bs-toggle="pill" data-bs-target="#pills-tour" type="button" role="tab" aria-controls="pills-tour" aria-selected="false">tournament</button>
+                            </li>
                         </ul>
                     </div>
 
@@ -103,7 +106,41 @@
                             <div class="tab-pane fade bg-dark-subtle" id="pills-4ppong" role="tabpanel" aria-labelledby="pills-4ppong-tab" tabindex="0">
                                 <a class="btn btn-outline-primary w-100 mb-3" href="#/pong-4p">Pong 4P</a>
                             </div>
-
+                            <div class="tab-pane fade bg-dark-subtle" id="pills-tour" role="tabpanel" aria-labelledby="pills-tour-tab" tabindex="0">
+                                <div class="mb-3">
+                                    <label for="numPlayers" class="form-label">Select number of players</label>
+                                    <select id="numPlayers" class="form-select">
+                                      <option value="2">2 Players</option>
+                                      <option value="4">4 Players</option>
+                                      <option value="8">8 Players</option>
+                                    </select>
+                                  </div>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user1" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user2" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user3" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user4" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user5" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user6" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user7" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user8" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                <a class="btn btn-outline-primary w-100 mb-3" href="#/local-tour">Local Tournament</a>
+                            </div>
                         </div>
                     </div>
                 </div>
