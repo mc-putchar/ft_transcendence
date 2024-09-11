@@ -28,6 +28,7 @@ class Profile(models.Model):
     blocked_users = models.ManyToManyField('self', through='Blocked', symmetrical=False, related_name='blocked_profiles', default=None, blank=True)
     forty_two_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     blockchain_address = models.CharField(max_length=42, null=True, blank=True, default=None)
+    currently_playing = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.alias:
