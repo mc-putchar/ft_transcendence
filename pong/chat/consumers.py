@@ -92,14 +92,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json["message"]
         username = text_data_json["username"]
         if text_data_json.get("type") == "challenge":
-            await self.channel_layer.group_send(
-                self.room_group_name, {
-                    "type": "challenge",
-                    "message": message,
-                    "username": username,
-                }
-            )
-            return
+
+            if await self.is_user_playing(self.user):
+                logger.info("User is already playing another game")
+                return
+            else:
+                logger.info("User joining challenge --- - - -- -- - - -")
+                await self.channel_layer.group_send(
+                    self.room_group_name, {
+                        "type": "challenge",
+                        "message": message,
+                        "username": username,
+                    }
+                )
+                return
+        
         usersList = await self.get_online_users() 
 
         # Send message to room group

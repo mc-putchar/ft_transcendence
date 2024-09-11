@@ -81,6 +81,12 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             "type": "connection",
             "message": f"Joined channel: {self.challenger}",
         }))
+
+        # avoid dueling while in game
+        profile = await get_profile(self.username)
+        profile.currently_playing = True
+        await sync_to_async(profile.save)()
+
         self.game_task = asyncio.create_task(self.game_update_loop())
 
     def cancel_tasks(self):
@@ -101,6 +107,11 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 await sync_to_async(game_manager.clear_game_state)(self.game_id)
         elif self.channel_name in self.spectators:
             self.spectators.remove(self.channel_name)
+        
+
+        profile = await get_profile(self.username)
+        profile.currently_playing = False
+        await sync_to_async(profile.save)()
 
         await self.channel_layer.group_discard(
             self.match_group_name,
