@@ -132,12 +132,13 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 def show_help():
-    console.print('\n-----\nHELP - AVAILABLE COMMANDS  \n--------------------------------------', style='bold')
+    console.print('\n------------------------\nHELP - AVAILABLE COMMANDS  \n--------------------------------------', style='bold')
     console.print('Commands:', style='green')
+    console.print('----------------------------------------------', style='bold')
     console.print('/duel <username> - Challenge a user to a game.', style='bold')
     console.print('/pm <username> <message> - Send a private message.', style='bold')
     console.print('/help - Show this help message.', style='bold')
-    console.print('exit or Ctrl + C to exit the app.', style='bold')
+    console.print('\nexit or Ctrl + C to exit the app.', style='bold')
     console.print('--------------------------------------\n', style='bold')
     console.print('Game Controls:', style='green')
     console.print('w - Move up', style='green')
@@ -180,6 +181,10 @@ class Game:
 
     async def close_socket(self):
         await asyncio.sleep(8)
+
+        if os.system("ps aux | grep './pong_cli' | grep -v grep &> /dev/null") == 0:
+            os.system("pkill -f './pong_cli' > /dev/null 2>&1")
+
         if self.websocket:
             console.print('Closing game socket due to inactivity', style='red')
             await self.websocket.close()
@@ -190,7 +195,6 @@ class Game:
         
         async for data in self.websocket:
             try:
-                self.last_activity.cancel()
                 data_json = json.loads(data)
                 msg_type = data_json.get('type')
 
@@ -200,7 +204,10 @@ class Game:
                         f'[bold cyan]{username}[/bold cyan] connected.')
 
                 elif msg_type == 'game_state':
+                    
                     self.game_state = data_json.get('game_state')
+                    self.last_activity.cancel()
+
                     if self.game_state['status'] == "finished" or self.game_state['status'] == "forfeited":
                         console.print(f"SCORE:\nPLAYER 1:\t{self.game_state['score']['p1']} \nPLAYER 2:\t{self.game_state['score']['p2']}", style='green')
                         console.print('Game Over', style='green')
@@ -283,11 +290,7 @@ class Game:
         while True and self.websocket:
             await self.websocket.send(json.dumps({
                 'type': 'ready',
-                'player': 'player2',
-            }))
-            await self.websocket.send(json.dumps({
-                'type': 'ready',
-                'player': 'player1',
+                'player': self.game_index,
             }))
             await asyncio.sleep(2)
 
@@ -370,9 +373,13 @@ class Game:
         except OSError as e:
             if e.errno == errno.EPIPE:
                 console.print('Client pipe exited', style='green')
-                # if (self.websocket):
-                    # await self.websocket.close()
-                # return
+
+            if os.system("ps aux | grep './pong_cli' | grep -v grep &> /dev/null ") == 0:
+                os.system("pkill -f './pong_cli' > /dev/null 2>&1")
+
+            if (self.websocket):
+                await self.websocket.close()
+                return
 
         except Exception as e:
             console.print(f'update_client: {e}', style='green')
@@ -559,16 +566,14 @@ if __name__ == '__main__':
         if not os.path.exists(fifo):
             try:
                 os.mkfifo(fifo, 0o666)
-                # console.print(f'Created FIFO: {fifo}', style='green')
             except OSError as e:
                 console.print(f'Failed to create FIFO {fifo}: {e}', style='red')
 
-    # console.print('Welcome to transcendCLI!', style='bold green')
 
     banner = """\n\n
         __       __       __                                 __
         | |     / /___   / /_____ ____   ____ ___   ___     / /_ ____                                              
-        | | /| / // _ \ / // ___// __ \ / __ `__ \ / _ \   / __// __ \                                             
+        | | /| / // _ \ / // ___// __ \ / __ `__ \ / _ \   / __// __ \                                        
         | |/ |/ //  __// // /__ / /_/ // / / / / //  __/  / /_ / /_/ /                                             
         |__/|__/ \___//_/ \___/ \____//_/ /_/ /_/ \___/   \__/ \____/                                              
 
@@ -589,9 +594,8 @@ if __name__ == '__main__':
     console.print(banner, style='bold green')
     console.print('Please log in to continue.\n', style='bold green')
     console.print('--------------------------------------', style='blue')
-    console.print('Type /help for a list of commands.', style='bold green')
-    console.print('You need to have an account registered via the web interface', style='green')
+    console.print('Type /help for a list of commands.', style='yellow')
+    console.print('You need to have an account registered via the web interface', style='bold green')
     login()
 
 # End of transcendCLI.py
-
