@@ -5,6 +5,7 @@ import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
+import { createModal } from './utils.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
@@ -26,7 +27,7 @@ class Router {
 		window.addEventListener('hashchange', (e) => this.route(e));
 
 		// PERFORMANCE MONITOR
-		(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
+		// (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
 		this.init();
 	}
@@ -35,12 +36,24 @@ class Router {
 		this.oldHash = window.location.hash;
 
 		// Register listeners for custom events
-		this.chatElement.addEventListener('challenge', (event) => {
-			if (this.game.setupGameWebSocket(event.detail.gameID)) {
+		this.chatElement.addEventListener('challenger', (event) => {
+			if (!this.game.gameSocket && this.game.setupGameWebSocket(event.detail.gameID)) {
 				const sound = new Audio(CHALLENGE_SOUND);
 				sound.volume = 0.5;
 				sound.play();
 			}
+		});
+		this.chatElement.addEventListener('challenged', (event) => {
+			if (this.game.gameSocket)	return;
+			const modalData = { message: `Challenged by ${event.detail.username}` };
+			const fields = [{ key: "message", label: "Message" }];
+			const custom = `
+				<div class="row">
+					<button onclick="location.hash='/game/accept/${event.detail.username}'" class="btn btn-success" data-bs-dismiss="modal">Accept</button>
+					<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-bs-dismiss="modal">Decline</button>
+				</div>`;
+			const closeCallback = () => { location.hash = '/game/decline/' };
+			createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
 		});
 		this.chatElement.addEventListener('notification', (event) => {
 			showNotification(
@@ -60,7 +73,7 @@ class Router {
 			// this.route();
 		});
 		this.appElement.addEventListener('game', (event) => {
-			this.game.startTournamentGame(event.detail);
+			setTimeout(() => this.game.startTournamentGame(event.detail), 1000);
 		});
 		this.appElement.addEventListener('announcement', (event) => {
 			this.chat.sendAnnouncement(event.detail);
@@ -98,13 +111,14 @@ class Router {
 			this.loadProfileTemplate(template);
 		} else if (template.startsWith('tournaments/')) {
 			const next = await this.tournament.route(template);
-			setTimeout(() => window.location.hash = next ?? this.oldHash, 100);
+			if (next)
+				setTimeout(() => window.location.hash = next, 10);
 		} else if (template.startsWith('chat')) {
 			const roomName = template.substring(5) || 'lobby';
 			this.loadChat(roomName);
 			setTimeout(() => window.location.hash = this.oldHash, 100);
 		} else if (template.startsWith('game/')) {
-			history.back();
+			// history.back();
 			if (template.startsWith('game/accept/')) {
 				const gameID = template.substring(12);
 				this.game.acceptChallenge(gameID);
@@ -121,7 +135,6 @@ class Router {
 		} else if (template.startsWith('pong-')) {
 			if (template === 'pong-classic') {
 				const p1Name = document.getElementById('player1-name')?.value;
-				// await this.loadTemplate(template);
 				if (!p1Name) {
 					this.notifyError("Player 1 name is required");
 					history.back();
@@ -129,6 +142,7 @@ class Router {
 				}
 				const p1 = this.game.makePlayer('right', p1Name);
 				const p2Name = document.getElementById('player2-name')?.value;
+				await this.loadTemplate(template);
 				if (p2Name) {
 					const p2 = this.game.makePlayer('left', p2Name);
 					this.game.startClassicGame(p1, p2);
@@ -136,9 +150,9 @@ class Router {
 					this.game.startClassicGame(p1);
 				}
 			} else
-				this.loadTemplate(template);
+				await this.loadTemplate(template);
 		} else {
-			this.loadTemplate(template);
+			await this.loadTemplate(template);
 		}
 		this.oldHash = window.location.hash;
 	}
@@ -385,9 +399,6 @@ class Router {
 			case 'profile':
 				this.handleProfilePage();
 				break;
-			case 'game':
-				// this.game.setupGameWebSocket();
-				break;
 			case 'tournaments':
 				this.handleTournamentPage();
 				break;
@@ -538,7 +549,7 @@ class Router {
 					throw new Error("Failed to change password");
 				}
 			} catch (error) {
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
 		document.getElementById('anonymize-data').addEventListener('click', (e) => {
@@ -573,7 +584,7 @@ class Router {
 					throw new Error("Failed to update profile");
 				}
 			} catch (error) {
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
 	}
@@ -657,11 +668,10 @@ class Router {
 	}
 };
 
-// document.addEventListener('DOMContentLoaded', () => {
-// });
-
-const navElement = document.getElementById('nav');
-const appElement = document.getElementById('app');
-const chatElement = document.getElementById('chat');
-
-new Router(navElement, appElement, chatElement);
+document.addEventListener('DOMContentLoaded', () => {
+	const navElement = document.getElementById('nav');
+	const appElement = document.getElementById('app');
+	const chatElement = document.getElementById('chat');
+	
+	new Router(navElement, appElement, chatElement);
+});

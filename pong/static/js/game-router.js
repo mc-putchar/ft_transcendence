@@ -95,34 +95,35 @@ class GameRouter {
 			console.error("No type in message", data);
 			return;
 		}
+		const message = data.message ?? "";
 		switch (data.type) {
 			case 'error':
-				console.error("Error message", data.message);
+				console.error("Error message", message);
 				break;
 			case 'connection':
-				console.log("Connection message", data.message);
+				console.log("Connection message", message);
 				break;
 			case 'registration':
-				console.log("Registration message", data.message);
+				console.log("Registration message", message);
 				break;
 			case 'spectate':
-				console.log("Spectator joined", data.message);
+				console.log("Spectator joined", message);
 				break;
 			case 'game_state':
 				this.gameData.update(data.game_state);
 				break;
 			case 'decline':
-				console.log("Game declined", data.message);
+				console.log("Game declined", message);
 				this.gameSocket.close();
 				break;
 			case 'accept':
-				console.log("Game accepted", data.message);
+				console.log("Game accepted", message);
 				const username = document.getElementById("chat-username").innerText.trim();
 				let opponent = this.gameID;
 				const isChallenger = (username === opponent);
 				if (isChallenger)
-					opponent = data.message.split(' ')[2];
-				const gameID = data.message.split(' ')[1];
+					opponent = message.split(' ')[2];
+				const gameID = message.split(' ')[1];
 				const result = await this.joinGame(gameID);
 				if (!result) {
 					console.error("Error! Game cancelled.");
@@ -138,7 +139,7 @@ class GameRouter {
 				break;
 			default:
 				if (data.hasOwnProperty('message')) {
-					console.log("Message", data.message);
+					console.log("Message", message);
 				} else {
 					console.log("Unknown message", data);
 				}
@@ -210,12 +211,13 @@ class GameRouter {
 			console.error("Error fetching player profiles");
 			return;
 		}
-		// console.log("Player profiles", playerProfile, opponentProfile);
+		const controls = playerProfile.client_3d ? { up: "ArrowLeft", down: "ArrowRight" } : { up: "ArrowUp", down: "ArrowDown" };
+		const revControls = { up: controls.down, down: controls.up };
 		const player = new Player(
 			data.isChallenger ? "left" : "right",
 			playerProfile.user.username,
 			playerProfile.alias,
-			{ up: "ArrowLeft", down: "ArrowRight" },
+			data.isChallenger ? controls : revControls,
 			playerProfile.image.replace("http://", "https://")
 		);
 		const opponent = new Player(
@@ -235,7 +237,6 @@ class GameRouter {
 		);
 		console.log("Starting online game", gameSetup);
 		this.gameData = new GameData();
-		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
 		if (playerProfile.client_3d)
 			this.client = new Client3DGame(gameSetup, this.gameSocket, this.gameData, data.gameID);
 		else
@@ -244,12 +245,13 @@ class GameRouter {
 	}
 
 	async startTournamentGame (data) {
-		this.setupGameWebSocket(`${data.tournamentID}#${data.gameID}#${data.player}`); // TODO: reflect backend changes
+		const challenger = data.isChallenger ? data.player : data.opponent;
+		this.setupGameWebSocket(`${data.tournamentID}-${data.gameID}-${challenger}`);
 		if (await this.joinGame(data.gameID) == null) {
 			console.error("Error joining game");
 			return;
 		}
-		// initGame(this.gameData, this.gameSocket, data.gameID, data.player, data.opponent, data.isChallenger);
+		await this.startOnlineGame(data);
 	}
 
 	startClassicGame (player1, player2=null) {
@@ -258,7 +260,7 @@ class GameRouter {
 			player1,
 			player2 ?? this.makeAIPlayer("left"),
 			true,
-			(player2 === null)? "single" : "classic",
+			player2 ? "classic" : "single",
 			"2d"
 		);
 		this.client = new ClientClassic(gameSetup);
@@ -271,7 +273,7 @@ class GameRouter {
 			player1,
 			player2 ?? this.makeAIPlayer("right"),
 			true,
-			(player2 === null)? "single" : "classic",
+			player2 ? "classic" : "single",
 			"3d"
 		);
 		if (!player2) {
@@ -311,6 +313,8 @@ class GameRouter {
 	stopGame () {
 		this.client?.stop();
 		this.client = null;
+		this.gameSocket?.close();
+		this.gameSocket = null;
 	}
 };
 

@@ -589,7 +589,8 @@ class Client3DGame {
 		this.parent = gameSetup.parentElement;
 		this.gameSocket = gameSocket;
 		this.isOnline = gameSocket !== null;
-		this.hasAI = gameSetup.mode === "single";
+		this.mode = gameSetup.mode;
+		this.hasAI = this.mode === "single";
 		this.gameData = this.isOnline ? gameData : new GameData();
 		this.gameID = gameID;
 		const nav = document.getElementById('nav');
@@ -724,14 +725,17 @@ class Client3DGame {
 		this.playerTwo.paddle = new Paddle(paddle_geo, paddle_mat, avatar2_texture);
 		this.playerTwo.paddle.place(this.playerTwo.side, this.scene);
 
-		if (this.isOnline) {
-			this.myPlayer = this.isChallenger ? "player1" : "player2";
-			this.sendRegisterPlayer();
-			setTimeout(() => this.intro(), 1000);
-		}
-		if (this.hasAI) {
-			this.ai = new proAI(this.playerTwo.paddle);
-			setTimeout(() => this.intro(), 1000);
+		if (this.mode === "spectate") {
+		} else {
+			if (this.isOnline) {
+				this.myPlayer = this.isChallenger ? "player1" : "player2";
+				this.sendRegisterPlayer();
+				setTimeout(() => this.intro(), 1000);
+			}
+			if (this.hasAI) {
+				this.ai = new proAI(this.playerTwo.paddle);
+				setTimeout(() => this.intro(), 1000);
+			}
 		}
 		this.showScore();
 
@@ -878,6 +882,13 @@ class Client3DGame {
 		}
 	}
 
+	sendRegisterSpectator() {
+		this.gameSocket?.send(JSON.stringify({
+			type: 'spectate',
+			match_id: this.gameID,
+		}));
+	}
+
 	sendRegisterPlayer() {
 		this.gameSocket?.send(JSON.stringify({
 			type: 'register',
@@ -1015,6 +1026,7 @@ class Client3DGame {
 		}
 		this.cam_controls.autoRotateSpeed = 6;
 		console.log("Game Over", this.playerOne.alias, this.playerOne.paddle.score, this.playerTwo.alias, this.playerTwo.paddle.score);
+		this.gtfo = this.gtfo ?? setTimeout(() => history.back(), 30000);
 	}
 
 	loop() {
@@ -1201,10 +1213,12 @@ class Client3DGame {
 	}
 
 	showScore() {
+		const left = this.isChallenger ? this.playerOne : this.playerTwo;
+		const right = this.isChallenger ? this.playerTwo : this.playerOne;
 		this.scene.remove(this.score);
 		this.fontLoader.load(SCORE_FONT, font => {
 			const textGeo = new TextGeometry(
-				this.playerOne.paddle.score + ' : ' + this.playerTwo.paddle.score, {
+				left.paddle.score + ' : ' + right.paddle.score, {
 				font: font,
 				size: 80,
 				height: 10,
@@ -1292,8 +1306,12 @@ class Client3DGame {
 		window.removeEventListener("fullscreenchange", (e) => this.resize(e));
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
+		while (this.parent.firstChild) {
+			this.parent.removeChild(this.parent.lastChild);
+		}
 		this.audio.stopAudioTrack();
 		this.gameSocket?.close();
+		this.gtfo && clearTimeout(this.gtfo);
 	}
 };
 
