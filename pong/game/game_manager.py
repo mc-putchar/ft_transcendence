@@ -145,8 +145,8 @@ class GameManager:
         direction['dy'] /= magnitude
 
     def score_update(self, game_state):
-        logger.info(
-            f"Goal at x:{game_state['ball']['x']} y:{game_state['ball']['y']}")
+        # logger.info(
+            # f"Goal at x:{game_state['ball']['x']} y:{game_state['ball']['y']}")
         game_state['ball'] = {'x': 0, 'y': 0,
                               'dx': 0, 'dy': 0, 'v': self.ball_speed}
         game_state['player1']['ready'] = False
@@ -177,7 +177,7 @@ class GameManager:
         elif player == 'player2':
             game_state['player2']['ready'] = True
         if game_state['player1']['ready'] and game_state['player2']['ready'] and game_state['status'] != 'running':
-            logger.info("Both players ready")
+            # logger.info("Both players ready")
             game_state['ball'] = {'x': 0, 'y': 0, 'dx': 1 if self.flip else -
                                   1, 'dy': 1 if self.prev_score else -1, 'v': self.ball_speed}
             game_state['status'] = 'running'
