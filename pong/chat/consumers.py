@@ -142,8 +142,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     async def challenge(self, event):
-        if await self.is_user_playing(self.user):
-            logger.info("\nUser is already playing another game\n------\n")
+        if await self.is_user_playing(event["username"]):
+            logger.info(f"\nUser   {event["username"]}is already playing another game\n------\n")
             return
         else: 
             await self.send(text_data=json.dumps({
