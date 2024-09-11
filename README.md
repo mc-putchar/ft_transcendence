@@ -36,6 +36,10 @@ Inspired by the classic Pong game of the 70s, infused with modern features and t
 	```
 
 # _Features_:
+
+![Architecture](pong/static/img/napkin-design.png)
+> Tip: `make swapmode` to switch between localhost and domain deployment
+
 ## _Live Chat_
   - Chat with other online users in real time
   - Send private messages to other users with `/pm <username> <message>`
