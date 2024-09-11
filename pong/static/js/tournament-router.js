@@ -42,29 +42,25 @@ class TournamentRouter {
 	}
 
 	async route(event) {
+		const tournamentID = event.split('/')[1];
 		if (event.endsWith('join/')) {
-			this.tournamentID = event.split('/')[1];
-			if (this.tournamentID && await this.joinTournament(this.tournamentID)) {
-				history.back();
-				return `/in-tournament/${this.tournamentID}`;
-			}
+			if (!await this.joinTournament(tournamentID))	return "/tournaments";
 		} else if (event.endsWith('leave/')) {
-			this.tournamentID = event.split('/')[1];
-			this.leaveTournament(this.tournamentID);
+			this.leaveTournament(tournamentID);
+			return "/tournaments";
 		} else if (event.endsWith('start_tournament/')) {
-			this.tournamentID = event.split('/')[1];
-			this.startTournament(this.tournamentID);
+			setTimeout(() => this.startTournament(tournamentID), 3000);
 		} else if (event.endsWith('delete_tournament/')) {
-			this.tournamentID = event.split('/')[1];
-			this.deleteTournament(this.tournamentID);
+			this.deleteTournament(tournamentID);
+			return "/tournaments";
 		} else if (event.endsWith('next_round/')) {
-			// this.tournamentID = event.split('/')[1];
-			this.nextRound(this.tournamentID);
+			setTimeout(() => this.nextRound(tournamentID), 3000);
 		} else {
 			console.debug("Unknown tournament route:", event);
+			return "/tournaments";
 		}
-		history.back();
-		return "/tournaments";
+		// history.back();
+		return `/in-tournament/${tournamentID}`;
 	}
 
 	parseMessage(event) {

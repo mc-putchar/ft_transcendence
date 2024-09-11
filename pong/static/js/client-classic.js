@@ -508,6 +508,8 @@ class ClientClassic {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		if (!this.gameover) {
 			this.isOnline ? this.syncData() : this.update();
+		} else {
+			this.gtfo = this.gtfo ?? setTimeout(() => history.back(), 30000);
 		}
 		this.draw();
 		this.animationID = window.requestAnimationFrame(this.loop.bind(this));
@@ -624,7 +626,9 @@ class ClientClassic {
 		|| this.score.score.right != this.gameData.score.p2) {
 			this.score.score.left = this.gameData.score.p1;
 			this.score.score.right = this.gameData.score.p2;
-			setTimeout(() => this.sendReady(), 1000);
+			if (!this.gameover) {
+				setTimeout(() => this.sendReady(), 1000);
+			}
 		}
 		if (this.gameData.status == "finished" || this.gameData.status == "forfeited") {
 			this.gameover = true;
@@ -632,8 +636,10 @@ class ClientClassic {
 			return;
 		}
 		const ratio = (this.arena.height + this.arena.width) / (ARENA_HEIGHT * 2 + ARENA_WIDTH * 2);
-		[ , this.player1.y] = this.transposePosition(-this.gameData.player1.x * ratio, 0);
-		[ , this.player2.y] = this.transposePosition(-this.gameData.player2.x * ratio, 0);
+		const left = this.isChallenger ? this.player1 : this.player2;
+		const right = this.isChallenger ? this.player2 : this.player1;
+		[ , left.y] = this.transposePosition(-this.gameData.player1.x * ratio, 0);
+		[ , right.y] = this.transposePosition(-this.gameData.player2.x * ratio, 0);
 		[this.ball.x, this.ball.y] = this.transposePosition(-this.gameData.ball.x * ratio, this.gameData.ball.y * ratio);
 		this.ball.vx = this.gameData.ball.dx;
 		this.ball.vy = this.gameData.ball.dy;
@@ -642,7 +648,7 @@ class ClientClassic {
 	draw () {
 		this.arena.draw(this.context);
 		if (this.gameover) {
-			const [left, right] = [this.opponent, this.player];
+			const [left, right] = this.isChallenger ? [this.player1, this.player2] : [this.player2, this.player1];
 			this.score.drawEndGame(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY, left.alias, right.alias);
 		} else {
 			this.score.draw(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY);
@@ -677,6 +683,8 @@ class ClientClassic {
 		}
 		console.log("Pong Classic - client stopped");
 		this.audio.stopAudioTrack();
+		this.gameSocket?.close();
+		this.gtfo && clearTimeout(this.gtfo);
 	}
 }
 

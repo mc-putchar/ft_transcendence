@@ -210,21 +210,12 @@ class ChatRouter {
 		if (this.users.includes(challengedUser)) {
 			if (data.username === this.username) {
 				this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
-				this.chatElement.dispatchEvent(new CustomEvent('challenge', { detail: { gameID: data.username } }));
+				this.chatElement.dispatchEvent(new CustomEvent('challenger', { detail: { gameID: data.username } }));
 			} else if (challengedUser !== this.username) {
 				this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
 			} else {
 				this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel', 'Announcer');
-				const modalData = { message: `Challenged by ${data.username}` };
-				const fields = [{ key: "message", label: "Message" }];
-				const custom = `
-					<div class="row">
-						<button onclick="location.hash='/game/accept/${data.username}'" class="btn btn-success" data-bs-dismiss="modal">Accept</button>
-						<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-bs-dismiss="modal">Decline</button>
-					</div>`;
-				const closeCallback = () => { location.hash = '/game/decline/' };
-
-				createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
+				this.chatElement.dispatchEvent(new CustomEvent('challenged', { detail: { username: data.username } }));
 			}
 		}
 	}
