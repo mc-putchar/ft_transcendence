@@ -770,6 +770,8 @@ class Online4P {
         button.addEventListener('click', () => {
 			console.log("CLICKED");
 			if(button.textContent == 'Click Me') {
+				let music = new Audio('/static/music.mp3');
+				music.play();
 				console.log("SENDING");
 				this.ws?.send(JSON.stringify({
 					"type": "is_ready",
