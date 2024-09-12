@@ -284,8 +284,8 @@ class GameRouter {
 	}
 
 	start4PGame () {
-		this.client = new Game4P(this.appElement);
-		this.client.start();
+			this.client = new Game4P(this.appElement);
+			this.client.start();
 	}
 
 	makePlayer (side, name, alias=null, img=null) {

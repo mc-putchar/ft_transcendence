@@ -578,7 +578,9 @@ class Game4P {
 		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
 	}
 	start() {
-		this.loop();
+		setTimeout(() => {
+			this.loop();
+		}, 50);
 	}
 	
 	stop () {
