@@ -52,6 +52,8 @@ class GameRouter4P {
 				"type":'get_used_paddles'}));
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_active_connections'}));
+			this.chat_websocket.send(JSON.stringify({
+					"type":'get_ball'}));
 		});
 
 		this.chat_websocket.onmessage = (event) => {
@@ -59,19 +61,23 @@ class GameRouter4P {
 			const data = JSON.parse(event.data);
 			const type = data.type;
 
+			if (type == "launch_game") {
+				this.launch_game();
+			}
 			if(type == "player_direction") {
 				this.initDirection(data);
 			}
 			else if(type == "paddle_collision") {
 				this.initCollision(data);
 			}
-
+			else if(type == "ball") {
+				this.initBall(data);
+			}
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
 				console.log("!!!!!!!!this.active_connect", this.active_connect);
 				if (this.active_connect == 4) {
-					// this.setBallVector()
-					this.launchGame();
+					this.launchReady();
 				}
 				return;
 			}
@@ -90,6 +96,12 @@ class GameRouter4P {
 				return;
 			}
 		};
+	}
+	initBall(data) {
+		this.gameData.ball.vx = data.vx;
+		this.gameData.ball.vy = data.vy;
+		this.gameData.ball.speedx = data.speedx;
+		this.gameData.ball.speedy = data.speedy;
 	}
 	initDirection(data) {
 		console.log("MOVE: ", data.side);
@@ -129,18 +141,15 @@ class GameRouter4P {
 			};
 		});
 	}
-
-	launchGame() {
-		this.player = new Player(this.used_paddles, this.my_paddle); // Initialize player if connections are okay
-		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
-		
-		let audio = new Audio('music.mp3'); // Assuming the music.mp3 is in the same directory
-		audio.loop = true; // Optional: loop the music
-		audio.play().catch(function(error) {
-			console.log('Audio playback failed:', error); // Handle potential errors
-		});
-		
+	launch_game() {
 		this.game.start();
+	}
+
+	launchReady() {
+		this.player = new Player(this.used_paddles, this.my_paddle);
+		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
+
+		this.game.getReady();
 	}
 }
 

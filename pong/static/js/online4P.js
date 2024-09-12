@@ -1,13 +1,5 @@
 // import { AudioController } from './audio.js';
 
-let audio = new Audio('./music.mp3'); // Path to your MP3 file
-audio.loop = true; // Enable looping
-audio.play().catch(function(error) {
-    console.log('Audio playback failed:', error); // Handle any potential errors
-});
-
-const ACTIVE_AI = false;
-
 let animationID = null;
 
 const CANVAS_PADDING = 10;
@@ -363,6 +355,24 @@ class Online4P {
 		ret_y = ret_y / this.arena._height * 100;
 		return ret_y;
 	}
+	denormSpeedX(preX) {
+		let ret_x = preX / 100 * this.arena._width;
+		return ret_x;
+	}
+	denormSpeedY(preY) {
+		let ret_y = preY / 100 * this.arena._height;
+		return ret_y;
+	}
+	normalizedSpeedX(preX) {
+		let ret_x = preX;
+		ret_x = ret_x / this.arena._width * 100;
+		return ret_x;
+	}
+	normalizedSpeedY(preY) {
+		let ret_y = preY;
+		ret_y = ret_y / this.arena._height * 100;
+		return ret_y;
+	}
 	sendPaddleCollision() {
 		console.log("sending ball_x: ", this.normalizedPosX(this.ball.x));
 		console.log("sending ball_y: ", this.normalizedPosX(this.ball.y));
@@ -525,7 +535,7 @@ class Online4P {
 			}
 		} // LEFT PADDLE
 		if(this.player.side == "right" && this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
-			if(!(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {				
+			if(!(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {			
 				if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
 					&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
 						let refAngle = (this.ball.y - this.playerRight.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
@@ -543,9 +553,9 @@ class Online4P {
 			if (!(this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width))) {
 				if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
 					this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
-					
+
 					let refAngle = (this.ball.x - this.playerTop.x) / (this.playerTop.len / 2) * (Math.PI / 4);
-					
+
 					this.ball.vx = Math.sin(refAngle);
 					this.ball.vy = Math.cos(refAngle);
 					
@@ -562,7 +572,7 @@ class Online4P {
 					this.ball.x - this.ball.radius <= this.playerBottom.x + this.playerBottom.len / 2) {
 					
 					let refAngle = (this.ball.x - this.playerBottom.x) / (this.playerBottom.len / 2) * (Math.PI / 4);
-	
+
 					this.ball.vx = Math.sin(refAngle);
 					this.ball.vy = -Math.cos(refAngle);
 	
@@ -597,7 +607,6 @@ class Online4P {
 			this.score.conceded += "bottom";
 			// window.playFx("/static/assets/arcade-alert.wav");
 		}
-
 	}
 	resetPositions () {
 		this.ball.initBall(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -626,9 +635,17 @@ class Online4P {
 			this.ball.vx = this.gameData.ball.vx;
 		if(!isNaN(this.gameData.ball.vy))
 			this.ball.vy = this.gameData.ball.vy;
+		if(!isNaN(this.gameData.ball.speedx))
+			this.ball.speedx = this.denormSpeedX(this.gameData.ball.speedx);
+		if(!isNaN(this.gameData.ball.speedy))
+			this.ball.speedy = this.denormSpeedY(this.gameData.ball.speedy);
 		console.log("POST BALL FETCH: ");
 		console.log("ball.x: ", this.ball.x);
 		console.log("ball.y: ", this.ball.y);
+		console.log("ball.vx: ", this.ball.vx);
+		console.log("ball.vy: ", this.ball.vy);
+		console.log("ball.speedx: ", this.ball.speedx);
+		console.log("ball.speedy: ", this.ball.speedy);
 	}
 	fetchAndUpdateFromGameData() {
 
@@ -731,8 +748,41 @@ class Online4P {
 		this.playerBottom.drawPaddle(this.context);
 		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
 	}
+	getReady() {
+		console.log("GET READY");
+		const button = document.createElement('button');
+		button.textContent = 'Click Me';
+		
+		// Style the button to ensure it's visible
+		button.style.position = 'absolute';
+		button.style.top = '50%';
+		button.style.left = '45%';
+		button.style.transform = 'translate(-50%, -50%)';
+		button.style.zIndex = '10';
+		button.style.padding = '10px 20px';
+		button.style.fontSize = '16px';
+		button.style.cursor = 'pointer';
+		
+		// Add button to the parent (same as canvas)
+		this.parent.appendChild(button);
+		
+        // Add click event to the button
+        button.addEventListener('click', () => {
+			console.log("CLICKED");
+			if(button.textContent == 'Click Me') {
+				console.log("SENDING");
+				this.ws?.send(JSON.stringify({
+					"type": "is_ready",
+					"side": this.player.side
+				}))
+			}
+			button.textContent = "READY!";
+        });
+	}
 	start() {
-		this.loop();
+		setTimeout(() => {
+			this.loop();
+		}, 50);
 	}
 	stopGame () {
 		console.log("pong stopped and exited");
