@@ -8,7 +8,7 @@ import asyncio
 LOGIN_ROUTE = '/api/login/'
 
 CLI_W = 150
-CLI_H = 64
+CLI_H = 42
 
 fifo_in = "/tmp/pong_in"
 fifo_out = "/tmp/pong_out"
