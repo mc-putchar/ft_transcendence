@@ -648,7 +648,7 @@ class ClientClassic {
 	draw () {
 		this.arena.draw(this.context);
 		if (this.gameover) {
-			const [left, right] = this.isChallenger ? [this.player1, this.player2] : [this.player2, this.player1];
+			const [left, right] = this.isChallenger ? [this.player, this.opponent] : [this.opponent, this.player];
 			this.score.drawEndGame(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY, left.alias, right.alias);
 		} else {
 			this.score.draw(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY);
