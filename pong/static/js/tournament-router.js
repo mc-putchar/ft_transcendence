@@ -37,6 +37,7 @@ class TournamentRouter {
 		this.tournamentSocket.addEventListener('close', (e) => {
 			if (!e.wasClean) console.error("Tournament socket closed unexpectedly:", e);
 			else console.log("Tournament socket closed:", e);
+			this.tournamentSocket = null;
 		});
 		this.tournamentSocket.addEventListener('message', (event) => this.parseMessage(event));
 	}

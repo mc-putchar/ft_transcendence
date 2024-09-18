@@ -140,11 +140,11 @@ class Router {
 					history.back();
 					return;
 				}
-				const p1 = this.game.makePlayer('right', p1Name);
+				const p1 = this.game.makePlayer('left', p1Name);
 				const p2Name = document.getElementById('player2-name')?.value;
-				await this.loadTemplate(template);
+				// await this.loadTemplate(template);
 				if (p2Name) {
-					const p2 = this.game.makePlayer('left', p2Name);
+					const p2 = this.game.makePlayer('right', p2Name);
 					this.game.startClassicGame(p1, p2);
 				} else {
 					this.game.startClassicGame(p1);
@@ -155,6 +155,32 @@ class Router {
 			await this.loadTemplate(template);
 		}
 		this.oldHash = window.location.hash;
+	}
+
+	getGameTemplate(template) {
+		const p1Name = document.getElementById('player1-name')?.value;
+		if (!p1Name) {
+			this.notifyError("Player 1 name is required");
+			return 'play';
+		}
+		const p1 = this.game.makePlayer('left', p1Name);
+		const p2Name = document.getElementById('player2-name')?.value;
+		if (p2Name) {
+			const p2 = this.game.makePlayer('right', p2Name);
+			this.game.startClassicGame(p1, p2);
+		} else {
+			this.game.startClassicGame(p1);
+			switch (template) {
+				case 'pong-classic':
+					return 'pong-classic';
+				case 'pong-3d':
+					return 'pong-3d';
+				case 'pong-4p':
+					return 'pong-4p';
+				default:
+					return 'home';
+			}
+		}
 	}
 
 	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
