@@ -5,6 +5,11 @@ import json
 import random
 
 BALL_START_SPEED = 2 / 12
+BALL_INCR_SPEED = 1 / 64
+GOAL_LINE = 10
+PADDLE_SPEED = 5
+PADDLE_LEN = 42
+PADDLE_WIDTH = 6
 
 class Ball:
 	def __init__(self):
@@ -23,21 +28,50 @@ class Ball:
 			self.vy = -1
 
 		rand = random.random()
-		if rand < 0.5:
+		if rand <= 0.5:
 			self.speedx = BALL_START_SPEED / 300 * 100
 			self.speedy = BALL_START_SPEED / 200 * 100
 		else:
 			self.speedx = BALL_START_SPEED / 200 * 100
 			self.speedy = BALL_START_SPEED / 300 * 100
 
+class Field:
+	def __init__(self):
+		goalLine = GOAL_LINE / 200 * 100
+
+		paddle = {"left": {"x": goalLine, "y": 50}, "right": {"x": 100 - goalLine, "y": 50},
+			"top": {"x": 50, "y": goalLine}, "bottom": {"x": 50, "y": 100 - goalLine}}
+
+class Score:
+	def __init__(self):
+		left = 0
+		right = 0
+		top = 0
+		bottom = 0
+		conceded = "none"
+		last_touch = "none"
+
+class Data:
+	def __init__(self):
+		ball = Ball()
+		field = Field()
+		score = Score()
+		animation_time = {"first": 0, "second": 0, "third": 0}
+	
+	def update():
+		check_goal()
+		check_collisions()
+		move()
 
 
 class handle4PGame(WebsocketConsumer):
+
 	active_connections = 0
 	used_paddles = []
 	is_ready = 0
-	ball = Ball()
 	group_name = 'game_group'
+
+	data = Data()
 
 	def connect(self):
 		self.accept()
@@ -110,9 +144,6 @@ class handle4PGame(WebsocketConsumer):
 					})
 				}
 			)
-		# elif type == "get_game_update":
-		# when player was inactive and becomes active again, he fetches update from other players
-		# set timer so that inactive players do not update the game when they come back
 
 	def game_message(self, event):
 		message = event['message']

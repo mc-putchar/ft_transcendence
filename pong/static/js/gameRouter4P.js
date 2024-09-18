@@ -34,7 +34,7 @@ class GameData {
 		this.right = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.top = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.bottom = { dir: NaN, pos: { x: NaN, y: NaN } };
-		this.update = true;
+		this.animation_time = {first: 0, second: 0, third: 0}
 	}
 }
 
@@ -43,8 +43,6 @@ class GameRouter4P {
 		const url = 'ws://127.0.0.1:8000/websocket/helauren'; // add username to the tail of this
 		this.gameData = new GameData();
 		this.chat_websocket = new WebSocket(url);
-		this.worker = new Worker('/static/js/Worker.js');
-		console.log("this worker: ", this.worker);
 		this.active_connect;
 		this.used_paddles;
 		this.my_paddle;
@@ -149,19 +147,6 @@ class GameRouter4P {
 				resolve();
 			};
 		});
-	}
-	visibilityChange() {
-		console.log("change");
-		if(this.started == false)
-			return;
-		if(document.hidden) {
-			this.game.pause();
-			this.worker.postMessage({hidden: true, game: this.gameData});
-		}
-		else {
-			this.worker.postMessage({hidden: false, game: this.gameData});
-			this.game.start();
-		}
 	}
 	launch_game() {
 		console.log("LAUNCH_GAME");

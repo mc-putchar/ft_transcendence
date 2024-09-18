@@ -516,7 +516,8 @@ class Online4P {
 		}
 		else {
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			this.update();
+			this.fetchAndUpdateFromGameData();
+			// this.update();
 			if(this.score.goal == false) {
 				this.draw();
 			}
@@ -622,14 +623,6 @@ class Online4P {
 		this.playerTop.init (this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerBottom.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 	}
-	resetGameData() {
-		this.gameData.ball = {x: NaN, y: NaN, vx : NaN, vy: NaN};
-		this.gameData.left = { dir: NaN, pos: { x: NaN, y: NaN } };
-		this.gameData.right = { dir: NaN, pos: { x: NaN, y: NaN } };
-		this.gameData.top = { dir: NaN, pos: { x: NaN, y: NaN } };
-		this.gameData.bottom = { dir: NaN, pos: { x: NaN, y: NaN } };
-		this.gameData.update = false;
-	}
 	fetchBall() {
 		// console.log("PRE BALL FETCH: ");
 		// console.log("ball.x: ", this.ball.x);
@@ -663,71 +656,10 @@ class Online4P {
 		this.score.goals.top = this.gameData.goals.top;
 		this.score.goals.bottom = this.gameData.goals.bottom;
 		
-		if(this.player.side != "left" && !isNaN(this.gameData.left.dir)) {
-			// console.log("fetching left");
-			// console.log("data dir: ", this.gameData.left.dir);
-			// console.log("player dir: ", this.playerLeft.direction);
-			// console.log("pos x: ", this.playerLeft.x);
-			// console.log("pos y: ", this.playerLeft.y);
-			this.gameData.left.dir = this.playerLeft.direction;
-			if(!isNaN(this.gameData.left.x)  && isNaN(this.gameData.left.y)) { // would only be called if direction is set to 0, that's when positions are set
-				this.playerLeft.x = this.gameData.left.x;
-				this.playerLeft.y = this.gameData.left.y;
-				// console.log("changed pos x: ", this.playerLeft.x);
-				// console.log("changed pos y: ", this.playerLeft.y);
-				this.gameData.left.x = NaN; 
-				this.gameData.left.y = NaN;
-			}
-		}
-		else if(this.player.side != "right" && !isNaN(this.gameData.right.dir)) {
-			// console.log("fetching right");
-			// console.log("data dir: ", this.gameData.right.dir);
-			// console.log("player dir: ", this.playerRight.direction);
-			// console.log("pos x: ", this.playerRight.x);
-			// console.log("pos y: ", this.playerRight.y);
-			this.gameData.right.dir = this.playerRight.direction;
-			if(!isNaN(this.gameData.right.x)  && isNaN(this.gameData.right.y)) {
-				this.playerRight.x = this.gameData.right.x;
-				this.playerRight.y = this.gameData.right.y;
-				// console.log("changed pos x: ", this.playerRight.x);
-				// console.log("changed pos y: ", this.playerRight.y);
-				this.gameData.right.x = NaN;
-				this.gameData.right.y = NaN;
-			}
-		}
-		else if(this.player.side != "top" && !isNaN(this.gameData.top.dir)) {
-			// console.log("fetching top");
-			// console.log("data dir: ", this.gameData.right.dir);
-			// console.log("player dir: ", this.playerRight.direction);
-			// console.log("pos x: ", this.playerTop.x);
-			// console.log("pos y: ", this.playerTop.y);
-			this.gameData.top.dir = this.playerTop.direction;
-			if(!isNaN(this.gameData.top.x)  && isNaN(this.gameData.top.y)) {
-				this.playerTop.x = this.gameData.top.x;
-				this.playerTop.y = this.gameData.top.y;
-				// console.log("changed pos x: ", this.playerTop.x);
-				// console.log("changed pos y: ", this.playerTop.y);
-				this.gameData.top.x = NaN;
-				this.gameData.top.y = NaN;
-			}
-		}
-		else if(this.player.side != "bottom" && !isNaN(this.gameData.bottom.dir)) {
-			// console.log("fetching bottom");
-			// console.log("data dir: ", this.gameData.right.dir);
-			// console.log("player dir: ", this.playerRight.direction);
-			// console.log("pos x: ", this.playerBottom.x);
-			// console.log("pos y: ", this.playerBottom.y);
-			this.gameData.bottom.dir = this.playerBottom.direction;
-			if(!isNaN(this.gameData.bottom.x)  && isNaN(this.gameData.bottom.y)) {
-				this.playerBottom.x = this.gameData.bottom.x;
-				this.playerBottom.y = this.gameData.bottom.y;
-				// console.log("changed pos x: ", this.playerBottom.x);
-				// console.log("changed pos y: ", this.playerBottom.y);
-				this.gameData.bottom.x = NaN;
-				this.gameData.bottom.y = NaN;
-			}
-		}
-		this.resetGameData();
+		this.playerLeft.direction = this.gameData.left.dir;
+		this.playerRight.direction = this.gameData.right.dir;
+		this.playerTop.direction = this.gameData.top.dir;
+		this.playerBottom.direction = this.gameData.bottom.dir;
 	}
 	update() {
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -738,8 +670,6 @@ class Online4P {
 			// console.log("GOOAL");
 			return ;
 		}
-		if(this.gameData.update == true)
-			this.fetchAndUpdateFromGameData();
 		this.paddleCollision();
 		// console.log("ball x", this.ball.x);
 		// console.log("ball y", this.ball.y);
@@ -762,26 +692,26 @@ class Online4P {
 	}
 	getReady() {
 		console.log("GET READY");
-		const button = document.createElement('button');
-		button.textContent = 'Click Me';
+		this.button = document.createElement('button');
+		this.button.textContent = 'Click Me';
 		
 		// Style the button to ensure it's visible
-		button.style.position = 'absolute';
-		button.style.top = '50%';
-		button.style.left = '45%';
-		button.style.transform = 'translate(-50%, -50%)';
-		button.style.zIndex = '10';
-		button.style.padding = '10px 20px';
-		button.style.fontSize = '16px';
-		button.style.cursor = 'pointer';
+		this.button.style.position = 'absolute';
+		this.button.style.top = '50%';
+		this.button.style.left = '45%';
+		this.button.style.transform = 'translate(-50%, -50%)';
+		this.button.style.zIndex = '10';
+		this.button.style.padding = '10px 20px';
+		this.button.style.fontSize = '16px';
+		this.button.style.cursor = 'pointer';
 		
 		// Add button to the parent (same as canvas)
-		this.parent.appendChild(button);
+		this.parent.appendChild(this.button);
 		
         // Add click event to the button
-        button.addEventListener('click', () => {
+        this.button.addEventListener('click', () => {
 			console.log("CLICKED");
-			if(button.textContent == 'Click Me') {
+			if(this.button.textContent == 'Click Me') {
 				let music = new Audio('/static/music.mp3');
 				music.play();
 				console.log("SENDING");
@@ -790,10 +720,11 @@ class Online4P {
 					"side": this.player.side
 				}))
 			}
-			button.textContent = "READY!";
+			this.button.textContent = "READY!";
         });
 	}
 	start() {
+		this.button.remove();
 		this.loop();
 	}
 	pause() {
