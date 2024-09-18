@@ -110,6 +110,9 @@ class handle4PGame(WebsocketConsumer):
 					})
 				}
 			)
+		# elif type == "get_game_update":
+		# when player was inactive and becomes active again, he fetches update from other players
+		# set timer so that inactive players do not update the game when they come back
 
 	def game_message(self, event):
 		message = event['message']

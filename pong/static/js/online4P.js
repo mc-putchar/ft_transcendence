@@ -404,6 +404,13 @@ class Online4P {
 			"y": ret_y,
 		}))
 	}
+	sendGoal() {
+		this.ws?.send(JSON.stringify({
+			"type": "goal",
+			"conceded": this.score.conceded,
+			"last_touch": this.score.lastTouch
+		}))
+	}
 	keydown(key) {
 		if(key.code == "KeyC") {
 			debugger;
@@ -650,7 +657,12 @@ class Online4P {
 	fetchAndUpdateFromGameData() {
 
 		this.fetchBall();
-
+		
+		this.score.goals.left = this.gameData.goals.left;
+		this.score.goals.right = this.gameData.goals.right;
+		this.score.goals.top = this.gameData.goals.top;
+		this.score.goals.bottom = this.gameData.goals.bottom;
+		
 		if(this.player.side != "left" && !isNaN(this.gameData.left.dir)) {
 			// console.log("fetching left");
 			// console.log("data dir: ", this.gameData.left.dir);

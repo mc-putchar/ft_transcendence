@@ -28,6 +28,7 @@ class Player {
 class GameData {
 	constructor() {
 		this.last_touch = "none";
+		this.goals = {left : 0, right : 0, top : 0, bottom : 0};
 		this.ball = {x: NaN, y: NaN, vx : NaN, vy: NaN, speedx : NaN, speedy: NaN};
 		this.left = { dir: NaN, pos: { x: NaN, y: NaN } };
 		this.right = { dir: NaN, pos: { x: NaN, y: NaN } };
