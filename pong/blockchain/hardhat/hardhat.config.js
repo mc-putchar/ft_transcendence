@@ -6,6 +6,9 @@ module.exports = {
     networks: {
         hardhat: {
             accounts: {
+				initialIndex: 0,
+				path: "m/44'/60'/0'/0",
+				mnemonic: "test test test test test test test test test test test junk",
                 count: 33,
                 accountsBalance: '10000000000000000000',
             }

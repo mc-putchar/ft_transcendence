@@ -15,6 +15,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @database_sync_to_async
 def get_user_by_id(user_id):
     User = get_user_model()
@@ -30,7 +31,8 @@ def get_match(match_id):
 
 @database_sync_to_async
 def update_player_match(match, player, score, win=False):
-    PlayerMatch.objects.filter(match=match, player=player).update(score=score,winner=win)
+    PlayerMatch.objects.filter(match=match, player=player).update(
+        score=score, winner=win)
 
 class PongGameConsumer(AsyncWebsocketConsumer):
 
@@ -50,7 +52,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         self.match_group_name = f"match_{self.challenger}"
         self.token = self.scope['query_string'].decode().split('=')[1]
         try:
-            decoded_token = jwt.decode(self.token, settings.SECRET_KEY, algorithms=["HS256"])
+            decoded_token = jwt.decode(
+                self.token, settings.SECRET_KEY, algorithms=["HS256"])
             self.user = await get_user_by_id(decoded_token['user_id'])
             if not self.user:
                 raise jwt.InvalidTokenError("User not found")
@@ -74,10 +77,17 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+        # avoid dueling while in game
+        profile = await get_profile(self.username)
+        profile.currently_playing = True
+        await sync_to_async(profile.save)()
+
         await self.send(text_data=json.dumps({
-                "type": "connection",
-                "message": f"Joined channel: {self.challenger}",
+            "type": "connection",
+            "message": f"Joined channel: {self.challenger}",
         }))
+
+
         self.game_task = asyncio.create_task(self.game_update_loop())
 
     def cancel_tasks(self):
@@ -89,7 +99,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         self.cancel_tasks()
         if self.channel_name in self.connection_player_map:
-            disconnected_player = self.connection_player_map.pop(self.channel_name)
+            disconnected_player = self.connection_player_map.pop(
+                self.channel_name)
             if disconnected_player and not self.gameover:
                 await game_manager.forfeit_game(self.game_id, disconnected_player)
                 await self.handle_forfeit(disconnected_player)
@@ -97,6 +108,12 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 await sync_to_async(game_manager.clear_game_state)(self.game_id)
         elif self.channel_name in self.spectators:
             self.spectators.remove(self.channel_name)
+        
+
+        # avoid dueling while in game
+        profile = await get_profile(self.username)
+        profile.currently_playing = False
+        await sync_to_async(profile.save)()
 
         await self.channel_layer.group_discard(
             self.match_group_name,
@@ -108,22 +125,13 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             player = data["player"]
             player_username = data["user"]
             match_id = data["match_id"]
+
             if not player or not player_username or not match_id:
                 raise Exception("Missing registration data")
-        except Exception as e:
-            await self.send(text_data=json.dumps({
-                "type": "error",
-                "message": "Missing registration data"
-            }))
-            return
-        if player_username != self.user.username:
-            logger.warn(f"Username mismatch: {player_username} != {self.user.username}")
-            await self.send(text_data=json.dumps({
-                "type": "error",
-                "message": "Username not recognized",
-            }))
-            return
-        try:
+            if player_username != self.user.username:
+                logger.info(f"Username mismatch: {player_username} != {self.user.username}")
+                raise Exception("Username mismatch")
+
             self.match = await get_match(match_id)
             logger.debug(f"Match set with ID {match_id}")
             profile = await get_profile(player_username)
@@ -139,25 +147,26 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 "type": "registration",
                 "message": f"{player} registered successfully",
             }))
+
             self.game_id = f"{self.match_group_name}@{match_id}"
             game_manager.reset_game_state(self.game_id, self.score_limit)
             self.timeout_task = asyncio.create_task(self.countdown_to_start())
             return
 
         except Profile.DoesNotExist:
-            logger.debug(f"Error: User Profile '{player_username}' does not exist")
+            logger.info(f"Error: User Profile '{player_username}' does not exist")
             await self.send(text_data=json.dumps({
                 "type": "error",
                 "message": "User profile does not exist",
             }))
         except Match.DoesNotExist:
-            logger.debug(f"Error: Match with ID {match_id} does not exist")
+            logger.info(f"Error: Match with ID {match_id} does not exist")
             await self.send(text_data=json.dumps({
                 "type": "error",
                 "message": "Match does not exist",
             }))
         except Exception as e:
-            logger.debug(f"Error registering player: {e}")
+            logger.info(f"Error registering player: {e}")
             await self.send(text_data=json.dumps({
                 "type": "error",
                 "message": "Player could not be registered for this match",
@@ -168,6 +177,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             del self.connection_player_map[self.channel_name]
 
     async def receive(self, text_data):
+        logger.debug(f"{text_data}")
         if self.gameover:
             return
         try:
@@ -196,11 +206,13 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             case "register":
                 await self.register_player(data)
             case "spectate":
-                self.spectators.add(self.channel_name)
-                await self.send(text_data=json.dumps({
-                    "type": "spectate",
-                    "message": "You are now spectating the match"
-                }))
+                if data.has_key("match_id"):
+                    self.game_id = f"{self.match_group_name}@{data['match_id']}"
+                    self.spectators.add(self.channel_name)
+                    await self.send(text_data=json.dumps({
+                        "type": "spectate",
+                        "message": "You are now spectating the match"
+                    }))
             case "accept" | "decline":
                 await self.channel_layer.group_send(
                     self.match_group_name,
@@ -209,7 +221,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                         "message": data["message"]
                     }
                 )
-            case _:
+            case "message":
                 await self.channel_layer.group_send(
                     self.match_group_name,
                     {
@@ -251,7 +263,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
         if not self.gameover:
             game_state = game_manager.get_game_state(self.game_id)
             if not game_state or game_state["status"] == "starting":
-                winner = self.username
+                winner = self.connection_player_map.get(self.channel_name)
                 await self.win_by_timeout(winner)
 
     async def game_update_loop(self):
@@ -293,7 +305,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             elif player2:
                 await update_player_match(self.match, player2, p2_score, p2_score > p1_score)
             else:
-                logger.warn("Error saving match results: Player is not registered.")
+                logger.warning("Error saving match results: Player is not registered.")
 
         except Exception as e:
             logger.error(f"Error saving match results: {e}")
@@ -301,11 +313,8 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 
     async def win_by_timeout(self, winner):
         try:
-            loser = self.match.get_players().exclude(username=winner.username).first()
-            await update_player_match(self.match, winner, self.score_limit, True)
-            await update_player_match(self.match, loser, 0, False)
-            logger.info("Match won by timeout")
-
+            loser = "player1" if winner == "player2" else "player2"
+            await self.handle_forfeit(loser)
         except Exception as e:
             logger.error(f"Error handling win by timeout: {e}")
 
@@ -323,7 +332,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
             elif loser:
                 await update_player_match(self.match, loser, 0, False)
             else:
-                logger.warn(f"Error handling forfeit: No player registered")
+                logger.warning(f"Error handling forfeit: No player registered")
             logger.info("Match forfeited")
 
         except Exception as e:
@@ -353,6 +362,7 @@ class PongGameConsumer(AsyncWebsocketConsumer):
     async def set_player_ready(self, player):
         await game_manager.set_player_ready(self.game_id, player)
 
+
 class PongTournamentConsumer(AsyncWebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
@@ -364,7 +374,8 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
         self.tournament_group_name = f'tournament_{self.tournament_id}'
         self.token = self.scope['query_string'].decode().split('=')[1]
         try:
-            decoded_token = jwt.decode(self.token, settings.SECRET_KEY, algorithms=["HS256"])
+            decoded_token = jwt.decode(
+                self.token, settings.SECRET_KEY, algorithms=["HS256"])
             self.user = await get_user_by_id(decoded_token['user_id'])
             if not self.user:
                 raise jwt.InvalidTokenError("User not found")
@@ -380,11 +391,14 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
 
         self.username = self.user.username
         self.player_ready = False
+
         await self.accept()
+        
         await self.channel_layer.group_add(
             self.tournament_group_name,
             self.channel_name
         )
+        
         await self.channel_layer.group_send(
             self.tournament_group_name,
             {

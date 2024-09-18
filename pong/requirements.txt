@@ -9,7 +9,7 @@ channels
 channels-redis
 daphne
 pillow
-web3
+web3>=7.0.0,<8.0.0
 py-solc-x
 python-dotenv
 selenium

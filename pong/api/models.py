@@ -19,20 +19,26 @@ def image_upload(instance, filename):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
-    alias = models.CharField(max_length=150, blank=True)
+    alias = models.CharField(max_length=24, blank=True)
     isOnline = models.BooleanField(default=False)
+    client_3d = models.BooleanField(default=False)
+    paddle = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to=image_upload, default='profile_images/default.png')
     friends = models.ManyToManyField('self', through='Friend', symmetrical=False, related_name='friend_profiles', default=None, blank=True)
     blocked_users = models.ManyToManyField('self', through='Blocked', symmetrical=False, related_name='blocked_profiles', default=None, blank=True)
     forty_two_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
-    blockchain_address = models.CharField(max_length=42, null=True, blank=True)
+    blockchain_address = models.CharField(max_length=42, null=True, blank=True, default=None)
+    currently_playing = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.alias:
-            self.alias = f'marvin_{self.user.id}'
+            self.alias = self.user.username
         super().save(*args, **kwargs)
         # if self.image and self.image.name != 'profile_images/default.png':
         #     self.resize_image()
+
+    def has_blockchain(self):
+        return self.blockchain_address is not None and self.blockchain_address != "0x0000000000000000000000000000000000000000"
 
     def resize_image(self):
         img = Image.open(self.image.path)

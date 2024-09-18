@@ -1,13 +1,37 @@
-{% if user.is_authenticated %}
-<h1>Welcome, {{ user.username }}!</h1>
-<p>Here you can access the features of the application:</p>
-<ul>
-  <li><a href="#/online-game" class="btn btn-primary">Play Online Game</a></li>
-  <li><a href="#/chat" class="btn btn-secondary">Chat</a></li>
-  <li><a href="#/logout" class="btn btn-danger">Logout</a></li>
-</ul>
-{% else %}
-<h1>Welcome to Transcendence</h1>
-<p><a href="#/play" class="btn btn-secondary">Play Local</a></p>
-<p>Please <a href="#/login" class="btn btn-outline-primary">Login</a> or <a href="#/register" class="btn btn-outline-secondary">Register</a> to access online features.</p>
-{% endif %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card p-2 bg-secondary-subtle">
+                <div class="card-header bg-dark text-success d-flex align-items-center justify-content-between">
+                    <button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
+                    <h5 class="mb-0 glitch" data-text="Home">Home</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if user.is_authenticated %}
+                        <div class="card-header bg-secondary-subtle text-success d-flex align-items-center justify-content-between">
+                            <h4 class="mb-0">Welcome, {{ user.profile.alias }}!</h4>
+                            <img src="{{ user.profile.image.url }}" class="rounded border border-2 border-info account-img" height="42" width="42" loading="lazy" />
+                        </div>
+                        <div class="card-body bg-dark-subtle text-center">
+                            <p>Here you can access the features of the application:</p>
+                            <p><a href="#/dashboard" class="btn btn-success">Dashboard</a></p>
+                            <p><a href="#/profile" class="btn btn-info">Edit Profile</a></p>
+                            <p><a href="#/play" class="btn btn-secondary">Play Local</a></p>
+                            <p><a href="#/online-game" class="btn btn-primary">Play Online Game</a></p>
+                            <p><a href="#/logout" class="btn btn-danger">Logout</a></p>
+                        </div>
+
+                    {% else %}
+                        <div class="card-header bg-secondary-subtle text-success d-flex align-items-center">
+                            <h1><div class="glitch" data-text="Transcendence"> Transcendence </div></h1>
+                        </div>
+                        <div class="card-body bg-dark-subtle text-center">
+                            <p><a href="#/play" class="btn btn-secondary">Play Local</a></p>
+                            <p>Please <a href="#/login" class="btn btn-outline-primary">Login</a> or <a href="#/register" class="btn btn-outline-light">Register</a> to access online features.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

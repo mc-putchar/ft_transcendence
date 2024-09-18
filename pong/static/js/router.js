@@ -1,28 +1,14 @@
 "use strict";
 
+import { showNotification } from './notification.js';
+import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
-import { startPongGame, stopPongGame } from './pong-game.js';
-import { startPong3DGame, stopPong3DGame } from './pong3d.js';
-import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
-import { showNotification } from './notification.js';
-import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
+import { createModal } from './utils.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
-
-    function stopAllGames() {
-        // if (this.pongClassicGame) {
-        //     this.pongClassicGame.stop();
-        // }
-        // if (this.pong3DGame) {
-        //     this.pong3DGame.stop();
-        // }
-		stopPongGame();
-		stopPong3DGame();
-		stopPong4PGame();
-    }
 
 class Router {
 	constructor(navElement, appElement, chatElement) {
@@ -33,36 +19,41 @@ class Router {
 		sessionStorage.setItem('friends', '[]');
 		sessionStorage.setItem('blocked', '[]');
 
-		this.chat = new ChatRouter(this.csrfToken, this.chatElement);
-		this.game = new GameRouter(this.csrfToken, this.appElement);
-		this.tournament = new TournamentRouter(this.csrfToken, this.appElement);
+		this.chat = new ChatRouter(this.chatElement);
+		this.game = new GameRouter(this.appElement);
+		this.tournament = new TournamentRouter(this.appElement);
+		this.audioContext = null;
+		window.addEventListener('load', () => this.route());
+		window.addEventListener('hashchange', (e) => this.route(e));
+
+		// PERFORMANCE MONITOR
+		// (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
 		this.init();
 	}
 
 	init() {
 		this.oldHash = window.location.hash;
-		window.addEventListener('load', () => this.route());
-		window.addEventListener('hashchange', (e) => this.route(e));
-		// PERFORMANCE MONITOR
-		(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
-
-		// Enable Bootstrap stuff
-		let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-		let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-			return new bootstrap.Tooltip(tooltipTriggerEl)
-		});
-		let popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-		let popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-			return new bootstrap.Popover(popoverTriggerEl)
-		});
 
 		// Register listeners for custom events
-		this.chatElement.addEventListener('challenge', (event) => {
-			this.game.setupGameWebSocket(event.detail.gameID);
-			const sound = new Audio(CHALLENGE_SOUND);
-			sound.volume = 0.5;
-			sound.play();
+		this.chatElement.addEventListener('challenger', (event) => {
+			if (!this.game.gameSocket && this.game.setupGameWebSocket(event.detail.gameID)) {
+				const sound = new Audio(CHALLENGE_SOUND);
+				sound.volume = 0.5;
+				sound.play();
+			}
+		});
+		this.chatElement.addEventListener('challenged', (event) => {
+			if (this.game.gameSocket)	return;
+			const modalData = { message: `Challenged by ${event.detail.username}` };
+			const fields = [{ key: "message", label: "Message" }];
+			const custom = `
+				<div class="row">
+					<button onclick="location.hash='/game/accept/${event.detail.username}'" class="btn btn-success" data-bs-dismiss="modal">Accept</button>
+					<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-bs-dismiss="modal">Decline</button>
+				</div>`;
+			const closeCallback = () => { location.hash = '/game/decline/' };
+			createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
 		});
 		this.chatElement.addEventListener('notification', (event) => {
 			showNotification(
@@ -82,7 +73,7 @@ class Router {
 			// this.route();
 		});
 		this.appElement.addEventListener('game', (event) => {
-			this.game.startTournamentGame(event.detail);
+			setTimeout(() => this.game.startTournamentGame(event.detail), 1000);
 		});
 		this.appElement.addEventListener('announcement', (event) => {
 			this.chat.sendAnnouncement(event.detail);
@@ -97,7 +88,7 @@ class Router {
 	}
 
 	displayError(message) {
-		this.appElement.innerHTML = `<p id='error-message'></p><button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>`;
+		this.appElement.innerHTML = `<p id='error-message'></p><button class="btn btn-primary btn-sm" onclick="history.back()">Go Back</button>`;
 		document.getElementById('error-message').innerText = message;
 	}
 
@@ -110,41 +101,86 @@ class Router {
 		this.loadNav();
 		this.loadChat();
 		window.location.hash = '/';
-		// this.route();
 	}
 
-	async route(e) {
+	async route() {
 		this.oldHash = this.oldHash ?? window.location.hash;
+		this.game?.stopGame();
 		const template = window.location.hash.substring(2) || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
 		} else if (template.startsWith('tournaments/')) {
 			const next = await this.tournament.route(template);
-			setTimeout(() => window.location.hash = next ?? this.oldHash, 100);
+			if (next)
+				setTimeout(() => window.location.hash = next, 10);
 		} else if (template.startsWith('chat')) {
 			const roomName = template.substring(5) || 'lobby';
 			this.loadChat(roomName);
+			setTimeout(() => window.location.hash = this.oldHash, 100);
 		} else if (template.startsWith('game/')) {
+			// history.back();
 			if (template.startsWith('game/accept/')) {
 				const gameID = template.substring(12);
 				this.game.acceptChallenge(gameID);
-				// this.chat.acceptGame();
 				this.chat.sendDuelResponse('accepted');
 			} else if (template.startsWith('game/decline/')) {
-				// this.chat.declineGame();
 				this.chat.sendDuelResponse('declined');
 			}
-			setTimeout(() => window.location.hash = this.oldHash, 100);
 			this.game.route(template);
 		} else if (template.startsWith('addFriend') || template.startsWith('deleteFriend') || template.startsWith('block') || template.startsWith('unblock')) {
 			const action = template.split('/')[0];
 			const id = template.split('/')[1];
 			this.manageFrenemy(action, id);
 			setTimeout(() => history.back(), 100);
+		} else if (template.startsWith('pong-')) {
+			if (template === 'pong-classic') {
+				const p1Name = document.getElementById('player1-name')?.value;
+				if (!p1Name) {
+					this.notifyError("Player 1 name is required");
+					history.back();
+					return;
+				}
+				const p1 = this.game.makePlayer('left', p1Name);
+				const p2Name = document.getElementById('player2-name')?.value;
+				// await this.loadTemplate(template);
+				if (p2Name) {
+					const p2 = this.game.makePlayer('right', p2Name);
+					this.game.startClassicGame(p1, p2);
+				} else {
+					this.game.startClassicGame(p1);
+				}
+			} else
+				await this.loadTemplate(template);
 		} else {
-			this.loadTemplate(template);
+			await this.loadTemplate(template);
 		}
 		this.oldHash = window.location.hash;
+	}
+
+	getGameTemplate(template) {
+		const p1Name = document.getElementById('player1-name')?.value;
+		if (!p1Name) {
+			this.notifyError("Player 1 name is required");
+			return 'play';
+		}
+		const p1 = this.game.makePlayer('left', p1Name);
+		const p2Name = document.getElementById('player2-name')?.value;
+		if (p2Name) {
+			const p2 = this.game.makePlayer('right', p2Name);
+			this.game.startClassicGame(p1, p2);
+		} else {
+			this.game.startClassicGame(p1);
+			switch (template) {
+				case 'pong-classic':
+					return 'pong-classic';
+				case 'pong-3d':
+					return 'pong-3d';
+				case 'pong-4p':
+					return 'pong-4p';
+				default:
+					return 'home';
+			}
+		}
 	}
 
 	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
@@ -175,7 +211,8 @@ class Router {
 			var navbarCollapse = document.querySelector('#navbarNav');
    			 if (navbarCollapse) {
    			     var collapse = new bootstrap.Collapse(navbarCollapse);
-  
+						 collapse.hide();
+
    			     // Hide the navbar when a link inside it is clicked
    			     var navbarLinks = document.querySelectorAll('.navbar-collapse a');
    			     navbarLinks.forEach(function (link) {
@@ -190,13 +227,65 @@ class Router {
    			         var isToggle = event.target.classList.contains('navbar-toggler');
    			         
    			         if (!isClickInside && !isToggle) {
-   			            //  console.log('click outside');
    			             collapse.hide();
    			         }
    			     });
    			 } else {
-				this.notifyError("Navbar collapse element not found.");
+						this.notifyError("Navbar collapse element not found.");
    			 }
+
+			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
+				const audioMuteBtn = document.getElementById('audioMuteBtn');
+
+				if (audioMuteBtn.innerText === '🔊 Music') {
+					audioMuteBtn.innerText = '🔇 Music';
+					if(window.mainOUT) {
+						window.mainOUT.gain.value = 0;
+					}
+				} else if (audioMuteBtn.innerText === '🔇 Music'){
+					audioMuteBtn.innerText = '🔊 Music';
+					if (window.mainOUT) {
+						window.mainOUT.gain.value = 1;
+					}
+				}
+			});
+
+			document.getElementById('fxMuteBtn').addEventListener('click', (e) => {
+				const fxMuteBtn = document.getElementById('fxMuteBtn');
+
+				if (fxMuteBtn.innerText === '🔊 FX') {
+					fxMuteBtn.innerText = '🔇 FX';
+					if(window.fxGainNode) {
+						window.fxGainNode.gain.value = 0;
+					}
+				} else if(fxMuteBtn.innerText === '🔇 FX'){
+					fxMuteBtn.innerText = '🔊 FX';
+					if (window.fxGainNode) {
+						window.fxGainNode.gain.value = 1;
+					}
+				}
+			});
+
+			let count = 1;
+
+			document.getElementById('changeMusicBtn').addEventListener('click', (e) => {
+				const changeMusicBtn = document.getElementById('changeMusicBtn');
+
+				if (count === 0) {
+					window.changeMusicTrack("/static/assets/music.mp3");
+					count++;
+				} else if (count === 1) {
+					window.changeMusicTrack("/static/assets/music2.mp3");
+					count++;
+				} else if (count === 2) {
+					window.changeMusicTrack("/static/assets/music3.mp3");
+					count++;
+				}
+
+				if (count === 3)
+					count = 0;
+			});
+
 		} catch (error) {
 			console.debug("Error loading nav: ", error);
 			this.navElement.innerHTML = "<p>Error loading navigation</p>";
@@ -293,14 +382,14 @@ class Router {
 
 	async loadCookieConsentFooter() {
 		try {
-			const response = await getHTML('/templates/cookie_consent_footer', this.csrfToken);
+			const response = await getHTML('/templates/cookie_consent_footer');
 			if (!response) {
 				throw new Error(`Cannot load cookie consent footer: ${response.status}`);
 			}
 			document.getElementById('cookie-consent-footer').innerHTML = response;
 			this.initCookieConsent();
 		} catch (error) {
-			this.notifyError("Error loading cookie consent footer");
+			this.notifyError(`Error loading cookie consent footer: ${error.message}`);
 		}
 	}
 
@@ -317,9 +406,9 @@ class Router {
 			cookieConsentFooter.style.display = 'none';
 		});
 
-		document.getElementById('cookiePreferencesButton').addEventListener('click', () => {
-			alert("No! You don't get to choose.\nIt's only CSRF protection anyway.\nNo tracking cookies here.");
-		});
+		// document.getElementById('cookiePreferencesButton').addEventListener('click', () => {
+		// 	alert("No! You don't get to choose.\nIt's only CSRF protection anyway.\nNo tracking cookies here.");
+		// });
 	}
 
 	handlePostLoad(template) {
@@ -336,23 +425,23 @@ class Router {
 			case 'profile':
 				this.handleProfilePage();
 				break;
-			case 'game':
-				// this.game.setupGameWebSocket();
-				break;
 			case 'tournaments':
 				this.handleTournamentPage();
 				break;
-			case 'pong-classic':
-				stopAllGames();
-				startPongGame();
-				break;
+			// case 'pong-classic':
+			// 	const p1 = this.game.makePlayer('left', 'Player 1');
+			// 	const p2 = this.game.makePlayer('right', 'Player 2');
+			// 	this.game.startClassicGame(p1, p2);
+			// 	break;
 			case 'pong-3d':
-				stopAllGames();
-				startPong3DGame();
+				// const pl1 = this.game.makePlayer('left', 'Player 1');
+				// const pl2 = this.game.makePlayer('right', 'Player 2');
+				// this.game.start3DGame(pl1, pl2);
+				const pl1 = this.game.makePlayer('left', 'Player 1', 'YOU', '/static/assets/42Berlin.svg');
+				this.game.start3DGame(pl1);
 				break;
 			case 'pong-4p':
-				stopAllGames();
-				startPong4PGame();
+				this.game.start4PGame();
 				break;
 			default:
 				break;
@@ -361,6 +450,7 @@ class Router {
 
 	handleRegistrationForm() {
 		const form = document.getElementById('registration-form');
+		if (!form) return;
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const username = document.getElementById('username').value;
@@ -390,7 +480,7 @@ class Router {
 					throw new Error(data.detail || 'Registration failed');
 				}
 			} catch (error) {
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
 	}
@@ -423,12 +513,16 @@ class Router {
 					throw new Error(data.error || 'Login failed');
 				}
 			} catch (error) {
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
 	}
 
 	async logout() {
+		if (!sessionStorage.getItem('access_token')) {
+			this.notifyError("You are not logged in");
+			return;
+		}
 		try {
 			const body = JSON.stringify({ refresh: sessionStorage.getItem('refresh_token') || '' });
 			const response = await postJSON('/api/logout/', this.csrfToken, body);
@@ -448,12 +542,12 @@ class Router {
 	}
 
 	handleProfilePage() {
-		const accAdminBtn = document.getElementById('account-administration');
 		const anonBtn = document.getElementById('anonymize-data');
 		const deleteBtn = document.getElementById('delete-account');
 		const profileForm = document.getElementById('profile-form');
+		const passwordForm = document.getElementById('password-form');
 		const blockchainBtn = document.getElementById('blockchain-optin');
-		if (!accAdminBtn || !anonBtn || !deleteBtn || !profileForm) return;
+		if (!anonBtn || !deleteBtn || !profileForm) return;
 		blockchainBtn?.addEventListener('click', async (e) => {
 			const response = await getHTML('/api/blockchain/optin/', this.csrfToken);
 			if (response) {
@@ -462,35 +556,27 @@ class Router {
 				this.notifyError("Failed to opt-in to blockchain");
 			}
 		});
-		accAdminBtn.addEventListener('click', (e) => {
+
+		passwordForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
-			const anonBtn = document.getElementById('anonymize-data');
-			const deleteBtn = document.getElementById('delete-account');
-			anonBtn.style.display = anonBtn.style.display === 'none' ? 'block' : 'none';
-			deleteBtn.style.display = deleteBtn.style.display === 'none' ? 'block' : 'none';
-			const passwordForm = document.getElementById('password-form');
-			passwordForm.style.display = passwordForm.style.display === 'none' ? 'block' : 'none';
-			passwordForm.addEventListener('submit', async (e) => {
-				e.preventDefault();
-				const formData = new FormData(passwordForm);
-				try {
-					const response = await fetch('/api/change-password/', {
-						method: 'POST',
-						headers: {
-							'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
-						},
-						body: formData
-					});
-					if (response.ok) {
-						alert("Password changed successfully");
-					} else {
-						throw new Error("Failed to change password");
-					}
-				} catch (error) {
-					this.displayError(error.message);
+			const formData = new FormData(passwordForm);
+			try {
+				const response = await fetch('/api/change-password/', {
+					method: 'POST',
+					headers: {
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
+						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
+					},
+					body: formData
+				});
+				if (response.ok) {
+					alert("Password changed successfully");
+				} else {
+					throw new Error("Failed to change password");
 				}
-			});
+			} catch (error) {
+				this.notifyError(error.message);
+			}
 		});
 		document.getElementById('anonymize-data').addEventListener('click', (e) => {
 			e.preventDefault();
@@ -524,43 +610,37 @@ class Router {
 					throw new Error("Failed to update profile");
 				}
 			} catch (error) {
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
 	}
 
 	handleTournamentPage() {
-		const createTournamentBtn = document.getElementById('create-tournament');
-		if (!createTournamentBtn) return;
-		createTournamentBtn.addEventListener('click', (e) => {
+		const form = document.getElementById('create-tournament-form');
+		const btn = document.getElementById('create-tournament-btn');
+		if (!form || !btn) return;
+		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
-			const form = document.getElementById('create-tournament-form');
-			const btn = document.getElementById('create-tournament-btn');
-			form.style.display = form.style.display === 'none' ? 'block' : 'none';
-			btn.style.display = btn.style.display === 'none' ? 'block' : 'none';
-			form.addEventListener('submit', async (e) => {
-				e.preventDefault();
-				const formData = new FormData(form);
-				try {
-					const response = await fetch('/game/tournaments/create_tournament_form/', {
-						method: 'POST',
-						headers: {
-							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`,
-							'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-						},
-						body: formData
-					});
-					if (response.ok) {
-						console.log("Tournament created successfully", response);
-						this.loadTemplate('tournaments');
-					} else {
-						console.log("Failed to create tournament", response);
-						throw new Error("Failed to create tournament");
-					}
-				} catch (error) {
-					this.displayError(error.message);
+			const formData = new FormData(form);
+			try {
+				const response = await fetch('/game/tournaments/create_tournament_form/', {
+					method: 'POST',
+					headers: {
+						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`,
+						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
+					},
+					body: formData
+				});
+				if (response.ok) {
+					console.log("Tournament created successfully", response);
+					this.loadTemplate('tournaments');
+				} else {
+					console.log("Failed to create tournament", response);
+					throw new Error("Failed to create tournament");
 				}
-			});
+			} catch (error) {
+				this.notifyError(error.message);
+			}
 		});
 	}
 
@@ -614,11 +694,10 @@ class Router {
 	}
 };
 
-// document.addEventListener('DOMContentLoaded', () => {
-// });
-
-const navElement = document.getElementById('nav');
-const appElement = document.getElementById('app');
-const chatElement = document.getElementById('chat');
-
-new Router(navElement, appElement, chatElement);
+document.addEventListener('DOMContentLoaded', () => {
+	const navElement = document.getElementById('nav');
+	const appElement = document.getElementById('app');
+	const chatElement = document.getElementById('chat');
+	
+	new Router(navElement, appElement, chatElement);
+});

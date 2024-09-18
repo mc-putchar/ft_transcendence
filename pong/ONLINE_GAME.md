@@ -44,6 +44,59 @@
 - when at least 2 players are joined, the creator may start the tournament
 - on start, the tournament creates initial round matches, announces start and sends match ids with pairings as `<match_id> <player1_username> vs <player2_username>` or `<match_id> <player1_username> bye` if no opponent for the player in the round
 - players join the matches via `/game/matches/<match_id>/join/`
-  and websocket `/ws/game/<tournament_id>#<match_id>#<player1_username>/`
+  and websocket `/ws/game/<tournament_id>-<match_id>-<player1_username>/`
 - when all the games of the round are concluded, the tournament progresses to the next round
 - when all the rounds are concluded, the tournament finalizes and announces a winner
+
+## Server side
+TOP SECRET
+
+# Game websocket listener
+
+## Receive:
+
+```json
+{ type:
+	"connection" |
+	"registration" |
+	"error" |
+	"message" |
+	"accept" |
+	"decline" |
+	"spectate",
+ message: <string> }
+```
+```json
+{ type: "game_state", game_state: <GameData> }
+```
+
+## Send:
+
+player1 is the player who initiated the challenge
+
+```json
+{
+	type: "register",
+	player: "player1" | "player2",
+	user: <username>,
+	match_id: <match_id>
+}
+```
+```json
+{ type: "ready", player: "player1" | "player2" }
+```
+```json
+{ type: "player1_move", direction: <direction> }
+```
+```json
+{ type: "player2_move", direction: <direction> }
+```
+```json
+{ type: "message", message: <string> }
+```
+```json
+{ type: "accept" | "decline" }
+```
+```json
+{ type: "spectate", match_id: <match_id> }
+```
