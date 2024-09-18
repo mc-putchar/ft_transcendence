@@ -42,9 +42,12 @@ class GameRouter4P {
 		const url = 'ws://127.0.0.1:8000/websocket/helauren'; // add username to the tail of this
 		this.gameData = new GameData();
 		this.chat_websocket = new WebSocket(url);
+		this.worker = new Worker("worker.js")
 		this.active_connect;
 		this.used_paddles;
 		this.my_paddle;
+		this.started = false;
+		document.addEventListener('visibilitychange', this.visibilityChange());
 
 		this.waitForConnection().then(() => {
 			console.log("WebSocket is open");
@@ -141,10 +144,21 @@ class GameRouter4P {
 			};
 		});
 	}
+	visibilityChange() {
+		if(this.started == false)
+			return;
+		if(document.hidden) {
+			this.game.pause();
+			this.worker.onmessage({gameData: this.gameData.splice[0]});
+		}
+		else {
+			this.game.start();
+		}
+	}
 	launch_game() {
 		this.game.start();
+		this.started = true;
 	}
-
 	launchReady() {
 		this.player = new Player(this.used_paddles, this.my_paddle);
 		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);

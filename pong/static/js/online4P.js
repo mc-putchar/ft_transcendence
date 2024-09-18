@@ -535,7 +535,7 @@ class Online4P {
 			}
 		} // LEFT PADDLE
 		if(this.player.side == "right" && this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
-			if(!(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {			
+			if(!(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {		
 				if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
 					&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
 						let refAngle = (this.ball.y - this.playerRight.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
@@ -782,16 +782,19 @@ class Online4P {
         });
 	}
 	start() {
-		setTimeout(() => {
-			this.loop();
-		}, 50);
+		this.loop();
+	}
+	pause() {
+		console.log("pong paused");
+		if(this.animRequestId) {
+			cancelAnimationFrame(this.animRequestId);
+		}
 	}
 	stopGame () {
 		console.log("pong stopped and exited");
 		this.stopPong4PGame();
 		// this.audio.stopAudioTrack();
 	}
-
 	stopPong4PGame () {
 		const nav = document.getElementById('nav');
 		const parent = document.getElementById('app');
