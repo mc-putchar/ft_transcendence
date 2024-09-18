@@ -281,7 +281,7 @@ class Online4P {
 	constructor(ws, gameData, param_player) {
 		this.gameData = gameData;
 		console.log("Pong 4P - Starting new game");
-		console.log("SECOND: ", this.gameData);
+		// console.log("SECOND: ", this.gameData);
 		this.ws = ws;
 		this.parent = document.getElementById('app');
 
@@ -624,9 +624,9 @@ class Online4P {
 		this.gameData.update = false;
 	}
 	fetchBall() {
-		console.log("PRE BALL FETCH: ");
-		console.log("ball.x: ", this.ball.x);
-		console.log("ball.y: ", this.ball.y);
+		// console.log("PRE BALL FETCH: ");
+		// console.log("ball.x: ", this.ball.x);
+		// console.log("ball.y: ", this.ball.y);
 		if(!isNaN(this.gameData.ball.x))
 			this.ball.x = this.denormPosX(this.gameData.ball.x);
 		if(!isNaN(this.gameData.ball.y))
@@ -639,78 +639,78 @@ class Online4P {
 			this.ball.speedx = this.denormSpeedX(this.gameData.ball.speedx);
 		if(!isNaN(this.gameData.ball.speedy))
 			this.ball.speedy = this.denormSpeedY(this.gameData.ball.speedy);
-		console.log("POST BALL FETCH: ");
-		console.log("ball.x: ", this.ball.x);
-		console.log("ball.y: ", this.ball.y);
-		console.log("ball.vx: ", this.ball.vx);
-		console.log("ball.vy: ", this.ball.vy);
-		console.log("ball.speedx: ", this.ball.speedx);
-		console.log("ball.speedy: ", this.ball.speedy);
+		// console.log("POST BALL FETCH: ");
+		// console.log("ball.x: ", this.ball.x);
+		// console.log("ball.y: ", this.ball.y);
+		// console.log("ball.vx: ", this.ball.vx);
+		// console.log("ball.vy: ", this.ball.vy);
+		// console.log("ball.speedx: ", this.ball.speedx);
+		// console.log("ball.speedy: ", this.ball.speedy);
 	}
 	fetchAndUpdateFromGameData() {
 
 		this.fetchBall();
 
 		if(this.player.side != "left" && !isNaN(this.gameData.left.dir)) {
-			console.log("fetching left");
-			console.log("data dir: ", this.gameData.left.dir);
-			console.log("player dir: ", this.playerLeft.direction);
-			console.log("pos x: ", this.playerLeft.x);
-			console.log("pos y: ", this.playerLeft.y);
+			// console.log("fetching left");
+			// console.log("data dir: ", this.gameData.left.dir);
+			// console.log("player dir: ", this.playerLeft.direction);
+			// console.log("pos x: ", this.playerLeft.x);
+			// console.log("pos y: ", this.playerLeft.y);
 			this.gameData.left.dir = this.playerLeft.direction;
 			if(!isNaN(this.gameData.left.x)  && isNaN(this.gameData.left.y)) { // would only be called if direction is set to 0, that's when positions are set
 				this.playerLeft.x = this.gameData.left.x;
 				this.playerLeft.y = this.gameData.left.y;
-				console.log("changed pos x: ", this.playerLeft.x);
-				console.log("changed pos y: ", this.playerLeft.y);
+				// console.log("changed pos x: ", this.playerLeft.x);
+				// console.log("changed pos y: ", this.playerLeft.y);
 				this.gameData.left.x = NaN; 
 				this.gameData.left.y = NaN;
 			}
 		}
 		else if(this.player.side != "right" && !isNaN(this.gameData.right.dir)) {
-			console.log("fetching right");
-			console.log("data dir: ", this.gameData.right.dir);
-			console.log("player dir: ", this.playerRight.direction);
-			console.log("pos x: ", this.playerRight.x);
-			console.log("pos y: ", this.playerRight.y);
+			// console.log("fetching right");
+			// console.log("data dir: ", this.gameData.right.dir);
+			// console.log("player dir: ", this.playerRight.direction);
+			// console.log("pos x: ", this.playerRight.x);
+			// console.log("pos y: ", this.playerRight.y);
 			this.gameData.right.dir = this.playerRight.direction;
 			if(!isNaN(this.gameData.right.x)  && isNaN(this.gameData.right.y)) {
 				this.playerRight.x = this.gameData.right.x;
 				this.playerRight.y = this.gameData.right.y;
-				console.log("changed pos x: ", this.playerRight.x);
-				console.log("changed pos y: ", this.playerRight.y);
+				// console.log("changed pos x: ", this.playerRight.x);
+				// console.log("changed pos y: ", this.playerRight.y);
 				this.gameData.right.x = NaN;
 				this.gameData.right.y = NaN;
 			}
 		}
 		else if(this.player.side != "top" && !isNaN(this.gameData.top.dir)) {
-			console.log("fetching top");
-			console.log("data dir: ", this.gameData.right.dir);
-			console.log("player dir: ", this.playerRight.direction);
-			console.log("pos x: ", this.playerTop.x);
-			console.log("pos y: ", this.playerTop.y);
+			// console.log("fetching top");
+			// console.log("data dir: ", this.gameData.right.dir);
+			// console.log("player dir: ", this.playerRight.direction);
+			// console.log("pos x: ", this.playerTop.x);
+			// console.log("pos y: ", this.playerTop.y);
 			this.gameData.top.dir = this.playerTop.direction;
 			if(!isNaN(this.gameData.top.x)  && isNaN(this.gameData.top.y)) {
 				this.playerTop.x = this.gameData.top.x;
 				this.playerTop.y = this.gameData.top.y;
-				console.log("changed pos x: ", this.playerTop.x);
-				console.log("changed pos y: ", this.playerTop.y);
+				// console.log("changed pos x: ", this.playerTop.x);
+				// console.log("changed pos y: ", this.playerTop.y);
 				this.gameData.top.x = NaN;
 				this.gameData.top.y = NaN;
 			}
 		}
 		else if(this.player.side != "bottom" && !isNaN(this.gameData.bottom.dir)) {
-			console.log("fetching bottom");
-			console.log("data dir: ", this.gameData.right.dir);
-			console.log("player dir: ", this.playerRight.direction);
-			console.log("pos x: ", this.playerBottom.x);
-			console.log("pos y: ", this.playerBottom.y);
+			// console.log("fetching bottom");
+			// console.log("data dir: ", this.gameData.right.dir);
+			// console.log("player dir: ", this.playerRight.direction);
+			// console.log("pos x: ", this.playerBottom.x);
+			// console.log("pos y: ", this.playerBottom.y);
 			this.gameData.bottom.dir = this.playerBottom.direction;
 			if(!isNaN(this.gameData.bottom.x)  && isNaN(this.gameData.bottom.y)) {
 				this.playerBottom.x = this.gameData.bottom.x;
 				this.playerBottom.y = this.gameData.bottom.y;
-				console.log("changed pos x: ", this.playerBottom.x);
-				console.log("changed pos y: ", this.playerBottom.y);
+				// console.log("changed pos x: ", this.playerBottom.x);
+				// console.log("changed pos y: ", this.playerBottom.y);
 				this.gameData.bottom.x = NaN;
 				this.gameData.bottom.y = NaN;
 			}
@@ -723,16 +723,16 @@ class Online4P {
 			this.animation.setTimeStamps();
 			this.resetPositions();
 			this.score.updateScore();
-			console.log("GOOAL");
+			// console.log("GOOAL");
 			return ;
 		}
 		if(this.gameData.update == true)
 			this.fetchAndUpdateFromGameData();
 		this.paddleCollision();
-		console.log("ball x", this.ball.x);
-		console.log("ball y", this.ball.y);
-		console.log("ball vx", this.ball.vx);
-		console.log("ball vy", this.ball.vy);
+		// console.log("ball x", this.ball.x);
+		// console.log("ball y", this.ball.y);
+		// console.log("ball vx", this.ball.vx);
+		// console.log("ball vy", this.ball.vy);
 		this.ball.doMove();
 		this.playerLeft.doMove(this.arena);
 		this.playerRight.doMove(this.arena);

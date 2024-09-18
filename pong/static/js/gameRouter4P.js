@@ -42,12 +42,13 @@ class GameRouter4P {
 		const url = 'ws://127.0.0.1:8000/websocket/helauren'; // add username to the tail of this
 		this.gameData = new GameData();
 		this.chat_websocket = new WebSocket(url);
-		this.worker = new Worker("worker.js")
+		this.worker = new Worker('/static/js/Worker.js');
+		console.log("this worker: ", this.worker);
 		this.active_connect;
 		this.used_paddles;
 		this.my_paddle;
 		this.started = false;
-		document.addEventListener('visibilitychange', this.visibilityChange());
+		document.addEventListener('visibilitychange', () => this.visibilityChange());
 
 		this.waitForConnection().then(() => {
 			console.log("WebSocket is open");
@@ -86,10 +87,8 @@ class GameRouter4P {
 			}
 			else if(type == "used_paddles") {
 				this.used_paddles = data.used_paddles.split(' ');
-				console.log("this.used_paddles: ", this.used_paddles);
 				if(!this.my_paddle) {
 					this.my_paddle = find_paddle(this.used_paddles);
-					console.log("paddle: ", this.my_paddle);
 					this.chat_websocket?.send(JSON.stringify(
 						{
 							type: 'added_paddle',
@@ -99,6 +98,12 @@ class GameRouter4P {
 				return;
 			}
 		};
+		this.worker.onmessage = (ev) => {
+			console.log("GAME ROUTER WORKER RECEIVED MESSAGE: ", ev);
+		}
+		this.worker.onerror = (error) => {
+			console.error("Worker error:", error.message);
+		};		
 	}
 	initBall(data) {
 		this.gameData.ball.vx = data.vx;
@@ -107,22 +112,22 @@ class GameRouter4P {
 		this.gameData.ball.speedy = data.speedy;
 	}
 	initDirection(data) {
-		console.log("MOVE: ", data.side);
-		console.log("PRE: ",this.gameData[data.side].dir);
+		// console.log("MOVE: ", data.side);
+		// console.log("PRE: ",this.gameData[data.side].dir);
 
 		this.gameData[data.side].dir = data.dir;
-		console.log("POST: ",this.gameData[data.side].dir);
+		// console.log("POST: ",this.gameData[data.side].dir);
 		this.gameData[data.side].pos.x = data.x;
 		this.gameData[data.side].pos.y = data.y;
 		this.gameData.update = true;
 	}
 	initCollision(data) {
-		console.log("DATA: ", data);
-		console.log("PRE Collision: ");
-		console.log("gameData.ball.x: ", this.gameData.ball.x);
-		console.log("gameData.ball.y: ", this.gameData.ball.y);
-		console.log("gameData.ball.vx: ", this.gameData.ball.vx);
-		console.log("gameData.ball.vy: ", this.gameData.ball.vy);
+		// console.log("DATA: ", data);
+		// console.log("PRE Collision: ");
+		// console.log("gameData.ball.x: ", this.gameData.ball.x);
+		// console.log("gameData.ball.y: ", this.gameData.ball.y);
+		// console.log("gameData.ball.vx: ", this.gameData.ball.vx);
+		// console.log("gameData.ball.vy: ", this.gameData.ball.vy);
 		this.gameData.last_touch = data.last_touch;
 
 		this.gameData.ball.x = data.ball_x;
@@ -131,11 +136,11 @@ class GameRouter4P {
 		this.gameData.ball.vy = data.ball_vy;
 
 		this.gameData.update = true;
-		console.log("POST Collision: ", this.gameData);
-		console.log("gameData.ball.x: ", this.gameData.ball.x);
-		console.log("gameData.ball.y: ", this.gameData.ball.y);
-		console.log("gameData.ball.vx: ", this.gameData.ball.vx);
-		console.log("gameData.ball.vy: ", this.gameData.ball.vy);
+		// console.log("POST Collision: ", this.gameData);
+		// console.log("gameData.ball.x: ", this.gameData.ball.x);
+		// console.log("gameData.ball.y: ", this.gameData.ball.y);
+		// console.log("gameData.ball.vx: ", this.gameData.ball.vx);
+		// console.log("gameData.ball.vy: ", this.gameData.ball.vy);
 	}
 	waitForConnection() {
 		return new Promise((resolve) => {
@@ -145,17 +150,20 @@ class GameRouter4P {
 		});
 	}
 	visibilityChange() {
+		console.log("change");
 		if(this.started == false)
 			return;
 		if(document.hidden) {
 			this.game.pause();
-			this.worker.onmessage({gameData: this.gameData.splice[0]});
+			this.worker.postMessage({hidden: true, game: this.gameData});
 		}
 		else {
+			this.worker.postMessage({hidden: false, game: this.gameData});
 			this.game.start();
 		}
 	}
 	launch_game() {
+		console.log("LAUNCH_GAME");
 		this.game.start();
 		this.started = true;
 	}

@@ -51,8 +51,6 @@ class handle4PGame(WebsocketConsumer):
 		data = json.loads(text_data)
 		type = data.get("type")
 
-		print("RECEIVED:", type)
-
 		if type == "is_ready":
 			handle4PGame.is_ready += 1
 			if(handle4PGame.is_ready == 4):
