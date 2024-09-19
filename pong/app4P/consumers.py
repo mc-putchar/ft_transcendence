@@ -111,27 +111,55 @@ class Data:
 		self.field = Field()
 		self.score = Score()
 		self.old_score = Score()
+		self.goal = False
 		self.animation_time = {"first": 0, "second": 0, "third": 0} # {first: 500, second: 1000, third: 1500};
 
+	async def update_score(self):
+		print("scorer: ", self.score.last_touch)
+		print("conceder: ", self.score.conceded)
+		if self.score.last_touch == "left":
+			self.score.left += 1
+		elif self.score.last_touch == "right":
+			self.score.right += 1
+		elif self.score.last_touch == "top":
+			self.score.top += 1
+		elif self.score.last_touch == "bottom":
+			self.score.bottom += 1
+		
+		if self.score.conceded.find("left") != -1:
+			self.score.left -= 1
+		elif self.score.conceded.find("right") !=-1:
+			self.score.right -= 1
+		elif self.score.conceded.find("top") !=-1:
+			self.score.top -= 1
+		elif self.score.conceded.find("bottom") !=-1:
+			self.score.bottom -= 1
+			
 	async def check_goal(self):
 		self.score.conceded = ""
-		goal = False
+		self.goal = False
 
 		if self.ball.pos_x < 0:
-			goal = True
+			self.goal = True
 			self.score.conceded += "left"
 		elif self.ball.pos_x > 100:
-			goal = True
+			self.goal = True
 			self.score.conceded += "right"
 
 		if self.ball.pos_y < 0:
-			goal = True
+			self.goal = True
 			self.score.conceded += "top"
 		elif self.ball.pos_y > 100:
-			goal = True
+			self.goal = True
 			self.score.conceded += "bottom"
 		
-		if goal == True:
+		if self.goal == True:
+			self.old_score = self.score
+			await self.update_score()
+			print("self.score.left: ", self.score.left)
+			print("self.score.right: ", self.score.right)
+			print("self.score.top: ", self.score.top)
+			print("self.score.bottom: ", self.score.bottom)
 			self.ball.__init__()
 			current_time = time.time()
 			self.animation_time["first"] = 500 + current_time
@@ -192,6 +220,10 @@ class Data:
 		await self.field.move()
 
 	async def update(self):
+		if self.goal == True:
+			self.score.last_touch = ""
+			self.score.conceded = ""
+			self.goal = False
 		await self.check_goal()
 		await self.check_collisions()
 		await self.move()

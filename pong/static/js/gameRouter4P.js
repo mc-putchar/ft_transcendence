@@ -122,7 +122,9 @@ class GameRouter4P {
 		this.gameData.goals["bottom"] = data.score_bottom;
 
         this.gameData.conceded = data.conceded;
-        this.gameData.animation_time[data.side] = data.animation_time;
+		this.gameData.animation_time["first"] = data.animation_time_first;
+		this.gameData.animation_time["second"] = data.animation_time_second;
+		this.gameData.animation_time["third"] = data.animation_time_third;
 		console.log("this.gameData", this.gameData);
 	}
 
