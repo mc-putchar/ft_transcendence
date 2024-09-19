@@ -160,7 +160,6 @@ class Data:
 			print("self.score.right: ", self.score.right)
 			print("self.score.top: ", self.score.top)
 			print("self.score.bottom: ", self.score.bottom)
-			self.ball.__init__()
 			current_time = time.time()
 			self.animation_time["first"] = 500 + current_time
 			self.animation_time["second"] = 1000 + current_time
@@ -223,7 +222,9 @@ class Data:
 		if self.goal == True:
 			self.score.last_touch = ""
 			self.score.conceded = ""
+			self.ball.__init__()
 			self.goal = False
+			await asyncio.sleep(1.5)
 		await self.check_goal()
 		await self.check_collisions()
 		await self.move()
