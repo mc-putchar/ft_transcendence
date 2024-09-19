@@ -30,7 +30,7 @@ class GameData {
 		this.last_touch = "none";
 		this.conceded = "none";
 		this.goals = {left : 0, right : 0, top : 0, bottom : 0};
-		this.ball = {x: NaN, y: NaN};
+		this.ball = {x: NaN, y: NaN, vx: NaN, vy: NaN, speedx: NaN, speedy: NaN};
 		this.left = {x: NaN, y: NaN };
 		this.right = {x: NaN, y: NaN };
 		this.top = {x: NaN, y: NaN };
@@ -72,9 +72,6 @@ class GameRouter4P {
 				console.log("Game is launching");
 				this.launch_game();
 			}
-			else if(type == "player_direction") {
-				this.initDirection(data);
-			}
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
 				console.log("!!!!!!!!this.active_connect", this.active_connect);
@@ -97,14 +94,6 @@ class GameRouter4P {
 			}
 		};
 	}
-	initDirection(data) {
-		// console.log("MOVE: ", data.side);
-		// console.log("PRE: ",this.gameData[data.side].dir);\
-		if(this.data.side != this.player.paddle_side) {
-			this.gameData[data.side].dir = data.dir;
-		}
-		// console.log("POST: ",this.gameData[data.side].dir);
-	}
 	updateGameData(data){
 		this.gameData.last_touch = data.last_touch;
 		this.gameData.conceded = data.conceded;
@@ -112,7 +101,9 @@ class GameRouter4P {
 		this.gameData.ball.x = data.ball_x;
 		this.gameData.ball.y = data.ball_y;
 		this.gameData.ball.vx = data.ball_vx;
-		this.gameData.ball.vy = data.ball_yv;
+		this.gameData.ball.vy = data.ball_vy;
+		this.gameData.ball.speedx = data.speedx;
+		this.gameData.ball.speedy = data.speedy;
 
 		this.gameData.left.y = data.left_y;
 		this.gameData.left.x = data.left_x;

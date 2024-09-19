@@ -19,7 +19,7 @@ const SCORE_LIMIT = 10;
 
 const BALL_COLOR = "red";
 const PADDLE_COLOR = "green";
-const DEBUG_KEY = false;
+const DEBUG_KEY = true;
 
 class Arena {
 	constructor(ctxwidth, ctxheight) {
@@ -116,9 +116,15 @@ class Player {
 			}
 		}
 	}
-	drawPaddle(ctx) {
+	drawPaddle(ctx, player_side) {
+		console.log(this.side);
+		console.log(player_side);
 		ctx.fillStyle = PADDLE_COLOR;
 		ctx.strokeStyle = PADDLE_COLOR;
+		if(player_side == this.side) {
+			ctx.fillStyle = "yellow";
+            ctx.strokeStyle = "yellow";
+		}
 		if(this.side == "left" || this.side == "right") {
 			ctx.fillRect(this.x - this.width / 2, this.y - this.len / 2, this.width, this.len);
 		}
@@ -305,6 +311,8 @@ class Online4P {
 		this.context = this.canvas.getContext("2d");
 		this.arena = new Arena(this.canvas.width, this.canvas.height);
 		this.player = new Player(param_player.paddle_side, this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		console.log("!!!THIS PLAYER: ", this.player);
+		console.log("!!!THIS PLAYER SIDE: ", this.player.side);
 		this.playerLeft = new Player("left", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerRight = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerBottom = new Player("bottom", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -435,13 +443,12 @@ class Online4P {
 			this.score.drawBigCurrScore(this.context);
 		}
 		this.arena.drawArena(this.context);
-		this.playerLeft.drawPaddle(this.context);
-		this.playerRight.drawPaddle(this.context);
-		this.playerTop.drawPaddle(this.context);
-		this.playerBottom.drawPaddle(this.context);
+		this.playerLeft.drawPaddle(this.context, this.player.side);
+		this.playerRight.drawPaddle(this.context, this.player.side);
+		this.playerTop.drawPaddle(this.context, this.player.side);
+		this.playerBottom.drawPaddle(this.context, this.player.side);
 	}
 	loop() {
-		console.log("loop");
 		let now = Date.now();
 		if(now < this.animation.times.third) {
 			this.kickOff = true;
@@ -557,27 +564,17 @@ class Online4P {
 		this.playerBottom.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 	}
 	fetchBall() {
-		// console.log("PRE BALL FETCH: ");
-		// console.log("ball.x: ", this.ball.x);
-		// console.log("ball.y: ", this.ball.y);
 			this.ball.x = this.denormPosX(this.gameData.ball.x);
 			this.ball.y = this.denormPosY(this.gameData.ball.y);
 			this.ball.vx = this.gameData.ball.vx;
 			this.ball.vy = this.gameData.ball.vy;
 			this.ball.speedx = this.denormSpeedX(this.gameData.ball.speedx);
 			this.ball.speedy = this.denormSpeedY(this.gameData.ball.speedy);
-		// console.log("POST BALL FETCH: ");
-		// console.log("ball.x: ", this.ball.x);
-		// console.log("ball.y: ", this.ball.y);
-		// console.log("ball.vx: ", this.ball.vx);
-		// console.log("ball.vy: ", this.ball.vy);
-		// console.log("ball.speedx: ", this.ball.speedx);
-		// console.log("ball.speedy: ", this.ball.speedy);
 	}
 	fetchAndUpdateFromGameData() {
 
 		this.fetchBall();
-		
+
 		this.score.goals.left = this.gameData.goals.left;
 		this.score.goals.right = this.gameData.goals.right;
 		this.score.goals.top = this.gameData.goals.top;
@@ -592,35 +589,17 @@ class Online4P {
 		this.playerTop.direction = this.gameData.top.dir;
 		this.playerBottom.direction = this.gameData.bottom.dir;
 
-		this.playerLeft.x = this.gameData.left.x;
-		this.playerLeft.y = this.gameData.left.y;
-		this.playerTop.x = this.gameData.top.x;
-		this.playerTop.y = this.gameData.top.y;
-		this.playerBottom.x = this.gameData.bottom.x;
-		this.playerBottom.y = this.gameData.bottom.y;
-		this.playerRight.x = this.gameData.right.x;
-		this.playerRight.y = this.gameData.right.y;
+		this.playerLeft.x = this.denormPosX(this.gameData.left.x);
+		this.playerLeft.y = this.denormPosY(this.gameData.left.y);
+		this.playerTop.x = this.denormPosX(this.gameData.top.x);
+		this.playerTop.y = this.denormPosY(this.gameData.top.y);
+		this.playerBottom.x = this.denormPosX(this.gameData.bottom.x);
+		this.playerBottom.y = this.denormPosY(this.gameData.bottom.y);
+		this.playerRight.x = this.denormPosX(this.gameData.right.x);
+		this.playerRight.y = this.denormPosY(this.gameData.right.y);
 
 		console.log("GameData Received");
 		console.log(this.gameData);
-
-		console.log("ball x", this.ball.x);
-		console.log("ball y", this.ball.y);
-		console.log("ball vx", this.ball.vx);
-		console.log("ball vy", this.ball.vy);
-		console.log("ball speedx", this.ball.speedx);
-        console.log("ball speedy", this.ball.speedy);
-
-        console.log("playerLeft x", this.playerLeft.x);
-        console.log("playerLeft y", this.playerLeft.y);
-        console.log("playerRight x", this.playerRight.x);
-        console.log("playerRight y", this.playerRight.y);
-        console.log("playerTop x", this.playerTop.x);
-        console.log("playerTop y", this.playerTop.y);
-        console.log("playerBottom x", this.playerBottom.x);
-        console.log("playerBottom y", this.playerBottom.y);
-
-        console.log("animation times", this.animation.times);
 	}
 	update() {
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -628,7 +607,6 @@ class Online4P {
 			this.animation.setTimeStamps();
 			this.resetPositions();
 			this.score.updateScore();
-			// console.log("GOOAL");
 			return ;
 		}
 		this.paddleCollision();
@@ -642,10 +620,10 @@ class Online4P {
 	draw() {
 		this.arena.drawArena(this.context);
 		this.score.drawScore(this.context, this.arena._height, this.arena._startX, this.arena._startY);
-		this.playerLeft.drawPaddle(this.context);
-		this.playerRight.drawPaddle(this.context);
-		this.playerTop.drawPaddle(this.context);
-		this.playerBottom.drawPaddle(this.context);
+		this.playerLeft.drawPaddle(this.context, this.player.side);
+		this.playerRight.drawPaddle(this.context, this.player.side);
+		this.playerTop.drawPaddle(this.context, this.player.side);
+		this.playerBottom.drawPaddle(this.context, this.player.side);
 		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
 	}
 	getReady() {

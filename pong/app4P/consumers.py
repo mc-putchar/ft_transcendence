@@ -51,8 +51,8 @@ class Ball:
 		self.speedy += self.incr_speed
 
 	async def move(self):
-		self.pos_x += self.speedx * 1000 / 60
-		self.pos_y += self.speedy * 1000 / 60
+		self.pos_x += self.vx * self.speedx * 1000 / 60
+		self.pos_y += self.vy * self.speedy * 1000 / 60
 
 class Field:
 
@@ -73,18 +73,28 @@ class Field:
 		for key in self.paddle:
 			if(self.paddle[key]["dir"] == 0):
 				continue
-			if(self.paddle[key] == "left" or self.paddle[key] == "right"):
+			print("key: ", key)
+			print("dir: ", self.paddle[key]["dir"])
+			print("start x: ", self.paddle[key]["x"])
+			print("start y: ", self.paddle[key]["y"])
+			if(key == "left" or key == "right"):
+				print("pre left or right: ", self.paddle[key]["y"])
 				self.paddle[key]["y"] += self.paddle_speed * self.paddle[key]["dir"]
+				print("post left or right: ", self.paddle[key]["y"])
 				if(self.paddle[key]["y"] < self.limit_min):
 					self.paddle[key]["y"] = self.limit_min
 				elif(self.paddle[key]["y"] > self.limit_max):
 					self.paddle[key]["y"] = self.limit_max
-			elif (self.paddle[key] == "top" or self.paddle[key] == "bottom"):
+			elif (key == "top" or key == "bottom"):
+				print("pre top or bottom: ", self.paddle[key]["x"])
 				self.paddle[key]["x"] += self.paddle_speed * self.paddle[key]["dir"]
+				print("post top or bottom: ", self.paddle[key]["x"])
 				if(self.paddle[key]["x"] < self.limit_min):
 					self.paddle[key]["x"] = self.limit_min
 				elif(self.paddle[key]["x"] > self.limit_max):
 					self.paddle[key]["x"] = self.limit_max
+			print("end x: ", self.paddle[key]["x"])
+			print("end y: ", self.paddle[key]["y"])
 
 class Score:
 	def __init__(self):
@@ -178,9 +188,7 @@ class Data:
 					self.score.last_touch = "bottom"
 
 	async def move(self):
-		print("PRE: x:", self.ball.pos_x, ", y:", self.ball.pos_y)
 		await self.ball.move()
-		print("POST: x:", self.ball.pos_x, ", y:", self.ball.pos_y)
 		await self.field.move()
 
 	async def update(self):
@@ -190,127 +198,129 @@ class Data:
 
 class handle4PGame(AsyncWebsocketConsumer):
 
-    active_connections = 0
-    used_paddles = []
-    is_ready = 0
-    group_name = 'game_group'
+	active_connections = 0
+	used_paddles = []
+	is_ready = 0
+	group_name = 'game_group'
 
-    data = Data()
+	data = Data()
 
-    async def game_loop(self):
-        while True:
-            print('Game loop started')
-            await handle4PGame.data.update()
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    'type': 'game_message',
-                    'message': json.dumps({
-                        'type': 'update_game_data',
-                        'last_touch': handle4PGame.data.score.last_touch,
-                        'conceded': handle4PGame.data.score.conceded,
-                        'score_left': handle4PGame.data.score.left,
-                        'score_right': handle4PGame.data.score.right,
-                        'score_top': handle4PGame.data.score.top,
-                        'score_bottom': handle4PGame.data.score.bottom,
-                        'animation_time_first': handle4PGame.data.animation_time["first"],
-                        'animation_time_second': handle4PGame.data.animation_time["second"],
-                        'animation_time_third': handle4PGame.data.animation_time["third"],
-                        'ball_x': handle4PGame.data.ball.pos_x,
-                        'ball_y': handle4PGame.data.ball.pos_y,
+	async def game_loop(self):
+		while True:
+			await handle4PGame.data.update()
+			await self.channel_layer.group_send(
+				self.group_name,
+				{
+					'type': 'game_message',
+					'message': json.dumps({
+						'type': 'update_game_data',
+						'last_touch': handle4PGame.data.score.last_touch,
+						'conceded': handle4PGame.data.score.conceded,
+						'score_left': handle4PGame.data.score.left,
+						'score_right': handle4PGame.data.score.right,
+						'score_top': handle4PGame.data.score.top,
+						'score_bottom': handle4PGame.data.score.bottom,
+						'animation_time_first': handle4PGame.data.animation_time["first"],
+						'animation_time_second': handle4PGame.data.animation_time["second"],
+						'animation_time_third': handle4PGame.data.animation_time["third"],
+
+						'ball_x': handle4PGame.data.ball.pos_x,
+						'ball_y': handle4PGame.data.ball.pos_y,
+						'ball_vx': handle4PGame.data.ball.vx,
+						'ball_vy': handle4PGame.data.ball.vy,
+						'speedx': handle4PGame.data.ball.speedx,
+						'speedy': handle4PGame.data.ball.speedy,
+						
 						'left_x': handle4PGame.data.field.paddle["left"]["x"],
-                        'left_y': handle4PGame.data.field.paddle["left"]["y"],
-                        'right_x': handle4PGame.data.field.paddle["right"]["x"],
-                        'right_y': handle4PGame.data.field.paddle["right"]["y"],
-                        'top_x': handle4PGame.data.field.paddle["top"]["x"],
-                        'top_y': handle4PGame.data.field.paddle["top"]["y"],
-                        'bottom_x': handle4PGame.data.field.paddle["bottom"]["x"],
-                        'bottom_y': handle4PGame.data.field.paddle["bottom"]["y"],
-                    })
-                }
-            )
-            await asyncio.sleep(0.016)
+						'left_y': handle4PGame.data.field.paddle["left"]["y"],
+						'right_x': handle4PGame.data.field.paddle["right"]["x"],
+						'right_y': handle4PGame.data.field.paddle["right"]["y"],
+						'top_x': handle4PGame.data.field.paddle["top"]["x"],
+						'top_y': handle4PGame.data.field.paddle["top"]["y"],
+						'bottom_x': handle4PGame.data.field.paddle["bottom"]["x"],
+						'bottom_y': handle4PGame.data.field.paddle["bottom"]["y"]
+					})
+				}
+			)
+			await asyncio.sleep(0.016)
 
-    async def connect(self):
-        await self.accept()
-        await self.channel_layer.group_add(
-            self.group_name,
-            self.channel_name
-        )
-        handle4PGame.active_connections += 1
+	async def connect(self):
+		await self.accept()
+		await self.channel_layer.group_add(
+			self.group_name,
+			self.channel_name
+		)
+		handle4PGame.active_connections += 1
 
-    async def receive(self, text_data=None, bytes_data=None):
-        data = json.loads(text_data)
-        type = data.get("type")
+	async def receive(self, text_data=None, bytes_data=None):
+		data = json.loads(text_data)
+		type = data.get("type")
 
-        if type == "is_ready":
-            handle4PGame.is_ready += 1
-            if handle4PGame.is_ready == 4:
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {
-                        'type': 'game_message',
-                        'message': json.dumps({
-                            'type': "launch_game"
-                        })
-                    }
-                )
-                await self.game_loop()  # Start game loop once all players are ready
-        elif type == "player_direction":
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    'type': 'game_message',
-                    'message': text_data
-                }
-            )
-        elif type == "added_paddle":
-            print("ADDED: ", data.get("added_paddle"))
-            handle4PGame.used_paddles.append(data.get("added_paddle"))
-        elif type == "get_used_paddles":
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    'type': 'game_message',
-                    'message': json.dumps({
-                        "type": "used_paddles",
-                        "used_paddles": ' '.join(handle4PGame.used_paddles)
-                    })
-                }
-            )
-        elif type == "get_active_connections":
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    'type': 'game_message',
-                    'message': json.dumps({
-                        "type": "active_connections",
-                        "active_connections": str(handle4PGame.active_connections),
-                    })
-                }
-            )
-        elif type == "get_ball":
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    'type': 'game_message',
-                    'message': json.dumps({
-                        "type": "ball",
-                        "vx": str(handle4PGame.data.ball.vx),
-                        "vy": str(handle4PGame.data.ball.vy),
-                        "speedx": str(handle4PGame.data.ball.speedx),
-                        "speedy": str(handle4PGame.data.ball.speedy),
-                    })
-                }
-            )
+		print("Received: ", data)
 
-    async def game_message(self, event):
-        message = event['message']
-        await self.send(text_data=message)
+		if type == "is_ready":
+			handle4PGame.is_ready += 1
+			if handle4PGame.is_ready == 4:
+				await self.channel_layer.group_send(
+					self.group_name,
+					{
+						'type': 'game_message',
+						'message': json.dumps({
+							'type': "launch_game"
+						})
+					}
+				)
+				await self.game_loop()  # Start game loop once all players are ready
+		elif type == "player_direction":
+			handle4PGame.data.field.paddle[data.get("side")]["dir"] = data.get("dir")
+			print("field paddle dir: ", handle4PGame.data.field.paddle[data.get("side")]["dir"])
+		elif type == "added_paddle":
+			print("ADDED: ", data.get("added_paddle"))
+			handle4PGame.used_paddles.append(data.get("added_paddle"))
+		elif type == "get_used_paddles":
+			await self.channel_layer.group_send(
+				self.group_name,
+				{
+					'type': 'game_message',
+					'message': json.dumps({
+						"type": "used_paddles",
+						"used_paddles": ' '.join(handle4PGame.used_paddles)
+					})
+				}
+			)
+		elif type == "get_active_connections":
+			await self.channel_layer.group_send(
+				self.group_name,
+				{
+					'type': 'game_message',
+					'message': json.dumps({
+						"type": "active_connections",
+						"active_connections": str(handle4PGame.active_connections),
+					})
+				}
+			)
+		elif type == "get_ball":
+			await self.channel_layer.group_send(
+				self.group_name,
+				{
+					'type': 'game_message',
+					'message': json.dumps({
+						"type": "ball",
+						"vx": str(handle4PGame.data.ball.vx),
+						"vy": str(handle4PGame.data.ball.vy),
+						"speedx": str(handle4PGame.data.ball.speedx),
+						"speedy": str(handle4PGame.data.ball.speedy),
+					})
+				}
+			)
 
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.group_name,
-            self.channel_name
-        )
-        handle4PGame.active_connections -= 1
+	async def game_message(self, event):
+		message = event['message']
+		await self.send(text_data=message)
+
+	async def disconnect(self, close_code):
+		await self.channel_layer.group_discard(
+			self.group_name,
+			self.channel_name
+		)
+		handle4PGame.active_connections -= 1
