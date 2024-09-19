@@ -75,9 +75,6 @@ class GameRouter4P {
 			else if(type == "player_direction") {
 				this.initDirection(data);
 			}
-			// else if(type == "ball") {
-			// 	this.initBall(data);
-			// }
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
 				console.log("!!!!!!!!this.active_connect", this.active_connect);
@@ -100,10 +97,6 @@ class GameRouter4P {
 			}
 		};
 	}
-	initBall(data) {
-		this.gameData.ball.x = data.ball_x;
-		this.gameData.ball.y = data.ball_y;
-	}
 	initDirection(data) {
 		// console.log("MOVE: ", data.side);
 		// console.log("PRE: ",this.gameData[data.side].dir);\
@@ -118,11 +111,17 @@ class GameRouter4P {
 
 		this.gameData.ball.x = data.ball_x;
 		this.gameData.ball.y = data.ball_y;
+		this.gameData.ball.vx = data.ball_vx;
+		this.gameData.ball.vy = data.ball_yv;
 
 		this.gameData.left.y = data.left_y;
+		this.gameData.left.x = data.left_x;
 		this.gameData.right.y = data.right_y;
+		this.gameData.right.x = data.right_x;
 		this.gameData.top.x = data.top_x;
+		this.gameData.top.y = data.top_y;
 		this.gameData.bottom.x = data.bottom_x;
+		this.gameData.bottom.y = data.bottom_y;
 
 		this.gameData.goals[data.side] = data.goals;
 

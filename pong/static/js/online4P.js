@@ -560,17 +560,11 @@ class Online4P {
 		// console.log("PRE BALL FETCH: ");
 		// console.log("ball.x: ", this.ball.x);
 		// console.log("ball.y: ", this.ball.y);
-		if(!isNaN(this.gameData.ball.x))
 			this.ball.x = this.denormPosX(this.gameData.ball.x);
-		if(!isNaN(this.gameData.ball.y))
 			this.ball.y = this.denormPosY(this.gameData.ball.y);
-		if(!isNaN(this.gameData.ball.vx))
 			this.ball.vx = this.gameData.ball.vx;
-		if(!isNaN(this.gameData.ball.vy))
 			this.ball.vy = this.gameData.ball.vy;
-		if(!isNaN(this.gameData.ball.speedx))
 			this.ball.speedx = this.denormSpeedX(this.gameData.ball.speedx);
-		if(!isNaN(this.gameData.ball.speedy))
 			this.ball.speedy = this.denormSpeedY(this.gameData.ball.speedy);
 		// console.log("POST BALL FETCH: ");
 		// console.log("ball.x: ", this.ball.x);
@@ -588,11 +582,45 @@ class Online4P {
 		this.score.goals.right = this.gameData.goals.right;
 		this.score.goals.top = this.gameData.goals.top;
 		this.score.goals.bottom = this.gameData.goals.bottom;
+
+		this.animation.times["first"] = this.gameData.first;
+		this.animation.times["second"] = this.gameData.second;
+		this.animation.times["third"] = this.gameData.third;
 		
 		this.playerLeft.direction = this.gameData.left.dir;
 		this.playerRight.direction = this.gameData.right.dir;
 		this.playerTop.direction = this.gameData.top.dir;
 		this.playerBottom.direction = this.gameData.bottom.dir;
+
+		this.playerLeft.x = this.gameData.left.x;
+		this.playerLeft.y = this.gameData.left.y;
+		this.playerTop.x = this.gameData.top.x;
+		this.playerTop.y = this.gameData.top.y;
+		this.playerBottom.x = this.gameData.bottom.x;
+		this.playerBottom.y = this.gameData.bottom.y;
+		this.playerRight.x = this.gameData.right.x;
+		this.playerRight.y = this.gameData.right.y;
+
+		console.log("GameData Received");
+		console.log(this.gameData);
+
+		console.log("ball x", this.ball.x);
+		console.log("ball y", this.ball.y);
+		console.log("ball vx", this.ball.vx);
+		console.log("ball vy", this.ball.vy);
+		console.log("ball speedx", this.ball.speedx);
+        console.log("ball speedy", this.ball.speedy);
+
+        console.log("playerLeft x", this.playerLeft.x);
+        console.log("playerLeft y", this.playerLeft.y);
+        console.log("playerRight x", this.playerRight.x);
+        console.log("playerRight y", this.playerRight.y);
+        console.log("playerTop x", this.playerTop.x);
+        console.log("playerTop y", this.playerTop.y);
+        console.log("playerBottom x", this.playerBottom.x);
+        console.log("playerBottom y", this.playerBottom.y);
+
+        console.log("animation times", this.animation.times);
 	}
 	update() {
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -604,10 +632,7 @@ class Online4P {
 			return ;
 		}
 		this.paddleCollision();
-		// console.log("ball x", this.ball.x);
-		// console.log("ball y", this.ball.y);
-		// console.log("ball vx", this.ball.vx);
-		// console.log("ball vy", this.ball.vy);
+
 		this.ball.doMove();
 		this.playerLeft.doMove(this.arena);
 		this.playerRight.doMove(this.arena);
