@@ -373,42 +373,11 @@ class Online4P {
 		ret_y = ret_y / this.arena._height * 100;
 		return ret_y;
 	}
-	sendPaddleCollision() {
-		console.log("sending ball_x: ", this.normalizedPosX(this.ball.x));
-		console.log("sending ball_y: ", this.normalizedPosX(this.ball.y));
-		this.ws?.send(JSON.stringify({
-			"type": "paddle_collision",
-			"last_touch": this.score.lastTouch,
-			"ball_x":this.normalizedPosX(this.ball.x),
-			"ball_y":this.normalizedPosY(this.ball.y),
-			"ball_vx":this.ball.vx,
-			"ball_vy":this.ball.vy,
-		}))
-	}
 	sendPlayerDirection() {
-		let ret_x;
-		let ret_y;
-		if(this.player.direction == 0) {
-			ret_x = this.normalizedPosX(this.player.x);
-			ret_y = this.normalizedPosY(this.player.y);
-		}
-		else {
-			ret_x = NaN;
-			ret_y = NaN;
-		}
 		this.ws?.send(JSON.stringify({
 			"type": "player_direction",
 			"side": this.player.side,
 			"dir": this.player.direction,
-			"x": ret_x,
-			"y": ret_y,
-		}))
-	}
-	sendGoal() {
-		this.ws?.send(JSON.stringify({
-			"type": "goal",
-			"conceded": this.score.conceded,
-			"last_touch": this.score.lastTouch
 		}))
 	}
 	keydown(key) {
@@ -432,22 +401,6 @@ class Online4P {
 			default:
 				break;
 		}
-		switch(this.player.side) {
-			case "left":
-				this.playerLeft.direction = this.player.direction;
-				break;
-			case "right":
-				this.playerRight.direction = this.player.direction;
-				break;
-			case "top":
-				this.playerTop.direction = this.player.direction;
-				break;
-			case "bottom":
-				this.playerBottom.direction = this.player.direction;
-				break;
-			default:
-				break;
-		}
 		// console.log("PRE SENDING: ", this.player.direction);
 		if(DEBUG_KEY == true)
 			console.log("key down: ", this.player.keys_active);
@@ -464,23 +417,6 @@ class Online4P {
 		if(this.player.keys_active == 0)
 			this.player.direction = 0;
 		this.sendPlayerDirection();
-
-		switch(this.player.side) {
-			case "left":
-				this.playerLeft.direction = this.player.direction;
-				break;
-			case "right":
-				this.playerRight.direction = this.player.direction;
-				break;
-			case "top":
-				this.playerTop.direction = this.player.direction;
-				break;
-			case "bottom":
-				this.playerBottom.direction = this.player.direction;
-				break;
-			default:
-				break;
-		}
 		if(DEBUG_KEY == true)
 			console.log("key up: ", this.player.keys_active);
 	}
@@ -490,7 +426,7 @@ class Online4P {
 			this.score.drawGolazo(this.context);
 			this.score.drawPrevScore(this.context);
 		}
-		else if(this.animation.times.second != null && now < this.animation.times.second) {
+			else if(this.animation.times.second != null && now < this.animation.times.second) {
 			this.score.drawGolazo(this.context);
 			this.score.drawBigPrevScore(this.context);
 		}
@@ -505,6 +441,7 @@ class Online4P {
 		this.playerBottom.drawPaddle(this.context);
 	}
 	loop() {
+		console.log("loop");
 		let now = Date.now();
 		if(now < this.animation.times.third) {
 			this.kickOff = true;
@@ -537,7 +474,6 @@ class Online4P {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "left";
-						this.sendPaddleCollision();
 						// this.audio.playTone(this.ball.speedx);
 					}
 			}
@@ -551,7 +487,6 @@ class Online4P {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "right";
-						this.sendPaddleCollision();
 						// this.audio.playTone(this.ball.speedx);
 				}
 			}
@@ -569,7 +504,6 @@ class Online4P {
 					
 					this.ball.speed_up();
 					this.score.lastTouch = "top";
-					this.sendPaddleCollision();
 					// this.audio.playTone(this.ball.speedx);
 				}
 			}
@@ -586,7 +520,6 @@ class Online4P {
 	
 					this.ball.speed_up();
 					this.score.lastTouch = "bottom";
-					this.sendPaddleCollision();
 					// this.audio.playTone(this.ball.speedx);
 				}
 			}
@@ -712,8 +645,6 @@ class Online4P {
         this.button.addEventListener('click', () => {
 			console.log("CLICKED");
 			if(this.button.textContent == 'Click Me') {
-				let music = new Audio('/static/music.mp3');
-				music.play();
 				console.log("SENDING");
 				this.ws?.send(JSON.stringify({
 					"type": "is_ready",

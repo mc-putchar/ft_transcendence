@@ -28,12 +28,13 @@ class Player {
 class GameData {
 	constructor() {
 		this.last_touch = "none";
+		this.conceded = "none";
 		this.goals = {left : 0, right : 0, top : 0, bottom : 0};
-		this.ball = {x: NaN, y: NaN, vx : NaN, vy: NaN, speedx : NaN, speedy: NaN};
-		this.left = { dir: NaN, pos: { x: NaN, y: NaN } };
-		this.right = { dir: NaN, pos: { x: NaN, y: NaN } };
-		this.top = { dir: NaN, pos: { x: NaN, y: NaN } };
-		this.bottom = { dir: NaN, pos: { x: NaN, y: NaN } };
+		this.ball = {x: NaN, y: NaN};
+		this.left = {x: NaN, y: NaN };
+		this.right = {x: NaN, y: NaN };
+		this.top = {x: NaN, y: NaN };
+		this.bottom = {x: NaN, y: NaN };
 		this.animation_time = {first: 0, second: 0, third: 0}
 	}
 }
@@ -47,7 +48,6 @@ class GameRouter4P {
 		this.used_paddles;
 		this.my_paddle;
 		this.started = false;
-		document.addEventListener('visibilitychange', () => this.visibilityChange());
 
 		this.waitForConnection().then(() => {
 			console.log("WebSocket is open");
@@ -61,21 +61,23 @@ class GameRouter4P {
 
 		this.chat_websocket.onmessage = (event) => {
 
+			console.log("received:", event.data);
 			const data = JSON.parse(event.data);
 			const type = data.type;
 
-			if (type == "launch_game") {
+			if (type == "update_game_data") {
+				this.updateGameData(data);
+			}
+			else if (type == "launch_game") {
+				console.log("Game is launching");
 				this.launch_game();
 			}
-			if(type == "player_direction") {
+			else if(type == "player_direction") {
 				this.initDirection(data);
 			}
-			else if(type == "paddle_collision") {
-				this.initCollision(data);
-			}
-			else if(type == "ball") {
-				this.initBall(data);
-			}
+			// else if(type == "ball") {
+			// 	this.initBall(data);
+			// }
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
 				console.log("!!!!!!!!this.active_connect", this.active_connect);
@@ -97,50 +99,43 @@ class GameRouter4P {
 				return;
 			}
 		};
-		this.worker.onmessage = (ev) => {
-			console.log("GAME ROUTER WORKER RECEIVED MESSAGE: ", ev);
-		}
-		this.worker.onerror = (error) => {
-			console.error("Worker error:", error.message);
-		};		
 	}
 	initBall(data) {
-		this.gameData.ball.vx = data.vx;
-		this.gameData.ball.vy = data.vy;
-		this.gameData.ball.speedx = data.speedx;
-		this.gameData.ball.speedy = data.speedy;
+		this.gameData.ball.x = data.ball_x;
+		this.gameData.ball.y = data.ball_y;
 	}
 	initDirection(data) {
 		// console.log("MOVE: ", data.side);
-		// console.log("PRE: ",this.gameData[data.side].dir);
-
-		this.gameData[data.side].dir = data.dir;
+		// console.log("PRE: ",this.gameData[data.side].dir);\
+		if(this.data.side != this.player.paddle_side) {
+			this.gameData[data.side].dir = data.dir;
+		}
 		// console.log("POST: ",this.gameData[data.side].dir);
-		this.gameData[data.side].pos.x = data.x;
-		this.gameData[data.side].pos.y = data.y;
-		this.gameData.update = true;
 	}
-	initCollision(data) {
-		// console.log("DATA: ", data);
-		// console.log("PRE Collision: ");
-		// console.log("gameData.ball.x: ", this.gameData.ball.x);
-		// console.log("gameData.ball.y: ", this.gameData.ball.y);
-		// console.log("gameData.ball.vx: ", this.gameData.ball.vx);
-		// console.log("gameData.ball.vy: ", this.gameData.ball.vy);
+	updateGameData(data){
 		this.gameData.last_touch = data.last_touch;
+		this.gameData.conceded = data.conceded;
 
 		this.gameData.ball.x = data.ball_x;
 		this.gameData.ball.y = data.ball_y;
-		this.gameData.ball.vx = data.ball_vx;
-		this.gameData.ball.vy = data.ball_vy;
 
-		this.gameData.update = true;
-		// console.log("POST Collision: ", this.gameData);
-		// console.log("gameData.ball.x: ", this.gameData.ball.x);
-		// console.log("gameData.ball.y: ", this.gameData.ball.y);
-		// console.log("gameData.ball.vx: ", this.gameData.ball.vx);
-		// console.log("gameData.ball.vy: ", this.gameData.ball.vy);
+		this.gameData.left.y = data.left_y;
+		this.gameData.right.y = data.right_y;
+		this.gameData.top.x = data.top_x;
+		this.gameData.bottom.x = data.bottom_x;
+
+		this.gameData.goals[data.side] = data.goals;
+
+		this.gameData.goals["left"] = data.score_left;
+		this.gameData.goals["right"] = data.score_right;
+		this.gameData.goals["top"] = data.score_top;
+		this.gameData.goals["bottom"] = data.score_bottom;
+
+        this.gameData.conceded = data.conceded;
+        this.gameData.animation_time[data.side] = data.animation_time;
+		console.log("this.gameData", this.gameData);
 	}
+
 	waitForConnection() {
 		return new Promise((resolve) => {
 			this.chat_websocket.onopen = () => {
