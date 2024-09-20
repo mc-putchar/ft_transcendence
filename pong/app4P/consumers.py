@@ -217,6 +217,7 @@ class Data:
 class handle4PGame(AsyncWebsocketConsumer):
 
 	active_connections = 0
+	active_games = 0
 	used_paddles = []
 	is_ready = 0
 	group_name = 'game_group'
@@ -290,22 +291,14 @@ class handle4PGame(AsyncWebsocketConsumer):
 
 		print("Received: ", data)
 
-		if type == "is_ready":
-			handle4PGame.is_ready += 1
-			print(handle4PGame.is_ready)
-			if handle4PGame.is_ready == 4:
-				await asyncio.sleep(1.5)
-				await self.channel_layer.group_send(
-					self.group_name,
-					{
-						'type': 'game_message',
-						'message': json.dumps({
-							'type': "launch_game"
-						})
-					}
-				)
-				await self.game_loop()  # Start game loop once all players are ready
-		if type == "player_direction":
+		if type == 'active_game':
+			handle4PGame.active_games += 1
+			print("active games: ", handle4PGame.active_games)
+			if(handle4PGame.active_games == 4):
+				print("STARTING 1")
+				await self.game_loop()
+				print("STARTING 2")
+		elif type == "player_direction":
 			handle4PGame.data.field.paddle[data.get("side")]["dir"] = data.get("dir")
 		elif type == "added_paddle":
 			handle4PGame.used_paddles.append(data.get("added_paddle"))
@@ -331,6 +324,8 @@ class handle4PGame(AsyncWebsocketConsumer):
 					})
 				}
 			)
+			# if (handle4PGame.active_connections == 4):
+			# 	await self.game_loop()  # Start game loop once all players are ready
 		elif type == "get_ball":
 			await self.channel_layer.group_send(
 				self.group_name,

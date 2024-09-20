@@ -70,15 +70,15 @@ class GameRouter4P {
 			if (type == "update_game_data") {
 				this.updateGameData(data);
 			}
-			else if (type == "launch_game") {
-				console.log("Game is launching");
-				this.launch_game();
-			}
+			// else if (type == "launch_game") {
+			// 	console.log("Game is launching");
+			// 	this.launch_game();
+			// }
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
-				console.log("!!!!!!!!this.active_connect", this.active_connect);
+				console.log("!!!this.active_connect", this.active_connect);
 				if (this.active_connect == 4) {
-					this.launchReady();
+					this.launchGame();
 				}
 				return;
 			}
@@ -87,10 +87,10 @@ class GameRouter4P {
 				if(!this.my_paddle) {
 					this.my_paddle = find_paddle(this.used_paddles);
 					this.chat_websocket?.send(JSON.stringify(
-						{
-							type: 'added_paddle',
-							added_paddle: this.my_paddle,
-						}));
+					{
+						type: 'added_paddle',
+						added_paddle: this.my_paddle,
+					}));
 				}
 				return;
 			}
@@ -145,18 +145,23 @@ class GameRouter4P {
 			};
 		});
 	}
-	launch_game() {
-		console.log("LAUNCH_GAME");
+	// launch_game() {
+	// 	console.log("LAUNCH_GAME");
+	// 	this.game.start();
+	// 	this.started = true;
+	// }
+	launchGame() {
 		this.player = new Player(this.used_paddles, this.my_paddle);
 		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
-		this.game.start();
-		this.started = true;
-	}
-	launchReady() {
-		this.player = new Player(this.used_paddles, this.my_paddle);
-		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
-
 		this.game.getReady();
+		console.log("LAUNCH_GAME 1");
+		this.game.start();
+		console.log("LAUNCH_GAME 2");
+		this.chat_websocket.send(JSON.stringify({
+			"type":'active_game'
+		}))
+		console.log("LAUNCH_GAME 3");
+		this.started = true;
 	}
 }
 

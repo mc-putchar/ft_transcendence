@@ -415,7 +415,7 @@ class Online4P {
 		if(!(key.code == this.player.keys.key_decr || key.code == this.player.keys.key_incr)) {
 			return;
 		}
-		
+	
 		if(this.player.keys_active > 0)
 			this.player.keys_active--;
 		if(this.player.keys_active == 0)
@@ -602,6 +602,8 @@ class Online4P {
 		this.playerBottom.y = this.denormPosY(this.gameData.bottom.y);
 		this.playerRight.x = this.denormPosX(this.gameData.right.x);
 		this.playerRight.y = this.denormPosY(this.gameData.right.y);
+		
+		console.log(this.gameData);
 
 	}
 	update() {
@@ -655,12 +657,13 @@ class Online4P {
 					"type": "is_ready",
 					"side": this.player.side
 				}))
+				console.log("SENT");
 			}
 			this.button.textContent = "READY!";
         });
 	}
 	start() {
-		// this.button.remove();
+		this.button.remove();
 		this.loop();
 	}
 	stopGame () {
