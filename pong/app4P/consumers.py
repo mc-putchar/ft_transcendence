@@ -9,6 +9,7 @@ import math
 import asyncio
 from asyncio import sleep
 import time
+import copy
 
 BALL_SIZE = 4
 BALL_START_SPEED = 2 / 12
@@ -20,10 +21,14 @@ PADDLE_WIDTH = 6
 
 class Ball:
 	def __init__(self):
-		self.pos_x = 50
-		self.pos_y = 50
+		async_to_sync(self.initialize())
 		self.radius = BALL_SIZE / 2 / 200 * 100
 		self.incr_speed = BALL_INCR_SPEED / 200 * 100
+		self.initialize()
+
+	def initialize(self):
+		self.pos_x = 50
+		self.pos_y = 50
 		rand = random.random()
 		if rand < 0.25:
 			self.vx = 1
@@ -73,28 +78,18 @@ class Field:
 		for key in self.paddle:
 			if(self.paddle[key]["dir"] == 0):
 				continue
-			print("key: ", key)
-			print("dir: ", self.paddle[key]["dir"])
-			print("start x: ", self.paddle[key]["x"])
-			print("start y: ", self.paddle[key]["y"])
 			if(key == "left" or key == "right"):
-				print("pre left or right: ", self.paddle[key]["y"])
 				self.paddle[key]["y"] += self.paddle_speed * self.paddle[key]["dir"]
-				print("post left or right: ", self.paddle[key]["y"])
 				if(self.paddle[key]["y"] < self.limit_min):
 					self.paddle[key]["y"] = self.limit_min
 				elif(self.paddle[key]["y"] > self.limit_max):
 					self.paddle[key]["y"] = self.limit_max
 			elif (key == "top" or key == "bottom"):
-				print("pre top or bottom: ", self.paddle[key]["x"])
 				self.paddle[key]["x"] += self.paddle_speed * self.paddle[key]["dir"]
-				print("post top or bottom: ", self.paddle[key]["x"])
 				if(self.paddle[key]["x"] < self.limit_min):
 					self.paddle[key]["x"] = self.limit_min
 				elif(self.paddle[key]["x"] > self.limit_max):
 					self.paddle[key]["x"] = self.limit_max
-			print("end x: ", self.paddle[key]["x"])
-			print("end y: ", self.paddle[key]["y"])
 
 class Score:
 	def __init__(self):
@@ -106,8 +101,6 @@ class Score:
 		self.last_touch = "none"
 
 	async def update_score(self):
-		print("scorer: ", self.last_touch)
-		print("conceder: ", self.conceded)
 		if self.last_touch == "left":
 			self.left += 1
 		elif self.last_touch == "right":
@@ -116,18 +109,15 @@ class Score:
 			self.top += 1
 		elif self.last_touch == "bottom":
 			self.bottom += 1
-		
+
 		if self.conceded.find("left") != -1:
 			self.left -= 1
-		elif self.conceded.find("right") !=-1:
+		elif self.conceded.find("right") != -1:
 			self.right -= 1
-		elif self.conceded.find("top") !=-1:
+		elif self.conceded.find("top") != -1:
 			self.top -= 1
-		elif self.conceded.find("bottom") !=-1:
+		elif self.conceded.find("bottom") != -1:
 			self.bottom -= 1
-
-		self.last_touch = ""
-		self.conceded = ""
 
 class Data:
 	def __init__(self):
@@ -137,7 +127,7 @@ class Data:
 		self.old_score = Score()
 		self.goal = False
 		self.animation_time = {"first": 0, "second": 0, "third": 0} # {first: 500, second: 1000, third: 1500};
-			
+
 	async def check_goal(self):
 		self.score.conceded = ""
 		self.goal = False
@@ -155,12 +145,12 @@ class Data:
 		elif self.ball.pos_y > 100:
 			self.goal = True
 			self.score.conceded += "bottom"
-		
+
 		if self.goal == True:
 			current_time = time.time()
-			self.animation_time["first"] = 500 + current_time
-			self.animation_time["second"] = 1000 + current_time
-			self.animation_time["third"] = 1500 + current_time
+			self.animation_time["first"] = 0.5 + current_time
+			self.animation_time["second"] = 1 + current_time
+			self.animation_time["third"] = 1.5 + current_time
 
 	async def check_collisions(self):
 		
@@ -171,7 +161,7 @@ class Data:
 			if not (self.score.last_touch == "left" or self.ball.pos_x - self.ball.radius < self.field.paddle["left"]["x"] - paddleWidth):
 				if self.ball.pos_y + self.ball.radius >= self.field.paddle["left"]["y"] - paddleLen / 2 and \
 					self.ball.pos_y - self.ball.radius <= self.field.paddle["left"]["y"] + paddleLen / 2:
-					
+
 					ref_angle = (self.ball.pos_y - self.field.paddle["left"]["y"]) / (paddleLen / 2) * (math.pi / 4)
 					self.ball.vx = 1 * math.cos(ref_angle)
 					self.ball.vy = math.sin(ref_angle)
@@ -216,14 +206,13 @@ class Data:
 		await self.field.move()
 
 	async def update(self):
-		if self.goal == True:
-			self.old_score = self.score
-			await self.score.update_score()
-			self.ball.__init__()
-			self.goal = False
 		await self.check_goal()
-		await self.check_collisions()
-		await self.move()
+		if self.goal == True:
+			self.old_score = copy.deepcopy(self.score)
+			await self.score.update_score()
+		else:
+			await self.check_collisions()
+			await self.move()
 
 class handle4PGame(AsyncWebsocketConsumer):
 
@@ -243,12 +232,19 @@ class handle4PGame(AsyncWebsocketConsumer):
 					'type': 'game_message',
 					'message': json.dumps({
 						'type': 'update_game_data',
+
+						'goal': handle4PGame.data.goal,
+
 						'last_touch': handle4PGame.data.score.last_touch,
 						'conceded': handle4PGame.data.score.conceded,
 						'score_left': handle4PGame.data.score.left,
 						'score_right': handle4PGame.data.score.right,
 						'score_top': handle4PGame.data.score.top,
 						'score_bottom': handle4PGame.data.score.bottom,
+						'old_score_left': handle4PGame.data.old_score.left,
+						'old_score_right': handle4PGame.data.old_score.right,
+						'old_score_top': handle4PGame.data.old_score.top,
+						'old_score_bottom': handle4PGame.data.old_score.bottom,
 						'animation_time_first': handle4PGame.data.animation_time["first"],
 						'animation_time_second': handle4PGame.data.animation_time["second"],
 						'animation_time_third': handle4PGame.data.animation_time["third"],
@@ -272,6 +268,11 @@ class handle4PGame(AsyncWebsocketConsumer):
 				}
 			)
 			if(self.data.goal == True):
+				# reseting variables after sending them
+				await sync_to_async(self.data.ball.initialize)()
+				self.goal = False
+				self.data.score.last_touch = ""
+				self.data.score.conceded = ""
 				await asyncio.sleep(1.5)
 			await asyncio.sleep(0.016)
 
@@ -291,7 +292,9 @@ class handle4PGame(AsyncWebsocketConsumer):
 
 		if type == "is_ready":
 			handle4PGame.is_ready += 1
+			print(handle4PGame.is_ready)
 			if handle4PGame.is_ready == 4:
+				await asyncio.sleep(1.5)
 				await self.channel_layer.group_send(
 					self.group_name,
 					{
@@ -302,11 +305,9 @@ class handle4PGame(AsyncWebsocketConsumer):
 					}
 				)
 				await self.game_loop()  # Start game loop once all players are ready
-		elif type == "player_direction":
+		if type == "player_direction":
 			handle4PGame.data.field.paddle[data.get("side")]["dir"] = data.get("dir")
-			print("field paddle dir: ", handle4PGame.data.field.paddle[data.get("side")]["dir"])
 		elif type == "added_paddle":
-			print("ADDED: ", data.get("added_paddle"))
 			handle4PGame.used_paddles.append(data.get("added_paddle"))
 		elif type == "get_used_paddles":
 			await self.channel_layer.group_send(
@@ -347,6 +348,9 @@ class handle4PGame(AsyncWebsocketConsumer):
 
 	async def game_message(self, event):
 		message = event['message']
+		message_data = json.loads(message)
+		if(message_data.get('type') == "launch_game"):
+			print("MESSGAGE: ", message)
 		await self.send(text_data=message)
 
 	async def disconnect(self, close_code):

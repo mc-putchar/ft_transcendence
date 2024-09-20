@@ -117,8 +117,6 @@ class Player {
 		}
 	}
 	drawPaddle(ctx, player_side) {
-		console.log(this.side);
-		console.log(player_side);
 		ctx.fillStyle = PADDLE_COLOR;
 		ctx.strokeStyle = PADDLE_COLOR;
 		if(player_side == this.side) {
@@ -240,14 +238,14 @@ class Scores {
 	drawPrevScore(ctx) {
 		let font_size = this.arenaHeight / 20;
 		ctx.font = `${font_size}px Orbitron`;
-		for (let key in this.goals) {
+		for (let key in this.prevScore) {
 			ctx.fillText(this.prevScore[key], this.startX + this.pos_x[key], this.startY + this.pos_y[key] + font_size / 2, 100);
 		}
 	}
 	drawBigPrevScore(ctx) {
 		let font_size = this.arenaHeight / 20;
 		ctx.font = `${font_size}px Orbitron`;
-		for (let key in this.goals) {
+		for (let key in this.prevScore) {
 			if(this.prevScore[key] != this.goals[key])
 				ctx.font = `${font_size * 1.5}px Orbitron`;
 			else
@@ -311,8 +309,6 @@ class Online4P {
 		this.context = this.canvas.getContext("2d");
 		this.arena = new Arena(this.canvas.width, this.canvas.height);
 		this.player = new Player(param_player.paddle_side, this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		console.log("!!!THIS PLAYER: ", this.player);
-		console.log("!!!THIS PLAYER SIDE: ", this.player.side);
 		this.playerLeft = new Player("left", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerRight = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerBottom = new Player("bottom", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -434,7 +430,7 @@ class Online4P {
 			this.score.drawGolazo(this.context);
 			this.score.drawPrevScore(this.context);
 		}
-			else if(this.animation.times.second != null && now < this.animation.times.second) {
+		else if(this.animation.times.second != null && now < this.animation.times.second) {
 			this.score.drawGolazo(this.context);
 			this.score.drawBigPrevScore(this.context);
 		}
@@ -451,13 +447,14 @@ class Online4P {
 	loop() {
 		let now = Date.now();
 		if(now < this.animation.times.third) {
-			this.kickOff = true;
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.goalAnimation(now);
+			// this.kickOff = true;
 		}
-		else if(this.kickOff == true) {
-			this.kickOff = false;
-			this.score.resetGoalTracker();
-		}
+		// else if(this.kickOff == true) {
+		// 	this.kickOff = false;
+		// 	this.score.resetGoalTracker();
+		// }
 		else {
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.fetchAndUpdateFromGameData();
@@ -465,8 +462,9 @@ class Online4P {
 			if(this.score.goal == false) {
 				this.draw();
 			}
-			else
+			else {
 				this.goalAnimation(now);
+			}
 		}
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
@@ -575,14 +573,21 @@ class Online4P {
 
 		this.fetchBall();
 
+		this.score.goal = this.gameData.goal;
+
 		this.score.goals.left = this.gameData.goals.left;
 		this.score.goals.right = this.gameData.goals.right;
 		this.score.goals.top = this.gameData.goals.top;
 		this.score.goals.bottom = this.gameData.goals.bottom;
 
-		this.animation.times["first"] = this.gameData.first;
-		this.animation.times["second"] = this.gameData.second;
-		this.animation.times["third"] = this.gameData.third;
+		this.score.prevScore.left = this.gameData.old_goals.left;
+		this.score.prevScore.right = this.gameData.old_goals.right;
+		this.score.prevScore.top = this.gameData.old_goals.top;
+		this.score.prevScore.bottom = this.gameData.old_goals.bottom;
+
+		this.animation.times["first"] = this.gameData.animation_time["first"] * 1000;
+		this.animation.times["second"] = this.gameData.animation_time["second"] * 1000;
+		this.animation.times["third"] = this.gameData.animation_time["third"] * 1000;
 		
 		this.playerLeft.direction = this.gameData.left.dir;
 		this.playerRight.direction = this.gameData.right.dir;
@@ -598,8 +603,6 @@ class Online4P {
 		this.playerRight.x = this.denormPosX(this.gameData.right.x);
 		this.playerRight.y = this.denormPosY(this.gameData.right.y);
 
-		console.log("GameData Received");
-		console.log(this.gameData);
 	}
 	update() {
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -627,7 +630,6 @@ class Online4P {
 		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
 	}
 	getReady() {
-		console.log("GET READY");
 		this.button = document.createElement('button');
 		this.button.textContent = 'Click Me';
 		
@@ -658,14 +660,8 @@ class Online4P {
         });
 	}
 	start() {
-		this.button.remove();
+		// this.button.remove();
 		this.loop();
-	}
-	pause() {
-		console.log("pong paused");
-		if(this.animRequestId) {
-			cancelAnimationFrame(this.animRequestId);
-		}
 	}
 	stopGame () {
 		console.log("pong stopped and exited");

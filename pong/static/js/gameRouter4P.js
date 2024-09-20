@@ -29,7 +29,9 @@ class GameData {
 	constructor() {
 		this.last_touch = "none";
 		this.conceded = "none";
+		this.old_goals = {left : 0, right : 0, top : 0, bottom : 0};
 		this.goals = {left : 0, right : 0, top : 0, bottom : 0};
+		this.goal = false;
 		this.ball = {x: NaN, y: NaN, vx: NaN, vy: NaN, speedx: NaN, speedy: NaN};
 		this.left = {x: NaN, y: NaN };
 		this.right = {x: NaN, y: NaN };
@@ -54,9 +56,9 @@ class GameRouter4P {
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_used_paddles'}));
 			this.chat_websocket.send(JSON.stringify({
-				"type":'get_active_connections'}));
+				"type":'get_ball'}));
 			this.chat_websocket.send(JSON.stringify({
-					"type":'get_ball'}));
+				"type":'get_active_connections'}));
 		});
 
 		this.chat_websocket.onmessage = (event) => {
@@ -95,6 +97,9 @@ class GameRouter4P {
 		};
 	}
 	updateGameData(data){
+
+		this.gameData.goal = data.goal;
+
 		this.gameData.last_touch = data.last_touch;
 		this.gameData.conceded = data.conceded;
 
@@ -115,6 +120,11 @@ class GameRouter4P {
 		this.gameData.bottom.y = data.bottom_y;
 
 		this.gameData.goals[data.side] = data.goals;
+
+		this.gameData.old_goals["left"] = data.old_score_left;
+		this.gameData.old_goals["right"] = data.old_score_right;
+		this.gameData.old_goals["top"] = data.old_score_top;
+		this.gameData.old_goals["bottom"] = data.old_score_bottom;
 
 		this.gameData.goals["left"] = data.score_left;
 		this.gameData.goals["right"] = data.score_right;
@@ -137,6 +147,8 @@ class GameRouter4P {
 	}
 	launch_game() {
 		console.log("LAUNCH_GAME");
+		this.player = new Player(this.used_paddles, this.my_paddle);
+		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
 		this.game.start();
 		this.started = true;
 	}
