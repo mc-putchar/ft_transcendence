@@ -294,12 +294,24 @@ class handle4PGame(AsyncWebsocketConsumer):
 
 		print("Received: ", data)
 
+		if type == "launch_game":
+			await self.channel_layer.group_send(
+				self.group_name,
+				{
+					'type': 'game_message',
+					'message': json.dumps({
+						'type': 'launch_game'
+					})
+				}
+			)
 		if type == 'active_game':
 			handle4PGame.active_games += 1
 			print("active games: ", handle4PGame.active_games)
 			if(handle4PGame.active_games == 4):
-				print("STARTING 1")
-				await self.game_loop()
+				print("STARTING LOOP")
+				await asyncio.sleep(1.5)
+				asyncio.create_task(self.game_loop())
+				# await self.game_loop()
 		elif type == "player_direction":
 			handle4PGame.data.field.paddle[data.get("side")]["dir"] = data.get("dir")
 		elif type == "added_paddle":

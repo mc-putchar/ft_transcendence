@@ -66,14 +66,22 @@ class GameRouter4P {
 			const data = JSON.parse(event.data);
 			const type = data.type;
 
-			if (type == "update_game_data") {
+
+			if (type == "launch_game") {
+				this.launchGame();
+			}
+			else if (type == "update_game_data") {
 				this.updateGameData(data);
 			}
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
 				console.log("!!!this.active_connect", this.active_connect);
 				if (this.active_connect == 4) {
-					this.launchGame();
+					this.chat_websocket?.send(JSON.stringify(
+						{
+							'type': "launch_game"
+						}
+					))
 				}
 				return;
 			}
