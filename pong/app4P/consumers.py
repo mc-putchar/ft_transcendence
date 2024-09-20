@@ -105,6 +105,30 @@ class Score:
 		self.conceded = ""
 		self.last_touch = "none"
 
+	async def update_score(self):
+		print("scorer: ", self.last_touch)
+		print("conceder: ", self.conceded)
+		if self.last_touch == "left":
+			self.left += 1
+		elif self.last_touch == "right":
+			self.right += 1
+		elif self.last_touch == "top":
+			self.top += 1
+		elif self.last_touch == "bottom":
+			self.bottom += 1
+		
+		if self.conceded.find("left") != -1:
+			self.left -= 1
+		elif self.conceded.find("right") !=-1:
+			self.right -= 1
+		elif self.conceded.find("top") !=-1:
+			self.top -= 1
+		elif self.conceded.find("bottom") !=-1:
+			self.bottom -= 1
+
+		self.last_touch = ""
+		self.conceded = ""
+
 class Data:
 	def __init__(self):
 		self.ball = Ball()
@@ -113,27 +137,6 @@ class Data:
 		self.old_score = Score()
 		self.goal = False
 		self.animation_time = {"first": 0, "second": 0, "third": 0} # {first: 500, second: 1000, third: 1500};
-
-	async def update_score(self):
-		print("scorer: ", self.score.last_touch)
-		print("conceder: ", self.score.conceded)
-		if self.score.last_touch == "left":
-			self.score.left += 1
-		elif self.score.last_touch == "right":
-			self.score.right += 1
-		elif self.score.last_touch == "top":
-			self.score.top += 1
-		elif self.score.last_touch == "bottom":
-			self.score.bottom += 1
-		
-		if self.score.conceded.find("left") != -1:
-			self.score.left -= 1
-		elif self.score.conceded.find("right") !=-1:
-			self.score.right -= 1
-		elif self.score.conceded.find("top") !=-1:
-			self.score.top -= 1
-		elif self.score.conceded.find("bottom") !=-1:
-			self.score.bottom -= 1
 			
 	async def check_goal(self):
 		self.score.conceded = ""
@@ -154,12 +157,6 @@ class Data:
 			self.score.conceded += "bottom"
 		
 		if self.goal == True:
-			self.old_score = self.score
-			await self.update_score()
-			print("self.score.left: ", self.score.left)
-			print("self.score.right: ", self.score.right)
-			print("self.score.top: ", self.score.top)
-			print("self.score.bottom: ", self.score.bottom)
 			current_time = time.time()
 			self.animation_time["first"] = 500 + current_time
 			self.animation_time["second"] = 1000 + current_time
@@ -220,11 +217,10 @@ class Data:
 
 	async def update(self):
 		if self.goal == True:
-			self.score.last_touch = ""
-			self.score.conceded = ""
+			self.old_score = self.score
+			await self.score.update_score()
 			self.ball.__init__()
 			self.goal = False
-			await asyncio.sleep(1.5)
 		await self.check_goal()
 		await self.check_collisions()
 		await self.move()
@@ -275,6 +271,8 @@ class handle4PGame(AsyncWebsocketConsumer):
 					})
 				}
 			)
+			if(self.data.goal == True):
+				await asyncio.sleep(1.5)
 			await asyncio.sleep(0.016)
 
 	async def connect(self):
