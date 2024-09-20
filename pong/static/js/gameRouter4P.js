@@ -63,17 +63,12 @@ class GameRouter4P {
 
 		this.chat_websocket.onmessage = (event) => {
 
-			console.log("received:", event.data);
 			const data = JSON.parse(event.data);
 			const type = data.type;
 
 			if (type == "update_game_data") {
 				this.updateGameData(data);
 			}
-			// else if (type == "launch_game") {
-			// 	console.log("Game is launching");
-			// 	this.launch_game();
-			// }
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
 				console.log("!!!this.active_connect", this.active_connect);

@@ -221,11 +221,13 @@ class handle4PGame(AsyncWebsocketConsumer):
 	used_paddles = []
 	is_ready = 0
 	group_name = 'game_group'
+	loop = 0
 
 	data = Data()
 
 	async def game_loop(self):
 		while True:
+			handle4PGame.loop += 1
 			await handle4PGame.data.update()
 			await self.channel_layer.group_send(
 				self.group_name,
@@ -233,7 +235,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 					'type': 'game_message',
 					'message': json.dumps({
 						'type': 'update_game_data',
-
+						'loop': handle4PGame.loop,
 						'goal': handle4PGame.data.goal,
 
 						'last_touch': handle4PGame.data.score.last_touch,
@@ -283,6 +285,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 			self.group_name,
 			self.channel_name
 		)
+		print(f"\nAdded {self.channel_name} to group\n")
 		handle4PGame.active_connections += 1
 
 	async def receive(self, text_data=None, bytes_data=None):
@@ -297,7 +300,6 @@ class handle4PGame(AsyncWebsocketConsumer):
 			if(handle4PGame.active_games == 4):
 				print("STARTING 1")
 				await self.game_loop()
-				print("STARTING 2")
 		elif type == "player_direction":
 			handle4PGame.data.field.paddle[data.get("side")]["dir"] = data.get("dir")
 		elif type == "added_paddle":
@@ -344,8 +346,8 @@ class handle4PGame(AsyncWebsocketConsumer):
 	async def game_message(self, event):
 		message = event['message']
 		message_data = json.loads(message)
-		if(message_data.get('type') == "launch_game"):
-			print("MESSGAGE: ", message)
+		# if(message_data.get('type') == 'update_game_data'):
+		# 	print("\nMESSGAGE: ", message)
 		await self.send(text_data=message)
 
 	async def disconnect(self, close_code):
