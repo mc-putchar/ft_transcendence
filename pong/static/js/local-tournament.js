@@ -316,6 +316,7 @@ class LocalTournament {
 
 	}
 	start(usernames) {
+		this.matches = []
 		this.usernames = usernames;
 		this.init();
 		this.loop();
