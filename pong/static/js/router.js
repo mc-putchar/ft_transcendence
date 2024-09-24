@@ -4,6 +4,7 @@ import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
+import { GameRouter4P } from './gameRouter4P.js';
 import { TournamentRouter } from './tournament-router.js';
 import { LocalTournament } from './local-tournament.js';
 import { createModal } from './utils.js';
@@ -24,6 +25,7 @@ class Router {
 		this.game = new GameRouter(this.appElement);
 		this.tournament = new TournamentRouter(this.appElement);
 		this.localTournament = new LocalTournament(this.appElement);
+		this.game4P = new GameRouter4P(this.appElement);
 		this.audioContext = null;
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));

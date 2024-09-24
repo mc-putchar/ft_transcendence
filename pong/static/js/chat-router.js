@@ -79,6 +79,9 @@ class ChatRouter {
 					case '/duel':
 						this.handleDuelRequest(data);
 						break;
+					case '/duel4P':
+						this.handleDuelRequest4P(data);
+						break;
 					case '/pm':
 						const recipient = data.message.split(' ')[1];
 						if (recipient === this.username && !this.isBlockedUser(data.username)) {
@@ -207,18 +210,46 @@ class ChatRouter {
 
 	handleDuelRequest(data) {
 		const challengedUser = data.message.split(' ')[1];
-		if (this.users.includes(challengedUser)) {
-			if (data.username === this.username) {
-				this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
-				this.chatElement.dispatchEvent(new CustomEvent('challenger', { detail: { gameID: data.username } }));
-			} else if (challengedUser !== this.username) {
-				this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
-			} else {
-				this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel', 'Announcer');
-				this.chatElement.dispatchEvent(new CustomEvent('challenged', { detail: { username: data.username } }));
+		if (data.username === this.username) {
+			this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
+			this.chatElement.dispatchEvent(new CustomEvent('challenger', { detail: { gameID: data.username } }));
+		} else if (challengedUser !== this.username) {
+			this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
+		} else {
+			this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel', 'Announcer');
+			this.chatElement.dispatchEvent(new CustomEvent('challenged', { detail: { username: data.username } }));
+		}
+	}
+
+	handleDuelRequest4P(data) {
+		let challengedUsers = [];
+		challengedUsers = data.message.split(' ');
+		challengedUsers.shift();
+		if(length(challengedUsers) != 3) {
+			return;
+		}
+		if (data.username === this.username) {
+			this.pushMessage(`You have challenged ${challengedUsers[0]} ${challengedUsers[1]} ${challengedUsers[2]} to a duel!`, 'duel', 'Announcer');
+		}
+		else {
+			if (this.users.includes(user)) {
+					this.chatElement.dispatchEvent(new CustomEvent('challenger', { detail: { gameID: data.username } }));
+				if (user !== this.username) {
+					this.pushMessage(`${data.username} has challenged ${challengedUsers[0]} ${challengedUsers[1]} ${challengedUsers[2]} to a duel!`, 'duel', 'Announcer');
+				} else {
+					this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel', 'Announcer');
+					this.chatElement.dispatchEvent(new CustomEvent('challenged', { detail: { username: data.username } }));
+				}
 			}
 		}
 	}
+		// check all users are active with user list online player something whatever
+		
+		
+		// this.username is current user
+		// data.message.split(' ')
+	}
+
 
 	sendDuelResponse(response) {	
 		const data = {

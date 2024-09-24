@@ -1,6 +1,4 @@
-import { AudioController } from './audio.js';
-
-const ACTIVE_AI = false;
+// import { AudioController } from './audio.js';
 
 let animationID = null;
 
@@ -21,6 +19,7 @@ const SCORE_LIMIT = 10;
 
 const BALL_COLOR = "red";
 const PADDLE_COLOR = "green";
+const DEBUG_KEY = true;
 
 class Arena {
 	constructor(ctxwidth, ctxheight) {
@@ -28,7 +27,7 @@ class Arena {
 	}
 	resize(ctxwidth, ctxheight) {
 		const size = Math.min(ctxwidth, ctxheight) * 0.9;
-    
+
 		this.width = size;
 		this.height = size;
 		this.startX = ctxwidth / 2 - this.width / 2;
@@ -60,6 +59,11 @@ class Arena {
 class Player {
 	constructor(side, arenaWidth, arenaHeight, startX, startY) {
 		this.side = side;
+		this.keys = {};
+		if(this.side == "top" || this.side == "bottom")
+			this.keys = {key_decr: "ArrowLeft", key_incr: "ArrowRight"}
+		else
+			this.keys = {key_decr: "ArrowUp", key_incr: "ArrowDown"}
 		this.init(arenaWidth, arenaHeight, startX, startY);
 	}
 	init(arenaWidth, arenaHeight, startX, startY)
@@ -112,9 +116,13 @@ class Player {
 			}
 		}
 	}
-	drawPaddle(ctx) {
+	drawPaddle(ctx, player_side) {
 		ctx.fillStyle = PADDLE_COLOR;
 		ctx.strokeStyle = PADDLE_COLOR;
+		if(player_side == this.side) {
+			ctx.fillStyle = "yellow";
+            ctx.strokeStyle = "yellow";
+		}
 		if(this.side == "left" || this.side == "right") {
 			ctx.fillRect(this.x - this.width / 2, this.y - this.len / 2, this.width, this.len);
 		}
@@ -125,34 +133,19 @@ class Player {
 };
 
 class Ball {
-	constructor(arenaWidth, arenaHeight, startX, startY) {
+	constructor(arenaWidth, arenaHeight, startX, startY, ball_vx, ball_vy) {
 		this.radius = (BALL_SIZE / 2 / 200 * arenaWidth);
 		this.color = BALL_COLOR;
-		this.initBall(arenaWidth, arenaHeight, startX, startY);
+		this.initBall(arenaWidth, arenaHeight, startX, startY, ball_vx, ball_vy);
 	}
-	initBall(arenaWidth, arenaHeight, startX, startY)
+	initBall(arenaWidth, arenaHeight, startX, startY, ball_vx, ball_vy)
 	{
 		this.x = startX + arenaWidth / 2;
 		this.y = startY + arenaHeight / 2;
 		this.lastMove = 0;
+		this.vx = ball_vx;
+		this.vy = ball_vy;
 		let rand = Math.random();
-		if(rand < 0.25) {
-			this.vx = 1;
-			this.vy = 1;
-		}
-		else if(rand < 0.5) {
-			this.vx = 1;
-			this.vy = -1;
-		}
-		else if(rand < 0.75) {
-			this.vx = -1;
-			this.vy = 1;
-		}
-		else {
-			this.vx = -1;
-			this.vy = -1;
-		}
-		rand = Math.random();
 		if(rand < 0.5) {
 			this.speedx = BALL_START_SPEED * arenaWidth / 300;
 			this.speedy = BALL_START_SPEED * arenaHeight / 200;
@@ -245,14 +238,14 @@ class Scores {
 	drawPrevScore(ctx) {
 		let font_size = this.arenaHeight / 20;
 		ctx.font = `${font_size}px Orbitron`;
-		for (let key in this.goals) {
+		for (let key in this.prevScore) {
 			ctx.fillText(this.prevScore[key], this.startX + this.pos_x[key], this.startY + this.pos_y[key] + font_size / 2, 100);
 		}
 	}
 	drawBigPrevScore(ctx) {
 		let font_size = this.arenaHeight / 20;
 		ctx.font = `${font_size}px Orbitron`;
-		for (let key in this.goals) {
+		for (let key in this.prevScore) {
 			if(this.prevScore[key] != this.goals[key])
 				ctx.font = `${font_size * 1.5}px Orbitron`;
 			else
@@ -288,9 +281,14 @@ class Animation {
 
 let resizeTimeout;
 
-class Game4P {
-	constructor() {
+class Online4P {
+	constructor(ws, gameData, param_player) {
+		this.gameData = gameData;
 		console.log("Pong 4P - Starting new game");
+		// console.log("SECOND: ", this.gameData);
+		this.ws = ws;
+		this.parent = document.getElementById('app');
+
 		const nav = document.getElementById('nav');
 		const parent = document.getElementById('app');
 	
@@ -310,11 +308,12 @@ class Game4P {
 		this.canvas.height = this.parent.height;
 		this.context = this.canvas.getContext("2d");
 		this.arena = new Arena(this.canvas.width, this.canvas.height);
+		this.player = new Player(param_player.paddle_side, this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerLeft = new Player("left", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerRight = new Player("right", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		this.playerTop = new Player("top", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerBottom = new Player("bottom", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
-		this.ball = new Ball(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.playerTop = new Player("top", this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+		this.ball = new Ball(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY, this.gameData.vx, this.gameData.vy);
 		this.score = new Scores(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.kickOff = true;
 		this.animation = new Animation();
@@ -326,8 +325,8 @@ class Game4P {
 		document.addEventListener("keyup", ev => this.keyup(ev));
 		window.addEventListener("resize", ev => this.onResize(ev));
 
-		this.audio = new AudioController();
-		this.audio.playAudioTrack();
+		// this.audio = new AudioController();
+		// this.audio.playAudioTrack();
 	}
 	resize() {
 		this.canvas.width = this.parent.width;
@@ -340,81 +339,90 @@ class Game4P {
 			this.resize();
 		}, 200);
 	}
+	denormPosX(preX) {
+		let ret_x = preX / 100 * this.arena._width;
+		ret_x = ret_x + this.arena._startX;
+		return ret_x;
+	}
+	denormPosY(preY) {
+		let ret_y = preY / 100 * this.arena._height;
+		ret_y = ret_y + this.arena._startY;
+		return ret_y;
+	}
+	normalizedPosX(preX) {
+		let ret_x = preX - this.arena._startX;
+		ret_x = ret_x / this.arena._width * 100;
+		return ret_x;
+	}
+	normalizedPosY(preY) {
+		let ret_y = preY - this.arena._startY;
+		ret_y = ret_y / this.arena._height * 100;
+		return ret_y;
+	}
+	denormSpeedX(preX) {
+		let ret_x = preX / 100 * this.arena._width;
+		return ret_x;
+	}
+	denormSpeedY(preY) {
+		let ret_y = preY / 100 * this.arena._height;
+		return ret_y;
+	}
+	normalizedSpeedX(preX) {
+		let ret_x = preX;
+		ret_x = ret_x / this.arena._width * 100;
+		return ret_x;
+	}
+	normalizedSpeedY(preY) {
+		let ret_y = preY;
+		ret_y = ret_y / this.arena._height * 100;
+		return ret_y;
+	}
+	sendPlayerDirection() {
+		this.ws?.send(JSON.stringify({
+			"type": "player_direction",
+			"side": this.player.side,
+			"dir": this.player.direction,
+		}))
+	}
 	keydown(key) {
 		if(key.code == "KeyC") {
 			debugger;
 		}
+		if(!(key.code == this.player.keys.key_decr || key.code == this.player.keys.key_incr)) {
+			return;
+		}
 		switch(key.code) {
-			case "KeyQ":
-				if(this.playerLeft.direction != -1)
-					this.playerLeft.keys_active++;
-				this.playerLeft.direction = -1; // -1 goes up
+			case this.player.keys.key_decr:
+				if(this.player.direction != -1)
+					this.player.keys_active++;
+				this.player.direction = -1; // -1 goes up
 				break;
-			case "KeyA":
-				if(this.playerLeft.direction != 1)
-					this.playerLeft.keys_active++;
-				this.playerLeft.direction = 1;
-				break;
-			case "ArrowUp":
-				if(this.playerRight.direction != -1)
-					this.playerRight.keys_active++;
-				this.playerRight.direction = -1;
-				break;
-			case "ArrowDown":
-				if(this.playerRight.direction != 1)
-					this.playerRight.keys_active++;
-				this.playerRight.direction = 1;
-				break;
-			case "KeyF":
-				if(this.playerTop.direction != -1)
-					this.playerTop.keys_active++;
-				this.playerTop.direction = -1; // -1 goes left
-				break;
-			case "KeyG":
-				if(this.playerTop.direction != 1)
-					this.playerTop.keys_active++;
-				this.playerTop.direction = 1;
-				break;
-			case "KeyK":
-				if(this.playerBottom.direction != -1)
-					this.playerBottom.keys_active++;
-				this.playerBottom.direction = -1; // -1 goes left
-				break;
-			case "KeyL":
-				if(this.playerBottom.direction != 1)
-					this.playerBottom.keys_active++;
-				this.playerBottom.direction = 1;
+			case this.player.keys.key_incr:
+				if(this.player.direction != 1)
+					this.player.keys_active++;
+				this.player.direction = 1;
 				break;
 			default:
 				break;
 		}
+		// console.log("PRE SENDING: ", this.player.direction);
+		if(DEBUG_KEY == true)
+			console.log("key down: ", this.player.keys_active);
+		this.sendPlayerDirection();
 	}
 	keyup(key) {
 		if (this.gameover)	return;
-		if (key.code == "KeyQ" || key.code == "KeyA") {
-			if(this.playerLeft.keys_active > 0)
-				this.playerLeft.keys_active--;
-			if(this.playerLeft.keys_active == 0)
-				this.playerLeft.direction = 0;
+		if(!(key.code == this.player.keys.key_decr || key.code == this.player.keys.key_incr)) {
+			return;
 		}
-		if (key.code == "ArrowUp" || key.code == "ArrowDown") {
-			if(this.playerRight.keys_active > 0)
-				this.playerRight.keys_active--;
-			if(this.playerRight.keys_active == 0)
-				this.playerRight.direction = 0;
-		}
-		if (key.code == "KeyF" || key.code == "KeyG") {
-			if(this.playerTop.keys_active > 0)
-				this.playerTop.keys_active--;
-			if(this.playerTop.keys_active == 0)
-				this.playerTop.direction = 0;
-		} 
-		if (key.code == "KeyK" || key.code == "KeyL") {
-			if(this.playerBottom.keys_active > 0)
-				this.playerBottom.keys_active--;
-			if(this.playerBottom.keys_active == 0)
-				this.playerBottom.direction = 0;
-		} 
+	
+		if(this.player.keys_active > 0)
+			this.player.keys_active--;
+		if(this.player.keys_active == 0)
+			this.player.direction = 0;
+		this.sendPlayerDirection();
+		if(DEBUG_KEY == true)
+			console.log("key up: ", this.player.keys_active);
 	}
 	goalAnimation(now) {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -431,35 +439,38 @@ class Game4P {
 			this.score.drawBigCurrScore(this.context);
 		}
 		this.arena.drawArena(this.context);
-		this.playerLeft.drawPaddle(this.context);
-		this.playerRight.drawPaddle(this.context);
-		this.playerTop.drawPaddle(this.context);
-		this.playerBottom.drawPaddle(this.context);
+		this.playerLeft.drawPaddle(this.context, this.player.side);
+		this.playerRight.drawPaddle(this.context, this.player.side);
+		this.playerTop.drawPaddle(this.context, this.player.side);
+		this.playerBottom.drawPaddle(this.context, this.player.side);
 	}
 	loop() {
 		let now = Date.now();
 		if(now < this.animation.times.third) {
-			this.kickOff = true;
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.goalAnimation(now);
+			// this.kickOff = true;
 		}
-		else if(this.kickOff == true) {
-			this.kickOff = false;
-			this.score.resetGoalTracker();
-		}
+		// else if(this.kickOff == true) {
+		// 	this.kickOff = false;
+		// 	this.score.resetGoalTracker();
+		// }
 		else {
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			this.update();
+			this.fetchAndUpdateFromGameData();
+			// this.update();
 			if(this.score.goal == false) {
 				this.draw();
 			}
-			else
+			else {
 				this.goalAnimation(now);
+			}
 		}
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
 	}
 	paddleCollision() {
-		if(this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width / 2) {
+		if(this.player.side == "left" && this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width / 2) {
 			if(!(this.score.lastTouch == "left"  || this.ball.x - this.ball.radius < this.playerLeft.x - this.playerLeft.width)) {
 				if(this.ball.y + this.ball.radius >= this.playerLeft.y - this.playerLeft.len / 2
 					&& this.ball.y - this.ball.radius <= this.playerLeft.y + this.playerLeft.len / 2) {
@@ -468,12 +479,12 @@ class Game4P {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "left";
-						this.audio.playTone(this.ball.speedx);
+						// this.audio.playTone(this.ball.speedx);
 					}
 			}
 		} // LEFT PADDLE
-		if(this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
-			if(!(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {				
+		if(this.player.side == "right" && this.ball.x + this.ball.radius >= this.playerRight.x - this.playerRight.width / 2) {
+			if(!(this.score.lastTouch == "right" || this.ball.x + this.ball.radius > this.playerRight.x + this.playerRight.width)) {		
 				if(this.ball.y + this.ball.radius >= this.playerRight.y - this.playerRight.len / 2
 					&& this.ball.y - this.ball.radius <= this.playerRight.y + this.playerRight.len / 2) {
 						let refAngle = (this.ball.y - this.playerRight.y) / (this.playerLeft.len / 2) * (Math.PI / 4);
@@ -481,40 +492,40 @@ class Game4P {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "right";
-						this.audio.playTone(this.ball.speedx);
+						// this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // RIGHT PADDLE
 		// it can hit left and bottom so no else here
-		if (this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
+		if (this.player.side == "top" && this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
 			if (!(this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width))) {
 				if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
 					this.ball.x - this.ball.radius <= this.playerTop.x + this.playerTop.len / 2) {
-					
+
 					let refAngle = (this.ball.x - this.playerTop.x) / (this.playerTop.len / 2) * (Math.PI / 4);
-					
+
 					this.ball.vx = Math.sin(refAngle);
 					this.ball.vy = Math.cos(refAngle);
 					
 					this.ball.speed_up();
 					this.score.lastTouch = "top";
-					this.audio.playTone(this.ball.speedx);
+					// this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // TOP PADDLE
-		if (this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
+		if (this.player.side == "bottom" && this.ball.y + this.ball.radius >= this.playerBottom.y - this.playerBottom.width / 2) {
 			if (!(this.score.lastTouch == "bottom" || (this.ball.y + this.ball.radius > this.playerBottom.y + this.playerBottom.width))) {
 				if (this.ball.x + this.ball.radius >= this.playerBottom.x - this.playerBottom.len / 2 &&
 					this.ball.x - this.ball.radius <= this.playerBottom.x + this.playerBottom.len / 2) {
 					
 					let refAngle = (this.ball.x - this.playerBottom.x) / (this.playerBottom.len / 2) * (Math.PI / 4);
-	
+
 					this.ball.vx = Math.sin(refAngle);
 					this.ball.vy = -Math.cos(refAngle);
 	
 					this.ball.speed_up();
 					this.score.lastTouch = "bottom";
-					this.audio.playTone(this.ball.speedx);
+					// this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // BOTTOM PADDLE
@@ -525,24 +536,23 @@ class Game4P {
 		if (this.ball.x < arenaStartX) {
 			this.score.goal = true;
 			this.score.conceded += "left";
-			window.playFx("/static/assets/arcade-alert.wav");
+			// window.playFx("/static/assets/arcade-alert.wav");
 		}
 		else if (this.ball.x > arenaStartX + arenaWidth) {
 			this.score.goal = true;
 			this.score.conceded += "right";
-			window.playFx("/static/assets/arcade-alert.wav");
+			// window.playFx("/static/assets/arcade-alert.wav");
 		}
 		if (this.ball.y < arenaStartY) {
 			this.score.goal = true;
 			this.score.conceded += "top";
-			window.playFx("/static/assets/arcade-alert.wav");
+			// window.playFx("/static/assets/arcade-alert.wav");
 		}
 		else if (this.ball.y > arenaStartY + arenaHeight) {
-			window.playFx("/static/assets/arcade-alert.wav");
 			this.score.goal = true;
 			this.score.conceded += "bottom";
+			// window.playFx("/static/assets/arcade-alert.wav");
 		}
-
 	}
 	resetPositions () {
 		this.ball.initBall(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -550,6 +560,51 @@ class Game4P {
 		this.playerRight.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerTop.init (this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
 		this.playerBottom.init(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
+	}
+	fetchBall() {
+			this.ball.x = this.denormPosX(this.gameData.ball.x);
+			this.ball.y = this.denormPosY(this.gameData.ball.y);
+			this.ball.vx = this.gameData.ball.vx;
+			this.ball.vy = this.gameData.ball.vy;
+			this.ball.speedx = this.denormSpeedX(this.gameData.ball.speedx);
+			this.ball.speedy = this.denormSpeedY(this.gameData.ball.speedy);
+	}
+	fetchAndUpdateFromGameData() {
+
+		this.fetchBall();
+
+		this.score.goal = this.gameData.goal;
+
+		this.score.goals.left = this.gameData.goals.left;
+		this.score.goals.right = this.gameData.goals.right;
+		this.score.goals.top = this.gameData.goals.top;
+		this.score.goals.bottom = this.gameData.goals.bottom;
+
+		this.score.prevScore.left = this.gameData.old_goals.left;
+		this.score.prevScore.right = this.gameData.old_goals.right;
+		this.score.prevScore.top = this.gameData.old_goals.top;
+		this.score.prevScore.bottom = this.gameData.old_goals.bottom;
+
+		this.animation.times["first"] = this.gameData.animation_time["first"] * 1000;
+		this.animation.times["second"] = this.gameData.animation_time["second"] * 1000;
+		this.animation.times["third"] = this.gameData.animation_time["third"] * 1000;
+		
+		this.playerLeft.direction = this.gameData.left.dir;
+		this.playerRight.direction = this.gameData.right.dir;
+		this.playerTop.direction = this.gameData.top.dir;
+		this.playerBottom.direction = this.gameData.bottom.dir;
+
+		this.playerLeft.x = this.denormPosX(this.gameData.left.x);
+		this.playerLeft.y = this.denormPosY(this.gameData.left.y);
+		this.playerTop.x = this.denormPosX(this.gameData.top.x);
+		this.playerTop.y = this.denormPosY(this.gameData.top.y);
+		this.playerBottom.x = this.denormPosX(this.gameData.bottom.x);
+		this.playerBottom.y = this.denormPosY(this.gameData.bottom.y);
+		this.playerRight.x = this.denormPosX(this.gameData.right.x);
+		this.playerRight.y = this.denormPosY(this.gameData.right.y);
+		
+		console.log(this.gameData);
+
 	}
 	update() {
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -560,6 +615,7 @@ class Game4P {
 			return ;
 		}
 		this.paddleCollision();
+
 		this.ball.doMove();
 		this.playerLeft.doMove(this.arena);
 		this.playerRight.doMove(this.arena);
@@ -569,25 +625,56 @@ class Game4P {
 	draw() {
 		this.arena.drawArena(this.context);
 		this.score.drawScore(this.context, this.arena._height, this.arena._startX, this.arena._startY);
-		this.playerLeft.drawPaddle(this.context);
-		this.playerRight.drawPaddle(this.context);
-		this.playerTop.drawPaddle(this.context);
-		this.playerBottom.drawPaddle(this.context);
+		this.playerLeft.drawPaddle(this.context, this.player.side);
+		this.playerRight.drawPaddle(this.context, this.player.side);
+		this.playerTop.drawPaddle(this.context, this.player.side);
+		this.playerBottom.drawPaddle(this.context, this.player.side);
 		this.ball.drawBall(this.context, this.arena._startX, this.arena._startY, this.arena._width, this.arena._height);
 	}
-	start() {
-		setTimeout(() => {
-			this.loop();
-		}, 50);
+	getReady() {
+		this.button = document.createElement('button');
+		this.button.textContent = 'Click Me';
+		
+		// Style the button to ensure it's visible
+		this.button.style.position = 'absolute';
+		this.button.style.top = '50%';
+		this.button.style.left = '45%';
+		this.button.style.transform = 'translate(-50%, -50%)';
+		this.button.style.zIndex = '10';
+		this.button.style.padding = '10px 20px';
+		this.button.style.fontSize = '16px';
+		this.button.style.cursor = 'pointer';
+		
+		// Add button to the parent (same as canvas)
+		this.parent.appendChild(this.button);
+		
+        // Add click event to the button
+        this.button.addEventListener('click', () => {
+			console.log("CLICKED");
+			if(this.button.textContent == 'Click Me') {
+				console.log("SENDING");
+				this.ws?.send(JSON.stringify({
+					"type": "is_ready",
+					"side": this.player.side
+				}))
+				console.log("SENT");
+			}
+			this.button.textContent = "READY!";
+        });
 	}
-	
-	stop () {
+	start() {
+		this.button.remove();
+		this.loop();
+	}
+	stopGame () {
 		console.log("pong stopped and exited");
 		this.stopPong4PGame();
-		this.audio.stopAudioTrack();
+		// this.audio.stopAudioTrack();
 	}
-
 	stopPong4PGame () {
+		const nav = document.getElementById('nav');
+		const parent = document.getElementById('app');
+
 		if(this.animRequestId) {
 			cancelAnimationFrame(this.animRequestId);
 		}
@@ -599,5 +686,4 @@ class Game4P {
 	}
 };
 
-// export { startPong4PGame, stopPong4PGame };
-export { Game4P };
+export { Online4P };
