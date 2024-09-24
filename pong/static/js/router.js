@@ -63,7 +63,7 @@ class Router {
 			console.log("challenger 4P");
 			this.game4P.initSocket(event.detail.username);
 			this.game4P.launchGame();
-			
+
 			// this.game4P.initSocket(event.detail.username);
 			// 	const sound = new Audio(CHALLENGE_SOUND);
 			// 	sound.volume = 0.5;
@@ -73,7 +73,7 @@ class Router {
 			console.log("challenged 4P");
 			this.game4P.initSocket(event.detail.username);
 			this.game4P.launchGame();
-			
+
 			// if (this.game.gameSocket)	return;
 			// const modalData = { message: `Challenged by ${event.detail.username}` };
 			// const fields = [{ key: "message", label: "Message" }];
