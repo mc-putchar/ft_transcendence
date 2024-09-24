@@ -340,18 +340,6 @@ class Game:
                         ball_x = remap(ball_x, -150, 150, 0, CLI_W)
                         ball_y = remap_inverted(ball_y, -100, 100, 0, CLI_H)
 
-                        # if self.game_index == 'player1':
-                        #     data = f"{int(score_p1)} {score_p2} {int(p2y)} {int(p1y)} {int(ball_x)} {int(ball_y)}"
-                        # else:
-                        #     data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
-                        
-                        # compose a single int by shifting the values
-                        # to fit in a single unsigned long for the C program with a total of 64 bits
-                        # for the score (0 to 11) we need 4 bits x2 = 8 bits
-                        # for the player y position (0 to 63) we need 6 bits x2 = 12 bits
-                        # for the ball x position (0 to 150) we need 8 bits
-                        # for the ball y position (0 to 63) we need 6 bits
-                        
                         # total of 34 bits
 
                         if self.game_index == 'player1':
@@ -360,7 +348,11 @@ class Game:
                             data = (score_p1 << 40) | (score_p2 << 32) | (p1y << 24) | (p2y << 16) | (ball_x << 8) | (ball_y)
 
                         hex_data_raw = hex(data)
+                        
+                        #console.print(hex_data_raw)
+
                         padded = hex_data_raw[2:].zfill(10)
+
 
                         try:
                             pipe_out.write(padded);
