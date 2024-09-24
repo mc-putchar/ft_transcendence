@@ -39,29 +39,30 @@ def update_player_match(match, player, score, win=False):
     logger.info(f"Player {type(player)} {player.username} updated with score {score}")
     logger.info(f"Match {type(match)} {match.id} updated with score {score}")
     logger.info(f"Score {type(score)}")
-    if win == True:
-        # TODO Check if the game is to be committed to the blockchain
-        try:
-            logger.info(f"Player {type(player)} {player.username} won")
-            chain = PongBlockchain()
-            player1_hash = hash_player([player.user.email, player.user.id])
-            winner = player1_hash
-            player_match2 = player_match.get_opponent()
-            player2_hash = hash_player([player_match2.player.user.email, player_match2.player.user.id]) 
-            match_players = [player1_hash, player2_hash]
-            tournament_id = match.tournament.id
-            scores = [player_match.score, player_match2.score]
-            logger.info(f"Parameters passing to the blockchain: {player1_hash}, {player2_hash}, {tournament_id}, {match_players}, {scores}, {winner}")
-            chain.addMatch(
-                chain.accounts[0],
-                os.getenv('HARDHAT_PRIVATE_KEY').strip('"'),
-                match.id, 
-                tournament_id, 
-                match_players, 
-                scores, 
-                winner)
-        except Exception as e:
-            logger.error(f"Error updating blockchain: {e}")
+    # if win == True:
+    #     # TODO Check if the game is to be committed to the blockchain
+	# 	# if opt-in was triggered
+    #     try:
+    #         logger.info(f"Player {type(player)} {player.username} won")
+    #         chain = PongBlockchain()
+    #         player1_hash = hash_player([player.user.email, player.user.id])
+    #         winner = player1_hash
+    #         player_match2 = player_match.get_opponent()
+    #         player2_hash = hash_player([player_match2.player.user.email, player_match2.player.user.id]) 
+    #         match_players = [player1_hash, player2_hash]
+    #         tournament_id = match.tournament.id
+    #         scores = [player_match.score, player_match2.score]
+    #         logger.info(f"Parameters passing to the blockchain: {player1_hash}, {player2_hash}, {tournament_id}, {match_players}, {scores}, {winner}")
+    #         chain.addMatch(
+    #             chain.accounts[0],
+    #             os.getenv('HARDHAT_PRIVATE_KEY').strip('"'),
+    #             match.id, 
+    #             tournament_id, 
+    #             match_players, 
+    #             scores, 
+    #             winner)
+    #     except Exception as e:
+    #         logger.error(f"Error updating blockchain: {e}")
 
 class PongGameConsumer(AsyncWebsocketConsumer):
 
@@ -335,6 +336,30 @@ class PongGameConsumer(AsyncWebsocketConsumer):
                 await update_player_match(self.match, player2, p2_score, p2_score > p1_score)
             else:
                 logger.warning("Error saving match results: Player is not registered.")
+
+			try:
+				logger.info(f"BLOCKCHAIN STUFF \n-----\nPlayer {type(player)} {player.username} won")
+				chain = PongBlockchain()
+				player1_hash = hash_player([player.user.email, player.user.id])
+				winner = player1_hash
+				player_match2 = player_match.get_opponent()
+				player2_hash = hash_player([player_match2.player.user.email, player_match2.player.user.id]) 
+				match_players = [player1_hash, player2_hash]
+				tournament_id = match.tournament.id
+				scores = [player_match.score, player_match2.score]
+				logger.info(f"Parameters passing to the blockchain: {player1_hash}, {player2_hash}, {tournament_id}, {match_players}, {scores}, {winner}")
+				chain.addMatch(
+					chain.accounts[0],
+					os.getenv('HARDHAT_PRIVATE_KEY').strip('"'),
+					match.id, 
+					tournament_id, 
+					match_players, 
+					scores, 
+					winner)
+			except Exception as e:
+				logger.error(f"Error updating blockchain: {e}")
+
+
 
         except Exception as e:
             logger.error(f"Error saving match results: {e}")
