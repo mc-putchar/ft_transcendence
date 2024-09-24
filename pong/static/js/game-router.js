@@ -204,7 +204,6 @@ class GameRouter {
 	}
 
 	async startOnlineGame (data) {
-		// create players
 		const playerProfile = await getJSON(`/api/profiles/user/${data.player}/`)
 		const opponentProfile = await getJSON(`/api/profiles/user/${data.opponent}/`);
 		if (playerProfile === null || opponentProfile === null) {
@@ -258,7 +257,7 @@ class GameRouter {
 		const gameSetup = new GameSetup(
 			this.appElement,
 			player1,
-			player2 ?? this.makeAIPlayer("left"),
+			player2 ?? this.makeAIPlayer("right"),
 			true,
 			player2 ? "classic" : "single",
 			"2d"
@@ -290,7 +289,7 @@ class GameRouter {
 
 	makePlayer (side, name, alias=null, img=null) {
 		let player = new Player(side, name);
-		if (side === "left")
+		if (side === "right")
 			player.controls = { up: "KeyW", down: "KeyS" };
 		else
 			player.controls = { up: "ArrowUp", down: "ArrowDown" };
