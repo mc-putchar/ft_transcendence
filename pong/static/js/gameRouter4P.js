@@ -49,7 +49,7 @@ class GameRouter4P {
 		this.started = false;
 
 	}
-	init(challenger, accessToken) {
+	initSocket(challenger) {
 
 		const accessToken = sessionStorage.getItem('access_token') || '';
 		const url = `wss://${window.location.host}/ws/game/${challenger}/?token=${accessToken}`;

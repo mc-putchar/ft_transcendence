@@ -222,36 +222,32 @@ class ChatRouter {
 	}
 
 	handleDuelRequest4P(data) {
+		console.log("handle duel request 4P");
 		let challengedUsers = [];
 		challengedUsers = data.message.split(' ');
 		challengedUsers.shift();
-		if(length(challengedUsers) != 3) {
+		if(challengedUsers.length != 3) {
 			return;
 		}
+		console.log("correct length");
 		if (data.username === this.username) {
-			this.pushMessage(`You have challenged ${challengedUsers[0]} ${challengedUsers[1]} ${challengedUsers[2]} to a duel!`, 'duel', 'Announcer');
+			this.pushMessage(`You have challenged ${challengedUsers[0]} ${challengedUsers[1]} ${challengedUsers[2]} to a duel4P!`, 'duel4P', 'Announcer');
+			this.chatElement.dispatchEvent(new CustomEvent('challenger4P', { detail: { gameID: data.username } }));
 		}
 		else {
-			if (this.users.includes(user)) {
-					this.chatElement.dispatchEvent(new CustomEvent('challenger', { detail: { gameID: data.username } }));
-				if (user !== this.username) {
-					this.pushMessage(`${data.username} has challenged ${challengedUsers[0]} ${challengedUsers[1]} ${challengedUsers[2]} to a duel!`, 'duel', 'Announcer');
-				} else {
-					this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel', 'Announcer');
-					this.chatElement.dispatchEvent(new CustomEvent('challenged', { detail: { username: data.username } }));
-				}
+			if (user !== this.username) {
+				this.pushMessage(`${data.username} has challenged ${challengedUsers[0]} ${challengedUsers[1]} ${challengedUsers[2]} to a duel4P!`, 'duel4P', 'Announcer');
+			} else {
+				this.pushMessage(`${data.username} has challenged you to a duel4P!`, 'duel4P', 'Announcer');
+				this.chatElement.dispatchEvent(new CustomEvent('challenged4P', { detail: { username: data.username } }));
 			}
 		}
 	}
 		// check all users are active with user list online player something whatever
-		
-		
 		// this.username is current user
 		// data.message.split(' ')
-	}
 
-
-	sendDuelResponse(response) {	
+	sendDuelResponse(response) {
 		const data = {
 			type: 'challenge',
 			username: this.username,
@@ -279,7 +275,7 @@ class ChatRouter {
 		this.chatSocket.send(JSON.stringify(data));
 	}
 
-	insertChatMessage(message, parent, type, sender=null) { 
+	insertChatMessage(message, parent, type, sender=null) {
 		const card = document.createElement('div');
 		card.classList.add('card', 'chat-card', 'my-1', 'mw-50');
 		card.style += 'max-width:50vw;';

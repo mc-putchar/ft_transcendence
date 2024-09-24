@@ -59,6 +59,32 @@ class Router {
 			const closeCallback = () => { location.hash = '/game/decline/' };
 			createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
 		});
+		this.chatElement.addEventListener('challenger4P', (event) => {
+			console.log("challenger 4P");
+			this.game4P.initSocket(event.detail.username);
+			this.game4P.launchGame();
+			
+			// this.game4P.initSocket(event.detail.username);
+			// 	const sound = new Audio(CHALLENGE_SOUND);
+			// 	sound.volume = 0.5;
+			// 	sound.play();
+		});
+		this.chatElement.addEventListener('challenged4P', (event) => {
+			console.log("challenged 4P");
+			this.game4P.initSocket(event.detail.username);
+			this.game4P.launchGame();
+			
+			// if (this.game.gameSocket)	return;
+			// const modalData = { message: `Challenged by ${event.detail.username}` };
+			// const fields = [{ key: "message", label: "Message" }];
+			// const custom = `
+			// 	<div class="row">
+			// 		<button onclick="location.hash='/game4P/accept/${event.detail.username}'" class="btn btn-success" data-bs-dismiss="modal">Accept</button>
+			// 		<button onclick="location.hash='/game4P/decline/'" class="btn btn-danger" data-bs-dismiss="modal">Decline</button>
+			// 	</div>`;
+			// const closeCallback = () => { location.hash = '/game4P/decline/' };
+			// createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
+		});
 		this.chatElement.addEventListener('notification', (event) => {
 			showNotification(
 				event.detail.message,

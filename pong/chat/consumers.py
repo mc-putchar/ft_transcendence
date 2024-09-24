@@ -90,6 +90,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
+        print("\nRECEIVED\n MESSAGE: ", message)
         username = text_data_json["username"]
         if text_data_json.get("type") == "challenge":
             await self.channel_layer.group_send(
@@ -121,7 +122,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     async def user_list(self, event):
-       
+
         users_list = await self.get_online_users()
 
         await self.send(text_data=json.dumps({

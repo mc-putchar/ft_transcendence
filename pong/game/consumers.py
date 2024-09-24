@@ -15,7 +15,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 @database_sync_to_async
 def get_user_by_id(user_id):
     User = get_user_model()
