@@ -5,6 +5,7 @@ import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { TournamentRouter } from './tournament-router.js';
+import { LocalTournament } from './local-tournament.js';
 import { createModal } from './utils.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
@@ -22,6 +23,7 @@ class Router {
 		this.chat = new ChatRouter(this.chatElement);
 		this.game = new GameRouter(this.appElement);
 		this.tournament = new TournamentRouter(this.appElement);
+		this.localTournament = new LocalTournament(this.appElement);
 		this.audioContext = null;
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));
@@ -151,7 +153,40 @@ class Router {
 				}
 			} else
 				await this.loadTemplate(template);
-		} else {
+		}
+		else if (template.startsWith('local-tour')) {
+			let numPlayers = document.getElementById('numPlayers')?.value;
+			let usernames = [];
+			usernames.push(document.getElementById('user1')?.value);
+			usernames.push(document.getElementById('user2')?.value);
+			usernames.push(document.getElementById('user3')?.value);
+			usernames.push(document.getElementById('user4')?.value);
+			usernames.push(document.getElementById('user5')?.value);
+			usernames.push(document.getElementById('user6')?.value);
+			usernames.push(document.getElementById('user7')?.value);
+			usernames.push(document.getElementById('user8')?.value);
+			for (let i = usernames.length - 1; i >= 0; i--) {
+				if (!usernames[i] || usernames[i].trim() == "") {
+					usernames.splice(i, 1);
+				} else {
+					usernames[i] = usernames[i].trim();
+				}
+			}
+			if(usernames.length != numPlayers) {
+				this.notifyError("You requested " + numPlayers + " players but inserted " + usernames.length + " usernames");
+				history.back();
+				usernames = [];
+				return;
+			}
+			let setSize = new Set(usernames).size;
+			if(setSize !== usernames.length) {
+				this.notifyError("Duplicates are not allowed");
+				history.back();
+				return;
+			};
+			this.localTournament.start(usernames);
+		}
+		else {
 			await this.loadTemplate(template);
 		}
 		this.oldHash = window.location.hash;
@@ -443,6 +478,8 @@ class Router {
 			case 'pong-4p':
 				this.game.start4PGame();
 				break;
+			case 'local-Tournament':
+				this.localTournament.start();
 			default:
 				break;
 		}
