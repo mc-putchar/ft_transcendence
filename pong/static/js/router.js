@@ -489,12 +489,13 @@ class Router {
 		const form = document.getElementById('registration-form');
 		if (!form) return;
 		form.addEventListener('submit', async (e) => {
-			e.preventDefault();
+            e.preventDefault();
 			const username = document.getElementById('username').value;
 			const email = document.getElementById('email').value;
 			const password = document.getElementById('password').value;
 			const password_confirmation = document.getElementById('password_confirmation').value;
-	
+			// TODO Add blockchain address field
+            // const evm_address = document.getElementById('evm_addr').value;
 			if (password !== password_confirmation) {
 				this.notifyError("Passwords do not match");
 				return;
@@ -643,6 +644,8 @@ class Router {
 					const html = await response.text();
 					this.animateContent(this.appElement, html, () => this.handlePostLoad("profile"));
 					this.loadNav();
+                    const newUsername = formData.get('alias');
+                    console.log(newUsername);
 				} else {
 					throw new Error("Failed to update profile");
 				}
