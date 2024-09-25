@@ -168,6 +168,13 @@ class GameRouter4P {
 		console.log("LAUNCH_GAME 3");
 		this.started = true;
 	}
+	stopGame() {
+		this.game?.stopPong4PGame();
+		if(this.chat_websocket) {
+			console.log("4P socket closed");
+			this.chat_websocket.close();
+		}
+	}
 }
 
 export { GameRouter4P }

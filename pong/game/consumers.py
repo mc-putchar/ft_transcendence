@@ -38,30 +38,6 @@ def update_player_match(match, player, score, win=False):
 	logger.info(f"Player {type(player)} {player.username} updated with score {score}")
 	logger.info(f"Match {type(match)} {match.id} updated with score {score}")
 	logger.info(f"Score {type(score)}")
-	# if win == True:
-	#     # TODO Check if the game is to be committed to the blockchain
-	# 	# if opt-in was triggered
-	#     try:
-	#         logger.info(f"Player {type(player)} {player.username} won")
-	#         chain = PongBlockchain()
-	#         player1_hash = hash_player([player.user.email, player.user.id])
-	#         winner = player1_hash
-	#         player_match2 = player_match.get_opponent()
-	#         player2_hash = hash_player([player_match2.player.user.email, player_match2.player.user.id]) 
-	#         match_players = [player1_hash, player2_hash]
-	#         tournament_id = match.tournament.id
-	#         scores = [player_match.score, player_match2.score]
-	#         logger.info(f"Parameters passing to the blockchain: {player1_hash}, {player2_hash}, {tournament_id}, {match_players}, {scores}, {winner}")
-	#         chain.addMatch(
-	#             chain.accounts[0],
-	#             os.getenv('HARDHAT_PRIVATE_KEY').strip('"'),
-	#             match.id, 
-	#             tournament_id, 
-	#             match_players, 
-	#             scores, 
-	#             winner)
-	#     except Exception as e:
-	#         logger.error(f"Error updating blockchain: {e}")
 
 class PongGameConsumer(AsyncWebsocketConsumer):
 
@@ -802,14 +778,15 @@ class handle4PGame(AsyncWebsocketConsumer):
 			self.group_name,
 			self.channel_name
 		)
+		profile = await get_profile(self.username)
+		profile.currently_playing = True
 		handle4PGame.active_connections += 1
 
 	async def receive(self, text_data=None, bytes_data=None):
 		data = json.loads(text_data)
 		type = data.get("type")
 
-		print("Received: ", data)
-
+		print("\nRECEIVE: ", data)
 		if type == "launch_game":
 			await self.channel_layer.group_send(
 				self.group_name,

@@ -666,12 +666,8 @@ class Online4P {
 		this.button.remove();
 		this.loop();
 	}
-	stopGame () {
-		console.log("pong stopped and exited");
-		this.stopPong4PGame();
-		// this.audio.stopAudioTrack();
-	}
 	stopPong4PGame () {
+		// this.audio.stopAudioTrack();
 		const nav = document.getElementById('nav');
 		const parent = document.getElementById('app');
 
