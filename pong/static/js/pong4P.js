@@ -289,7 +289,7 @@ class Animation {
 let resizeTimeout;
 
 class Game4P {
-	constructor() {
+	constructor(appElement) {
 		console.log("Pong 4P - Starting new game");
 		const nav = document.getElementById('nav');
 		const parent = document.getElementById('app');
@@ -301,6 +301,7 @@ class Game4P {
 		parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
 		parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
 	
+		this.parent = parent;
 		this.canvas = document.createElement("canvas");
 		this.parent.appendChild(this.canvas);
 		this.canvas.style.width = Math.min(this.parent.height, this.parent.width);

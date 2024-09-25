@@ -401,7 +401,6 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 	async def set_player_ready(self, player):
 		await game_manager.set_player_ready(self.game_id, player)
 
-
 class PongTournamentConsumer(AsyncWebsocketConsumer):
 
 	def __init__(self, *args, **kwargs):
@@ -564,11 +563,11 @@ class Ball:
 
 		rand = random.random()
 		if rand <= 0.5:
-			self.speedx = BALL_START_SPEED / 300 * 100
-			self.speedy = BALL_START_SPEED / 200 * 100
+			self.speedx = BALL_START_SPEED / 300 * 70
+			self.speedy = BALL_START_SPEED / 200 * 70
 		else:
-			self.speedx = BALL_START_SPEED / 200 * 100
-			self.speedy = BALL_START_SPEED / 300 * 100
+			self.speedx = BALL_START_SPEED / 200 * 70
+			self.speedy = BALL_START_SPEED / 300 * 70
 
 	async def speed_up (self):
 		self.speedx += self.incr_speed
