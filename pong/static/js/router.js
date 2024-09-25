@@ -62,7 +62,6 @@ class Router {
 		this.chatElement.addEventListener('challenger4P', (event) => {
 			console.log("challenger 4P");
 			this.game4P.initSocket(event.detail.username);
-			this.game4P.launchGame();
 
 			// this.game4P.initSocket(event.detail.username);
 			// 	const sound = new Audio(CHALLENGE_SOUND);
@@ -72,7 +71,6 @@ class Router {
 		this.chatElement.addEventListener('challenged4P', (event) => {
 			console.log("challenged 4P");
 			this.game4P.initSocket(event.detail.username);
-			this.game4P.launchGame();
 
 			// if (this.game.gameSocket)	return;
 			// const modalData = { message: `Challenged by ${event.detail.username}` };

@@ -41,7 +41,7 @@ class GameData {
 }
 
 class GameRouter4P {
-	constructor(appElement) {
+	constructor() {
 		// make personal address
 		this.active_connect;
 		this.used_paddles;
@@ -52,7 +52,7 @@ class GameRouter4P {
 	initSocket(challenger) {
 
 		const accessToken = sessionStorage.getItem('access_token') || '';
-		const url = `wss://${window.location.host}/ws/game/${challenger}/?token=${accessToken}`;
+		const url = `wss://${window.location.host}/ws/online4P/${challenger}/?token=${accessToken}`;
 		this.gameData = new GameData();
 		this.chat_websocket = new WebSocket(url);
 
@@ -64,6 +64,8 @@ class GameRouter4P {
 				"type":'get_ball'}));
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_active_connections'}));
+				
+			console.log("Getters executed");
 		});
 
 		this.chat_websocket.onmessage = (event) => {
@@ -71,6 +73,7 @@ class GameRouter4P {
 			const data = JSON.parse(event.data);
 			const type = data.type;
 
+			console.log("received: ", data);
 			if (type == "launch_game") {
 				this.launchGame();
 			}
