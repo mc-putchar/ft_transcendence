@@ -1,5 +1,5 @@
 __pycache__
-.env
+*.env
 .env_local
 .env_deploy
 .venv/
@@ -11,7 +11,7 @@ migrations
 staticfiles
 .venv
 __pycache__
-.env
+*.env
 pong/testenv
 testenv
 tags

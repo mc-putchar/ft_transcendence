@@ -11,7 +11,6 @@ from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
-# abstracted into a function
 class ChatConsumer(AsyncWebsocketConsumer):
     
     async def set_online_status(self, status):
@@ -26,6 +25,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         from django.contrib.auth import get_user_model
         User = get_user_model()
         return User.objects.get(id=user_id)
+
+    @database_sync_to_async
+    def get_id_from_username(self, username):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        return User.objects.get(username=username).id
 
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
@@ -50,7 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         self.username = self.user.username
-        # set user online status
+
         await self.set_online_status(True)
 
         if self.room_name == "lobby":
@@ -68,6 +73,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_group_name, {"type": "connection", "username": self.username}
         )
+
+        # Set user as not playing on start
+        profile = await sync_to_async(Profile.objects.get)(user=self.user)
+        profile.currently_playing = False
+        await sync_to_async(profile.save)()
 
     async def disconnect(self, close_code):
         try:
@@ -91,6 +101,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
         username = text_data_json["username"]
+
         if text_data_json.get("type") == "challenge":
             await self.channel_layer.group_send(
                 self.room_group_name, {
@@ -100,6 +111,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
             )
             return
+        
         usersList = await self.get_online_users() 
 
         # Send message to room group
@@ -114,6 +126,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
        
         usersList = await self.get_online_users()
         
+        if message.startswith("/duel") and await self.is_user_playing(message.split(" ")[1]):
+            logger.info(f"------- User {message.split(" ")[1]} Already playing, cant duel -------")
+            return
+
         await self.send(text_data=json.dumps({
             "message": message,
             "username": username,
@@ -135,11 +151,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     async def challenge(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "challenge",
-            "username": event["username"],
-            "message": event["message"],
-        }))
+        if await self.is_user_playing(event["username"]):
+            logger.info("------- User") 
+            logger.info(f"{ event["username"] } is already playing another game\n------\n")
+        else: 
+            await self.send(text_data=json.dumps({
+                "type": "challenge",
+                "username": event["username"],
+                "message": event["message"],
+            }))
+
+    async def is_user_playing(self, user):
+        try:
+            userid = await self.get_id_from_username(user)
+            profile = await sync_to_async(Profile.objects.get)(user=userid)
+            return profile.currently_playing
+
+        except Exception as e:
+            logger.error(f"Error checking if user is playing: {e}")
+            return False
 
     @database_sync_to_async
     def get_online_users(self):

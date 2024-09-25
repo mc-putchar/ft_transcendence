@@ -2,6 +2,12 @@
 from api.models import Profile
 from django import forms
 from django.contrib.auth.models import User
+import logging
+from blockchain.blockchain_api import PongBlockchain, hash_player
+from web3.exceptions import InvalidAddress
+import os
+
+logger = logging.getLogger(__name__)
 
 class LoginForm(forms.Form):
     username = forms.CharField(label='Username', max_length=16, widget=forms.TextInput(attrs={'class': 'form-control'}), required=True)
@@ -54,7 +60,7 @@ class RegisterForm(forms.ModelForm):
                 "Password and Confirm Password do not match")
 
         return cleaned_data
-
+    
 class UserUpdateForm(forms.ModelForm):
     email = forms.EmailField()
 
@@ -68,19 +74,51 @@ class UserUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['alias', 'image', 'client_3d']
+        fields = ['alias', 'image', 'client_3d', 'blockchain_address']
         widgets = {
             'alias': forms.TextInput(attrs={'class': 'form-control'}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
             'client_3d': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'blockchain_address': forms.TextInput(attrs={
+                'class': 'form-control',
+                'pattern': '^(0x[a-fA-F0-9]{40}|[a-zA-Z0-9]{40})$', # 40 hexadecimal characters preceded by 0x or not
+                'title': 'Enter a valid Ethereum address: 0x followed by 40 hexadecimal characters',
+                }),
         }
+    
+    def __init__(self, *args, **kwargs):
+            super(ProfileUpdateForm, self).__init__(*args, **kwargs)
+            user = kwargs.get('instance').user
+            if not user.profile.blockchain_address:
+                self.fields.pop('blockchain_address')
+
+    def save(self, commit=True):
+        """Override save method to update blockchain address on chain"""
+        profile = super(ProfileUpdateForm, self).save(commit=False)
+        if 'blockchain_address' in self.changed_data:
+            new_address = self.cleaned_data['blockchain_address']
+            chain = PongBlockchain()
+            player_hash = hash_player([profile.user.email, profile.user.id])
+            chain.updatePlayerAddress(chain.accounts[0], os.getenv('HARDHAT_PRIVATE_KEY'), player_hash, new_address)
+            logger.info(f"Updated on chain address: {chain.getPlayer(player_hash)[5]}")
+        if commit:
+            profile.save()
+        return profile
 
     def clean(self):
+        """Override clean method to validate image size and blockchain address"""
         cleaned_data = super().clean()
         image = cleaned_data.get("image")
         if image and image.size > 2*1024*1024:
             raise forms.ValidationError(
                 "Image file is too large ( > 2mb )")
+        blockchain_address = cleaned_data.get("blockchain_address")
+        if blockchain_address:
+            blockchain_address = PongBlockchain().web3.to_checksum_address(blockchain_address)
+            cleaned_data['blockchain_address'] = blockchain_address
+            if not PongBlockchain().web3.is_checksum_address(blockchain_address): # Custom validate blockchain address
+                raise forms.ValidationError(
+                    "Invalid blockchain address")
         return cleaned_data
 
 class UsernameCollisionForm(forms.Form):

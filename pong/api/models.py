@@ -28,6 +28,7 @@ class Profile(models.Model):
     blocked_users = models.ManyToManyField('self', through='Blocked', symmetrical=False, related_name='blocked_profiles', default=None, blank=True)
     forty_two_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     blockchain_address = models.CharField(max_length=42, null=True, blank=True, default=None)
+    currently_playing = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.alias:
@@ -35,6 +36,9 @@ class Profile(models.Model):
         super().save(*args, **kwargs)
         # if self.image and self.image.name != 'profile_images/default.png':
         #     self.resize_image()
+
+    def has_blockchain(self):
+        return self.blockchain_address is not None and self.blockchain_address != "0x0000000000000000000000000000000000000000"
 
     def resize_image(self):
         img = Image.open(self.image.path)
@@ -335,6 +339,7 @@ class Tournament(models.Model):
                 self.status = 'closed'
                 self.end_date = timezone.now()
                 self.save()
+			# TODO Commit to blockchain
         except ValueError as e:
             logger.error(f"Failed to end tournament: {e}")
         except TournamentPlayer.DoesNotExist:

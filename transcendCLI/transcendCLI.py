@@ -8,7 +8,7 @@ import asyncio
 LOGIN_ROUTE = '/api/login/'
 
 CLI_W = 150
-CLI_H = 64
+CLI_H = 42
 
 fifo_in = "/tmp/pong_in"
 fifo_out = "/tmp/pong_out"
@@ -132,12 +132,13 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 def show_help():
-    console.print('\n-----\nHELP - AVAILABLE COMMANDS  \n--------------------------------------', style='bold')
+    console.print('\n------------------------\nHELP - AVAILABLE COMMANDS  \n--------------------------------------', style='bold')
     console.print('Commands:', style='green')
+    console.print('----------------------------------------------', style='bold')
     console.print('/duel <username> - Challenge a user to a game.', style='bold')
     console.print('/pm <username> <message> - Send a private message.', style='bold')
     console.print('/help - Show this help message.', style='bold')
-    console.print('exit or Ctrl + C to exit the app.', style='bold')
+    console.print('\nexit or Ctrl + C to exit the app.', style='bold')
     console.print('--------------------------------------\n', style='bold')
     console.print('Game Controls:', style='green')
     console.print('w - Move up', style='green')
@@ -157,7 +158,7 @@ class Game:
         self.websocket = None
         self.users_list = []
 
-        subprocess.run(['bash ../ft_ascii/start.sh'], shell=True)
+        self.subproc = subprocess.run(['bash ../ft_ascii/start.sh'], shell=True)
         
         if not os.path.exists(fifo_out) or not os.path.exists(fifo_in):
             raise FileNotFoundError("FIFO files not found")   
@@ -176,10 +177,22 @@ class Game:
         elif game_creator == False:
             self.game_index = 'player2'
         
+        self.last_activity = asyncio.create_task(self.close_socket())
+
+    async def close_socket(self):
+        await asyncio.sleep(8)
+
+        if os.system("ps aux | grep './pong_cli' | grep -v grep &> /dev/null") == 0:
+            os.system("pkill -f './pong_cli' > /dev/null 2>&1")
+
+        if self.websocket:
+            console.print('Closing game socket due to inactivity', style='red')
+            await self.websocket.close()
 
     async def receive_message(self):
         if not self.websocket:
             return
+        
         async for data in self.websocket:
             try:
                 data_json = json.loads(data)
@@ -191,7 +204,15 @@ class Game:
                         f'[bold cyan]{username}[/bold cyan] connected.')
 
                 elif msg_type == 'game_state':
+                    
                     self.game_state = data_json.get('game_state')
+                    self.last_activity.cancel()
+
+                    if self.game_state['status'] == "finished" or self.game_state['status'] == "forfeited":
+                        console.print(f"SCORE:\nPLAYER 1:\t{self.game_state['score']['p1']} \nPLAYER 2:\t{self.game_state['score']['p2']}", style='green')
+                        console.print('Game Over', style='green')
+                        await self.websocket.close()
+                        return
 
                 elif msg_type == 'accept':
                     match_id = data_json.get('message').split(' ')[1]
@@ -269,11 +290,7 @@ class Game:
         while True and self.websocket:
             await self.websocket.send(json.dumps({
                 'type': 'ready',
-                'player': 'player2',
-            }))
-            await self.websocket.send(json.dumps({
-                'type': 'ready',
-                'player': 'player1',
+                'player': self.game_index,
             }))
             await asyncio.sleep(2)
 
@@ -317,26 +334,28 @@ class Game:
                         
                         # console.print(f'p1y: {p1y}, p2y: {p2y}, ball_x: {ball_x}, ball_y: {ball_y}', style='green')
 
-                        if ball_x > 150:
-                            ball_x = 150
-                        elif ball_x < -150:
-                            ball_x = -150
-
-                        if ball_y > 100:
-                            ball_y = 100
-                        elif ball_y < -100:
-                            ball_y = -100
+                        ball_x = min(150, max(-150, ball_x))
+                        ball_y = min(100, max(-100, ball_y))
 
                         ball_x = remap(ball_x, -150, 150, 0, CLI_W)
                         ball_y = remap_inverted(ball_y, -100, 100, 0, CLI_H)
 
+                        # total of 34 bits
+
                         if self.game_index == 'player1':
-                            data = f"{int(score_p1)} {score_p2} {int(p2y)} {int(p1y)} {int(ball_x)} {int(ball_y)}"
+                            data = (score_p1 << 40) | (score_p2 << 32) | (p2y << 24) | (p1y << 16) | (ball_x << 8) | (ball_y)                           
                         else:
-                            data = f"{int(score_p1)} {score_p2} {int(p1y)} {int(p2y)} {int(ball_x)} {int(ball_y)}"
+                            data = (score_p1 << 40) | (score_p2 << 32) | (p1y << 24) | (p2y << 16) | (ball_x << 8) | (ball_y)
+
+                        hex_data_raw = hex(data)
+                        
+                        #console.print(hex_data_raw)
+
+                        padded = hex_data_raw[2:].zfill(10)
+
 
                         try:
-                            pipe_out.write(data)
+                            pipe_out.write(padded);
                             pipe_out.flush() 
 
                         except BlockingIOError:
@@ -344,23 +363,28 @@ class Game:
                         
                     try:
                         recv_dx = pipe_in.readline().strip()
-                        # if recv_dx != self.player1_dx:
                         self.player1_dx = recv_dx
                         await self.update_movement()
 
                     except BlockingIOError:
                         console.print('fifo_in is not ready for reading', style='yellow')
             
-                    await asyncio.sleep(0.04)
+                    await asyncio.sleep(0.03)
+        
 
         except OSError as e:
             if e.errno == errno.EPIPE:
                 console.print('Client pipe exited', style='green')
-                if (self.websocket):
-                    await self.websocket.close()
+
+            if os.system("ps aux | grep './pong_cli' | grep -v grep &> /dev/null ") == 0:
+                os.system("pkill -f './pong_cli' > /dev/null 2>&1")
+
+            if (self.websocket):
+                await self.websocket.close()
+                return
 
         except Exception as e:
-            console.print(f'Error in update_client: {e}', style='red')
+            console.print(f'update_client: {e}', style='green')
 
 
 class Chat:
@@ -402,8 +426,11 @@ class Chat:
             await self.websocket.send(json.dumps(data))
  
             if message.split(' ')[0] == '/duel':
-                self.game = Game(self.base_url, self.jwt_token, self.username, True)
-                await self.game.connect() 
+                if message.split(' ')[1] != self.username:
+                    self.game = Game(self.base_url, self.jwt_token, self.username, True)
+                    await self.game.connect() 
+                elif message.split(' ')[1] == self.username:
+                    console.print('You cannot challenge yourself.', style='red')
 
             if message.startswith('/help'):
                 show_help()
@@ -541,16 +568,14 @@ if __name__ == '__main__':
         if not os.path.exists(fifo):
             try:
                 os.mkfifo(fifo, 0o666)
-                # console.print(f'Created FIFO: {fifo}', style='green')
             except OSError as e:
                 console.print(f'Failed to create FIFO {fifo}: {e}', style='red')
 
-    # console.print('Welcome to transcendCLI!', style='bold green')
 
     banner = """\n\n
         __       __       __                                 __
         | |     / /___   / /_____ ____   ____ ___   ___     / /_ ____                                              
-        | | /| / // _ \ / // ___// __ \ / __ `__ \ / _ \   / __// __ \                                             
+        | | /| / // _ \ / // ___// __ \ / __ `__ \ / _ \   / __// __ \                                        
         | |/ |/ //  __// // /__ / /_/ // / / / / //  __/  / /_ / /_/ /                                             
         |__/|__/ \___//_/ \___/ \____//_/ /_/ /_/ \___/   \__/ \____/                                              
 
@@ -571,9 +596,8 @@ if __name__ == '__main__':
     console.print(banner, style='bold green')
     console.print('Please log in to continue.\n', style='bold green')
     console.print('--------------------------------------', style='blue')
-    console.print('Type /help for a list of commands.', style='bold green')
-    console.print('You need to have an account registered via the web interface', style='green')
+    console.print('Type /help for a list of commands.', style='yellow')
+    console.print('You need to have an account registered via the web interface', style='bold green')
     login()
 
 # End of transcendCLI.py
-

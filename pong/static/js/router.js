@@ -154,11 +154,11 @@ class Router {
 					history.back();
 					return;
 				}
-				const p1 = this.game.makePlayer('right', p1Name);
+				const p1 = this.game.makePlayer('left', p1Name);
 				const p2Name = document.getElementById('player2-name')?.value;
-				await this.loadTemplate(template);
+				// await this.loadTemplate(template);
 				if (p2Name) {
-					const p2 = this.game.makePlayer('left', p2Name);
+					const p2 = this.game.makePlayer('right', p2Name);
 					this.game.startClassicGame(p1, p2);
 				} else {
 					this.game.startClassicGame(p1);
@@ -204,6 +204,32 @@ class Router {
 		this.oldHash = window.location.hash;
 	}
 
+	getGameTemplate(template) {
+		const p1Name = document.getElementById('player1-name')?.value;
+		if (!p1Name) {
+			this.notifyError("Player 1 name is required");
+			return 'play';
+		}
+		const p1 = this.game.makePlayer('left', p1Name);
+		const p2Name = document.getElementById('player2-name')?.value;
+		if (p2Name) {
+			const p2 = this.game.makePlayer('right', p2Name);
+			this.game.startClassicGame(p1, p2);
+		} else {
+			this.game.startClassicGame(p1);
+			switch (template) {
+				case 'pong-classic':
+					return 'pong-classic';
+				case 'pong-3d':
+					return 'pong-3d';
+				case 'pong-4p':
+					return 'pong-4p';
+				default:
+					return 'home';
+			}
+		}
+	}
+
 	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
 		try {
 			element.innerHTML = '<div class="spinner-border text-success"></div>';
@@ -232,8 +258,7 @@ class Router {
 			var navbarCollapse = document.querySelector('#navbarNav');
    			 if (navbarCollapse) {
    			     var collapse = new bootstrap.Collapse(navbarCollapse);
-  
-			     collapse.hide();
+						 collapse.hide();
 
    			     // Hide the navbar when a link inside it is clicked
    			     var navbarLinks = document.querySelectorAll('.navbar-collapse a');
@@ -253,7 +278,7 @@ class Router {
    			         }
    			     });
    			 } else {
-				this.notifyError("Navbar collapse element not found.");
+						this.notifyError("Navbar collapse element not found.");
    			 }
 
 			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
@@ -271,6 +296,7 @@ class Router {
 					}
 				}
 			});
+
 			document.getElementById('fxMuteBtn').addEventListener('click', (e) => {
 				const fxMuteBtn = document.getElementById('fxMuteBtn');
 
@@ -475,12 +501,13 @@ class Router {
 		const form = document.getElementById('registration-form');
 		if (!form) return;
 		form.addEventListener('submit', async (e) => {
-			e.preventDefault();
+            e.preventDefault();
 			const username = document.getElementById('username').value;
 			const email = document.getElementById('email').value;
 			const password = document.getElementById('password').value;
 			const password_confirmation = document.getElementById('password_confirmation').value;
-	
+			// TODO Add blockchain address field
+            // const evm_address = document.getElementById('evm_addr').value;
 			if (password !== password_confirmation) {
 				this.notifyError("Passwords do not match");
 				return;
@@ -629,6 +656,8 @@ class Router {
 					const html = await response.text();
 					this.animateContent(this.appElement, html, () => this.handlePostLoad("profile"));
 					this.loadNav();
+                    const newUsername = formData.get('alias');
+                    console.log(newUsername);
 				} else {
 					throw new Error("Failed to update profile");
 				}

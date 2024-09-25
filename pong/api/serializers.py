@@ -42,7 +42,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password_confirmation = serializers.CharField(write_only=True)
-
+	
     class Meta:
         model = User
         fields = ['username', 'password', 'password_confirmation', 'email']
@@ -56,6 +56,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(
             username=validated_data['username'],
             password=validated_data['password'],
-            email=validated_data['email']
+            email=validated_data['email'],
         )
         return user

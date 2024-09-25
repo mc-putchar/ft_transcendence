@@ -11,6 +11,9 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from api.models import Match, Profile, PlayerMatch, Tournament, TournamentPlayer
 from .game_manager import game_manager
 
+from blockchain.blockchain_api import PongBlockchain, hash_player
+import os
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -30,11 +33,48 @@ def get_match(match_id):
 
 @database_sync_to_async
 def update_player_match(match, player, score, win=False):
-	PlayerMatch.objects.filter(match=match, player=player).update(
-		score=score, winner=win)
+    player_match = PlayerMatch.objects.filter(match=match, player=player).first()
+    player_match.update(score=score,winner=win)
+    logger.info(f"Player {type(player)} {player.username} updated with score {score}")
+    logger.info(f"Match {type(match)} {match.id} updated with score {score}")
+    logger.info(f"Score {type(score)}")
+    # if win == True:
+    #     # TODO Check if the game is to be committed to the blockchain
+	# 	# if opt-in was triggered
+    #     try:
+    #         logger.info(f"Player {type(player)} {player.username} won")
+    #         chain = PongBlockchain()
+    #         player1_hash = hash_player([player.user.email, player.user.id])
+    #         winner = player1_hash
+    #         player_match2 = player_match.get_opponent()
+    #         player2_hash = hash_player([player_match2.player.user.email, player_match2.player.user.id]) 
+    #         match_players = [player1_hash, player2_hash]
+    #         tournament_id = match.tournament.id
+    #         scores = [player_match.score, player_match2.score]
+    #         logger.info(f"Parameters passing to the blockchain: {player1_hash}, {player2_hash}, {tournament_id}, {match_players}, {scores}, {winner}")
+    #         chain.addMatch(
+    #             chain.accounts[0],
+    #             os.getenv('HARDHAT_PRIVATE_KEY').strip('"'),
+    #             match.id, 
+    #             tournament_id, 
+    #             match_players, 
+    #             scores, 
+    #             winner)
+    #     except Exception as e:
+    #         logger.error(f"Error updating blockchain: {e}")
 
 class PongGameConsumer(AsyncWebsocketConsumer):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.players = {}
+        self.connection_player_map = {}
+        self.match = None
+        self.spectators = set()
+        self.gameover = False
+        self.score_limit = 1
+        self.game_id = None
+        self.update_interval = 1 / 32
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.players = {}
@@ -69,18 +109,25 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 			await self.close()
 			return
 
-		self.username = self.user.username
-		await self.accept()
-		await self.channel_layer.group_add(
-			self.match_group_name,
-			self.channel_name
-		)
+        self.username = self.user.username
+        await self.accept()
+        await self.channel_layer.group_add(
+            self.match_group_name,
+            self.channel_name
+        )
 
-		await self.send(text_data=json.dumps({
-			"type": "connection",
-			"message": f"Joined channel: {self.challenger}",
-		}))
-		self.game_task = asyncio.create_task(self.game_update_loop())
+        # avoid dueling while in game
+        profile = await get_profile(self.username)
+        profile.currently_playing = True
+        await sync_to_async(profile.save)()
+
+        await self.send(text_data=json.dumps({
+            "type": "connection",
+            "message": f"Joined channel: {self.challenger}",
+        }))
+
+
+        self.game_task = asyncio.create_task(self.game_update_loop())
 
 	def cancel_tasks(self):
 		if hasattr(self, "game_task"):
@@ -88,18 +135,24 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 		if hasattr(self, "timeout_task"):
 			self.timeout_task.cancel()
 
-	async def disconnect(self, close_code):
-		self.cancel_tasks()
-		if self.channel_name in self.connection_player_map:
-			disconnected_player = self.connection_player_map.pop(
-				self.channel_name)
-			if disconnected_player and not self.gameover:
-				await game_manager.forfeit_game(self.game_id, disconnected_player)
-				await self.handle_forfeit(disconnected_player)
-			if self.gameover:
-				await sync_to_async(game_manager.clear_game_state)(self.game_id)
-		elif self.channel_name in self.spectators:
-			self.spectators.remove(self.channel_name)
+    async def disconnect(self, close_code):
+        self.cancel_tasks()
+        if self.channel_name in self.connection_player_map:
+            disconnected_player = self.connection_player_map.pop(
+                self.channel_name)
+            if disconnected_player and not self.gameover:
+                await game_manager.forfeit_game(self.game_id, disconnected_player)
+                await self.handle_forfeit(disconnected_player)
+            if self.gameover:
+                await sync_to_async(game_manager.clear_game_state)(self.game_id)
+        elif self.channel_name in self.spectators:
+            self.spectators.remove(self.channel_name)
+        
+
+        # avoid dueling while in game
+        profile = await get_profile(self.username)
+        profile.currently_playing = False
+        await sync_to_async(profile.save)()
 
 		await self.channel_layer.group_discard(
 			self.match_group_name,
@@ -293,9 +346,33 @@ class PongGameConsumer(AsyncWebsocketConsumer):
 			else:
 				logger.warning("Error saving match results: Player is not registered.")
 
-		except Exception as e:
-			logger.error(f"Error saving match results: {e}")
-		self.cancel_tasks()
+			try:
+				logger.info(f"BLOCKCHAIN STUFF \n-----\nPlayer {type(player)} {player.username} won")
+				chain = PongBlockchain()
+				player1_hash = hash_player([player.user.email, player.user.id])
+				winner = player1_hash
+				player_match2 = player_match.get_opponent()
+				player2_hash = hash_player([player_match2.player.user.email, player_match2.player.user.id]) 
+				match_players = [player1_hash, player2_hash]
+				tournament_id = match.tournament.id
+				scores = [player_match.score, player_match2.score]
+				logger.info(f"Parameters passing to the blockchain: {player1_hash}, {player2_hash}, {tournament_id}, {match_players}, {scores}, {winner}")
+				chain.addMatch(
+					chain.accounts[0],
+					os.getenv('HARDHAT_PRIVATE_KEY').strip('"'),
+					match.id, 
+					tournament_id, 
+					match_players, 
+					scores, 
+					winner)
+			except Exception as e:
+				logger.error(f"Error updating blockchain: {e}")
+
+
+
+        except Exception as e:
+            logger.error(f"Error saving match results: {e}")
+        self.cancel_tasks()
 
 	async def win_by_timeout(self, winner):
 		try:
@@ -375,6 +452,23 @@ class PongTournamentConsumer(AsyncWebsocketConsumer):
 			await self.close()
 			return
 
+        self.username = self.user.username
+        self.player_ready = False
+
+        await self.accept()
+        
+        await self.channel_layer.group_add(
+            self.tournament_group_name,
+            self.channel_name
+        )
+        
+        await self.channel_layer.group_send(
+            self.tournament_group_name,
+            {
+                "type": "connection",
+                "message": f"connected {self.username}"
+            }
+        )
 		self.username = self.user.username
 		self.player_ready = False
 		await self.accept()

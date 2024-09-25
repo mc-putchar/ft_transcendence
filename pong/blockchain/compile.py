@@ -3,9 +3,6 @@ from solcx.exceptions import SolcNotInstalled
 import json
 from pathlib import Path
 
-BUILD_PATH = "blockchain/static/blockchain/build/"
-CONTRACT_PATH = "blockchain/static/blockchain/contracts/"
-
 def installCompiler(version='0.8.26'):
 	# Install solc version 0.8.26
 	print("Installing solc version", version)
@@ -15,15 +12,16 @@ def installCompiler(version='0.8.26'):
 	active_version = get_solc_version()
 	print("Active solc version:", active_version)
 
-def compileSmartContract(filename, compiled_name):
+def compileSmartContract(contract_path, compiled_path):
 	try:
 		solc_version = get_solc_version()
 	except SolcNotInstalled:
 		print("solc not installed")
 		installCompiler()
 		solc_version = get_solc_version()
+	filename = Path(contract_path).name
 	print("Compiling contract " + filename)
-	with open(CONTRACT_PATH + filename , "r") as file:
+	with open(contract_path , "r") as file:
 		tournament_code = file.read()
 	compiled_sol = compile_standard({
 		"language": "Solidity", # needs capital letter, fails with "solidity"
@@ -36,7 +34,7 @@ def compileSmartContract(filename, compiled_name):
 			}
 		}
 	}, solc_version=get_solc_version())
-	with open(BUILD_PATH + compiled_name, "w") as file:
+	with open(compiled_path, "w") as file:
 		json.dump(compiled_sol, file)
-	print("Contract compiled successfully to " + BUILD_PATH + compiled_name)
-	return Path(BUILD_PATH + compiled_name)
+	print("Contract compiled successfully to " + compiled_path)
+	return Path(compiled_path)
