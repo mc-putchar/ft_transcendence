@@ -216,11 +216,11 @@ class ChatRouter {
                 'notification', 
                 { detail: { message: 'Please specify a user to challenge', type: 'Error' } }));
         }
-		else if (challengedUser === this.username) {
-			this.chatElement.dispatchEvent(new CustomEvent(
-                'notification', 
-                { detail: { message: "You can't challenge yourself", type: 'Error' } }));
-		}
+		// else if (challengedUser === this.username) {
+		// 	this.chatElement.dispatchEvent(new CustomEvent(
+        //         'notification', 
+        //         { detail: { message: "You can't challenge yourself", type: 'Error' } }));
+		// }
 		else if (this.users.includes(challengedUser)) {
 			if (data.username === this.username) {
 				this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
