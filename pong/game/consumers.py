@@ -805,6 +805,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 		handle4PGame.active_connections += 1
 		if(handle4PGame.active_connections == 1):
 			await self.initialize()
+			logger.error(f"!!!: {self.data.ball}")
 
 	async def receive(self, text_data=None, bytes_data=None):
 		data = json.loads(text_data)
@@ -812,6 +813,14 @@ class handle4PGame(AsyncWebsocketConsumer):
 
 		print("\nRECEIVE: ", data)
 		if type == "close_socket":
+			await self.channel_layer.group_send(
+				self.group_name,
+				{
+					'type': 'game_message',
+					'message': json.dumps({
+						'type': 'player_disconnection'
+					})
+				})
 			self.close()
 		elif type == "launch_game":
 			await self.channel_layer.group_send(

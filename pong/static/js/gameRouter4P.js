@@ -1,4 +1,5 @@
 import { Online4P } from './online4P.js';
+import { showNotification } from './notification.js';
 
 function find_paddle(used_paddles) {
 
@@ -55,6 +56,9 @@ class GameRouter4P {
 		this.started = false;
 
 	}
+	notifyError(message) {
+		showNotification(message, 'error');
+	}
 	initSocket(challenger) {
 
 		const accessToken = sessionStorage.getItem('access_token') || '';
@@ -80,7 +84,10 @@ class GameRouter4P {
 			const type = data.type;
 
 			console.log("received: ", data);
-			if (type == "launch_game") {
+			if (type == "player_disconnection") {
+				this.notifyError("A player disconnect, Game stops now");
+			}
+			else if (type == "launch_game") {
 				this.launchGame();
 			}
 			else if (type == "update_game_data") {
