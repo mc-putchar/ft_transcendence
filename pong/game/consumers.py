@@ -727,7 +727,6 @@ class handle4PGame(AsyncWebsocketConsumer):
 	active_connections = 0
 	active_games = 0
 	used_paddles = []
-	is_ready = 0
 	group_name = 'game_group'
 	loop = 0
 
@@ -786,6 +785,12 @@ class handle4PGame(AsyncWebsocketConsumer):
 				await asyncio.sleep(1.5)
 			await asyncio.sleep(0.016)
 
+	async def initialize(self):
+		self.data.initialize()
+		handle4PGame.active_games = 0
+		handle4PGame.used_paddles = []
+		handle4PGame.loop = 0
+
 	async def connect(self):
 		print("PRE ACCEPT: ", self)
 		print(self)
@@ -799,7 +804,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 		# profile.currently_playing = True
 		handle4PGame.active_connections += 1
 		if(handle4PGame.active_connections == 1):
-			self.data.initialize()
+			await self.initialize()
 
 	async def receive(self, text_data=None, bytes_data=None):
 		data = json.loads(text_data)
@@ -831,6 +836,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 		elif type == "added_paddle":
 			handle4PGame.used_paddles.append(data.get("added_paddle"))
 		elif type == "get_used_paddles":
+			print("USED PADDLES: ", handle4PGame.used_paddles)
 			await self.channel_layer.group_send(
 				self.group_name,
 				{

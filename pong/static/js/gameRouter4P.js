@@ -19,8 +19,8 @@ function find_paddle(used_paddles) {
 		}
 	}
 	let rand = Math.round(Math.random() * 20);
-	rand = rand % options.length;
-	return (options[rand]);
+	rand = rand % availableOptions.length;
+	return (availableOptions[rand]);
 };
 
 class Player {
@@ -100,6 +100,7 @@ class GameRouter4P {
 			}
 			else if(type == "used_paddles") {
 				this.used_paddles = data.used_paddles.split(' ');
+				console.log(this.used_paddles);
 				if(!this.my_paddle) {
 					this.my_paddle = find_paddle(this.used_paddles);
 					this.chat_websocket?.send(JSON.stringify(
