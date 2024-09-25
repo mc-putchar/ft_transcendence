@@ -779,7 +779,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 			)
 			if(self.data.goal == True):
 				await sync_to_async(self.data.ball.initialize)()
-				self.goal = False
+				self.data.goal = False
 				self.data.score.last_touch = ""
 				self.data.score.conceded = ""
 				await asyncio.sleep(1.5)
@@ -805,7 +805,9 @@ class handle4PGame(AsyncWebsocketConsumer):
 		handle4PGame.active_connections += 1
 		if(handle4PGame.active_connections == 1):
 			await self.initialize()
-			logger.error(f"!!!: {self.data.ball}")
+			logger.debug(f"!!!: speedx: {self.data.ball.speedx}, speedy: {self.data.ball.speedy}")
+			logger.debug(f"!!!: vx: {self.data.ball.vx}, vy: {self.data.ball.vy}")
+			logger.debug(f"!!!: pos_x: {self.data.ball.pos_x}, pos_y: {self.data.ball.pos_y}")
 
 	async def receive(self, text_data=None, bytes_data=None):
 		data = json.loads(text_data)
