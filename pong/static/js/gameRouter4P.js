@@ -179,6 +179,10 @@ class GameRouter4P {
 		this.game?.stopPong4PGame();
 		// send to back end that player left the game
 		if(this.chat_websocket) {
+			// this.chat_websocket?.send(JSON.stringify(
+			this.chat_websocket?.send(JSON.stringify({
+				"type": "close_socket"
+			}))
 			this.chat_websocket.close();
 			console.log("!!!!4P socket closed");
 		}

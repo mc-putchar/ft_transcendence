@@ -798,13 +798,17 @@ class handle4PGame(AsyncWebsocketConsumer):
 		# profile = await get_profile(self.username)
 		# profile.currently_playing = True
 		handle4PGame.active_connections += 1
+		if(handle4PGame.active_connections == 1):
+			self.data.initialize()
 
 	async def receive(self, text_data=None, bytes_data=None):
 		data = json.loads(text_data)
 		type = data.get("type")
 
 		print("\nRECEIVE: ", data)
-		if type == "launch_game":
+		if type == "close_socket":
+			self.close()
+		elif type == "launch_game":
 			await self.channel_layer.group_send(
 				self.group_name,
 				{
