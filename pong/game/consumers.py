@@ -751,7 +751,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 					})
 				}
 			)
-		if type == 'active_game':
+		elif type == 'active_game':
 			handle4PGame.active_games += 1
 			print("active games: ", handle4PGame.active_games)
 			if(handle4PGame.active_games == 4):
