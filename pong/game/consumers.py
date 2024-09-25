@@ -556,6 +556,9 @@ class Ball:
 class Field:
 
 	def __init__(self):
+		self.initialize()
+
+	def initialize(self):
 		self.paddle_width = PADDLE_WIDTH / 300 * 100
 		self.paddle_len = PADDLE_LEN / 200 * 100
 		self.paddle_speed = PADDLE_SPEED / 200 * 100
@@ -587,6 +590,9 @@ class Field:
 
 class Score:
 	def __init__(self):
+		self.initialize()
+
+	def initialize(self):
 		self.left = 0
 		self.right = 0
 		self.top = 0
@@ -619,6 +625,14 @@ class Data:
 		self.field = Field()
 		self.score = Score()
 		self.old_score = Score()
+		self.goal = False
+		self.animation_time = {"first": 0, "second": 0, "third": 0} # {first: 500, second: 1000, third: 1500};
+
+	def initialize(self):
+		self.ball.initialize()
+		self.field.initialize()
+		self.score.initialize()
+		self.old_score.initialize()
 		self.goal = False
 		self.animation_time = {"first": 0, "second": 0, "third": 0} # {first: 500, second: 1000, third: 1500};
 
@@ -773,13 +787,16 @@ class handle4PGame(AsyncWebsocketConsumer):
 			await asyncio.sleep(0.016)
 
 	async def connect(self):
+		print("PRE ACCEPT: ", self)
+		print(self)
 		await self.accept()
 		await self.channel_layer.group_add(
 			self.group_name,
 			self.channel_name
 		)
-		profile = await get_profile(self.username)
-		profile.currently_playing = True
+		print("POST ACCEPT")
+		# profile = await get_profile(self.username)
+		# profile.currently_playing = True
 		handle4PGame.active_connections += 1
 
 	async def receive(self, text_data=None, bytes_data=None):
@@ -802,6 +819,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 			print("active games: ", handle4PGame.active_games)
 			if(handle4PGame.active_games == 4):
 				print("STARTING LOOP")
+				handle4PGame.data.initialize()
 				await asyncio.sleep(1.5)
 				asyncio.create_task(self.game_loop())
 		elif type == "player_direction":
@@ -815,7 +833,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 					'type': 'game_message',
 					'message': json.dumps({
 						"type": "used_paddles",
-						"used_paddles": ' '.join(handle4PGame.used_paddles)
+						"used_paddles": ' '.join(str(paddle) for paddle in handle4PGame.used_paddles if paddle is not None)
 					})
 				}
 			)
@@ -851,6 +869,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 		await self.send(text_data=message)
 
 	async def disconnect(self, close_code):
+		print("\n\nsocket disconnection\n")
 		await self.channel_layer.group_discard(
 			self.group_name,
 			self.channel_name

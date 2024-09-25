@@ -320,6 +320,7 @@ class Online4P {
 		this.gameover = false;
 		this.animRequestId = 0;
 		this.lastUpdate = Date.now();
+		this.stop = false;
 		this.fpsInterval = 1000 / TARGET_FPS;
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
@@ -446,16 +447,15 @@ class Online4P {
 	}
 	loop() {
 		let now = Date.now();
+		console.log("1");
 		if(now < this.animation.times.third) {
+			console.log("2");
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.goalAnimation(now);
 			// this.kickOff = true;
 		}
-		// else if(this.kickOff == true) {
-		// 	this.kickOff = false;
-		// 	this.score.resetGoalTracker();
-		// }
 		else {
+			console.log("2.1");
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.fetchAndUpdateFromGameData();
 			// this.update();
@@ -465,9 +465,16 @@ class Online4P {
 			else {
 				this.goalAnimation(now);
 			}
+			console.log("3");
+		}
+		console.log("4");
+		if(this.stop == true) {
+			this.stop = false;
+			return;
 		}
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
+		console.log("5");
 	}
 	paddleCollision() {
 		if(this.player.side == "left" && this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width / 2) {
@@ -496,7 +503,6 @@ class Online4P {
 				}
 			}
 		} // RIGHT PADDLE
-		// it can hit left and bottom so no else here
 		if (this.player.side == "top" && this.ball.y - this.ball.radius <= this.playerTop.y + this.playerTop.width / 2) {
 			if (!(this.score.lastTouch == "top" || (this.ball.y - this.ball.radius < this.playerTop.y - this.playerTop.width))) {
 				if (this.ball.x + this.ball.radius >= this.playerTop.x - this.playerTop.len / 2 &&
@@ -671,7 +677,9 @@ class Online4P {
 		const nav = document.getElementById('nav');
 		const parent = document.getElementById('app');
 
+		this.stop == true;
 		if(this.animRequestId) {
+			console.log("STOPPED");
 			cancelAnimationFrame(this.animRequestId);
 		}
 		this.animRequestId = null;

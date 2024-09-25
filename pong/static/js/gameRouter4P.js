@@ -3,13 +3,19 @@ import { Online4P } from './online4P.js';
 function find_paddle(used_paddles) {
 
 	let options = ["left", "top", "bottom", "right"];
+	let availableOptions = [];
+	
+	// Collect available options
 	for (let i = 0; i < options.length; i++) {
+		let isUsed = false;
 		for (let key in used_paddles) {
-			if (options[i] == used_paddles[key]) {
-				options.splice(i, 1);
-				i--;
+			if (options[i] === used_paddles[key]) {
+				isUsed = true;
 				break;
 			}
+		}
+		if (!isUsed) {
+			availableOptions.push(options[i]);
 		}
 	}
 	let rand = Math.round(Math.random() * 20);
@@ -169,10 +175,12 @@ class GameRouter4P {
 		this.started = true;
 	}
 	stopGame() {
+		console.log("STOP GAME CALLED, wait for closed socket");
 		this.game?.stopPong4PGame();
+		// send to back end that player left the game
 		if(this.chat_websocket) {
-			console.log("4P socket closed");
 			this.chat_websocket.close();
+			console.log("!!!!4P socket closed");
 		}
 	}
 }
