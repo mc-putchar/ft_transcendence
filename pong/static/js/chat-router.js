@@ -84,11 +84,11 @@ class ChatRouter {
 						break;
 					case '/pm':
 						const recipient = data.message.split(' ')[1];
-                        if (!recipient && data.username === this.username) {
-                            this.chatElement.dispatchEvent(new CustomEvent(
-                                'notification', 
-                                { detail: { message: 'Please specify a user to pm', type: 'Error' } }));
-                        } else if (recipient === this.username && !this.isBlockedUser(data.username)) {
+						if (!recipient && data.username === this.username) {
+							this.chatElement.dispatchEvent(new CustomEvent(
+								'notification', 
+								{ detail: { message: 'Please specify a user to pm', type: 'Error' } }));
+						} else if (recipient === this.username && !this.isBlockedUser(data.username)) {
 							const message = data.message.replace(`/pm ${recipient} `, '');
 							this.pushMessage(message, 'pm', data.username);
 						} else if (data.username === this.username) {
@@ -214,15 +214,15 @@ class ChatRouter {
 
 	handleDuelRequest(data) {
 		const challengedUser = data.message.split(' ')[1];
-        if (!challengedUser && data.username === this.username) {
-            this.chatElement.dispatchEvent(new CustomEvent(
-                'notification', 
-                { detail: { message: 'Please specify a user to challenge', type: 'Error' } }));
-        }
+		if (!challengedUser && data.username === this.username) {
+			this.chatElement.dispatchEvent(new CustomEvent(
+				'notification', 
+				{ detail: { message: 'Please specify a user to challenge', type: 'Error' } }));
+		}
 		else if (challengedUser === this.username) {
 			this.chatElement.dispatchEvent(new CustomEvent(
-                'notification', 
-                { detail: { message: "You can't challenge yourself", type: 'Error' } }));
+				'notification', 
+				{ detail: { message: "You can't challenge yourself", type: 'Error' } }));
 		}
 		else if (this.users.includes(challengedUser)) {
 			if (data.username === this.username) {
@@ -235,7 +235,6 @@ class ChatRouter {
 				this.chatElement.dispatchEvent(new CustomEvent('challenged', { detail: { username: data.username } }));
 			}
 		}
-	}
 		if (data.username === this.username) {
 			this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
 			this.chatElement.dispatchEvent(new CustomEvent('challenger', { detail: { gameID: data.username } }));
