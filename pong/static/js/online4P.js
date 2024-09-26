@@ -618,6 +618,7 @@ class Online4P {
 			this.animation.setTimeStamps();
 			this.resetPositions();
 			this.score.updateScore();
+			console.log(this.score);
 			return ;
 		}
 		this.paddleCollision();
@@ -641,7 +642,6 @@ class Online4P {
 		this.button = document.createElement('button');
 		this.button.textContent = 'Click Me';
 		
-		// Style the button to ensure it's visible
 		this.button.style.position = 'absolute';
 		this.button.style.top = '50%';
 		this.button.style.left = '45%';
@@ -651,19 +651,14 @@ class Online4P {
 		this.button.style.fontSize = '16px';
 		this.button.style.cursor = 'pointer';
 		
-		// Add button to the parent (same as canvas)
 		this.parent.appendChild(this.button);
 		
-        // Add click event to the button
         this.button.addEventListener('click', () => {
-			console.log("CLICKED");
 			if(this.button.textContent == 'Click Me') {
-				console.log("SENDING");
 				this.ws?.send(JSON.stringify({
 					"type": "is_ready",
 					"side": this.player.side
 				}))
-				console.log("SENT");
 			}
 			this.button.textContent = "READY!";
         });

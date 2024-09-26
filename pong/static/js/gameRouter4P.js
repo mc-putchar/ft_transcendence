@@ -53,8 +53,7 @@ class GameRouter4P {
 		this.active_connect;
 		this.used_paddles;
 		this.my_paddle;
-		this.started = false;
-
+		this.is_active = false;
 	}
 	notifyError(message) {
 		showNotification(message, 'error');
@@ -85,9 +84,9 @@ class GameRouter4P {
 
 			console.log("received: ", data);
 			if (type == "player_disconnection") {
-				this.notifyError("A player disconnect, Game stops now");
+				this.notifyError("A player has disconnected");
 			}
-			else if (type == "launch_game") {
+			else if (type == "launch_game" && this.is_active == false) {
 				this.launchGame();
 			}
 			else if (type == "update_game_data") {
@@ -175,6 +174,7 @@ class GameRouter4P {
 		this.game.getReady();
 		console.log("LAUNCH_GAME 1");
 		this.game.start();
+		this.is_active = true;
 		console.log("LAUNCH_GAME 2");
 		this.chat_websocket.send(JSON.stringify({
 			"type":'active_game'
@@ -183,6 +183,7 @@ class GameRouter4P {
 		this.started = true;
 	}
 	stopGame() {
+		this.is_active = false;
 		console.log("STOP GAME CALLED, wait for closed socket");
 		this.game?.stopPong4PGame();
 		// send to back end that player left the game

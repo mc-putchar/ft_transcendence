@@ -716,6 +716,7 @@ class Data:
 	async def update(self):
 		await self.check_goal()
 		if self.goal == True:
+			logger.debug("\n\nGOAL")
 			self.old_score = copy.deepcopy(self.score)
 			await self.score.update_score()
 		else:
@@ -734,8 +735,16 @@ class handle4PGame(AsyncWebsocketConsumer):
 
 	async def game_loop(self):
 		while True:
+			if(handle4PGame.active_connections != 4):
+				return
 			handle4PGame.loop += 1
 			await handle4PGame.data.update()
+			logger.info(f"\nball_x: {handle4PGame.data.ball.pos_x}")
+			logger.info(f"ball_y: {handle4PGame.data.ball.pos_y}")
+			logger.info(f"ball_vx: {handle4PGame.data.ball.vx}")
+			logger.info(f"ball_vy: {handle4PGame.data.ball.vy}")
+			logger.info(f"speedx: {handle4PGame.data.ball.speedx}")
+			logger.info(f"speedy: {handle4PGame.data.ball.speedy}")
 			await self.channel_layer.group_send(
 				self.group_name,
 				{
@@ -765,7 +774,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 						'ball_vy': handle4PGame.data.ball.vy,
 						'speedx': handle4PGame.data.ball.speedx,
 						'speedy': handle4PGame.data.ball.speedy,
-						
+
 						'left_x': handle4PGame.data.field.paddle["left"]["x"],
 						'left_y': handle4PGame.data.field.paddle["left"]["y"],
 						'right_x': handle4PGame.data.field.paddle["right"]["x"],
@@ -783,7 +792,9 @@ class handle4PGame(AsyncWebsocketConsumer):
 				self.data.score.last_touch = ""
 				self.data.score.conceded = ""
 				await asyncio.sleep(1.5)
+			print("Before sleep:", time.time())
 			await asyncio.sleep(0.016)
+			print("After sleep:", time.time())
 
 	async def initialize(self):
 		self.data.initialize()
@@ -792,28 +803,22 @@ class handle4PGame(AsyncWebsocketConsumer):
 		handle4PGame.loop = 0
 
 	async def connect(self):
-		print("PRE ACCEPT: ", self)
-		print(self)
 		await self.accept()
 		await self.channel_layer.group_add(
 			self.group_name,
 			self.channel_name
 		)
-		print("POST ACCEPT")
 		# profile = await get_profile(self.username)
 		# profile.currently_playing = True
 		handle4PGame.active_connections += 1
 		if(handle4PGame.active_connections == 1):
 			await self.initialize()
-			logger.debug(f"!!!: speedx: {self.data.ball.speedx}, speedy: {self.data.ball.speedy}")
-			logger.debug(f"!!!: vx: {self.data.ball.vx}, vy: {self.data.ball.vy}")
-			logger.debug(f"!!!: pos_x: {self.data.ball.pos_x}, pos_y: {self.data.ball.pos_y}")
+			logger.debug("\n\nINITIALIZE NEW GAME\n")
 
 	async def receive(self, text_data=None, bytes_data=None):
 		data = json.loads(text_data)
 		type = data.get("type")
 
-		print("\nRECEIVE: ", data)
 		if type == "close_socket":
 			await self.channel_layer.group_send(
 				self.group_name,
@@ -836,18 +841,16 @@ class handle4PGame(AsyncWebsocketConsumer):
 			)
 		elif type == 'active_game':
 			handle4PGame.active_games += 1
-			print("active games: ", handle4PGame.active_games)
 			if(handle4PGame.active_games == 4):
-				print("STARTING LOOP")
 				handle4PGame.data.initialize()
 				await asyncio.sleep(1.5)
+				logger.debug("\n\nLAUNCH GAME LOOP")
 				asyncio.create_task(self.game_loop())
 		elif type == "player_direction":
 			handle4PGame.data.field.paddle[data.get("side")]["dir"] = data.get("dir")
 		elif type == "added_paddle":
 			handle4PGame.used_paddles.append(data.get("added_paddle"))
 		elif type == "get_used_paddles":
-			print("USED PADDLES: ", handle4PGame.used_paddles)
 			await self.channel_layer.group_send(
 				self.group_name,
 				{
@@ -890,9 +893,9 @@ class handle4PGame(AsyncWebsocketConsumer):
 		await self.send(text_data=message)
 
 	async def disconnect(self, close_code):
-		print("\n\nsocket disconnection\n")
 		await self.channel_layer.group_discard(
 			self.group_name,
 			self.channel_name
 		)
+		logger.debug(f"PLAYER DISCONNECTION active connections: {handle4PGame.active_connections}")
 		handle4PGame.active_connections -= 1
