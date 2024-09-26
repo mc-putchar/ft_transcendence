@@ -285,7 +285,6 @@ class Online4P {
 	constructor(ws, gameData, param_player) {
 		this.gameData = gameData;
 		console.log("Pong 4P - Starting new game");
-		// console.log("SECOND: ", this.gameData);
 		this.ws = ws;
 		this.parent = document.getElementById('app');
 
@@ -447,15 +446,12 @@ class Online4P {
 	}
 	loop() {
 		let now = Date.now();
-		console.log("1");
 		if(now < this.animation.times.third) {
-			console.log("2");
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.goalAnimation(now);
 			// this.kickOff = true;
 		}
 		else {
-			console.log("2.1");
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.fetchAndUpdateFromGameData();
 			// this.update();
@@ -465,16 +461,13 @@ class Online4P {
 			else {
 				this.goalAnimation(now);
 			}
-			console.log("3");
 		}
-		console.log("4");
 		if(this.stop == true) {
 			this.stop = false;
 			return;
 		}
 		this.animRequestId = window.requestAnimationFrame(this.loop.bind(this));
 		animationID = this.animRequestId;
-		console.log("5");
 	}
 	paddleCollision() {
 		if(this.player.side == "left" && this.ball.x - this.ball.radius <= this.playerLeft.x + this.playerLeft.width / 2) {
@@ -667,14 +660,26 @@ class Online4P {
 		this.button.remove();
 		this.loop();
 	}
+	// drawDisconnection(ctx) {
+	// 	ctx.fillStyle = SCORE_COLOR;
+	// 	let font_size = this.arenaHeight / 10;
+	// 	ctx.font = `${font_size}px Orbitron`;
+	// 	let text = "A PLAYER DISCONNECTED";
+	// 	let textSize = ctx.measureText(text);
+	// 	ctx.fillText(text, this.arena._startX + this.arena._width / 2 - textSize.width / 2.2, this.arena._height / 4 + font_size / 2);
+	// 	text = "GAME STOPPED";
+	// 	ctx.fillText(text, this.arena._startX + this.arena._width / 2 - textSize.width / 2.2, (this.arena._height / 4) * 3 + font_size / 2);
+	// }
 	stopPong4PGame () {
 		// this.audio.stopAudioTrack();
-		const nav = document.getElementById('nav');
-		const parent = document.getElementById('app');
+		console.log("STOP PONG 4P GAME");
+		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		console.log(this.context);
+		this.arena.drawArena(this.context);
+		// this.drawDisconnection();
 
-		this.stop == true;
+		this.stop = true;
 		if(this.animRequestId) {
-			console.log("STOPPED");
 			cancelAnimationFrame(this.animRequestId);
 		}
 		this.animRequestId = null;
