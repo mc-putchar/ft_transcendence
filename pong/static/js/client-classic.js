@@ -175,6 +175,18 @@ class Ball {
 			ctx.fillRect(this.x - (this.radius), y, this.radius * 2, 1);
 		}
 	}
+	resize(arenaWidth, arenaHeight, startX, startY, prevHeight, prevStartX, prevStartY) {
+		const difference_ratio = arenaHeight / prevHeight;
+		this.speedx *= difference_ratio;
+		this.speedy *= difference_ratio;
+		this.x -= prevStartX;
+		this.x *= difference_ratio;
+		this.x += startX;
+		this.y -= prevStartY;
+		this.y *= difference_ratio;
+		this.y += startY;
+		this.radius = (BALL_SIZE / 2 * ((arenaWidth + arenaHeight) / 500));
+	}
 };
 
 class Score {
@@ -474,9 +486,12 @@ class ClientClassic {
 			this.canvas.width = this.parent.width - CANVAS_PADDING;
 			this.canvas.height = this.parent.height - CANVAS_PADDING;
 			const prevHeight = this.arena.height;
+			const prevStartX = this.arena.startX;
+			const prevStartY = this.arena.startY;
 			this.arena.resize(this.canvas.width, this.canvas.height);
 			this.player1.resize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
 			this.player2.resize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
+			this.ball.resize(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY, prevHeight, prevStartX, prevStartY);
 		}, 200);
 	}
 	handleTouchStart(event, key) {
