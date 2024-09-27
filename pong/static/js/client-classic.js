@@ -287,7 +287,7 @@ class proAI {
 		this.roundsTillImpact = rounds;
 
 		let margin = this.randomMargin();
-		this.objective = simBall.posY + this.player.len / 4 + margin;
+		this.objective = simBall.posY + this.player.len / 7 + margin;
 	}
 	setWait(simBall) {
 		this.wait = 0;
