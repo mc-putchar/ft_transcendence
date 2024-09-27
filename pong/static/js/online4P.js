@@ -702,7 +702,7 @@ class Online4P {
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
 		window.removeEventListener("resize", ev => this.onResize(ev));
-		window.removeEventListener('beforeunload', function (event){});
+		window.removeEventListener('beforeunload', ev => this.handleBeforeUnload(ev));
 		return ;
 	}
 };
