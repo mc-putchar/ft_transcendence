@@ -545,11 +545,6 @@ class Ball:
 			self.speedx = BALL_START_SPEED / 200 * 70
 			self.speedy = BALL_START_SPEED / 300 * 70
 
-		self.speedy = BALL_START_SPEED * 70 / 300
-		self.speedx = BALL_START_SPEED * 70 / 300
-		self.speedx *= 1.1
-		self.vy = 1
-
 	async def speed_up (self):
 		self.speedx += self.incr_speed
 		self.speedy += self.incr_speed

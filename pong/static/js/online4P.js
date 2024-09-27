@@ -1,4 +1,4 @@
-// import { AudioController } from './audio.js';
+import { AudioController } from './audio.js';
 
 let animationID = null;
 
@@ -324,9 +324,21 @@ class Online4P {
 		document.addEventListener("keydown", ev => this.keydown(ev));
 		document.addEventListener("keyup", ev => this.keyup(ev));
 		window.addEventListener("resize", ev => this.onResize(ev));
-
-		// this.audio = new AudioController();
-		// this.audio.playAudioTrack();
+		window.addEventListener('beforeunload', ev => this.handleBeforeUnload(ev))
+	
+		this.audio = new AudioController();
+		this.audio.playAudioTrack();
+	}
+	handleBeforeUnload (ev) {
+		if(this.ws) {
+			this.ws?.send(JSON.stringify({
+				"type": "close_socket"
+			}))
+			this.ws.close();
+			console.log("!!!!4P socket closed");
+		}
+		ev.preventDefault();
+		ev.returnValue = '';
 	}
 	resize() {
 		this.canvas.width = this.parent.width;
@@ -405,7 +417,6 @@ class Online4P {
 			default:
 				break;
 		}
-		// console.log("PRE SENDING: ", this.player.direction);
 		if(DEBUG_KEY == true)
 			console.log("key down: ", this.player.keys_active);
 		this.sendPlayerDirection();
@@ -449,12 +460,10 @@ class Online4P {
 		if(now < this.animation.times.third) {
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.goalAnimation(now);
-			// this.kickOff = true;
 		}
 		else {
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.fetchAndUpdateFromGameData();
-			// this.update();
 			if(this.score.goal == false) {
 				this.draw();
 			}
@@ -479,7 +488,7 @@ class Online4P {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "left";
-						// this.audio.playTone(this.ball.speedx);
+						this.audio.playTone(this.ball.speedx);
 					}
 			}
 		} // LEFT PADDLE
@@ -492,7 +501,7 @@ class Online4P {
 						this.ball.vy = Math.sin(refAngle);
 						this.ball.speed_up();
 						this.score.lastTouch = "right";
-						// this.audio.playTone(this.ball.speedx);
+						this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // RIGHT PADDLE
@@ -508,7 +517,7 @@ class Online4P {
 					
 					this.ball.speed_up();
 					this.score.lastTouch = "top";
-					// this.audio.playTone(this.ball.speedx);
+					this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // TOP PADDLE
@@ -524,7 +533,7 @@ class Online4P {
 	
 					this.ball.speed_up();
 					this.score.lastTouch = "bottom";
-					// this.audio.playTone(this.ball.speedx);
+					this.audio.playTone(this.ball.speedx);
 				}
 			}
 		} // BOTTOM PADDLE
@@ -535,22 +544,22 @@ class Online4P {
 		if (this.ball.x < arenaStartX) {
 			this.score.goal = true;
 			this.score.conceded += "left";
-			// window.playFx("/static/assets/arcade-alert.wav");
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 		else if (this.ball.x > arenaStartX + arenaWidth) {
 			this.score.goal = true;
 			this.score.conceded += "right";
-			// window.playFx("/static/assets/arcade-alert.wav");
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 		if (this.ball.y < arenaStartY) {
 			this.score.goal = true;
 			this.score.conceded += "top";
-			// window.playFx("/static/assets/arcade-alert.wav");
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 		else if (this.ball.y > arenaStartY + arenaHeight) {
 			this.score.goal = true;
 			this.score.conceded += "bottom";
-			// window.playFx("/static/assets/arcade-alert.wav");
+			window.playFx("/static/assets/arcade-alert.wav");
 		}
 	}
 	resetPositions () {
@@ -660,23 +669,30 @@ class Online4P {
 		this.button.remove();
 		this.loop();
 	}
-	// drawDisconnection(ctx) {
-	// 	ctx.fillStyle = SCORE_COLOR;
-	// 	let font_size = this.arenaHeight / 10;
-	// 	ctx.font = `${font_size}px Orbitron`;
-	// 	let text = "A PLAYER DISCONNECTED";
-	// 	let textSize = ctx.measureText(text);
-	// 	ctx.fillText(text, this.arena._startX + this.arena._width / 2 - textSize.width / 2.2, this.arena._height / 4 + font_size / 2);
-	// 	text = "GAME STOPPED";
-	// 	ctx.fillText(text, this.arena._startX + this.arena._width / 2 - textSize.width / 2.2, (this.arena._height / 4) * 3 + font_size / 2);
-	// }
+	drawDisconnection(ctx) {
+		console.log("DRAW DISCONNECT1");
+		ctx.fillStyle = SCORE_COLOR;
+		let font_size = this.arenaHeight / 5;
+		ctx.font = `${font_size}px Orbitron`;
+		let text = "GAME STOPPED";
+		let textSize = ctx.measureText(text);
+		console.log("canvas width", this.canvas.width);
+		console.log("text size: ", textSize);
+		ctx.fillText(text, this.canvas.width / 2 - textSize.width / 2, this.canvas.height / 4);
+
+		font_size = this.arenaHeight / 5;
+		text = "A PLAYER DISCONNECTED";
+		textSize = ctx.measureText(text);
+		ctx.fillText(text, this.canvas.width / 2 - textSize.width / 2, this.canvas.height / 2);
+		console.log("DRAW DISCONNECT2");
+	}
 	stopPong4PGame () {
-		// this.audio.stopAudioTrack();
+		this.audio.stopAudioTrack();
 		console.log("STOP PONG 4P GAME");
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		console.log(this.context);
-		this.arena.drawArena(this.context);
 		// this.drawDisconnection();
+		this.arena.drawArena(this.context);
 
 		this.stop = true;
 		if(this.animRequestId) {
@@ -686,6 +702,7 @@ class Online4P {
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
 		window.removeEventListener("resize", ev => this.onResize(ev));
+		window.removeEventListener('beforeunload', function (event){});
 		return ;
 	}
 };

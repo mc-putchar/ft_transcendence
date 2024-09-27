@@ -83,7 +83,7 @@ class GameRouter4P {
 			const data = JSON.parse(event.data);
 			const type = data.type;
 
-			console.log("received: ", data);
+			// console.log("received: ", data);
 			if (type == "player_disconnection") {
 				this.notifyError("A player has disconnected");
 				this.disconnected = true;
