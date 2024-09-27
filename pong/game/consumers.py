@@ -545,6 +545,11 @@ class Ball:
 			self.speedx = BALL_START_SPEED / 200 * 70
 			self.speedy = BALL_START_SPEED / 300 * 70
 
+		self.speedy = BALL_START_SPEED * 70 / 300
+		self.speedx = BALL_START_SPEED * 70 / 300
+		self.speedx *= 1.1
+		self.vy = 1
+
 	async def speed_up (self):
 		self.speedx += self.incr_speed
 		self.speedy += self.incr_speed
@@ -687,7 +692,7 @@ class Data:
 					self.ball.speed_up()
 					self.score.last_touch = "right"
 
-		elif self.ball.pos_y - self.ball.radius <= self.field.paddle["top"]["y"] + paddleWidth / 2:
+		if self.ball.pos_y - self.ball.radius <= self.field.paddle["top"]["y"] + paddleWidth / 2:
 			if not (self.score.last_touch == "top" or self.ball.pos_y - self.ball.radius < self.field.paddle["top"]["y"] - paddleWidth):
 				if self.ball.pos_x + self.ball.radius >= self.field.paddle["top"]["x"] - paddleLen / 2 and \
 					self.ball.pos_x - self.ball.radius <= self.field.paddle["top"]["x"] + paddleLen / 2:
