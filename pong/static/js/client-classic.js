@@ -364,6 +364,7 @@ class ClientClassic {
 		this.isOnline = gameSocket !== null;
 		this.hasAI = gameSetup.mode === "single";
 		this.gameData = this.isOnline ? gameData : new GameData();
+		
 		this.matchId = matchId;
 
 		while (this.parent.firstChild) {
@@ -392,8 +393,32 @@ class ClientClassic {
 
 		this.audio = new AudioController();
 		this.audio.playAudioTrack();
-	}
 
+		if(!this.isOnline && gameSetup.mode === "single" && ('ontouchstart' in window || navigator.maxTouchPoints))
+			this.setUpTouchScreen();
+	}
+	setUpTouchScreen() {
+		const leftDiv = document.createElement("div");
+		leftDiv.style.width = "50%";
+		leftDiv.style.height = "100%";
+		leftDiv.style.position = "absolute"; // Changed from float to absolute
+		leftDiv.style.left = "0"; // Align to the left side
+	
+		const rightDiv = document.createElement("div");
+		rightDiv.style.width = "50%";
+		rightDiv.style.height = "100%";
+		rightDiv.style.position = "absolute"; // Changed from float to absolute
+		rightDiv.style.right = "0"; // Align to the right side
+
+		this.parent.appendChild(leftDiv);
+		this.parent.appendChild(rightDiv);
+
+		leftDiv.addEventListener('touchstart', (event) => this.handleTouchStart(event, 'ArrowUp'));
+		leftDiv.addEventListener('touchend', (event) => this.handleTouchEnd(event, 'ArrowUp'));
+
+		rightDiv.addEventListener('touchstart', (event) => this.handleTouchStart(event, 'ArrowDown'));
+		rightDiv.addEventListener('touchend', (event) => this.handleTouchEnd(event, 'ArrowDown'));
+	}
 	init () {
 		this.arena = new Arena(this.canvas.width, this.canvas.height);
 		this.ball = new Ball(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
@@ -454,7 +479,17 @@ class ClientClassic {
 			this.player2.resize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
 		}, 200);
 	}
-
+	handleTouchStart(event, key) {
+		console.log("TOUCH START");
+		if (this.gameover)	return;
+		if (this.gameData.status == "paused")
+			setTimeout(() => this.sendReady(), 1000);
+	}
+	
+	handleTouchEnd(event, key) {
+		console.log("TOUCH END");
+		if (this.gameover)	return;
+	}	
 	keydown (key) {
 		if (this.gameover)	return;
 		if (this.gameData.status == "paused")

@@ -155,11 +155,12 @@ class Router {
 					history.back();
 					return;
 				}
-				const p1 = this.game.makePlayer('left', p1Name);
 				const p2Name = document.getElementById('player2-name')?.value;
+				console.log("HERE1");
+				const p1 = this.game.makePlayer('left', p1Name, p2Name);
 				// await this.loadTemplate(template);
 				if (p2Name) {
-					const p2 = this.game.makePlayer('right', p2Name);
+					const p2 = this.game.makePlayer('right', p2Name, p2Name);
 					this.game.startClassicGame(p1, p2);
 				} else {
 					this.game.startClassicGame(p1);
@@ -211,10 +212,10 @@ class Router {
 			this.notifyError("Player 1 name is required");
 			return 'play';
 		}
-		const p1 = this.game.makePlayer('left', p1Name);
 		const p2Name = document.getElementById('player2-name')?.value;
+		const p1 = this.game.makePlayer('left', p1Name, p2Name);
 		if (p2Name) {
-			const p2 = this.game.makePlayer('right', p2Name);
+			const p2 = this.game.makePlayer('right', p2Name, p2Name);
 			this.game.startClassicGame(p1, p2);
 		} else {
 			this.game.startClassicGame(p1);
@@ -485,7 +486,7 @@ class Router {
 				// const pl1 = this.game.makePlayer('left', 'Player 1');
 				// const pl2 = this.game.makePlayer('right', 'Player 2');
 				// this.game.start3DGame(pl1, pl2);
-				const pl1 = this.game.makePlayer('left', 'Player 1', 'YOU', '/static/assets/42Berlin.svg');
+				const pl1 = this.game.makePlayer('left', 'Player 1', 'single', 'YOU', '/static/assets/42Berlin.svg');
 				this.game.start3DGame(pl1);
 				break;
 			case 'pong-4p':

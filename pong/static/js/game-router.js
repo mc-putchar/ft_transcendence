@@ -287,12 +287,15 @@ class GameRouter {
 			this.client.start();
 	}
 
-	makePlayer (side, name, alias=null, img=null) {
+	makePlayer (side, name, single=null, alias=null, img=null) {
 		let player = new Player(side, name);
-		if (side === "right")
-			player.controls = { up: "KeyW", down: "KeyS" };
-		else
+		if(!single) {
 			player.controls = { up: "ArrowUp", down: "ArrowDown" };
+		}
+		else if (side === "right")
+			player.controls = { up: "ArrowUp", down: "ArrowDown" };
+		else
+			player.controls = { up: "KeyW", down: "KeyS" };
 		player.alias = alias ?? name;
 		if (img) player.avatar = img;
 		return player;
