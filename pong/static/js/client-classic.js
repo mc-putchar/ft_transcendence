@@ -495,16 +495,31 @@ class ClientClassic {
 		}, 200);
 	}
 	handleTouchStart(event, key) {
-		console.log("TOUCH START");
 		if (this.gameover)	return;
 		if (this.gameData.status == "paused")
 			setTimeout(() => this.sendReady(), 1000);
+		if(key == "ArrowUp") {
+			if(this.player1.direction != -1)
+				this.player1.keys_active++;
+			this.player1.direction = -1;
+		}
+		else if (key == "ArrowDown") {
+			if(this.player1.direction != 1)
+				this.player1.keys_active++;
+			this.player1.direction = 1;
+		}
 	}
 	
 	handleTouchEnd(event, key) {
-		console.log("TOUCH END");
 		if (this.gameover)	return;
-	}	
+		if (key == "ArrowDown" || key == "ArrowUp") {
+			if(this.player1.keys_active > 0)
+				this.player1.keys_active--;
+			if(this.player1.keys_active == 0) {
+				this.player1.direction = 0;
+			}
+		}
+	}
 	keydown (key) {
 		if (this.gameover)	return;
 		if (this.gameData.status == "paused")
