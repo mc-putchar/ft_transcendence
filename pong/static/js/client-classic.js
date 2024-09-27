@@ -406,10 +406,13 @@ class ClientClassic {
 		this.audio = new AudioController();
 		this.audio.playAudioTrack();
 
+		this.touchScreenAdded = false;
+
 		if(!this.isOnline && gameSetup.mode === "single" && ('ontouchstart' in window || navigator.maxTouchPoints))
 			this.setUpTouchScreen();
 	}
 	setUpTouchScreen() {
+		this.touchScreenAdded = true;
 		const leftDiv = document.createElement("div");
 		leftDiv.style.width = "50%";
 		leftDiv.style.height = "100%";
@@ -734,6 +737,15 @@ class ClientClassic {
 		if (this.hasAI) {
 			clearInterval(this.AIupdater);
 		}
+		if(this.touchScreenAdded == true) {
+			leftDiv.removeEventListener('touchstart', (event) => this.handleTouchStart(event));
+			leftDiv.removeEventListener('touchend', (event) => this.handleTouchEnd(event));
+			rightDiv.removeEventListener('touchstart', (event) => this.handleTouchStart(event));
+			rightDiv.removeEventListener('touchend', (event) => this.handleTouchEnd(event));
+			leftDiv.remove();
+			rightDiv.remove();
+		}
+
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
 		window.removeEventListener("resize", ev => this.onResize(ev));

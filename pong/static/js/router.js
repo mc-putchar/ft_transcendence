@@ -156,7 +156,6 @@ class Router {
 					return;
 				}
 				const p2Name = document.getElementById('player2-name')?.value;
-				console.log("HERE1");
 				const p1 = this.game.makePlayer('left', p1Name, p2Name);
 				// await this.loadTemplate(template);
 				if (p2Name) {
