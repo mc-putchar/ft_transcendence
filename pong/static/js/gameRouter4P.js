@@ -43,7 +43,6 @@ class GameRouter4P {
 		this.username = username;
 
 		this.waitForConnection().then(() => {
-			// console.log("WebSocket is open");
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_my_paddle',
 				"sender": this.username
@@ -52,8 +51,6 @@ class GameRouter4P {
 				"type":'get_ball'}));
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_active_connections'}));
-				
-			// console.log("Getters executed");
 		});
 
 		this.chat_websocket.onmessage = (event) => {
@@ -61,7 +58,6 @@ class GameRouter4P {
 			const data = JSON.parse(event.data);
 			const type = data.type;
 
-			// console.log("received: ", data);
 			if (type == "player_disconnection") {
 				this.notifyError("A player has disconnected");
 				this.disconnected = true;
@@ -75,7 +71,6 @@ class GameRouter4P {
 			}
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
-				// console.log("!!!this.active_connect", this.active_connect);
 				if (this.active_connect == 4) {
 					this.chat_websocket?.send(JSON.stringify(
 						{
@@ -141,33 +136,26 @@ class GameRouter4P {
 		});
 	}
 	launchGame() {
-		console.log("LAUNCH_GAME 1");
-		console.log(this.my_paddle);
 		this.player = new Player(this.used_paddles, this.my_paddle);
-		console.log("PLAYER: ", this.player);
 		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
-		console.log("LAUNCH_GAME 2");
 		this.game.getReady();
 		this.game.start();
 		this.is_active = true;
 		this.chat_websocket.send(JSON.stringify({
 			"type":'active_game'
 		}))
-		// console.log("LAUNCH_GAME 3");
 	}
 	stopGame() {
 		if (!this.is_active) {
 			return;
 		}
 		this.is_active = false;
-		// console.log("STOP GAME CALLED, wait for closed socket");
 		this.game?.stopPong4PGame();
 		if(this.chat_websocket) {
 			this.chat_websocket?.send(JSON.stringify({
 				"type": "close_socket"
 			}))
 			this.chat_websocket.close();
-			// console.log("!!!!4P socket closed");
 		}
 	}
 }
