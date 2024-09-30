@@ -43,7 +43,7 @@ class GameRouter4P {
 		this.username = username;
 
 		this.waitForConnection().then(() => {
-			console.log("WebSocket is open");
+			// console.log("WebSocket is open");
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_my_paddle',
 				"sender": this.username
@@ -52,7 +52,8 @@ class GameRouter4P {
 				"type":'get_ball'}));
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_active_connections'}));
-			console.log("Getters executed");
+				
+			// console.log("Getters executed");
 		});
 
 		this.chat_websocket.onmessage = (event) => {
@@ -74,7 +75,7 @@ class GameRouter4P {
 			}
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
-				console.log("!!!this.active_connect", this.active_connect);
+				// console.log("!!!this.active_connect", this.active_connect);
 				if (this.active_connect == 4) {
 					this.chat_websocket?.send(JSON.stringify(
 						{
@@ -152,18 +153,21 @@ class GameRouter4P {
 		this.chat_websocket.send(JSON.stringify({
 			"type":'active_game'
 		}))
-		console.log("LAUNCH_GAME 3");
+		// console.log("LAUNCH_GAME 3");
 	}
 	stopGame() {
+		if (!this.is_active) {
+			return;
+		}
 		this.is_active = false;
-		console.log("STOP GAME CALLED, wait for closed socket");
+		// console.log("STOP GAME CALLED, wait for closed socket");
 		this.game?.stopPong4PGame();
 		if(this.chat_websocket) {
 			this.chat_websocket?.send(JSON.stringify({
 				"type": "close_socket"
 			}))
 			this.chat_websocket.close();
-			console.log("!!!!4P socket closed");
+			// console.log("!!!!4P socket closed");
 		}
 	}
 }

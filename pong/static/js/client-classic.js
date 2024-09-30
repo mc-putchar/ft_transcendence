@@ -55,8 +55,8 @@ class Arena {
 		ctx.fillRect(this.startX, this.startY, this.width, this.height);
 		// ctx.fillRect(this.startX, this.startY + this.height, this.width, 1);
 		ctx.fillStyle = GOAL_COLOR;
-		ctx.fillRect(this.startX, this.startY, 1, this.height);
-		ctx.fillRect(this.startX + this.width, this.startY, 1, this.height);
+		ctx.fillRect(this.startX + 1, this.startY, 1, this.height);
+		ctx.fillRect(this.startX + this.width - 1, this.startY, 1, this.height);
 		ctx.fillStyle = NET_COLOR;
 		for (let i = 1; i < this.height; i += 16) {
 			ctx.fillRect(this.startX + this.width / 2, this.startY + i, 1, 8);
@@ -79,7 +79,7 @@ class Paddle {
 		this.speed = PADDLE_SPEED * ratio;
 		this.goalLine = GOAL_LINE * ratio;
 		this.goalLine += (side == "left") ? this.width / 2 : -this.width / 2;
-		this.x = (side == "left") 
+		this.x = (side == "left")
 			? startX + this.goalLine 
 			: startX + arenaWidth - this.goalLine;
 		this.y = startY + arenaHeight / 2;
@@ -197,10 +197,6 @@ class Score {
 
 	update (scorer) {
 		this.score[scorer]++;
-		// setTimeout(() => {
-		// 	this.hasScored.goal = false;
-		// 	this.hasScored.scorer = "none";
-		// }, 1000);
 		setTimeout(() => {
 			this.hasScored.goal = false;
 			this.hasScored.scorer = "none";
@@ -377,7 +373,6 @@ class ClientClassic {
 		this.isOnline = gameSocket !== null;
 		this.hasAI = gameSetup.mode === "single";
 		this.gameData = this.isOnline ? gameData : new GameData();
-		
 		this.matchId = matchId;
 
 		while (this.parent.firstChild) {
@@ -577,6 +572,8 @@ class ClientClassic {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		if (!this.gameover) {
 			this.isOnline ? this.syncData() : this.update();
+		} else {
+			this.gtfo = this.gtfo ?? setTimeout(() => history.back(), 30000);
 		}
 		this.draw();
 		this.animationID = window.requestAnimationFrame(this.loop.bind(this));
@@ -608,7 +605,7 @@ class ClientClassic {
 
 	paddleCollision () {
 		const left = this.player1.side == "left" ? this.player1 : this.player2;
-		const right = this.player1.side == "right" ? this.player1 : this.player2;
+		const right = this.player1.side == "left" ? this.player2 : this.player1;
 		if(this.ball.x - this.ball.radius <= left.x + left.width) {
 			if(this.ball.x < left.x - left.width)
 				return;
@@ -680,8 +677,10 @@ class ClientClassic {
 	}
 
 	transposePosition (x, y) {
-		const tx = (this.arena.width / ARENA_WIDTH * y) + this.arena.startX + (this.arena.width / 2);
-		const ty = (this.arena.height / ARENA_HEIGHT * x) + this.arena.startY + (this.arena.height / 2);
+		// const tx = (this.arena.width / ARENA_WIDTH * y) + this.arena.startX + (this.arena.width / 2);
+		// const ty = (this.arena.height / ARENA_HEIGHT * x) + this.arena.startY + (this.arena.height / 2);
+		const tx = y + this.arena.startX + (this.arena.width / 2);
+		const ty = x + this.arena.startY + (this.arena.height / 2);
 		return [tx, ty];
 	}
 
@@ -699,11 +698,17 @@ class ClientClassic {
 		}
 		// this.player1.y = (this.gameData.player1.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
 		// this.player2.y = (this.gameData.player2.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
-		[ , this.player1.y] = this.transposePosition(this.gameData.player1.x, 0);
-		[ , this.player2.y] = this.transposePosition(this.gameData.player2.x, 0);
-		this.ball.y = this.gameData.ball.x + this.arena.startY + this.arena.height / 2;
-		this.ball.x = this.gameData.ball.y + this.arena.startX + this.arena.width / 2;
+		// [ , this.player1.y] = this.transposePosition(this.gameData.player1.x, 0);
+		// [ , this.player2.y] = this.transposePosition(this.gameData.player2.x, 0);
+		// this.ball.y = this.gameData.ball.x + this.arena.startY + this.arena.height / 2;
+		// this.ball.x = this.gameData.ball.y + this.arena.startX + this.arena.width / 2;
 		// [this.ball.x, this.ball.y] = this.transposePosition(this.gameData.ball.x, this.gameData.ball.y);
+		const ratio = (this.arena.height + this.arena.width) / (ARENA_HEIGHT * 2 + ARENA_WIDTH * 2);
+		const left = this.isChallenger ? this.player1 : this.player2;
+		const right = this.isChallenger ? this.player2 : this.player1;
+		[ , left.y] = this.transposePosition(-this.gameData.player1.x * ratio, 0);
+		[ , right.y] = this.transposePosition(-this.gameData.player2.x * ratio, 0);
+		[this.ball.x, this.ball.y] = this.transposePosition(-this.gameData.ball.x * ratio, this.gameData.ball.y * ratio);
 		this.ball.vx = this.gameData.ball.dx;
 		this.ball.vy = this.gameData.ball.dy;
 	}
@@ -736,10 +741,6 @@ class ClientClassic {
 
 	start () {
 		console.log("Pong Classic - client started");
-		// Should be done like this according to the subject
-		// if (this.hasAI) {
-		// 	this.AIupdater = setInterval(() => this.proAI.update(this.ball), 1000);
-		// }
 		this.loop();
 	}
 
