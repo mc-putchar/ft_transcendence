@@ -45,16 +45,21 @@ h4,
 h5,
 h6,
 li,
-Buttons,
+button,
 label,
 input,
 select,
+span,
 textarea,
 img {
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+img {
+  z-index: 999;
 }
 
 html,
@@ -69,10 +74,9 @@ body {
 }
 
 canvas {
-  margin-bottom: 30px;
   margin-top: auto;
-  width: 80%;
-  height: 100%;
+  height: auto;
+  width: 90%;
   display: block;
   align-content: center;
   background-color: black;
@@ -105,26 +109,15 @@ canvas {
 #app {
   position: relative;
   top: 5%;
-  margin-top: 5rem;
-  margin-bottom: 5rem;
-  z-index: 99;
+  margin-bottom: 2%;
+  margin-top: 5%;
   width: 100%;
   height: auto;
+  z-index: 99;
   display: flex;
   flex-direction: column;
   align-items: center;
   pointer-events: auto;
-  /* justify-content: center; */
-}
-
-#chat {
-  position: fixed;
-  top: 5%;
-  right: 5%;
-  z-index: 100;
-  display: none;
-  flex-direction: column;
-  height: 100%;
 }
 
 #game-container {
@@ -146,10 +139,10 @@ canvas {
 #footer {
   position: fixed;
   text-align: center;
-  font-size: smaller;
+  font-size: x-small;
   bottom: 0;
-  left: 10%;
-  width: 80%;
+  left: 0;
+  width: 100%;
   z-index: 100;
 }
 
@@ -269,9 +262,11 @@ button:focus {
 /* Responsive Design */
 
 @media (max-width: 768px) {
+  
   button {
     padding-left: 42px;
-    font-size: 1em;
+    font-size: 0.6em;
+  }
     chat-container {
       width: 100%;
       display: flex;
@@ -280,20 +275,37 @@ button:focus {
     chat-log {
       width: 100%;
     }
-  }
-  img {
-    width: 50%;
-  }
+
+  
+  /* img { */
+  /*   width: 50%; */
+  /* } */
 }
 
 @media (max-width: 480px) {
-  button {
-    padding-left: 42px;
-    font-size: 0.9em;
+  
+  html, body {
+      font-size: 0.8em;
   }
 
-  img {
-    width: 60%;
+  button {
+    padding-left: 42px;
+    font-size: 0.6em;
+  }
+
+  #chat {
+      position: fixed;
+      bottom: 2px;
+      right: 2px; 
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      max-height: 50vh;
+      /* overflow-y: auto; */
+      margin-bottom: 1%;
+    }
+  #app {
+    margin-top: 18%;
   }
 }
 
@@ -314,19 +326,16 @@ img.mp3-hover:hover {
 }
 
 .popover-body {
-  /* position: relative; */
-  /* border: 1px solid #d1d1d1; */
-  /* justify-content: left; */
-  /* text-align: left; */
-  /* font-size: 1rem; */
-  /* width: 50vw; */
   font-family: "Lucida Sans";
 }
 
 .chat-userlist {
   display: flex;
   flex-direction: column;
-  margin-top: 20px;
+  margin-top: 12px;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important; /* Ensure no extra unused space */
 }
 
 .chat-container {
@@ -335,15 +344,47 @@ img.mp3-hover:hover {
   height: 100%;
 }
 
+#chat {
+  position: fixed;
+  bottom: 5%;
+  right: 5%; 
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  max-height: 70vh;
+  /* overflow-y: auto; */
+  margin-bottom: 5%;
+}
+
 #chat-log {
+  height: 50vh; /* Adjust as needed */
+  max-height: 50vh; /* Ensures the maximum height is 50vh */
+  overflow-y: auto; /* Enables vertical scrolling */
+  overflow-x: hidden; /* Hides horizontal scrolling */
+  position: relative;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   margin-bottom: 15px;
-  overflow-y: auto;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  user-select: none; /* Disables text selection */
+  -webkit-user-select: none; /* For WebKit browsers */
+  -moz-user-select: none; /* For Mozilla browsers */
+  -ms-user-select: none; /* For Internet Explorer/Edge browsers */
+  
+  /* WebKit browsers (Chrome, Safari) */
+  ::-webkit-scrollbar {
+    width: 0; /* Hides the scrollbar */
+    background: transparent; /* Optional: background for better visibility */
+  }
+
+  /* Firefox */
+  scrollbar-width: none; /* Hides the scrollbar */
+
+  /* Edge */
+  -ms-overflow-style: none; /* Hides the scrollbar */
 }
+
 
 #chat-message-input {
   width: 100%;
@@ -354,7 +395,26 @@ img.mp3-hover:hover {
   padding: 10px;
   margin-top: 20px;
 }
- 
+
+.chat-message {
+  margin: 0; /* Removes default margin */
+  margin-left: 10px; /* Adds space between messages */
+  padding: 0; /* Removes default padding */
+  line-height: 1.4; /* Adjust line height to reduce extra space */
+  display: flex; /* Use flexbox for centering */
+  align-items: center; /* Vertically center text */
+  justify-content: left; /* Horizontally center text, if needed */
+  min-height: 30px; /* Set a minimum height if needed */
+  word-break: break-word; /* Ensures long words are broken */
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  max-height: inherit;
+  overflow: auto;
+  /* max-width: 50vw; */
+  font-size: smaller;
+}
+
 #room-name {
   margin-top: 15px;
 }
@@ -419,3 +479,115 @@ img.mp3-hover:hover {
   background-color: rgba(0, 0, 0, 0.75);
 }
 
+.glitch {
+  position: relative;
+  animation: glitch 9s linear infinite;
+}
+
+@keyframes glitch{
+  2%,64%{
+    transform: translate(1px,0) skew(0deg);
+  }
+  4%,60%{
+    transform: translate(-1px,0) skew(0deg);
+  }
+  62%{
+    transform: translate(0,0) skew(5deg); 
+  }
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  left: 2px;
+  text-shadow: -1px 0 rgba(152, 6, 160, 0.69);
+  background: rgba(0, 0, 0, 0);
+  animation: glitch-anim-1 2s linear infinite alternate-reverse;
+  animation: glitchTop 1.5s linear infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 31%, 0 31%);
+  -webkit-clip-path: polygon(0 0, 100% 0, 100% 31%, 0 31%);
+}
+
+@keyframes glitchTop{
+  2%, 64% {
+    transform: translate(2px, -2px);
+  }
+  4%, 60% {
+    transform: translate(-2px, 2px);
+  }
+  62% {
+    transform: translate(13px, -1px) skew(-13deg); 
+  }
+}
+
+.glitch::after {
+  left: 2px;
+  text-shadow: 1px 0 rgba(28, 147, 111, 0.69);
+  background: rgba(0, 0, 0, 0);
+  animation: glitch-anim-2 2s linear infinite alternate-reverse;
+  animation: glitchBottom 2s linear infinite;
+  clip-path: polygon(0 69%, 100% 69%, 100% 100%, 0 100%);
+  -webkit-clip-path: polygon(0 69%, 100% 69%, 100% 100%, 0 100%);
+}
+
+@keyframes glitchBottom{
+  2%, 64% {
+    transform: translate(-2px, 0);
+  }
+  4%, 60% {
+    transform: translate(-2px, 0);
+  }
+  62% {
+    transform: translate(-21px, 5px) skew(42deg); 
+  }
+}
+
+@keyframes glitch-anim-1 {
+    0% {
+        clip-path: inset(42% 0 38% 0);
+    }
+    20% {
+        clip-path: inset(91% 0 2% 0);
+    }
+    40% {
+        clip-path: inset(42% 0 1% 0);
+    }
+    60% {
+        clip-path: inset(33% 0 61% 0);
+    }
+    80% {
+        clip-path: inset(17% 0 9% 0);
+    }
+    100% {
+        clip-path: inset(69% 0 42% 0);
+    }
+}
+
+@keyframes glitch-anim-2 {
+    0% {
+        clip-path: inset(4% 0 93% 0);
+    }
+    20% {
+        clip-path: inset(48% 0 12% 0);
+    }
+    40% {
+        clip-path: inset(24% 0 68% 0);
+    }
+    60% {
+        clip-path: inset(62% 0 49% 0);
+    }
+    80% {
+        clip-path: inset(79% 0 19% 0);
+    }
+    100% {
+        clip-path: inset(6% 0 84% 0);
+    }
+}

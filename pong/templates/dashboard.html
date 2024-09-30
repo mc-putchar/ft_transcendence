@@ -1,37 +1,55 @@
 {% if user.is_authenticated %}
 {% load static %}
-<div class="row justify-content-center">
+<div class="row justify-content-center mt-5">
     <div class="col-12">
-        <div class="card p-2 shadow-sm style="width: 100%;">
-            <div class="card-body text-center container-background">
-                <h2 class="h4 mb-4">Dashboard</h2>
-                    <div class="card-body text-center" >
-                        <ul class="list-group list-group-flush mb-4">
-                            <li class="list-group-item">User: {{ username }}</li>
-                            <li class="list-group-item">Alias: {{ profile.alias }}</li>
-                            <li class="list-group-item">Status: {{ status }}</li>
-                            <li class="list-group-item">
-                                <img src="{{ profile.image }}" alt="Profile Image" class="img-thumbnail" style="width-max: 90vw ; height: auto;">
-                            </li>
-                            <p>Friends:</p>
-                            {% for friend in friends %}
-                                    <li class="list-group-item">
-                                        <button class="btn btn-outline-{% if friend.isOnline %}success{% else %}danger{% endif %} border-info rounded-pill" onclick="location.href='#/profiles/{{ friend.username }}'">
-                                            <img src="{{ friend.profilepic }}" alt="Friend Image" class="img-thumbnail" style="width: 32px; height: 32px;"> {{ friend.username }}
-                                        </button>
-                                    </li>
-                            {% endfor %}
-                        </ul>
+        <div class="card p-2 shadow-sm bg-secondary-subtle">
+            <div class="card-body bg-secondary-subtle container-background overflow-y-auto">
+                <div class="row">
+                    <div class="card-header bg-dark text-success d-flex justify-content-between align-items-center">
+                        <button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
+                        <h4 class="mb-0 glitch" data-text="Dashboard">Dashboard</h4>
                     </div>
-                    <div class="container-fluid">
-                        <div class="row">
-                            <a class="btn btn-primary" href="#/chat">Enter Chat</a>
+                    <div class="col mt-4">
+                        <img src="{{ profile.image }}" class="rounded border border-3 border-info account-img img-fluid mx-auto" alt="Profile Picture" >
+                    </div>
+                    <div class="col mt-4">
+                        <div class="card-body text-center" >
+                            <h3 class="card-title">{{ username }}</h3>
+                            <p><span class="badge bg-{% if profile.isOnline %}success{% else %}danger{% endif %}">{{ status }}</span></p>
+                            <p class="card-text"><b>Alias:</b> {{ profile.alias }}</p>
+                            <p class="card-text"><b>Games played:</b> {{ match_stats.played }}</p>
+                            <p class="card-text"><b>Won: 
+                                <span class="text-success">{{ match_stats.wins }}</span> / Lost: 
+                                <span class="text-danger">{{ match_stats.losses }}</span></b>
+                            </p>
+                            <p class="card-text"><b>Tournaments: </b>{{ tournament_history.count }}</p>
                         </div>
                     </div>
-                    <div class="row">
-                        <img src="{% static 'assets/42Berlin.svg' %}" alt="42 Berlin Logo"
-                                class="img-fluid mt-4">
+                </div>
+                <div class="row">
+                    <div class="card mt-2">
+                        <div class="card-header bg-dark text-success align-items-center">
+                            <h5 class="mb-0">Friends:</h5>
+                        </div>
+                        <div class="col-12 d-flex flex-wrap align-content-center mt-4 mb-4">
+                        {% if friends %}
+                            {% for friend in friends %}
+                                <button class="btn btn-outline-{% if friend.isOnline %}success{% else %}danger{% endif %} rounded-pill mx-1" onclick="location.href='#/profiles/{{ friend.username }}'">
+                                    <img src="{{ friend.profilepic }}" title="{{ friend.username }}" alt="Friend Image" class="img-thumbnail" style="width: 32px; height: 32px;">
+                                </button>
+                            {% endfor %}
+                        {% else %}
+                            <p>Oh! It seems like you don't have any friends yet.
+                            <br>Maybe you should do something about that.</p>
+                        {% endif %}
+                        </div>
                     </div>
+                </div>
+                <div class="row">
+                    <div class="card bg-transparent align-items-center my-4 p-4">
+                        <img class="img-thumbnail shadow border-2 border-rounded border-secondary" src="{% static 'assets/42Berlin.svg' %}" alt="42 Berlin Logo">
+                    </div>
+                </div>
             </div>
         </div>
     </div>

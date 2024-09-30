@@ -3,10 +3,10 @@ from api.models import Tournament
 
 class CreateTournamentForm(forms.Form):
 	name = forms.CharField(label='Tournament Name', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}), required=True)
-	player_limit = forms.IntegerField(label='Max Players', widget=forms.NumberInput(attrs={'class': 'form-control'}), required=True, min_value=2, max_value=32)
-	prize = forms.DecimalField(label='Prize', widget=forms.NumberInput(attrs={'class': 'form-control'}), required=True, min_value=0)
-	entry_fee = forms.DecimalField(label='Entry Fee', widget=forms.NumberInput(attrs={'class': 'form-control'}), required=True, min_value=0)
-	on_blockchain = forms.BooleanField(label='On Blockchain', widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}), required=False)
+	player_limit = forms.IntegerField(label='Max Players', widget=forms.NumberInput(attrs={'class': 'form-control'}), required=True, min_value=2, initial=4, max_value=32)
+	prize = forms.DecimalField(label='Prize', widget=forms.NumberInput(attrs={'class': 'form-control'}), min_value=0, initial=0)
+	entry_fee = forms.DecimalField(label='Entry Fee', widget=forms.NumberInput(attrs={'class': 'form-control'}), min_value=0, initial=0)
+	on_blockchain = forms.BooleanField(label='On Blockchain', widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}), required=False, initial=False)
 
 	def is_valid(self):
 		return super().is_valid()

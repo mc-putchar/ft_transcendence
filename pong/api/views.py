@@ -29,7 +29,7 @@ from .serializers import UserSerializer, ProfileSerializer, FriendSerializer, Bl
     ],
     responses={204: None, 400: None}
 )
-def logout(self, request):
+def logout(request):
     """Logout the user and blacklist the refresh token."""
     try:
         refresh_token = request.data["refresh"]
@@ -61,7 +61,7 @@ def logout(self, request):
     ],
     responses={200: None, 400: None}
 )
-def change_password(self, request):
+def change_password(request):
     """Change the user's password."""
     user = request.user
     old_password = request.data.get('old_password')
@@ -85,18 +85,16 @@ def change_password(self, request):
     summary="Anonymize the user's data.",
     responses={200: None}
 )
-def anonymize_user(self, request):
+def anonymize_user(request):
     """Anonymize the user's data."""
     user = request.user
-    hashed_value = str(hash({user.username, user.id}))
+    hashed_value = str(hash(f"{user.username}{user.id}") % 1234567)
     user.username = f"marvin_{hashed_value}"
     user.email = ""
     user.profile.alias = f"marvin"
     user.profile.image = 'profile_images/default.png'
-    user.profile.friends.clear()
-    user.profile.blocked_users.clear()
-    user.profile.forty_two_id = ''
-    user.profile.blockchain_address = ''
+    # user.profile.forty_two_id = '' # Issue: if deleted, the user can't log in again
+    # user.profile.blockchain_address = '' # Maybe shouldn't be deleted
     user.save()
     return JsonResponse({"message": "Your data has been anonymized."}, status=200)
 
@@ -111,6 +109,10 @@ class DeleteAccountView(generics.DestroyAPIView):
     def delete(self, request, *args, **kwargs):
         """Delete the user's account."""
         user = request.user
+        profile = user.profile
+        if profile.image and profile.image.name != 'profile_images/default.png':
+            profile.image.delete() # issue: it seems to delete the file, not only the database entry
+        profile.delete()
         user.delete()
         return Response({"detail": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
@@ -154,7 +156,7 @@ class ProfileViewSet(viewsets.ViewSet):
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Bad request'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
     def block_user(self, request):

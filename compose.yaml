@@ -1,4 +1,4 @@
-#version: '42'
+# version: '42'
 
 name: ft_transcendence
 
@@ -17,21 +17,15 @@ services:
     networks:
       - transcendeNet
     volumes:
-      - ./cloudflared:/etc/cloudflared
+      - ./cloudflared:/etc/cloudflared:ro
     profiles:
       - tunnel
     restart: unless-stopped
-
-  blockchain:
-    build:
-      context: "${PWD}/pong/blockchain"
-    networks:
-      - transcendeNet
-    restart: unless-stopped
-
+    
   server:
-    build:
-      context: "${PWD}/server"
+    image: caddy:2.8.4-alpine
+    # build:
+    #   context: "${PWD}/server"
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
@@ -41,33 +35,12 @@ services:
     networks:
       - transcendeNet
     ports:
-      - "127.0.0.1:4243:443"
-    depends_on:
-      django:
-        condition: service_started
-      db:
-        condition: service_healthy
+      - "0.0.0.0:4243:443"
     restart: unless-stopped
 
-  db:
-    image: postgres:16.3-alpine3.20
-    environment:
-      - POSTGRES_DB
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-    volumes:
-      - "dbdata:/var/lib/postgresql/data"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - transcendeNet
-    restart: unless-stopped
-
-  redis:
-    image: redis:7.2.5-alpine
+  blockchain:
+    build:
+      context: "${PWD}/pong/blockchain"
     networks:
       - transcendeNet
     restart: unless-stopped
@@ -75,6 +48,10 @@ services:
   django:
     build:
       context: "${PWD}/pong"
+    command: sh -c "
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000"
     volumes:
       - "${PWD}/pong:/code:rw"
     environment:
@@ -96,6 +73,29 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: postgres:16.3-alpine3.20
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    volumes:
+      - "dbdata:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.0-alpine
+    networks:
+      - transcendeNet
     restart: unless-stopped
 
 volumes:
