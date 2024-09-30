@@ -44,8 +44,6 @@ services:
     networks:
       - transcendeNet
     restart: unless-stopped
-    ports:
-      - "8545:8545"
 
   django:
     build:
