@@ -19,7 +19,7 @@ const SCORE_LIMIT = 10;
 
 const BALL_COLOR = "red";
 const PADDLE_COLOR = "green";
-const DEBUG_KEY = true;
+const DEBUG_KEY = false;
 
 class Arena {
 	constructor(ctxwidth, ctxheight) {
@@ -417,8 +417,6 @@ class Online4P {
 			default:
 				break;
 		}
-		if(DEBUG_KEY == true)
-			console.log("key down: ", this.player.keys_active);
 		this.sendPlayerDirection();
 	}
 	keyup(key) {
@@ -432,8 +430,6 @@ class Online4P {
 		if(this.player.keys_active == 0)
 			this.player.direction = 0;
 		this.sendPlayerDirection();
-		if(DEBUG_KEY == true)
-			console.log("key up: ", this.player.keys_active);
 	}
 	goalAnimation(now) {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -617,7 +613,6 @@ class Online4P {
 			this.animation.setTimeStamps();
 			this.resetPositions();
 			this.score.updateScore();
-			console.log(this.score);
 			return ;
 		}
 		this.paddleCollision();
