@@ -67,7 +67,7 @@ class GameRouter4P {
 		this.chat_websocket = new WebSocket(url);
 
 		this.waitForConnection().then(() => {
-			console.log("WebSocket is open");
+			// console.log("WebSocket is open");
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_used_paddles'}));
 			this.chat_websocket.send(JSON.stringify({
@@ -75,7 +75,7 @@ class GameRouter4P {
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_active_connections'}));
 				
-			console.log("Getters executed");
+			// console.log("Getters executed");
 		});
 
 		this.chat_websocket.onmessage = (event) => {
@@ -97,7 +97,7 @@ class GameRouter4P {
 			}
 			else if(type == "active_connections") {
 				this.active_connect = parseInt(data.active_connections, 10);
-				console.log("!!!this.active_connect", this.active_connect);
+				// console.log("!!!this.active_connect", this.active_connect);
 				if (this.active_connect == 4) {
 					this.chat_websocket?.send(JSON.stringify(
 						{
@@ -109,7 +109,7 @@ class GameRouter4P {
 			}
 			else if(type == "used_paddles") {
 				this.used_paddles = data.used_paddles.split(' ');
-				console.log(this.used_paddles);
+				// console.log(this.used_paddles);
 				if(!this.my_paddle) {
 					this.my_paddle = find_paddle(this.used_paddles);
 					this.chat_websocket?.send(JSON.stringify(
@@ -161,7 +161,7 @@ class GameRouter4P {
 		this.gameData.animation_time["first"] = data.animation_time_first;
 		this.gameData.animation_time["second"] = data.animation_time_second;
 		this.gameData.animation_time["third"] = data.animation_time_third;
-		console.log("this.gameData", this.gameData);
+		// console.log("this.gameData", this.gameData);
 	}
 
 	waitForConnection() {
@@ -175,25 +175,28 @@ class GameRouter4P {
 		this.player = new Player(this.used_paddles, this.my_paddle);
 		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
 		this.game.getReady();
-		console.log("LAUNCH_GAME 1");
+		// console.log("LAUNCH_GAME 1");
 		this.game.start();
-		console.log("LAUNCH_GAME 2");
+		// console.log("LAUNCH_GAME 2");
 		this.is_active = true;
 		this.chat_websocket.send(JSON.stringify({
 			"type":'active_game'
 		}))
-		console.log("LAUNCH_GAME 3");
+		// console.log("LAUNCH_GAME 3");
 	}
 	stopGame() {
+		if (!this.is_active) {
+			return;
+		}
 		this.is_active = false;
-		console.log("STOP GAME CALLED, wait for closed socket");
+		// console.log("STOP GAME CALLED, wait for closed socket");
 		this.game?.stopPong4PGame();
 		if(this.chat_websocket) {
 			this.chat_websocket?.send(JSON.stringify({
 				"type": "close_socket"
 			}))
 			this.chat_websocket.close();
-			console.log("!!!!4P socket closed");
+			// console.log("!!!!4P socket closed");
 		}
 	}
 }

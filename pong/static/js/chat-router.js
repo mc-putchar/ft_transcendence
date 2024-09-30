@@ -230,15 +230,6 @@ class ChatRouter {
 				this.chatElement.dispatchEvent(new CustomEvent('challenged', { detail: { username: data.username } }));
 			}
 		}
-		if (data.username === this.username) {
-			this.pushMessage(`You have challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
-			this.chatElement.dispatchEvent(new CustomEvent('challenger', { detail: { gameID: data.username } }));
-		} else if (challengedUser !== this.username) {
-			this.pushMessage(`${data.username} has challenged ${challengedUser} to a duel!`, 'duel', 'Announcer');
-		} else {
-			this.pushMessage(`${data.username} has challenged you to a duel!`, 'duel', 'Announcer');
-			this.chatElement.dispatchEvent(new CustomEvent('challenged', { detail: { username: data.username } }));
-		}
 	}
 
 	handleDuelRequest4P(data) {
