@@ -710,7 +710,7 @@ class ClientClassic {
 	
 		let textY = padding_height / 2;
 	
-		console.log(this.gameSetup);
+		// console.log(this.gameSetup);
 
 		let textSize = ctx.measureText(this.gameSetup.player2.name);
 		ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY);
@@ -719,9 +719,9 @@ class ClientClassic {
 	
 	draw () {
 		this.arena.draw(this.context);
-		if(this.tour_result){
-			this.drawNames(this.context, this.canvas.height, this.canvas.width);
-		}
+		// if(this.tour_result){
+		this.drawNames(this.context, this.canvas.height, this.canvas.width);
+		// }
 		if (this.gameover) {
 			const [left, right] = this.isChallenger ? [this.player, this.opponent] : [this.opponent, this.player];
 			this.score.drawEndGame(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY, left.alias, right.alias);
