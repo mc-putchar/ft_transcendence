@@ -369,8 +369,9 @@ class proAI {
 }
 
 class ClientClassic {
-	constructor (gameSetup, gameSocket=null, gameData=null, matchId=null, result=null) {
-		this.result = result;
+	constructor (gameSetup, gameSocket=null, gameData=null, matchId=null, tour_result=null) {
+		this.gameSetup = gameSetup;
+		this.tour_result = tour_result;
 		this.parent = gameSetup.parentElement;
 		this.gameSocket = gameSocket;
 		this.isOnline = gameSocket !== null;
@@ -659,8 +660,8 @@ class ClientClassic {
 			if (this.score.score.left >= this.gameData.score.limit 
 			|| this.score.score.right >= this.gameData.score.limit) {
 				let winner = this.score.score.left > this.score.score.right ? "p1" : "p2";
-				if(this.result)
-					this.result.update(this.score.score.left, this.score.score.right, winner);
+				if(this.tour_result)
+					this.tour_result.update(this.score.score.left, this.score.score.right, winner);
 				this.gameover = true;
 				this.ball = null;
 			}
@@ -706,9 +707,25 @@ class ClientClassic {
 		this.ball.vx = this.gameData.ball.dx;
 		this.ball.vy = this.gameData.ball.dy;
 	}
+	drawNames(ctx, height, width) {
+		let padding_height = (height - this.arena.height) / 2;
+		ctx.fillStyle = SCORE_COLOR;
+		ctx.font = `${padding_height / 1.5}px Orbitron`;
+	
+		let textY = padding_height / 2;
+	
+		console.log(this.gameSetup);
 
+		let textSize = ctx.measureText(this.gameSetup.player2.name);
+		ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY);
+		ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY);
+	}
+	
 	draw () {
 		this.arena.draw(this.context);
+		if(this.tour_result){
+			this.drawNames(this.context, this.canvas.height, this.canvas.width);
+		}
 		if (this.gameover) {
 			const [left, right] = this.isChallenger ? [this.player, this.opponent] : [this.opponent, this.player];
 			this.score.drawEndGame(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY, left.alias, right.alias);
