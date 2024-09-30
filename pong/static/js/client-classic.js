@@ -197,10 +197,6 @@ class Score {
 
 	update (scorer) {
 		this.score[scorer]++;
-		// setTimeout(() => {
-		// 	this.hasScored.goal = false;
-		// 	this.hasScored.scorer = "none";
-		// }, 1000);
 		setTimeout(() => {
 			this.hasScored.goal = false;
 			this.hasScored.scorer = "none";
