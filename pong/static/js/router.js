@@ -120,7 +120,8 @@ class Router {
 	async route() {
 		this.oldHash = this.oldHash ?? window.location.hash;
 		this.game?.stopGame();
-		this.game4P?.stopGame();	
+		this.game4P?.stopGame();
+		this.localTournament?.stop();
 		const template = window.location.hash.substring(2) || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
