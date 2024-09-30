@@ -739,12 +739,6 @@ class handle4PGame(AsyncWebsocketConsumer):
 				return
 			handle4PGame.loop += 1
 			await handle4PGame.data.update()
-			logger.info(f"\nball_x: {handle4PGame.data.ball.pos_x}")
-			logger.info(f"ball_y: {handle4PGame.data.ball.pos_y}")
-			logger.info(f"ball_vx: {handle4PGame.data.ball.vx}")
-			logger.info(f"ball_vy: {handle4PGame.data.ball.vy}")
-			logger.info(f"speedx: {handle4PGame.data.ball.speedx}")
-			logger.info(f"speedy: {handle4PGame.data.ball.speedy}")
 			await self.channel_layer.group_send(
 				self.group_name,
 				{
@@ -792,9 +786,24 @@ class handle4PGame(AsyncWebsocketConsumer):
 				self.data.score.last_touch = ""
 				self.data.score.conceded = ""
 				await asyncio.sleep(1.5)
-			print("Before sleep:", time.time())
 			await asyncio.sleep(0.016)
-			print("After sleep:", time.time())
+
+	async def getRandomPaddle():
+		options = ["left", "top", "bottom", "right"]
+		availableOptions = []
+		
+		for side in options:
+			isUsed = False
+			for used in handle4PGame.used_paddles:
+				if side == used:
+					isUsed = True
+			if(isUsed == False):
+				availableOptions.append(side)
+		
+		rand = random.randint(0, 100) % len(availableOptions)
+		paddle = availableOptions[rand]
+		handle4PGame.used_paddles.append(paddle)
+		return paddle
 
 	async def initialize(self):
 		self.data.initialize()
@@ -808,12 +817,9 @@ class handle4PGame(AsyncWebsocketConsumer):
 			self.group_name,
 			self.channel_name
 		)
-		# profile = await get_profile(self.username)
-		# profile.currently_playing = True
 		handle4PGame.active_connections += 1
 		if(handle4PGame.active_connections == 1):
 			await self.initialize()
-			logger.debug("\n\nINITIALIZE NEW GAME\n")
 
 	async def receive(self, text_data=None, bytes_data=None):
 		data = json.loads(text_data)
@@ -844,23 +850,25 @@ class handle4PGame(AsyncWebsocketConsumer):
 			if(handle4PGame.active_games == 4):
 				handle4PGame.data.initialize()
 				await asyncio.sleep(1.5)
-				logger.debug("\n\nLAUNCH GAME LOOP")
 				asyncio.create_task(self.game_loop())
 		elif type == "player_direction":
 			handle4PGame.data.field.paddle[data.get("side")]["dir"] = data.get("dir")
 		elif type == "added_paddle":
 			handle4PGame.used_paddles.append(data.get("added_paddle"))
-		elif type == "get_used_paddles":
+		elif type == "get_my_paddle":
+			receiver = data.get("sender")
+			logger.debug("GET MY PADDLE CALLED")
+			paddle = await handle4PGame.getRandomPaddle()
+			logger.debug(f"GOT PADDLE {paddle}")
 			await self.channel_layer.group_send(
 				self.group_name,
 				{
 					'type': 'game_message',
 					'message': json.dumps({
-						"type": "used_paddles",
-						"used_paddles": ' '.join(str(paddle) for paddle in handle4PGame.used_paddles if paddle is not None)
-					})
-				}
-			)
+						'type': 'my_paddle',
+						'receiver': receiver,
+						'side': paddle
+				})})
 		elif type == "get_active_connections":
 			await self.channel_layer.group_send(
 				self.group_name,
