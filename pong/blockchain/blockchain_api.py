@@ -130,6 +130,10 @@ class PongBlockchain(metaclass=Singleton):
 		return self.signAndSendTransaction(txn, private_key)
 
 	def updatePlayerAddress(self, sender: str, private_key: str, hash: int, new_address: str):
+		# Checking if player exists from the alias (field 4 of the array)
+		player = self.getPlayer(hash)
+		if not player[4]:
+			raise ValueError("Player not found")
 		senderAddressChecksum = Web3.to_checksum_address(sender)
 		params = self.build_params({'from': senderAddressChecksum, 'nonce': self.web3.eth.get_transaction_count(senderAddressChecksum)})
 		txn = self.contract.functions.updatePlayerAddress(hash, new_address).build_transaction(params) # type: ignore

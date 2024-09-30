@@ -99,8 +99,15 @@ class ProfileUpdateForm(forms.ModelForm):
             new_address = self.cleaned_data['blockchain_address']
             chain = PongBlockchain()
             player_hash = hash_player([profile.user.email, profile.user.id])
-            chain.updatePlayerAddress(chain.accounts[0], os.getenv('HARDHAT_PRIVATE_KEY'), player_hash, new_address)
+            try:
+                chain.updatePlayerAddress(chain.accounts[0], os.getenv('HARDHAT_PRIVATE_KEY'), player_hash, new_address)
+            except ValueError as e:
+                logger.info(f"Player {profile.user.username} not found on chain: adding...")
+                chain.addPlayerFull(chain.accounts[0], os.getenv('HARDHAT_PRIVATE_KEY'), player_hash, profile.user.username, new_address)
             logger.info(f"Updated on chain address: {chain.getPlayer(player_hash)[5]}")
+            # TODO Remove
+            logger.info(f"Is_deployed: {chain.is_deployed}, Address: {chain.address}")
+            logger.info(f"Player hash: {player_hash}")
         if commit:
             profile.save()
         return profile
