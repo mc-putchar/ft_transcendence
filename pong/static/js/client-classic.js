@@ -708,24 +708,21 @@ class ClientClassic {
 		this.ball.vy = this.gameData.ball.dy;
 	}
 	drawNames(ctx, height, width) {
-		let padding_height = (height - this.arena.height) / 2;
+		// let padding_height = (height - this.arena.height) / 2;
+		let padding_height = this.arena.startY / 1.5;
 		ctx.fillStyle = SCORE_COLOR;
 		ctx.font = `${padding_height / 1.5}px Orbitron`;
 	
 		let textY = padding_height / 2;
 	
-		console.log(this.gameSetup);
-
 		let textSize = ctx.measureText(this.gameSetup.player2.name);
-		ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY);
-		ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY);
+		ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY / 2);
+		ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
 	}
-	
+
 	draw () {
 		this.arena.draw(this.context);
-		if(this.tour_result){
-			this.drawNames(this.context, this.canvas.height, this.canvas.width);
-		}
+		this.drawNames(this.context, this.canvas.height, this.canvas.width);
 		if (this.gameover) {
 			const [left, right] = this.isChallenger ? [this.player, this.opponent] : [this.opponent, this.player];
 			this.score.drawEndGame(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY, left.alias, right.alias);

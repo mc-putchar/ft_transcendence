@@ -85,8 +85,6 @@ class GameRouter4P {
 				return;
 			}
 			else if(type == "my_paddle") {
-				console.log("DATA RECEIVER: ", data.receiver);
-				console.log("THIS USERNAME: ", this.username);
 				if(data.receiver == this.username)
 					this.my_paddle = data.side;
 				return;
