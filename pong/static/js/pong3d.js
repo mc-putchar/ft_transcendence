@@ -270,10 +270,9 @@ class Hud {
 
 	prologue() {
 		this.scene.remove(this.vsMesh);
-		this.leftTextMesh.translateOnAxis(new THREE.Vector3(-1, 0, 0), 0.5);
+		this.leftTextMesh.translateOnAxis(new THREE.Vector3(-1, 0, 0), 1.5);
 		this.leftTextMesh.translateOnAxis(new THREE.Vector3(0, -1, 0), 2.5);
 		this.rightTextMesh.translateOnAxis(new THREE.Vector3(-1, 0, 0), 0.5);
-		this.rightTextMesh.translateOnAxis(new THREE.Vector3(0, -1, 0), 2.5);
 	}
 
 	update() {

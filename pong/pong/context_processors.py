@@ -12,7 +12,7 @@ def get_user_from_token(request):
             token = request.headers.get('Authorization').split(' ')[1]
             user = get_user_from_validated_token(token)
         except Exception as e:
-            logger.error(f"Token error: {e}")
+            logger.debug(f"Bad Token: {e}")
     return {'user': user}
 
 def get_user_from_validated_token(token):
@@ -22,5 +22,5 @@ def get_user_from_validated_token(token):
         validated_token = auth.get_validated_token(token)
         user = auth.get_user(validated_token)
     except Exception as e:
-        logger.error(f"Token error: {e}")
+        logger.debug(f"Bad Token: {e}")
     return user
