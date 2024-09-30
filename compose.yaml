@@ -51,7 +51,7 @@ services:
     build:
       context: "${PWD}/pong"
     command: sh -c "
-      python manage.py runserver 0.0.0.0:8000" # add -noreaload flag to avoid double deployment to the blockchain
+      python manage.py runserver 0.0.0.0:8000" # add --noreload flag to avoid double deployment to the blockchain
     volumes:
       - "${PWD}/pong:/code:rw"
     environment:
