@@ -366,6 +366,7 @@ class proAI {
 
 class ClientClassic {
 	constructor (gameSetup, gameSocket=null, gameData=null, matchId=null, tour_result=null) {
+		console.log(gameSetup);
 		this.gameSetup = gameSetup;
 		this.tour_result = tour_result;
 		this.parent = gameSetup.parentElement;
@@ -713,7 +714,6 @@ class ClientClassic {
 		this.ball.vy = this.gameData.ball.dy;
 	}
 	drawNames(ctx, height, width) {
-		// let padding_height = (height - this.arena.height) / 2;
 		let padding_height = this.arena.startY / 1.5;
 		ctx.fillStyle = SCORE_COLOR;
 		ctx.font = `${padding_height / 1.5}px Orbitron`;
@@ -721,8 +721,20 @@ class ClientClassic {
 		let textY = padding_height / 2;
 	
 		let textSize = ctx.measureText(this.gameSetup.player2.name);
-		ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY / 2);
-		ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+		if(this.gameSetup.mode == "online") {
+			if(this.gameSetup.player1.side == "left") {
+				ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY / 2);
+				ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+			}
+			else {
+				ctx.fillText(this.gameSetup.player2.name, this.arena.startX, this.arena.startY / 2);
+				ctx.fillText(this.gameSetup.player1.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+			}
+		}
+		else {
+			ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY / 2);
+			ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+		}
 	}
 
 	draw () {
