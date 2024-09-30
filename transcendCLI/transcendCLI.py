@@ -8,7 +8,7 @@ import asyncio
 LOGIN_ROUTE = '/api/login/'
 
 CLI_W = 150
-CLI_H = 42
+CLI_H = 64
 
 fifo_in = "/tmp/pong_in"
 fifo_out = "/tmp/pong_out"
@@ -139,6 +139,9 @@ def show_help():
     console.print('/duel4P - Challenge 3 users to a 4P game.', style='bold')
     console.print('/pm <username> <message> - Send a private message.', style='bold')
     console.print('/help - Show this help message.', style='bold')
+    console.print('ls - List online users.', style='bold')
+    console.print('clear - Clear the screen.', style='bold')
+    console.print('exit - Exit the app.', style='bold')
     console.print('\nexit or Ctrl + C to exit the app.', style='bold')
     console.print('--------------------------------------\n', style='bold')
     console.print('Game Controls:', style='green')

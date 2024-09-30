@@ -241,6 +241,8 @@ class GameRouter {
 		else
 			this.client = new ClientClassic(gameSetup, this.gameSocket, this.gameData, data.gameID);
 		this.client.start();
+
+		document.body.style.overflow = "hidden";
 	}
 
 	async startTournamentGame (data) {
@@ -264,6 +266,8 @@ class GameRouter {
 		);
 		this.client = new ClientClassic(gameSetup);
 		this.client.start();
+
+		document.body.style.overflow = "hidden";
 	}
 
 	start3DGame (player1, player2=null) {
@@ -280,11 +284,17 @@ class GameRouter {
 		}
 		this.client = new Client3DGame(gameSetup);
 		this.client.start();
+
+
+		document.body.style.overflow = "hidden";
 	}
 
 	start4PGame () {
 			this.client = new Game4P(this.appElement);
 			this.client.start();
+
+			
+			document.body.style.overflow = "hidden";
 	}
 
 	makePlayer (side, name, single=null, alias=null, img=null) {
@@ -297,9 +307,6 @@ class GameRouter {
 			player.controls = { up: "ArrowUp", down: "ArrowDown" };
 		else
 			player.controls = { up: "KeyW", down: "KeyS" };
-		console.log("name: ", name);
-		console.log("side: ", side);
-		console.log("player.controls: ", player.controls);
 		player.alias = alias ?? name;
 		if (img) player.avatar = img;
 		return player;
