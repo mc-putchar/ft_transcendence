@@ -289,6 +289,7 @@ class GameRouter {
 
 	makePlayer (side, name, single=null, alias=null, img=null) {
 		let player = new Player(side, name);
+		console.log("single: ", single);
 		if(!single) {
 			player.controls = { up: "ArrowUp", down: "ArrowDown" };
 		}
@@ -296,6 +297,9 @@ class GameRouter {
 			player.controls = { up: "ArrowUp", down: "ArrowDown" };
 		else
 			player.controls = { up: "KeyW", down: "KeyS" };
+		console.log("name: ", name);
+		console.log("side: ", side);
+		console.log("player.controls: ", player.controls);
 		player.alias = alias ?? name;
 		if (img) player.avatar = img;
 		return player;
