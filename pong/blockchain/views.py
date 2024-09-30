@@ -5,8 +5,10 @@ from .blockchain_api import PongBlockchain, hash_player
 from pong.context_processors import get_user_from_token
 from api.models import Profile
 from logging import getLogger
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
 import json
 
 logger = getLogger(__name__)
@@ -55,4 +57,4 @@ def connect_wallet(request):
     account = data.get('account')
     logger.info(f"User: '{user.username} - {user.profile.blockchain_address}'")
     logger.info(f"Wallet connected to '{account}' on the chain {data.get('chainId')}")
-    return render(request, 'blockchain/blockchain.html', {'message': 'Connected wallet successfully'})
+    return Response({"detail": "Wallet connected successfully."}, status=status.HTTP_200_OK)
