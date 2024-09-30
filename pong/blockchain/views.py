@@ -34,11 +34,11 @@ def optin(request):
 				profile.blockchain_address = "0x0000000000000000000000000000000000000000"
 			profile.save()
 			if status['status'] == 1:
-				logger.info(f"Added player '{user.username}' to blockchain")
+				logger.info(f"Added player '{user.username}' to blockchain on address '{chain.address}'")
 				return render(request, 'blockchain-optin.html', {'message': 'Opted in successfully'})
 			else:
-				logger.error(f"Failed to add player '{user.username}' to blockchain")
+				logger.error(f"Failed to add player '{user.username}' to blockchain on address '{chain.address}'")
 				return render(request, 'blockchain-optin.html', {'message': 'Opt in failed'})
 		except ValueError as e:
-			logger.error(f"Failed to add player '{user.username}' to blockchain")
+			logger.error(f"Failed to add player '{user.username}' to blockchain on address '{chain.address}'")
 			return render(request, 'blockchain-optin.html', {'message': 'Opt in failed'})
