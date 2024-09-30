@@ -4,7 +4,9 @@ import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
+import { GameRouter4P } from './gameRouter4P.js';
 import { TournamentRouter } from './tournament-router.js';
+import { LocalTournament } from './local-tournament.js';
 import { createModal } from './utils.js';
 
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
@@ -22,6 +24,8 @@ class Router {
 		this.chat = new ChatRouter(this.chatElement);
 		this.game = new GameRouter(this.appElement);
 		this.tournament = new TournamentRouter(this.appElement);
+		this.localTournament = new LocalTournament(this.appElement);
+		this.game4P = new GameRouter4P(this.appElement);
 		this.audioContext = null;
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));
@@ -54,6 +58,16 @@ class Router {
 				</div>`;
 			const closeCallback = () => { location.hash = '/game/decline/' };
 			createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
+		});
+		this.chatElement.addEventListener('challenger4P', (event) => {
+			console.log("challenger 4P");
+			this.game4P.initSocket(event.detail.username);
+
+		});
+		this.chatElement.addEventListener('challenged4P', (event) => {
+			console.log("challenged 4P");
+			this.game4P.initSocket(event.detail.username);
+
 		});
 		this.chatElement.addEventListener('notification', (event) => {
 			showNotification(
@@ -106,6 +120,8 @@ class Router {
 	async route() {
 		this.oldHash = this.oldHash ?? window.location.hash;
 		this.game?.stopGame();
+		this.game4P?.stopGame();
+		this.localTournament?.stop();
 		const template = window.location.hash.substring(2) || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
@@ -140,18 +156,51 @@ class Router {
 					history.back();
 					return;
 				}
-				const p1 = this.game.makePlayer('left', p1Name);
 				const p2Name = document.getElementById('player2-name')?.value;
+				const p1 = this.game.makePlayer('left', p1Name, p2Name);
 				// await this.loadTemplate(template);
 				if (p2Name) {
-					const p2 = this.game.makePlayer('right', p2Name);
+					const p2 = this.game.makePlayer('right', p2Name, p2Name);
 					this.game.startClassicGame(p1, p2);
 				} else {
 					this.game.startClassicGame(p1);
 				}
 			} else
 				await this.loadTemplate(template);
-		} else {
+		}
+		else if (template.startsWith('local-tour')) {
+			let numPlayers = document.getElementById('numPlayers')?.value;
+			let usernames = [];
+			usernames.push(document.getElementById('user1')?.value);
+			usernames.push(document.getElementById('user2')?.value);
+			usernames.push(document.getElementById('user3')?.value);
+			usernames.push(document.getElementById('user4')?.value);
+			usernames.push(document.getElementById('user5')?.value);
+			usernames.push(document.getElementById('user6')?.value);
+			usernames.push(document.getElementById('user7')?.value);
+			usernames.push(document.getElementById('user8')?.value);
+			for (let i = usernames.length - 1; i >= 0; i--) {
+				if (!usernames[i] || usernames[i].trim() == "") {
+					usernames.splice(i, 1);
+				} else {
+					usernames[i] = usernames[i].trim();
+				}
+			}
+			if(usernames.length != numPlayers) {
+				this.notifyError("You requested " + numPlayers + " players but inserted " + usernames.length + " usernames");
+				history.back();
+				usernames = [];
+				return;
+			}
+			let setSize = new Set(usernames).size;
+			if(setSize !== usernames.length) {
+				this.notifyError("Duplicates are not allowed");
+				history.back();
+				return;
+			};
+			this.localTournament.start(usernames);
+		}
+		else {
 			await this.loadTemplate(template);
 		}
 		this.oldHash = window.location.hash;
@@ -163,10 +212,10 @@ class Router {
 			this.notifyError("Player 1 name is required");
 			return 'play';
 		}
-		const p1 = this.game.makePlayer('left', p1Name);
 		const p2Name = document.getElementById('player2-name')?.value;
+		const p1 = this.game.makePlayer('left', p1Name, p2Name);
 		if (p2Name) {
-			const p2 = this.game.makePlayer('right', p2Name);
+			const p2 = this.game.makePlayer('right', p2Name, p2Name);
 			this.game.startClassicGame(p1, p2);
 		} else {
 			this.game.startClassicGame(p1);
@@ -437,12 +486,14 @@ class Router {
 				// const pl1 = this.game.makePlayer('left', 'Player 1');
 				// const pl2 = this.game.makePlayer('right', 'Player 2');
 				// this.game.start3DGame(pl1, pl2);
-				const pl1 = this.game.makePlayer('left', 'Player 1', 'YOU', '/static/assets/42Berlin.svg');
+				const pl1 = this.game.makePlayer('left', 'Player 1', 'single', 'YOU', '/static/assets/42Berlin.svg');
 				this.game.start3DGame(pl1);
 				break;
 			case 'pong-4p':
 				this.game.start4PGame();
 				break;
+			case 'local-Tournament':
+				this.localTournament.start();
 			default:
 				break;
 		}
@@ -452,12 +503,13 @@ class Router {
 		const form = document.getElementById('registration-form');
 		if (!form) return;
 		form.addEventListener('submit', async (e) => {
-			e.preventDefault();
+            e.preventDefault();
 			const username = document.getElementById('username').value;
 			const email = document.getElementById('email').value;
 			const password = document.getElementById('password').value;
 			const password_confirmation = document.getElementById('password_confirmation').value;
-	
+			// TODO Add blockchain address field
+            // const evm_address = document.getElementById('evm_addr').value;
 			if (password !== password_confirmation) {
 				this.notifyError("Passwords do not match");
 				return;
@@ -606,6 +658,8 @@ class Router {
 					const html = await response.text();
 					this.animateContent(this.appElement, html, () => this.handlePostLoad("profile"));
 					this.loadNav();
+                    const newUsername = formData.get('alias');
+                    console.log(newUsername);
 				} else {
 					throw new Error("Failed to update profile");
 				}

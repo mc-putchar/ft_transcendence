@@ -42,6 +42,7 @@ const WALL_THICKNESS = 10;
 const SCORE_FONT = "static/fonts/helvetiker_regular.typeface.json";
 const WIN_FONT = "static/fonts/optimer_regular.typeface.json";
 const HUD_FONT = "static/fonts/terminess_nerd_font_mono_bold.json";
+const BRUSH_FONT = "static/fonts/Permanent_Marker_Regular.json";
 
 const WALL_TEX_IMG = "static/img/matrix-purple.jpg"
 const PADDLE_TEX_IMG = "static/img/textures/bricks/2K/Poliigon_BrickWallReclaimed_8320_BaseColor.jpg"
@@ -148,7 +149,8 @@ class Arena {
  * hud.update();
  */
 class Hud {
-	constructor(renderer, fontLoader, player1, player2, score, p1Avatar, p2Avatar) {
+	constructor(fontLoader, player1, player2, score, p1Avatar, p2Avatar) {
+		this.fontLoader = fontLoader;
 		const frustumSize = 5;
 		const aspect = window.innerWidth / window.innerHeight;
 		this.camera = new THREE.OrthographicCamera(
@@ -163,8 +165,8 @@ class Hud {
 		this.scene = new THREE.Scene();
 		this.camera.position.set(0, 0, 5);
 
-		const leftAlias = player1.side === "left" ? player1.alias : player2.alias;
-		const rightAlias = player1.side === "right" ? player1.alias : player2.alias;
+		this.leftAlias = player1.side === "left" ? player1.alias : player2.alias;
+		this.rightAlias = player1.side === "right" ? player1.alias : player2.alias;
 		const leftAvatar = player1.side === "left" ? p1Avatar : p2Avatar;
 		const rightAvatar = player1.side === "right" ? p1Avatar : p2Avatar;
 		this.p1img = new THREE.Mesh(
@@ -195,41 +197,58 @@ class Hud {
 		light2.target = this.p2img;
 		this.scene.add(light2);
 
-		fontLoader.load(HUD_FONT, font => {
-			const textGeo = new TextGeometry(`${leftAlias}`, {
+		this.fontLoader.load(BRUSH_FONT, font => {
+			const textGeo = new TextGeometry(this.leftAlias, {
 				font: font,
 				size: 0.3,
-				depth: 0.1,
+				depth: 0.3,
 				curveSegments: 12,
 				bevelEnabled: false
 			});
 			textGeo.computeBoundingBox();
-			const textMat = new THREE.MeshBasicMaterial({ color: 0xffaa99, wireframe: true });
-			const textMesh = new THREE.Mesh(textGeo, textMat);
-			textMesh.position.x = this.camera.left + 0.5;
-			textMesh.position.y = this.camera.bottom + 0.2;
-			textMesh.rotateY(Math.PI / 6);
-			textMesh.rotateX(-Math.PI / 6);
-			this.scene.add(textMesh);
+			const textMat = new THREE.MeshBasicMaterial({ color: 0xffaa99 });
+			this.leftTextMesh = new THREE.Mesh(textGeo, textMat);
+			this.leftTextMesh.position.x = this.camera.left + 2;
+			this.leftTextMesh.position.y = this.camera.top - 2;
+			// this.leftTextMesh.rotateY(Math.PI / 6);
+			// this.leftTextMesh.rotateX(-Math.PI / 6);
+			this.scene.add(this.leftTextMesh);
 		});
-		fontLoader.load(HUD_FONT, font => {
-			const textGeo = new TextGeometry(`${rightAlias}`, {
+		this.fontLoader.load(BRUSH_FONT, font => {
+			const textGeo = new TextGeometry(this.rightAlias, {
 				font: font,
 				size: 0.3,
-				depth: 0.1,
+				depth: 0.3,
 				curveSegments: 12,
 				bevelEnabled: false
 			});
 			textGeo.computeBoundingBox();
-			const textMat = new THREE.MeshBasicMaterial({ color: 0xaa99ff, wireframe: true });
-			const textMesh = new THREE.Mesh(textGeo, textMat);
-			textMesh.position.x = this.camera.right - textGeo.boundingBox.max.x;
-			textMesh.position.y = this.camera.bottom + 0.5;
-			textMesh.rotateY(Math.PI / 6);
-			textMesh.rotateX(Math.PI / 6);
-			this.scene.add(textMesh);
+			const textMat = new THREE.MeshBasicMaterial({ color: 0xaa99ff });
+			this.rightTextMesh = new THREE.Mesh(textGeo, textMat);
+			this.rightTextMesh.position.x = this.camera.right - textGeo.boundingBox.max.x - 0.5;
+			this.rightTextMesh.position.y = this.camera.bottom + 1;
+			// this.rightTextMesh.rotateY(Math.PI / 6);
+			// this.rightTextMesh.rotateX(Math.PI / 6);
+			this.scene.add(this.rightTextMesh);
 		});
-		fontLoader.load(HUD_FONT, font => {
+		this.fontLoader.load(BRUSH_FONT, font => {
+			const textGeo = new TextGeometry("VS", {
+				font: font,
+				size: 0.5,
+				depth: 0.3,
+				curveSegments: 12,
+				bevelEnabled: false
+			});
+			textGeo.computeBoundingBox();
+			const textMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+			this.vsMesh = new THREE.Mesh(textGeo, textMat);
+			this.vsMesh.position.x = this.camera.left + this.camera.right - textGeo.boundingBox.max.x / 2;
+			this.vsMesh.position.y = this.camera.bottom + 2;
+			// this.vsMesh.rotateY(Math.PI / 6);
+			// this.vsMesh.rotateX(Math.PI / 6);
+			this.scene.add(this.vsMesh);
+		});
+		this.fontLoader.load(HUD_FONT, font => {
 			const textGeo = new TextGeometry(`${score.p1} : ${score.p2}`, {
 				font: font,
 				size: 0.42,
@@ -240,8 +259,6 @@ class Hud {
 				bevelSize: 0.01
 			});
 			textGeo.computeBoundingBox();
-			// const textTex = new THREE.TextureLoader().load("static/img/textures/verde-guatemala/textures/Verde_Guatemala_Slatted_Marble_baseColor.png");
-			// const textMat = new THREE.MeshStandardMaterial({ map: textTex });
 			const textMat = new THREE.MeshBasicMaterial({ color: 0x2b422b, wireframe: true });
 			this.scoreText = new THREE.Mesh(textGeo, textMat);
 			this.scoreText.position.x = this.camera.left + this.camera.right - textGeo.boundingBox.max.x / 2;
@@ -249,12 +266,14 @@ class Hud {
 			this.scoreText.rotateX(Math.PI / 8);
 			this.scene.add(this.scoreText);
 		});
-		// this.composer = new EffectComposer(renderer);
-		// this.composer.addPass(new RenderPass(this.scene, this.camera));
-		// const shader = new ShaderPass(RGBShiftShader);
-		// shader.uniforms.amount.value = 0.0015;
-		// this.composer.addPass(shader);
-		// this.composer.addPass(new OutputPass());
+	}
+
+	prologue() {
+		this.scene.remove(this.vsMesh);
+		this.leftTextMesh.translateOnAxis(new THREE.Vector3(-1, 0, 0), 0.5);
+		this.leftTextMesh.translateOnAxis(new THREE.Vector3(0, -1, 0), 2.5);
+		this.rightTextMesh.translateOnAxis(new THREE.Vector3(-1, 0, 0), 0.5);
+		this.rightTextMesh.translateOnAxis(new THREE.Vector3(0, -1, 0), 2.5);
 	}
 
 	update() {
@@ -681,7 +700,7 @@ class Client3DGame {
 
 		// setup scene
 		this.scene = new THREE.Scene();
-		this.scene.fog = new THREE.Fog(0x000000, 1, 1000);
+		this.scene.fog = new THREE.Fog(0x000000, 1, 500);
 
 		// setup camera
 		const FOV = 75;
@@ -730,17 +749,17 @@ class Client3DGame {
 			if (this.isOnline) {
 				this.myPlayer = this.isChallenger ? "player1" : "player2";
 				this.sendRegisterPlayer();
-				setTimeout(() => this.intro(), 1000);
+				// setTimeout(() => this.intro(), 1000);
 			}
 			if (this.hasAI) {
 				this.ai = new proAI(this.playerTwo.paddle);
-				setTimeout(() => this.intro(), 1000);
+				// setTimeout(() => this.intro(), 1000);
 			}
 		}
 		this.showScore();
 
 		// setup HUD
-		this.hud = new Hud(this.renderer, this.fontLoader, this.playerOne, this.playerTwo, this.gameData.score, avatar1_texture, avatar2_texture);
+		this.hud = new Hud(this.fontLoader, this.playerOne, this.playerTwo, this.gameData.score, avatar1_texture, avatar2_texture);
 
 		// setup postprocessing
 		this.composer = new EffectComposer(this.renderer);
@@ -860,22 +879,22 @@ class Client3DGame {
 		this.gui.domElement.style.zIndex = '199';
 		this.gui.domElement.style.display = 'none';
 		document.body.appendChild(this.gui.domElement);
-
 	}
 
 	intro() {
 		if (this.isOnline || this.hasAI) {
 			this.cam_controls.autoRotate = true;
 			if (this.playerOne.side === "left") {
-				this.cam_controls.autoRotateSpeed = 6;
+				this.cam_controls.autoRotateSpeed = 3;
 			} else {
-				this.cam_controls.autoRotateSpeed = -6;
+				this.cam_controls.autoRotateSpeed = -3;
 			}
 			setTimeout(() => {
 				this.cam_controls.autoRotate = false;
 				this.cam_controls.enabled = true;
+				this.hud.prologue();
 				this.sendReady();
-			}, 3000);
+			}, 5000);
 		} else {
 			this.cam_controls.autoRotate = false;
 			this.cam_controls.enabled = true;
@@ -928,6 +947,7 @@ class Client3DGame {
 	resize(ev) {
 		const width = this.canvas.clientWidth;
 		const height = this.canvas.clientHeight;
+		console.log("Resizing", width, height);
 		// const needResize = this.canvas.width !== width || this.canvas.height !== height;
 		// if (needResize) {
 		this.camera.aspect = width / height;

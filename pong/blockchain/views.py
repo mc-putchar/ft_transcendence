@@ -42,3 +42,7 @@ def optin(request):
 		except ValueError as e:
 			logger.error(f"Failed to add player '{user.username}' to blockchain")
 			return render(request, 'blockchain-optin.html', {'message': 'Opt in failed'})
+
+def commit(request):
+	# TODO: implement commit on blockchain
+	return render(request, 'blockchain-commit.html', {'message': 'Tournament committed successfully'})

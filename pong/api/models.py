@@ -339,6 +339,7 @@ class Tournament(models.Model):
                 self.status = 'closed'
                 self.end_date = timezone.now()
                 self.save()
+			# TODO Commit to blockchain
         except ValueError as e:
             logger.error(f"Failed to end tournament: {e}")
         except TournamentPlayer.DoesNotExist:

@@ -2,8 +2,6 @@
 
 [![Uptime Robot status](https://img.shields.io/uptimerobot/status/m797505515-6190c28211f4dbd75e68ae49?up_message=ONLINE&up_color=green&down_message=DOWN&down_color=red&style=plastic&link=https%3A%2F%2Fstats.uptimerobot.com%2FiK804X9tfp)](https://stats.uptimerobot.com/iK804X9tfp)
 
-
-
 > This project is about doing something you’ve never done before.
 > Remind yourself the beginning of your journey in computer science.
 > Look at you now. Time to shine!  

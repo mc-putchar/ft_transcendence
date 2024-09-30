@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# case EXPRESSION in
+#   PATTERN_1)
+#     STATEMENTS
+#     ;;
+
+#   PATTERN_2)
+#     STATEMENTS
+#     ;;
+
+#   PATTERN_N)
+#     STATEMENTS
+#     ;;
+
+#   *)
+#     STATEMENTS
+#     ;;
+# esac
+
+docker exec -it ft_transcendence-django-1 python -c \
+"case $1 in
+
+	status)
+		python -c 'from blockchain.blockchain_api import PongBlockchain; \
+		chain = PongBlockchain(); \
+		status = chain.is_connected(); \
+		print(status)' \
+		;; \
+\
+	help | *) \
+		echo 'Usage: ./blockchain.sh [status]' \
+		;; \
+esac"
+# docker exec -it ft_transcendence-django-1 bash -c \
+# "
+# python -c 'from blockchain.blockchain_api import PongBlockchain; \
+# chain = PongBlockchain(); \
+# status = chain.is_connected(); \
+# print(status)' \
+# "
