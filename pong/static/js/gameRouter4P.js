@@ -1,29 +1,6 @@
 import { Online4P } from './online4P.js';
 import { showNotification } from './notification.js';
 
-function find_paddle(used_paddles) {
-
-	let options = ["left", "top", "bottom", "right"];
-	let availableOptions = [];
-	
-	// Collect available options
-	for (let i = 0; i < options.length; i++) {
-		let isUsed = false;
-		for (let key in used_paddles) {
-			if (options[i] === used_paddles[key]) {
-				isUsed = true;
-				break;
-			}
-		}
-		if (!isUsed) {
-			availableOptions.push(options[i]);
-		}
-	}
-	let rand = Math.round(Math.random() * 20);
-	rand = rand % availableOptions.length;
-	return (availableOptions[rand]);
-};
-
 class Player {
 	constructor(used_paddles, my_paddle) {
 		this.name;
@@ -50,17 +27,15 @@ class GameData {
 
 class GameRouter4P {
 	constructor() {
-		// make personal address
 		this.active_connect;
 		this.used_paddles;
-		this.my_paddle;
+		this.my_paddle == null;
 		this.is_active = false;
 	}
 	notifyError(message) {
 		showNotification(message, 'error');
 	}
 	initSocket(challenger) {
-
 		const accessToken = sessionStorage.getItem('access_token') || '';
 		const url = `wss://${window.location.host}/ws/online4P/${challenger}/?token=${accessToken}`;
 		this.gameData = new GameData();
@@ -69,12 +44,11 @@ class GameRouter4P {
 		this.waitForConnection().then(() => {
 			console.log("WebSocket is open");
 			this.chat_websocket.send(JSON.stringify({
-				"type":'get_used_paddles'}));
+				"type":'get_my_paddle'}));
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_ball'}));
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_active_connections'}));
-				
 			console.log("Getters executed");
 		});
 
@@ -107,17 +81,11 @@ class GameRouter4P {
 				}
 				return;
 			}
-			else if(type == "used_paddles") {
-				this.used_paddles = data.used_paddles.split(' ');
-				console.log(this.used_paddles);
-				if(!this.my_paddle) {
-					this.my_paddle = find_paddle(this.used_paddles);
-					this.chat_websocket?.send(JSON.stringify(
-					{
-						type: 'added_paddle',
-						added_paddle: this.my_paddle,
-					}));
-				}
+			else if(type == "my_paddle") {
+				console.log(event.data);
+				console.log("SIDE: ", data.side);
+				if(this.my_paddle == null)
+					this.my_paddle = data.side;
 				return;
 			}
 		};
@@ -161,7 +129,6 @@ class GameRouter4P {
 		this.gameData.animation_time["first"] = data.animation_time_first;
 		this.gameData.animation_time["second"] = data.animation_time_second;
 		this.gameData.animation_time["third"] = data.animation_time_third;
-		console.log("this.gameData", this.gameData);
 	}
 
 	waitForConnection() {
@@ -172,12 +139,14 @@ class GameRouter4P {
 		});
 	}
 	launchGame() {
-		this.player = new Player(this.used_paddles, this.my_paddle);
-		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
-		this.game.getReady();
 		console.log("LAUNCH_GAME 1");
-		this.game.start();
+		console.log(this.my_paddle);
+		this.player = new Player(this.used_paddles, this.my_paddle);
+		console.log("PLAYER: ", this.player);
+		this.game = new Online4P(this.chat_websocket, this.gameData, this.player);
 		console.log("LAUNCH_GAME 2");
+		this.game.getReady();
+		this.game.start();
 		this.is_active = true;
 		this.chat_websocket.send(JSON.stringify({
 			"type":'active_game'

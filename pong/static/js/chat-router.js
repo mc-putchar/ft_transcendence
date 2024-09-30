@@ -256,11 +256,11 @@ class ChatRouter {
 			this.chatElement.dispatchEvent(new CustomEvent('challenger4P', { detail: { username: data.username } }));
 		}
 		else if (challengedUsers.includes(this.username) == false) {
-				this.pushMessage(`${data.username} has challenged ${challengedUsers[0]} ${challengedUsers[1]} ${challengedUsers[2]} to a duel4P!`, 'duel4P', 'Announcer');
+			this.pushMessage(`${data.username} has challenged ${challengedUsers[0]} ${challengedUsers[1]} ${challengedUsers[2]} to a duel4P!`, 'duel4P', 'Announcer');
 		}
 		else {
-				this.pushMessage(`${data.username} has challenged you to a duel4P!`, 'duel4P', 'Announcer');
-				this.chatElement.dispatchEvent(new CustomEvent('challenged4P', { detail: { username: data.username } }));
+			this.pushMessage(`${data.username} has challenged you to a duel4P!`, 'duel4P', 'Announcer');
+			this.chatElement.dispatchEvent(new CustomEvent('challenged4P', { detail: { username: data.username } }));
 		}
 	}
 		// check all users are active with user list online player something whatever

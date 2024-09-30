@@ -796,6 +796,27 @@ class handle4PGame(AsyncWebsocketConsumer):
 			await asyncio.sleep(0.016)
 			print("After sleep:", time.time())
 
+	async def getRandomPaddle():
+		logger.debug("GETRANDOMPADDLE1")
+		options = ["left", "top", "bottom", "right"]
+		availableOptions = []
+		
+		for side in options:
+			isUsed = False
+			for used in handle4PGame.used_paddles:
+				if side == used:
+					isUsed = True
+			if(isUsed == False):
+				availableOptions.append(side)
+		
+		rand = random.randint(0, 100) % len(availableOptions)
+		paddle = availableOptions[rand]
+		handle4PGame.used_paddles.append(paddle)
+		logger.debug(f"added paddle{paddle}")
+		logger.debug(f"used paddles{handle4PGame.used_paddles}")
+		logger.debug("GETRANDOMPADDLE2")
+		return paddle
+
 	async def initialize(self):
 		self.data.initialize()
 		handle4PGame.active_games = 0
@@ -844,23 +865,23 @@ class handle4PGame(AsyncWebsocketConsumer):
 			if(handle4PGame.active_games == 4):
 				handle4PGame.data.initialize()
 				await asyncio.sleep(1.5)
-				logger.debug("\n\nLAUNCH GAME LOOP")
 				asyncio.create_task(self.game_loop())
 		elif type == "player_direction":
 			handle4PGame.data.field.paddle[data.get("side")]["dir"] = data.get("dir")
 		elif type == "added_paddle":
 			handle4PGame.used_paddles.append(data.get("added_paddle"))
-		elif type == "get_used_paddles":
+		elif type == "get_my_paddle":
+			logger.debug("GET MY PADDLE CALLED")
+			paddle = await handle4PGame.getRandomPaddle()
+			logger.debug(f"GOT PADDLE {paddle}")
 			await self.channel_layer.group_send(
 				self.group_name,
 				{
 					'type': 'game_message',
 					'message': json.dumps({
-						"type": "used_paddles",
-						"used_paddles": ' '.join(str(paddle) for paddle in handle4PGame.used_paddles if paddle is not None)
-					})
-				}
-			)
+						'type': 'my_paddle',
+						'side': paddle
+				})})
 		elif type == "get_active_connections":
 			await self.channel_layer.group_send(
 				self.group_name,
