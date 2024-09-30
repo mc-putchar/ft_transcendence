@@ -292,7 +292,7 @@ class GameRouter {
 		if(!single) {
 			player.controls = { up: "ArrowUp", down: "ArrowDown" };
 		}
-		else if (side === "right")
+		else if (side == "right")
 			player.controls = { up: "ArrowUp", down: "ArrowDown" };
 		else
 			player.controls = { up: "KeyW", down: "KeyS" };

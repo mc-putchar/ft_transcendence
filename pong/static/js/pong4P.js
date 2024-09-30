@@ -26,12 +26,12 @@ class Arena {
 	constructor(ctxwidth, ctxheight) {
 		this.resize(ctxwidth, ctxheight);
 	}
-	resize(ctxwidth, ctxheight) {
-		const size = Math.min(ctxwidth, ctxheight) * 0.9;
+	resize(can_width, can_height) {
+		const size = Math.min(can_width, can_height) * 0.9;
     
 		this.width = size;
 		this.height = size;
-		this.startX = ctxwidth / 2 - this.width / 2;
+		this.startX = can_width / 2 - this.width / 2;
 		this.startY = 0.05 * this.height;
 	}
 	drawArena(ctx) {
@@ -91,6 +91,14 @@ class Player {
 				this.x = startX + arenaWidth / 2;
 				break;
 		}
+	}
+	resize(arena, old_arena, ratio) {
+		this.x = (this.x - old_arena.startX) * ratio + arena.startX
+		this.y = (this.y - old_arena.startY) * ratio + arena.startY
+		this.len *= ratio
+		this.width *= ratio
+		this.speed *= ratio
+		this.goalLine *= ratio
 	}
 	doMove(arena) {
 		if(this.side == "left" || this.side == "right") {
@@ -330,15 +338,21 @@ class Game4P {
 		this.audio = new AudioController();
 		this.audio.playAudioTrack();
 	}
-	resize() {
-		this.canvas.width = this.parent.width;
-		this.canvas.height = this.parent.height;
-		this.arena.resize(this.canvas.width, this.canvas.height);
-	}
 	onResize() {
 		if (resizeTimeout) clearTimeout(resizeTimeout);
 		resizeTimeout = setTimeout(() => {
-			this.resize();
+			let prevWidth = this.arena.width;
+			let prevHeight = this.arena.height;
+			this.canvas.width = this.parent.width;
+			this.canvas.height = this.parent.height;
+			let old_arena = this.arena;
+			let ratio = this.arena.height / prevHeight;
+
+			this.arena.resize(this.canvas.width, this.canvas.height);
+			this.playerLeft.resize(this.arena, old_arena, ratio);
+			this.playerBottom.resize(this.arena, old_arena, ratio);
+			this.playerTop.resize(this.arena, old_arena, ratio);
+			this.playerRight.resize(this.arena, old_arena, ratio);
 		}, 200);
 	}
 	keydown(key) {
