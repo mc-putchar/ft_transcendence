@@ -33,8 +33,11 @@ class PongBlockchain(metaclass=Singleton):
 			'gasPrice': self.web3.to_wei('50', 'gwei')
 		}
 		self.accounts = self.web3.eth.accounts
-		self.contract = None
-		self.address = None
+		if not self.is_deployed:
+			self.contract = None
+			self.address = None
+			self.abi = None
+			self.bytecode = None
 
 	###################
 	# CLASS UTILITIES #
@@ -48,6 +51,17 @@ class PongBlockchain(metaclass=Singleton):
 		self.deploy_contract(account, hardhat_private_key, "PongTournament.sol")
 		logger.info(f"Contract deployed at address: {self.address}")
 		return self.address
+	
+	def connect(self, contract_address: str, contract_path: str = "PongTournament.sol"):
+		try:
+			self.abi, self.bytecode = self.get_contract_metadata(contract_path)
+			self.address = self.web3.to_checksum_address(contract_address)
+			self.contract = self.web3.eth.contract(abi=self.abi, address=self.address)
+			self.is_deployed = True
+			return True
+		except Exception as e:
+			logger.error(f"Failed to connect to contract at address: {contract_address}")
+			return False
 
 	def build_params(self, additional_params: dict):
 		params = self.params.copy()
@@ -90,8 +104,8 @@ class PongBlockchain(metaclass=Singleton):
 	# TRANSACTION FUNCTIONS #
 	#########################
 	def deploy_contract(self, account: str, private_key: str, contract_path):
-		abi, bytecode = self.get_contract_metadata(contract_path)
-		contract = self.web3.eth.contract(abi=abi, bytecode=bytecode)
+		self.abi, self.bytecode = self.get_contract_metadata(contract_path)
+		contract = self.web3.eth.contract(abi=self.abi, bytecode=self.bytecode)
 		txn = self.build_generic_transaction(account, contract)
 		signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
 		tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
@@ -99,7 +113,7 @@ class PongBlockchain(metaclass=Singleton):
 		if tx_receipt['status'] == 0:
 			raise ValueError("Transaction failed")
 		self.address = tx_receipt['contractAddress']
-		self.contract = self.web3.eth.contract(abi=abi, address=self.address)
+		self.contract = self.web3.eth.contract(abi=self.abi, address=self.address)
 		self.is_deployed = True
 		return self.contract
 	
