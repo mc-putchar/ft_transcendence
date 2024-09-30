@@ -1,0 +1,6 @@
+- Is migrate embedded at startup?
+- Tournament page: no price and reward and on_blockchain
+- When a player joins the tournament the tournament screen should be updated for everyone
+- Make buttons unclickable after Start tournament or Next round
+- After make shred needs make migrate to work properly
+114166742742697671008529055675024143010440124229107135258154833621394798994390
