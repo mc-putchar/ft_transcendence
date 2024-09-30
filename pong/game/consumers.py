@@ -803,6 +803,9 @@ class handle4PGame(AsyncWebsocketConsumer):
 		rand = random.randint(0, 100) % len(availableOptions)
 		paddle = availableOptions[rand]
 		handle4PGame.used_paddles.append(paddle)
+		logger.debug(f"added paddle{paddle}")
+		logger.debug(f"used paddles{handle4PGame.used_paddles}")
+		logger.debug("GETRANDOMPADDLE2")
 		return paddle
 
 	async def initialize(self):
@@ -820,6 +823,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 		handle4PGame.active_connections += 1
 		if(handle4PGame.active_connections == 1):
 			await self.initialize()
+			logger.debug("\n\nINITIALIZE NEW GAME\n")
 
 	async def receive(self, text_data=None, bytes_data=None):
 		data = json.loads(text_data)
