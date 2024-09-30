@@ -54,7 +54,8 @@ def update_player_match(match, player, score, win=False):
 		try:
 			# Initialize blockchain interaction
 			chain = PongBlockchain()
-
+			# TODO Remove this line after testing
+			logger.info(f"Blockchain deployed: {chain.is_deployed}, address: {chain.address}")
 			# Hash the player's information for blockchain storage
 			player1_hash = hash_player([player.user.email, player.user.id])
 			winner = player1_hash
@@ -67,13 +68,19 @@ def update_player_match(match, player, score, win=False):
 				logger.error(f"get_opponent() returned None or invalid opponent.")
 				return
 			
+			# Check that both players have opted in for the blockchain
+			if player_match.player.has_blockchain() and player_match2.player.has_blockchain():
+				logger.info(f"Both players have opted in for the blockchain.")
+			else:
+				logger.error(f"One or both players have not opted in for the blockchain.")
+				return
 			# Prepare data for blockchain storage
 			match_players = [player1_hash, player2_hash]
 			tournament_id = match.tournament.id
 			scores = [player_match.score, player_match2.score]
 
 			# Log the parameters before sending to the blockchain
-			logger.info(f"Parameters passing to the blockchain: {player1_hash}, {player2_hash}, {tournament_id}, {match_players}, {scores}, {winner}")
+			logger.info(f"Parameters passing to the blockchain {chain.address}: {player1_hash}, {player2_hash}, {tournament_id}, {match_players}, {scores}, {winner}")
 
 			# Add match data to the blockchain
 			chain.addMatch(
