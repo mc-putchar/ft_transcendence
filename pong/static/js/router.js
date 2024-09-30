@@ -118,6 +118,7 @@ class Router {
 	}
 
 	async route() {
+		document.body.style.overflow = 'auto';
 		this.oldHash = this.oldHash ?? window.location.hash;
 		this.game?.stopGame();
 		this.game4P?.stopGame();
