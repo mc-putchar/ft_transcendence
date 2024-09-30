@@ -34,14 +34,14 @@ def get_match(match_id):
 
 @database_sync_to_async
 def update_player_match(match, player, score, win=False):
+	# Update score and win status if necessary (currently commented out)
+	PlayerMatch.objects.filter(match=match, player=player).update(score=score, winner=win)
+
 	# Retrieve the player_match object for the specific player and match
 	player_match = PlayerMatch.objects.filter(match=match, player=player).first()
 	
 	# Log the player_match object for debugging
 	logger.info(f"player_match {player_match}")
-	
-	# Update score and win status if necessary (currently commented out)
-	# player_match.update(score=score, winner=win)
 	
 	# Debugging information for logging the player, match, and score details
 	# logger.info(f"Player {type(player)} {player.username} updated with score {score}")
