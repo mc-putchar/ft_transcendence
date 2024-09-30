@@ -33,11 +33,10 @@ def get_match(match_id):
 
 @database_sync_to_async
 def update_player_match(match, player, score, win=False):
-	player_match = PlayerMatch.objects.filter(match=match, player=player).first()
-	player_match.update(score=score,winner=win)
-	logger.info(f"Player {type(player)} {player.username} updated with score {score}")
-	logger.info(f"Match {type(match)} {match.id} updated with score {score}")
-	logger.info(f"Score {type(score)}")
+	PlayerMatch.objects.filter(match=match, player=player).update(score=score,winner=win)
+	logger.debug(f"Player {type(player)} {player.username} updated with score {score}")
+	logger.debug(f"Match {type(match)} {match.id} updated with score {score}")
+	logger.debug(f"Score {type(score)}")
 
 class PongGameConsumer(AsyncWebsocketConsumer):
 
