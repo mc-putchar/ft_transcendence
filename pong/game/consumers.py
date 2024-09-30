@@ -739,12 +739,6 @@ class handle4PGame(AsyncWebsocketConsumer):
 				return
 			handle4PGame.loop += 1
 			await handle4PGame.data.update()
-			logger.info(f"\nball_x: {handle4PGame.data.ball.pos_x}")
-			logger.info(f"ball_y: {handle4PGame.data.ball.pos_y}")
-			logger.info(f"ball_vx: {handle4PGame.data.ball.vx}")
-			logger.info(f"ball_vy: {handle4PGame.data.ball.vy}")
-			logger.info(f"speedx: {handle4PGame.data.ball.speedx}")
-			logger.info(f"speedy: {handle4PGame.data.ball.speedy}")
 			await self.channel_layer.group_send(
 				self.group_name,
 				{
@@ -792,9 +786,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 				self.data.score.last_touch = ""
 				self.data.score.conceded = ""
 				await asyncio.sleep(1.5)
-			print("Before sleep:", time.time())
 			await asyncio.sleep(0.016)
-			print("After sleep:", time.time())
 
 	async def getRandomPaddle():
 		logger.debug("GETRANDOMPADDLE1")
@@ -829,8 +821,6 @@ class handle4PGame(AsyncWebsocketConsumer):
 			self.group_name,
 			self.channel_name
 		)
-		# profile = await get_profile(self.username)
-		# profile.currently_playing = True
 		handle4PGame.active_connections += 1
 		if(handle4PGame.active_connections == 1):
 			await self.initialize()
@@ -871,6 +861,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 		elif type == "added_paddle":
 			handle4PGame.used_paddles.append(data.get("added_paddle"))
 		elif type == "get_my_paddle":
+			receiver = data.get("sender")
 			logger.debug("GET MY PADDLE CALLED")
 			paddle = await handle4PGame.getRandomPaddle()
 			logger.debug(f"GOT PADDLE {paddle}")
@@ -880,6 +871,7 @@ class handle4PGame(AsyncWebsocketConsumer):
 					'type': 'game_message',
 					'message': json.dumps({
 						'type': 'my_paddle',
+						'receiver': receiver,
 						'side': paddle
 				})})
 		elif type == "get_active_connections":

@@ -35,16 +35,19 @@ class GameRouter4P {
 	notifyError(message) {
 		showNotification(message, 'error');
 	}
-	initSocket(challenger) {
+	initSocket(challenger, username) {
 		const accessToken = sessionStorage.getItem('access_token') || '';
 		const url = `wss://${window.location.host}/ws/online4P/${challenger}/?token=${accessToken}`;
 		this.gameData = new GameData();
 		this.chat_websocket = new WebSocket(url);
+		this.username = username;
 
 		this.waitForConnection().then(() => {
 			console.log("WebSocket is open");
 			this.chat_websocket.send(JSON.stringify({
-				"type":'get_my_paddle'}));
+				"type":'get_my_paddle',
+				"sender": this.username
+			}));
 			this.chat_websocket.send(JSON.stringify({
 				"type":'get_ball'}));
 			this.chat_websocket.send(JSON.stringify({
@@ -82,9 +85,9 @@ class GameRouter4P {
 				return;
 			}
 			else if(type == "my_paddle") {
-				console.log(event.data);
-				console.log("SIDE: ", data.side);
-				if(this.my_paddle == null)
+				console.log("DATA RECEIVER: ", data.receiver);
+				console.log("THIS USERNAME: ", this.username);
+				if(data.receiver == this.username)
 					this.my_paddle = data.side;
 				return;
 			}

@@ -61,13 +61,15 @@ class Router {
 		});
 		this.chatElement.addEventListener('challenger4P', (event) => {
 			console.log("challenger 4P");
-			this.game4P.initSocket(event.detail.username);
-
+			console.log("challenger: ", event.detail.challenger);
+			console.log("username: ", event.detail.username);
+			this.game4P.initSocket(event.detail.challenger, event.detail.username);
 		});
 		this.chatElement.addEventListener('challenged4P', (event) => {
 			console.log("challenged 4P");
-			this.game4P.initSocket(event.detail.username);
-
+			console.log("challenger: ", event.detail.challenger);
+			console.log("username: ", event.detail.username);
+			this.game4P.initSocket(event.detail.challenger, event.detail.username);
 		});
 		this.chatElement.addEventListener('notification', (event) => {
 			showNotification(
