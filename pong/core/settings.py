@@ -15,7 +15,7 @@ REDIRECT_URI = env('REDIRECT_URI')
 CLIENT_ID = env('CLIENT_ID')
 CLIENT_SECRET = env('CLIENT_SECRET')
 
-DEBUG = env.bool('DEBUG', default=True)
+DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=[
                          'localhost', '127.0.0.1', 'pong42.ktano-studio.com'])
@@ -194,7 +194,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console', 'file'],
-        'level': 'DEBUG',
+        'level': 'INFO',
     },
 }
 
