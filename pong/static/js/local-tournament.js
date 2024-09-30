@@ -194,8 +194,8 @@ class LocalTournament {
 			}, ANIM_DELAY * 5);
 	}
 	launchMatch(matchIndex, result) {
-		this.p1 = this.gameRouter.makePlayer("left", this.matches[matchIndex].p1);
-		this.p2 = this.gameRouter.makePlayer("right", this.matches[matchIndex].p2);
+		this.p1 = this.gameRouter.makePlayer("left", this.matches[matchIndex].p1, this.matches[matchIndex].p2);
+		this.p2 = this.gameRouter.makePlayer("right", this.matches[matchIndex].p2, this.matches[matchIndex].p1);
 		this.gameSetup = new GameSetup(this.parent, this.p1, this.p2, true, "double", "2d");
 		this.game = new ClientClassic(this.gameSetup, null, null, null, result);
 	

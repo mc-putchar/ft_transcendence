@@ -1,18 +1,18 @@
-POST https://localhost:4243/api/register/
+POST https://wow.transcend42.online/api/register/
 Content-Type: application/json
 
 { "username": "foo", "password": "foo", "password_confirmation": "foo", "email": "foo@foo.com" }
 
 ###
 
-POST https://localhost:4243/api/login/
+POST https://wow.transcend42.online/api/login/
 Content-Type: application/json
 
 { "username": "foo", "password": "foo" }
 
 ###
 
-POST https://localhost:4243/api/token/refresh/
+POST https://wow.transcend42.online/api/token/refresh/
 Content-Type: application/json
 Authorization: Bearer 
 
@@ -20,7 +20,7 @@ Authorization: Bearer
 
 ###
 
-POST https://localhost:4243/api/logout/
+POST https://wow.transcend42.online/api/logout/
 Content-Type: application/json
 Authorization: Bearer 
 

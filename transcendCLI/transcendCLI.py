@@ -136,6 +136,7 @@ def show_help():
     console.print('Commands:', style='green')
     console.print('----------------------------------------------', style='bold')
     console.print('/duel <username> - Challenge a user to a game.', style='bold')
+    console.print('/duel4P - Challenge 3 users to a 4P game.', style='bold')
     console.print('/pm <username> <message> - Send a private message.', style='bold')
     console.print('/help - Show this help message.', style='bold')
     console.print('ls - List online users.', style='bold')

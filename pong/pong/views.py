@@ -216,12 +216,13 @@ def create_42user(username, email, forty_two_id, image_url):
     return user, created
 
 def redirect_view(request):
+    'TODO: check headers for origin'
     code = request.GET.get('code')
     state = request.GET.get('state')
     session_state = request.session.get('oauth_state')
 
     if state != session_state:
-        logger.warn(f"Invalid state parameter: {state} != {session_state}")
+        logger.warning(f"Invalid state parameter: {state} != {session_state}")
         return HttpResponse('Invalid state parameter', status=400)
 
     redirect_uri = settings.REDIRECT_URI

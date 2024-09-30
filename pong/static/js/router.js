@@ -4,6 +4,7 @@ import { showNotification } from './notification.js';
 import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
+import { GameRouter4P } from './gameRouter4P.js';
 import { TournamentRouter } from './tournament-router.js';
 import { LocalTournament } from './local-tournament.js';
 import { createModal } from './utils.js';
@@ -24,6 +25,7 @@ class Router {
 		this.game = new GameRouter(this.appElement);
 		this.tournament = new TournamentRouter(this.appElement);
 		this.localTournament = new LocalTournament(this.appElement);
+		this.game4P = new GameRouter4P(this.appElement);
 		this.audioContext = null;
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));
@@ -56,6 +58,16 @@ class Router {
 				</div>`;
 			const closeCallback = () => { location.hash = '/game/decline/' };
 			createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
+		});
+		this.chatElement.addEventListener('challenger4P', (event) => {
+			console.log("challenger 4P");
+			this.game4P.initSocket(event.detail.username);
+
+		});
+		this.chatElement.addEventListener('challenged4P', (event) => {
+			console.log("challenged 4P");
+			this.game4P.initSocket(event.detail.username);
+
 		});
 		this.chatElement.addEventListener('notification', (event) => {
 			showNotification(
@@ -108,6 +120,8 @@ class Router {
 	async route() {
 		this.oldHash = this.oldHash ?? window.location.hash;
 		this.game?.stopGame();
+		this.game4P?.stopGame();
+		this.localTournament?.stop();
 		const template = window.location.hash.substring(2) || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
@@ -142,11 +156,11 @@ class Router {
 					history.back();
 					return;
 				}
-				const p1 = this.game.makePlayer('left', p1Name);
 				const p2Name = document.getElementById('player2-name')?.value;
+				const p1 = this.game.makePlayer('left', p1Name, p2Name);
 				// await this.loadTemplate(template);
 				if (p2Name) {
-					const p2 = this.game.makePlayer('right', p2Name);
+					const p2 = this.game.makePlayer('right', p2Name, p2Name);
 					this.game.startClassicGame(p1, p2);
 				} else {
 					this.game.startClassicGame(p1);
@@ -198,10 +212,10 @@ class Router {
 			this.notifyError("Player 1 name is required");
 			return 'play';
 		}
-		const p1 = this.game.makePlayer('left', p1Name);
 		const p2Name = document.getElementById('player2-name')?.value;
+		const p1 = this.game.makePlayer('left', p1Name, p2Name);
 		if (p2Name) {
-			const p2 = this.game.makePlayer('right', p2Name);
+			const p2 = this.game.makePlayer('right', p2Name, p2Name);
 			this.game.startClassicGame(p1, p2);
 		} else {
 			this.game.startClassicGame(p1);
@@ -472,7 +486,7 @@ class Router {
 				// const pl1 = this.game.makePlayer('left', 'Player 1');
 				// const pl2 = this.game.makePlayer('right', 'Player 2');
 				// this.game.start3DGame(pl1, pl2);
-				const pl1 = this.game.makePlayer('left', 'Player 1', 'YOU', '/static/assets/42Berlin.svg');
+				const pl1 = this.game.makePlayer('left', 'Player 1', 'single', 'YOU', '/static/assets/42Berlin.svg');
 				this.game.start3DGame(pl1);
 				break;
 			case 'pong-4p':
