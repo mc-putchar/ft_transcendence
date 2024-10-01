@@ -65,10 +65,10 @@ class Arena {
 };
 
 class Paddle {
-	constructor (side, arenaWidth, arenaHeight, startX, startY) {
+	constructor (side, arenaWidth, arenaHeight, startX, startY, color=PADDLE_COLOR, colorEffect=EFFECT_COLOR) {
 		this.side = side;
-		this.color = PADDLE_COLOR;
-		this.colorEffect = EFFECT_COLOR;
+		this.color = color;
+		this.colorEffect = colorEffect;
 		this.hit = false;
 		this.keys_active = 0;
 		this.direction = 0;
@@ -366,6 +366,7 @@ class proAI {
 
 class ClientClassic {
 	constructor (gameSetup, gameSocket=null, gameData=null, matchId=null, tour_result=null) {
+		console.debug(gameSetup);
 		this.gameSetup = gameSetup;
 		this.tour_result = tour_result;
 		this.parent = gameSetup.parentElement;
@@ -433,8 +434,8 @@ class ClientClassic {
 	init () {
 		this.arena = new Arena(this.canvas.width, this.canvas.height);
 		this.ball = new Ball(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
-		this.player1 = new Paddle(this.player.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
-		this.player2 = new Paddle(this.opponent.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
+		this.player1 = new Paddle(this.player.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY, this.player.color);
+		this.player2 = new Paddle(this.opponent.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY, this.opponent.color);
 		this.score = new Score();
 		if (this.hasAI) {
 			this.proAI = new proAI(this.player2, this.arena);
@@ -603,6 +604,11 @@ class ClientClassic {
 		return false;
 	}
 
+	audioVisualEffect (player, ballSpeed) {
+		player.onHit();
+		this.audio.playTone(ballSpeed);
+	}
+
 	paddleCollision () {
 		const left = this.player1.side == "left" ? this.player1 : this.player2;
 		const right = this.player1.side == "left" ? this.player2 : this.player1;
@@ -615,8 +621,7 @@ class ClientClassic {
 					this.ball.vx = 1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
-					left.onHit();
-					this.audio.playTone(this.ball.speedx);
+					this.audioVisualEffect(left, this.ball.speedx);
 			}
 		}
 		if(this.ball.x + this.ball.radius >= right.x - right.width / 2) {
@@ -628,9 +633,16 @@ class ClientClassic {
 					this.ball.vx = -1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
-					right.onHit();
-					this.audio.playTone(this.ball.speedx);
+					this.audioVisualEffect(right, this.ball.speedx);
 			}
+		}
+	}
+
+	playGoalSound (iScored) {
+		if (iScored) {
+			this.audio.playFx("/static/assets/arcade-alert.wav");
+		} else {
+			this.audio.playFx("/static/assets/pop-alert.wav");
 		}
 	}
 
@@ -638,13 +650,13 @@ class ClientClassic {
 		if (this.ball.x < this.arena.startX - this.player1.goalLine) {
 			this.score.hasScored.goal = true;
 			this.score.hasScored.scorer = "right";
-			window.playFx("/static/assets/arcade-alert.wav");
+			this.playGoalSound(true);
 			return true;
 		}
 		if (this.ball.x > this.arena.startX + this.arena.width + this.player2.goalLine) {
 			this.score.hasScored.goal = true;
 			this.score.hasScored.scorer = "left";
-			window.playFx("/static/assets/pop-alert.wav");
+			this.playGoalSound(false);
 			return true;
 		}
 		return false;
@@ -689,6 +701,7 @@ class ClientClassic {
 		|| this.score.score.right != this.gameData.score.p2) {
 			this.score.score.left = this.gameData.score.p1;
 			this.score.score.right = this.gameData.score.p2;
+			this.playGoalSound(this.isChallenger && this.score.hasScored.scorer == "left");
 			setTimeout(() => this.sendReady(), 1000);
 		}
 		if (this.gameData.status == "finished" || this.gameData.status == "forfeited") {
@@ -696,13 +709,6 @@ class ClientClassic {
 			this.ball = null;
 			return;
 		}
-		// this.player1.y = (this.gameData.player1.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
-		// this.player2.y = (this.gameData.player2.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
-		// [ , this.player1.y] = this.transposePosition(this.gameData.player1.x, 0);
-		// [ , this.player2.y] = this.transposePosition(this.gameData.player2.x, 0);
-		// this.ball.y = this.gameData.ball.x + this.arena.startY + this.arena.height / 2;
-		// this.ball.x = this.gameData.ball.y + this.arena.startX + this.arena.width / 2;
-		// [this.ball.x, this.ball.y] = this.transposePosition(this.gameData.ball.x, this.gameData.ball.y);
 		const ratio = (this.arena.height + this.arena.width) / (ARENA_HEIGHT * 2 + ARENA_WIDTH * 2);
 		const left = this.isChallenger ? this.player1 : this.player2;
 		const right = this.isChallenger ? this.player2 : this.player1;
@@ -711,21 +717,43 @@ class ClientClassic {
 		[this.ball.x, this.ball.y] = this.transposePosition(-this.gameData.ball.x * ratio, this.gameData.ball.y * ratio);
 		this.ball.vx = this.gameData.ball.dx;
 		this.ball.vy = this.gameData.ball.dy;
+		// detect paddle collision to hook audio visual effect
+		if (this.ball.x - this.ball.radius <= left.x + left.width) {
+			if (this.ball.y + this.ball.radius >= left.y - left.len / 2
+			&& this.ball.y - this.ball.radius <= left.y + left.len / 2) {
+				this.audioVisualEffect(left, this.ball.speedx);
+			}
+		} else if (this.ball.x + this.ball.radius >= right.x - right.width / 2) {
+			if (this.ball.y + this.ball.radius >= right.y - right.len / 2
+			&& this.ball.y - this.ball.radius <= right.y + right.len / 2) {
+				this.audioVisualEffect(right, this.ball.speedx);
+			}
+		}
 	}
 	drawNames(ctx, height, width) {
-		let padding_height = (height - this.arena.height) / 2;
+		let padding_height = this.arena.startY / 1.5;
 		ctx.fillStyle = SCORE_COLOR;
 		ctx.font = `${padding_height / 1.5}px Orbitron`;
 	
 		let textY = padding_height / 2;
 	
-		// console.log(this.gameSetup);
-
 		let textSize = ctx.measureText(this.gameSetup.player2.name);
-		ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY);
-		ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY);
+		if(this.gameSetup.mode == "online") {
+			if(this.gameSetup.player1.side == "left") {
+				ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY / 2);
+				ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+			}
+			else {
+				ctx.fillText(this.gameSetup.player2.name, this.arena.startX, this.arena.startY / 2);
+				ctx.fillText(this.gameSetup.player1.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+			}
+		}
+		else {
+			ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY / 2);
+			ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+		}
 	}
-	
+
 	draw () {
 		this.arena.draw(this.context);
 		this.drawNames(this.context, this.canvas.height, this.canvas.width);

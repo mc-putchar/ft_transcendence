@@ -19,7 +19,7 @@ const SCORE_LIMIT = 10;
 
 const BALL_COLOR = "red";
 const PADDLE_COLOR = "green";
-const DEBUG_KEY = true;
+const DEBUG_KEY = false;
 
 class Arena {
 	constructor(ctxwidth, ctxheight) {
@@ -297,7 +297,7 @@ class Online4P {
 
 		parent.height = screen.availHeight - (window.outerHeight - window.innerHeight) - nav.offsetHeight - CANVAS_PADDING;
 		parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
-	
+
 		this.canvas = document.createElement("canvas");
 		this.parent.appendChild(this.canvas);
 		this.canvas.style.width = Math.min(this.parent.height, this.parent.width);
@@ -417,8 +417,6 @@ class Online4P {
 			default:
 				break;
 		}
-		if(DEBUG_KEY == true)
-			console.log("key down: ", this.player.keys_active);
 		this.sendPlayerDirection();
 	}
 	keyup(key) {
@@ -432,8 +430,6 @@ class Online4P {
 		if(this.player.keys_active == 0)
 			this.player.direction = 0;
 		this.sendPlayerDirection();
-		if(DEBUG_KEY == true)
-			console.log("key up: ", this.player.keys_active);
 	}
 	goalAnimation(now) {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -610,9 +606,6 @@ class Online4P {
 		this.playerBottom.y = this.denormPosY(this.gameData.bottom.y);
 		this.playerRight.x = this.denormPosX(this.gameData.right.x);
 		this.playerRight.y = this.denormPosY(this.gameData.right.y);
-		
-		console.log(this.gameData);
-
 	}
 	update() {
 		this.checkGoal(this.arena._width, this.arena._height, this.arena._startX, this.arena._startY);
@@ -620,7 +613,6 @@ class Online4P {
 			this.animation.setTimeStamps();
 			this.resetPositions();
 			this.score.updateScore();
-			console.log(this.score);
 			return ;
 		}
 		this.paddleCollision();

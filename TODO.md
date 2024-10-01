@@ -2,7 +2,7 @@
 
 ### Documentation:
 	- [x] README.md
-	- [ ] LICENSE
+	- [X] LICENSE
 	- [x] API schema
 	- [ ] Dependencies and their justifications
 	- [ ] ? code documentation
@@ -45,9 +45,9 @@
 			- [ ] validate user email
 				- [ ] password recovery
 				- [ ] ? easy 2FA on top
-			- [ ] change password
+			- [x] change password
 			- [x] anonymize account (ensure no personal data is stored)
-			- [ ] delete account (adjust cascading in db on delete)
+			- [x] delete account (adjust cascading in db on delete)
 			- [x] resolve 42 acount username conflict
 			- [ ] connect 42 account (after conventional registration)
 			- [x] ? display blockchain user address? status? (after optin)
@@ -73,7 +73,7 @@
 		- [x] server side game logic
 		- [x] 2D client option
 		- [x] 3D client option
-		- [ ] mobile controls
+		- [x] mobile controls (2D client only)
 		- [ ] improve predictive client
 		- [ ] global matchmaking
 		- [ ] spectating mode
@@ -97,9 +97,7 @@
 
 	- [ ] swag:
 		- [x] notifications
-		- [ ] modals:
-			- [ ] need better controls over them (closing, dissmissing, persisting)
-			- [ ] improve look
+		- [x] modals
 		- [x] sound controls
 		- [ ] ensure device support
 

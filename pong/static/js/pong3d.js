@@ -270,10 +270,9 @@ class Hud {
 
 	prologue() {
 		this.scene.remove(this.vsMesh);
-		this.leftTextMesh.translateOnAxis(new THREE.Vector3(-1, 0, 0), 0.5);
+		this.leftTextMesh.translateOnAxis(new THREE.Vector3(-1, 0, 0), 1.5);
 		this.leftTextMesh.translateOnAxis(new THREE.Vector3(0, -1, 0), 2.5);
 		this.rightTextMesh.translateOnAxis(new THREE.Vector3(-1, 0, 0), 0.5);
-		this.rightTextMesh.translateOnAxis(new THREE.Vector3(0, -1, 0), 2.5);
 	}
 
 	update() {
@@ -882,6 +881,7 @@ class Client3DGame {
 	}
 
 	intro() {
+		setTimeout(this.audio.playFx("/static/assets/countdown.wav"), 1500);
 		if (this.isOnline || this.hasAI) {
 			this.cam_controls.autoRotate = true;
 			if (this.playerOne.side === "left") {
@@ -898,6 +898,7 @@ class Client3DGame {
 		} else {
 			this.cam_controls.autoRotate = false;
 			this.cam_controls.enabled = true;
+			setTimeout(() => this.hud.prologue(), 4000);
 		}
 	}
 
@@ -1113,6 +1114,7 @@ class Client3DGame {
 		if (left.paddle.score != this.gameData.score.p1 || right.paddle.score != this.gameData.score.p2) {
 			left.paddle.score = this.gameData.score.p1;
 			right.paddle.score = this.gameData.score.p2;
+			window.playFx("/static/assets/arcade-alert.wav");
 			this.ball.reset();
 			this.showScore();
 			this.hud.updateScore(this.gameData.score);
@@ -1166,7 +1168,6 @@ class Client3DGame {
 	}
 
 	checkCollisions() {
-
 		const [ballX, ballY] = this.ball.position;
 		if (ballX <= -(ARENA_HEIGHT / 2) + BALL_SIZE / 2
 			|| ballX >= (ARENA_HEIGHT / 2) - BALL_SIZE / 2) {
