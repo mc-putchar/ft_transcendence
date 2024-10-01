@@ -38,7 +38,7 @@ COLOUR_MAGB := \033[1;35m
 COLOUR_CYN := \033[36m
 COLOUR_CYNB := \033[1;36m
 
-.PHONY: help up down start stop re logs logs-django ps db-shell migrate debug clean shred collect schema newkey swapmode maintenance clitest testlogin tests testblockchain
+.PHONY: help up down start stop re logs logs-django ps db-shell migrate debug clean shred collect schema newkey swapmode maintenance cli CLI testlogin tests testblockchain
 
 help: # Display this helpful message
 	@awk 'BEGIN { \
