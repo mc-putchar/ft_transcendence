@@ -51,8 +51,9 @@ help: # Display this helpful message
 .env:
 	bash setup_wizard.sh
 
-up: .env # Beam me up, Scotty
+up: .env migrate # Beam me up, Scotty
 	$(info "Aye, aye Cap'n!")
+	@echo -e "making migrations if any"
 	@echo -e "Deploying $(COLOUR_GREEN)${DOMAIN}$(COLOUR_END)"
 	@echo -e "Building and starting containers, with $(COLOUR_CYNB)$(DC)$(COLOUR_END) and $(COLOUR_MAGB)$(SRC)$(COLOUR_END)"
 	@rm -f pong/static/maintenance.on
