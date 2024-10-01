@@ -38,7 +38,7 @@ COLOUR_MAGB := \033[1;35m
 COLOUR_CYN := \033[36m
 COLOUR_CYNB := \033[1;36m
 
-.PHONY: help up down start stop re logs logs-django ps db-shell migrate debug clean shred collect schema newkey swapmode maintenance clitest testlogin tests
+.PHONY: help up down start stop re logs logs-django ps db-shell migrate debug clean shred collect schema newkey swapmode maintenance cli CLI testlogin tests
 
 help: # Display this helpful message
 	@awk 'BEGIN { \
@@ -117,8 +117,14 @@ debug: # DEBUG MODE
 	@echo -e 'using $(DC) and $(SRC)'
 	$(DC) -f $(SRC) --profile debug up --build
 
-clitest: # CLI test
-	cd transcendCLI && source .venv/bin/activate && python $(CLI)
+cli CLI: # run CLI
+	@if [[ ! -d transcendCLI/.venv ]]; then \
+		{ echo -e "$(COLOUR_CYNB)Setting up virtual environment...$(COLOUR_END)"; \
+		python3 -m venv transcendCLI/.venv && \
+		pip install -r transcendCLI/requirements.txt && \
+		exit 0; } \
+	fi
+	cd transcendCLI && source .venv/bin/activate && python $(CLI) --url=$(DOMAIN)
 
 testlogin: # Selenium tests
 	# docker exec ft_transcendence-django-1 python test_selenium.py

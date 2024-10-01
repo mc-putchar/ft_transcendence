@@ -51,8 +51,8 @@
                                         <p><span class="{% if match.winner %}text-success{% else %}text-danger{% endif %}"><b>Scored:</b> {{ match.score }}</span></p>
                                         <p><b>Opponent:</b>
                                             {% if match.get_opponent %}
-                                            <button class="btn btn-outline-primary border-info rounded-pill" onclick="location.href='#/profiles/{{ match.get_opponent.user.username }}'">
-                                            <img src="{{ match.get_opponent.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> | {{ match.get_opponent.alias }}
+                                            <button class="btn btn-outline-primary border-info rounded-pill" onclick="location.href='#/profiles/{{ match.get_opponent.player.user.username }}'">
+                                            <img src="{{ match.get_opponent.player.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> | {{ match.get_opponent.player.alias }}
                                             </button></p>
                                             {% else %}
                                             <p>Opponent not found</p>
