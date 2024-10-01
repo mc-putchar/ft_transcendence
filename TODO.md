@@ -45,7 +45,7 @@
 			- [ ] validate user email
 				- [ ] password recovery
 				- [ ] ? easy 2FA on top
-			- [ ] change password
+			- [x] change password
 			- [x] anonymize account (ensure no personal data is stored)
 			- [x] delete account (adjust cascading in db on delete)
 			- [x] resolve 42 acount username conflict
