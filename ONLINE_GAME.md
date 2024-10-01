@@ -50,6 +50,7 @@
 
 ## Server side
 TOP SECRET
+:detective:
 
 # Game websocket listener
 
