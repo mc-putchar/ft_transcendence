@@ -389,16 +389,6 @@ class PlayerMatch(models.Model):
 	def __str__(self):
 		return f"{self.player} in {self.match} scored {self.score} and {'won' if self.winner else 'lost'} "
 
-	# def get_opponent(self):
-	#     """Returns the opponent of the player in the match."""
-	#     try:
-	#         opponent = self.match.players.exclude(player=self.player).first()
-	#     except PlayerMatch.DoesNotExist:
-	#         return None
-	#     if opponent:
-	#         return opponent.player
-	#     return None
-
 	def get_opponent(self):
 		"""Returns the PlayerMatch instance of the opponent in the match."""
 		try:
