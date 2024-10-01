@@ -5,6 +5,7 @@ from .blockchain_api import PongBlockchain, hash_player
 from pong.context_processors import get_user_from_token
 from api.models import Profile
 from logging import getLogger
+from django.http import HttpResponse, HttpResponseBadRequest
 
 logger = getLogger(__name__)
 
@@ -44,5 +45,42 @@ def optin(request):
 			return render(request, 'blockchain-optin.html', {'message': 'Opt in failed'})
 
 def commit(request):
-	# TODO: implement commit on blockchain
-	return render(request, 'blockchain-commit.html', {'message': 'Tournament committed successfully'})
+	if request.method == 'POST':
+		chain = PongBlockchain()
+		sender = chain.accounts[0]
+		if 'HARDHAT_PRIVATE_KEY' in os.environ:
+			pk = os.environ['HARDHAT_PRIVATE_KEY']
+		tournament_id = int(request.POST.get('tournament_id'))
+		winner = int(request.POST.get('winner'))
+		try:
+			chain.createTournament(sender, pk, tournament_id, winner)
+			return HttpResponse('Tournament added successfully')
+		except:
+			return HttpResponseBadRequest('Failed to add tournament')
+	else:
+		return HttpResponse('Invalid request method')
+
+def addMatch(request):
+	if request.method == 'POST':
+		logger.info('Received POST request to add match')
+		chain = PongBlockchain()
+		sender = chain.accounts[0]
+		# Extract data from the POST request
+		if 'HARDHAT_PRIVATE_KEY' in os.environ:
+			pk = os.environ['HARDHAT_PRIVATE_KEY']
+		player1_hash = int(request.POST.get('player1_hash'))
+		player2_hash = int(request.POST.get('player2_hash'))
+		score1 = int(request.POST.get('score1'))
+		score2 = int(request.POST.get('score2'))
+		winner_hash = int(request.POST.get('winner_hash'))
+		tournament_id = int(request.POST.get('tournament_id'))
+		match_id = int(request.POST.get('match_id'))
+		try:
+			response = chain.addMatch(sender, pk, match_id, tournament_id, [player1_hash, player2_hash], [score1, score2], winner_hash)
+			logger.info(f"Added match '{match_id}' to blockchain")
+			return HttpResponse('Match added successfully')
+		except:
+			logger.error(f"Failed to add match '{match_id}' to blockchain")
+			return HttpResponseBadRequest('Failed to add match')
+	else:
+		return HttpResponse('Invalid request method')

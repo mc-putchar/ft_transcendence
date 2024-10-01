@@ -1,0 +1,26 @@
+#!/bin/bash
+RELATIVE_PATH=.
+
+helpFunction()
+{
+   echo "Usage: $0 <command> <args>"
+   echo -e "\tis_connected"
+   echo -e "\tis_deployed <eth_address>"
+   exit 1 # Exit script after printing help
+}
+
+if [ "$#" -lt 1 ]; then
+	helpFunction
+	exit 1
+fi
+
+case $1 in
+	"is_connected")
+	echo "Checking connection status..."
+	$RELATIVE_PATH/is_connected.sh
+	;;
+	"is_deployed")
+	echo "Checking deployment status..."
+	$RELATIVE_PATH/is_deployed.sh $2
+	;;
+esac
