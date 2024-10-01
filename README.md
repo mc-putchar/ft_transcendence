@@ -53,13 +53,18 @@ Inspired by the classic Pong game of the 70s, infused with modern features and t
   - Command `/duel4P <username1> <username2> <username3>` to challenge 3 other online users to a 4 Player Pong match
 
 ## _Pong Game_
-🏓
+
+> 🏓  
+
+![Pong3D](pong/static/img/pong3d.gif)
+
 ### Local
   - Play Pong on a local computer against another player or AI opponent
   - Different variants of Pong available:
 	- 2D Pong
 	- 3D Pong
 	- 4 Player Pong
+
 
 ### Online
   - Play Pong online against other users
