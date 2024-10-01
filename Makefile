@@ -38,7 +38,7 @@ COLOUR_MAGB := \033[1;35m
 COLOUR_CYN := \033[36m
 COLOUR_CYNB := \033[1;36m
 
-.PHONY: help up down start stop re logs logs-django ps db-shell migrate debug clean shred collect schema newkey swapmode maintenance cli CLI testlogin tests
+.PHONY: help up down start stop re logs logs-django ps db-shell migrate debug clean shred collect schema newkey swapmode maintenance cli CLI testlogin tests testblockchain
 
 help: # Display this helpful message
 	@awk 'BEGIN { \
@@ -131,11 +131,14 @@ testlogin: # Selenium tests
 	docker exec ft_transcendence-django-1 python test_selenium.py
 	@echo "Test done"
 
-tests: # Run automated tests
-#	$(DC) -f $(SRC) start
-#	@docker exec -it ft_transcendence-blockchain-1 sh -c "npx hardhat test" 
+testcontract: # Run smart contract tests (run while containers are not running)
 	@echo -e "$(COLOUR_MAGB)Testing smart contract$(COLOUR_END)"
 	$(DC) -f $(SRC) run --rm blockchain npx hardhat test
-#	$(DC) -f $(SRC) run --rm django python manage.py test # should run on separate test volume
 	$(DC) -f $(SRC) stop
 
+testblockchain:	# Run blockchain tests (run while containers are running)
+	@echo -e "$(COLOUR_MAGB)Testing committing data to the blockchain$(COLOUR_END)"
+	@echo -e "$(COLOUR_GREEN)Adding matches$(COLOUR_END)"
+	docker exec -it ft_transcendence-django-1 python manage.py test blockchain.tests.AddMatchViewTest
+	@echo -e "$(COLOUR_GREEN)Adding tournaments$(COLOUR_END)"
+	docker exec -it ft_transcendence-django-1 python manage.py test blockchain.tests.CommitTournamentViewTest
