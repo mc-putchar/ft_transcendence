@@ -161,13 +161,27 @@ class Router {
 				}
 				const p2Name = document.getElementById('player2-name')?.value;
 				const p1 = this.game.makePlayer('left', p1Name, p2Name);
-				// await this.loadTemplate(template);
+				p1.color = document.getElementById('p1-color')?.value || 'green';
 				if (p2Name) {
 					const p2 = this.game.makePlayer('right', p2Name, p2Name);
+					p2.color = document.getElementById('p2-color')?.value || 'green';
 					this.game.startClassicGame(p1, p2);
-				} else {
-					this.game.startClassicGame(p1);
 				}
+				else this.game.startClassicGame(p1);
+			} else if (template === 'pong-3d') {
+				const p1Name = document.getElementById('player1-3d-name')?.value;
+				if (!p1Name) {
+					this.notifyError("Player 1 name is required");
+					history.back();
+					return;
+				}
+				const p2Name = document.getElementById('player2-3d-name')?.value;
+				const p1 = this.game.makePlayer('left', p1Name, p2Name, p1Name, '/static/assets/42Berlin.svg');
+				if (p2Name) {
+					const p2 = this.game.makePlayer('right', p2Name, p2Name, p2Name, '/static/assets/42Berlin.svg');
+					this.game.start3DGame(p1, p2);
+				}
+				else this.game.start3DGame(p1);
 			} else
 				await this.loadTemplate(template);
 		}
@@ -207,32 +221,6 @@ class Router {
 			await this.loadTemplate(template);
 		}
 		this.oldHash = window.location.hash;
-	}
-
-	getGameTemplate(template) {
-		const p1Name = document.getElementById('player1-name')?.value;
-		if (!p1Name) {
-			this.notifyError("Player 1 name is required");
-			return 'play';
-		}
-		const p2Name = document.getElementById('player2-name')?.value;
-		const p1 = this.game.makePlayer('left', p1Name, p2Name);
-		if (p2Name) {
-			const p2 = this.game.makePlayer('right', p2Name, p2Name);
-			this.game.startClassicGame(p1, p2);
-		} else {
-			this.game.startClassicGame(p1);
-			switch (template) {
-				case 'pong-classic':
-					return 'pong-classic';
-				case 'pong-3d':
-					return 'pong-3d';
-				case 'pong-4p':
-					return 'pong-4p';
-				default:
-					return 'home';
-			}
-		}
 	}
 
 	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
@@ -394,14 +382,14 @@ class Router {
 		try {
 			let response = await getJSON('/api/profiles/friends/', this.csrfToken);
 			if (response) {
-				console.log("Updated friends", response);
+				console.debug("Updated friends", response);
 				sessionStorage.setItem('friends', JSON.stringify(response));
 			} else {
 				throw new Error("Failed to update friends");
 			}
 			response = await getJSON('/api/profiles/blocked_users/', this.csrfToken);
 			if (response) {
-				console.log("Updated blocked", response);
+				console.debug("Updated blocked", response);
 				sessionStorage.setItem('blocked', JSON.stringify(response));
 			} else {
 				throw new Error("Failed to update blocked");
@@ -485,13 +473,13 @@ class Router {
 			// 	const p2 = this.game.makePlayer('right', 'Player 2');
 			// 	this.game.startClassicGame(p1, p2);
 			// 	break;
-			case 'pong-3d':
-				// const pl1 = this.game.makePlayer('left', 'Player 1');
-				// const pl2 = this.game.makePlayer('right', 'Player 2');
-				// this.game.start3DGame(pl1, pl2);
-				const pl1 = this.game.makePlayer('left', 'Player 1', 'single', 'YOU', '/static/assets/42Berlin.svg');
-				this.game.start3DGame(pl1);
-				break;
+			// case 'pong-3d':
+			// 	// const pl1 = this.game.makePlayer('left', 'Player 1');
+			// 	// const pl2 = this.game.makePlayer('right', 'Player 2');
+			// 	// this.game.start3DGame(pl1, pl2);
+			// 	const pl1 = this.game.makePlayer('left', 'Player 1', 'single', 'YOU', '/static/assets/42Berlin.svg');
+			// 	this.game.start3DGame(pl1);
+			// 	break;
 			case 'pong-4p':
 				this.game.start4PGame();
 				break;
@@ -611,28 +599,29 @@ class Router {
 				this.notifyError("Failed to opt-in to blockchain");
 			}
 		});
-
-		passwordForm.addEventListener('submit', async (e) => {
-			e.preventDefault();
-			const formData = new FormData(passwordForm);
-			try {
-				const response = await fetch('/api/change-password/', {
-					method: 'POST',
-					headers: {
-						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
-					},
-					body: formData
-				});
-				if (response.ok) {
-					alert("Password changed successfully");
-				} else {
-					throw new Error("Failed to change password");
+		if (passwordForm) {
+			passwordForm.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const formData = new FormData(passwordForm);
+				try {
+					const response = await fetch('/templates/profile', {
+						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
+						},
+						body: formData
+					});
+					if (response.ok) {
+						const html = await response.text();
+						this.animateContent(this.appElement, html, () => this.handlePostLoad("profile"));
+					} else {
+						throw new Error("Failed to change password");
+					}
+				} catch (error) {
+					this.notifyError(error.message);
 				}
-			} catch (error) {
-				this.notifyError(error.message);
-			}
-		});
+			});
+		}
 		document.getElementById('anonymize-data').addEventListener('click', (e) => {
 			e.preventDefault();
 			if (confirm("Are you sure you want to anonymize your data? This action is irreversible.")) {

@@ -18,13 +18,14 @@ class GameSetup {
 };
 
 class Player {
-	constructor (side, name, alias=null, controls=null, avatar="static/img/avatar-marvin.png", isAI=false) {
+	constructor (side, name, alias=null, controls=null, avatar="static/img/avatar-marvin.png", isAI=false, color="green") {
 		this.side = side;
 		this.name = name;
 		this.alias = alias ?? name;
 		this.controls = controls;
 		this.avatar = avatar;
 		this.AI = isAI;
+		this.color = color;
 	}
 };
 
@@ -299,7 +300,6 @@ class GameRouter {
 
 	makePlayer (side, name, single=null, alias=null, img=null) {
 		let player = new Player(side, name);
-		console.log("single: ", single);
 		if(!single) {
 			player.controls = { up: "ArrowUp", down: "ArrowDown" };
 		}
