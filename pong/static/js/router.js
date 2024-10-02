@@ -6,7 +6,6 @@ import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { GameRouter4P } from './gameRouter4P.js';
 import { TournamentRouter } from './tournament-router.js';
-import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
 import { handle_wallet_button, disconnect_wallet } from './web3_wallet.js';
 import { LocalTournament } from './local-tournament.js';
 import { createModal } from './utils.js';
