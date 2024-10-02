@@ -38,37 +38,51 @@ COLOUR_MAGB := \033[1;35m
 COLOUR_CYN := \033[36m
 COLOUR_CYNB := \033[1;36m
 
-.PHONY: up down start stop re debug swapmode clitest testlogin migrate clean collect schema tests help
+.PHONY: help up down start stop re logs logs-django ps db-shell migrate debug clean shred collect schema newkey swapmode maintenance cli CLI testlogin tests testblockchain
 
-up: .env # Beam me up, Scotty
-	@echo -e "Deploying $(COLOUR_GREEN)${DOMAIN}$(COLOUR_END)"
-	@echo -e "Building and starting containers, with $(COLOUR_CYNB)$(DC)$(COLOUR_END) and $(COLOUR_MAGB)$(SRC)$(COLOUR_END)"
-	@rm -f pong/static/maintenance.on
-	$(DC) -f $(SRC) $@ --build
-
-down: # Bring 'em down
-	$(DC) -f $(SRC) $@
-
-start: # Start containers and detach
-	$(DC) -f $(SRC) $@
-
-stop: # Stop the containers, please
-	$(DC) -f $(SRC) $@
-
-re: # Re-create containers
-	$(DC) -f $(SRC) up --build --force-recreate
+help: # Display this helpful message
+	@awk 'BEGIN { \
+	FS = ":.*#"; printf "Usage:\n\t$(COLOUR_CYNB)make $(COLOUR_MAGB)<target> \
+	$(COLOUR_END)\n\nTargets:\n"; } \
+	/^[a-zA-Z_0-9-]+:.*?#/ { \
+	printf "$(COLOUR_MAGB)%-16s$(COLOUR_CYN)%s$(COLOUR_END)\n", $$1, $$2 } ' \
+	Makefile
 
 .env:
 	bash setup_wizard.sh
 
+up: .env # Beam me up, Scotty
+	$(info "Aye, aye Cap'n!")
+	@echo -e "Deploying $(COLOUR_GREEN)${DOMAIN}$(COLOUR_END)"
+	@echo -e "Building and starting containers, with $(COLOUR_CYNB)$(DC)$(COLOUR_END) and $(COLOUR_MAGB)$(SRC)$(COLOUR_END)"
+	@rm -f pong/static/maintenance.on
+	$(DC) -f $(SRC) $@ --build -d
+down: # Bring 'em down
+	$(DC) -f $(SRC) $@
+start: # Start containers and detach
+	$(DC) -f $(SRC) $@
+stop: # Stop the containers, please
+	$(DC) -f $(SRC) $@
+re: stop # Re-create containers
+	$(DC) -f $(SRC) up --build --force-recreate -d
+
+logs: # Tail the logs 
+	$(DC) -f $(SRC) logs --tail=100 -f
+logs-django: # Tail the Django logs
+	$(DC) -f $(SRC) logs --tail=100 -f django
+ps: # Show running containers
+	$(DC) -f $(SRC) ps
+db-shell: # Run database shell
+	$(DC) -f $(SRC) exec db psql $(POSTGRES_DB) -U $(POSTGRES_USER)
 migrate: # Make and run DB migrations
 	$(DC) -f $(SRC) stop
 	$(DC) -f $(SRC) run --build --rm -e SKIP_DEPLOYMENT=true django python manage.py makemigrations $(APPS)
 	$(DC) -f $(SRC) run --rm -e SKIP_DEPLOYMENT=true django python manage.py migrate
 	$(DC) -f $(SRC) stop
 
-clean: # DROP database (Warning: all database data will be irreversibly lost! Consider making backup)
-	@$(MAKE) -s down
+clean: # clean docker system
+	docker system prune
+shred: down # DROP database (Warning: all database data will be irreversibly lost! Consider making backup)
 	@docker volume rm $(NAME)_dbdata
 	@$(MAKE) -s newkey
 	@echo -e "$(COLOUR_GREEN)^^Here^^$(COLOUR_END) is a new Django key for you, if you need it"
@@ -103,26 +117,28 @@ debug: # DEBUG MODE
 	@echo -e 'using $(DC) and $(SRC)'
 	$(DC) -f $(SRC) --profile debug up --build
 
-clitest: # CLI test
-	cd transcendCLI && source .venv/bin/activate && python $(CLI)
+cli CLI: # run CLI
+	@if [[ ! -d transcendCLI/.venv ]]; then \
+		{ echo -e "$(COLOUR_CYNB)Setting up virtual environment...$(COLOUR_END)"; \
+		python3 -m venv transcendCLI/.venv && \
+		pip install -r transcendCLI/requirements.txt && \
+		exit 0; } \
+	fi
+	cd transcendCLI && source .venv/bin/activate && python $(CLI) --url=$(DOMAIN)
 
 testlogin: # Selenium tests
 	# docker exec ft_transcendence-django-1 python test_selenium.py
 	docker exec ft_transcendence-django-1 python test_selenium.py
 	@echo "Test done"
 
-tests: # Run automated tests
-#	$(DC) -f $(SRC) start
-#	@docker exec -it ft_transcendence-blockchain-1 sh -c "npx hardhat test" 
+testcontract: # Run smart contract tests (run while containers are not running)
 	@echo -e "$(COLOUR_MAGB)Testing smart contract$(COLOUR_END)"
 	$(DC) -f $(SRC) run --rm blockchain npx hardhat test
-#	$(DC) -f $(SRC) run --rm django python manage.py test # should run on separate test volume
 	$(DC) -f $(SRC) stop
 
-help: # Display this helpful message
-	@awk 'BEGIN { \
-	FS = ":.*#"; printf "Usage:\n\t$(COLOUR_CYNB)make $(COLOUR_MAGB)<target> \
-	$(COLOUR_END)\n\nTargets:\n"; } \
-	/^[a-zA-Z_0-9-]+:.*?#/ { \
-	printf "$(COLOUR_MAGB)%-16s$(COLOUR_CYN)%s$(COLOUR_END)\n", $$1, $$2 } ' \
-	Makefile
+testblockchain:	# Run blockchain tests (run while containers are running)
+	@echo -e "$(COLOUR_MAGB)Testing committing data to the blockchain$(COLOUR_END)"
+	@echo -e "$(COLOUR_GREEN)Adding matches$(COLOUR_END)"
+	docker exec -it ft_transcendence-django-1 python manage.py test blockchain.tests.AddMatchViewTest
+	@echo -e "$(COLOUR_GREEN)Adding tournaments$(COLOUR_END)"
+	docker exec -it ft_transcendence-django-1 python manage.py test blockchain.tests.CommitTournamentViewTest

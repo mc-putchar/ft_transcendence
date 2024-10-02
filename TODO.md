@@ -2,7 +2,7 @@
 
 ### Documentation:
 	- [x] README.md
-	- [ ] LICENSE
+	- [X] LICENSE
 	- [x] API schema
 	- [ ] Dependencies and their justifications
 	- [ ] ? code documentation
@@ -10,47 +10,47 @@
 ###  Email-validator?:
 
 ### Features:
-	- [ ] Minimal technical requirements:
+	- [x] Minimal technical requirements:
 		- [x] Framework: Django
 		- [x] Database: PostgreSQL
 		- [x] Frontend: Vanilla JS + Bootstrap
 		- [x] SPA
 		- [x] Google Chrome compatibility
-		- [ ] no unhandled errors or warnings
+		- [x] no unhandled errors or warnings
 		- [x] single command line launch (make)
 		- [x] Docker runtime files must be located in /goinfre or /sgoinfre
 		- [x] no “bind-mount volumes” between the host and the container if non-root UIDs are used in the container
-		- [ ] Game:
+		- [x] Game:
 			- [x] remote players (+ 42 OAuth)
-			- [ ] tournament system
+			- [x] tournament system
 			- [x] registration with User Management
 			- [x] matchmaking
 			- [x] same universal rules for all players and AI
 			- [x] Graphics: 2D and 3D
-		- [ ] Security:
+		- [x] Security:
 			- [x] password hashing
 			- [x] SQL injection/XSS protection
 			- [x] mandatory https:// and wss://
-			- [?] form and input server side validation
+			- [x] form and input server side validation
 			- [x] JWT auth
 
 	- [ ] User customization options:
 		- [x] mandatory
-		- [ ] game settings:
-			- [ ] sound preferences
-			- [ ] default Pong client variant (2D/3D/any other)
+		- [x] game settings:
+			- [x] sound preferences
+			- [x] default Pong client variant (2D/3D/any other)
 		- [ ] user settings:
 			- [x] on change of profile picture, overwrite old one if not default
 			- [ ] change email
 			- [ ] validate user email
 				- [ ] password recovery
 				- [ ] ? easy 2FA on top
-			- [ ] change password
+			- [x] change password
 			- [x] anonymize account (ensure no personal data is stored)
-			- [ ] delete account (adjust cascading in db on delete)
+			- [x] delete account (adjust cascading in db on delete)
 			- [x] resolve 42 acount username conflict
 			- [ ] connect 42 account (after conventional registration)
-			- [ ] ? display blockchain user address? status? (after optin)
+			- [x] ? display blockchain user address? status? (after optin)
 		- [ ] custom paddle texture:
 			- [x] provide defaults
 			- [ ] ? visualize with 3D model
@@ -62,7 +62,7 @@
 		- [x] change message log container from textarea
 		- [x] special style for private messages and announcements
 		- [ ] add some chat history (maybe with redis)
-		- [ ] validate challenged/mentioned user is in online user list
+		- [x] validate challenged/mentioned user is in online user list
 		- [ ] expand commands list
 		- [ ] ? chat spam detection
 		- [ ] ? chat rooms (lobby, tournament, game, private)
@@ -71,20 +71,20 @@
 	- [ ] online game:
 		- [x] mandatory
 		- [x] server side game logic
-		- [ ] 2D client option
+		- [x] 2D client option
 		- [x] 3D client option
-		- [ ] mobile controls
+		- [x] mobile controls (2D client only)
 		- [ ] improve predictive client
 		- [ ] global matchmaking
 		- [ ] spectating mode
 		- [ ] correct game socket management
 
 	- [ ] tournaments:
-		- [ ] mandatory:
+		- [x] mandatory:
 			- [x] tournament history
 			- [x] create, join, leave, start, delete tournaments
 			- [x] try harder to make players show up for the match
-			- [ ] websocket updates
+			- [x] websocket updates
 			- [x] tournament round progressions
 			- [x] tournament finalization
 		- [ ] tournament rewards
@@ -97,16 +97,14 @@
 
 	- [ ] swag:
 		- [x] notifications
-		- [ ] modals:
-			- [ ] need better controls over them (closing, dissmissing, persisting)
-			- [ ] improve look
-		- [ ] sound controls
+		- [x] modals
+		- [x] sound controls
 		- [ ] ensure device support
 
 ### Security:
 	- [x] JWT auth
 	- [x] refresh tokens
-	- [ ] input validation
+	- [x] input validation
 	- [ ] rate limiting
 	- [ ] ? make websockets cooperate with WAF
 	- [ ] secure headers
@@ -146,7 +144,7 @@
 	- [x] login
 	- [x] my profile
 	- [ ] friends and blocked users
-	- [ ] chat socket
-	- [ ] game socket
+	- [x] chat socket
+	- [x] game socket
 	- [ ] tournament socket
 	- [ ] arrange display

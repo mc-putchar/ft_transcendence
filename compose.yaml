@@ -1,4 +1,4 @@
-#version: '42'
+# version: '42'
 
 name: ft_transcendence
 
@@ -23,8 +23,9 @@ services:
     restart: unless-stopped
     
   server:
-    build:
-      context: "${PWD}/server"
+    image: caddy:2.8.4-alpine
+    # build:
+    #   context: "${PWD}/server"
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
@@ -34,7 +35,7 @@ services:
     networks:
       - transcendeNet
     ports:
-      - "127.0.0.1:4243:443"
+      - "0.0.0.0:4243:443"
     restart: unless-stopped
 
   blockchain:
@@ -43,14 +44,14 @@ services:
     networks:
       - transcendeNet
     restart: unless-stopped
-    ports:
-      - "8545:8545"
 
   django:
     build:
       context: "${PWD}/pong"
     command: sh -c "
-      python manage.py runserver 0.0.0.0:8000" # add -noreaload flag to avoid double deployment to the blockchain
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000"
     volumes:
       - "${PWD}/pong:/code:rw"
     environment:

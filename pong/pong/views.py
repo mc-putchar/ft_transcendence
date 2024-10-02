@@ -4,7 +4,10 @@ import string
 import requests
 
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import PasswordChangeForm
 from django.core.files.images import ImageFile
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -138,7 +141,6 @@ def get_user_info(request, username):
         'match_history': played,
         'tournament_history': TournamentPlayer.objects.filter(player=profile, tournament__status='closed')
     }
-    # logger.info(context)
     return context
 
 def update_profile(request, user):
@@ -146,21 +148,46 @@ def update_profile(request, user):
         u_form = UserUpdateForm(request.POST, instance=user)
         p_form = ProfileUpdateForm(
             request.POST, request.FILES, instance=user.profile)
-        cp_form = ChangePasswordForm(request.POST)
-        if u_form.is_valid() and p_form.is_valid():
-            u_form.save()
-            p_form.save()
-        if cp_form.is_valid():
-            user.set_password(cp_form.cleaned_data['password'])
-            user.save()
+        cp_form = PasswordChangeForm(user, request.POST)
+        try:
+            if u_form.is_valid() and p_form.is_valid():
+                u_form.save()
+                p_form.save()
+            if cp_form.is_valid():
+                cp_form.save()
+                update_session_auth_hash(request, user)
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                refresh_token = str(refresh)
+                messages.success(request, 'Password updated successfully')
+                context = {
+                    'u_form': u_form,
+                    'p_form': p_form,
+                    'cp_form': cp_form,
+                    'username': user.username,
+                    'profilepic': user.profile.image.url,
+                    'access_token': access_token,
+                    'refresh_token': refresh_token,
+                    'user': get_user_from_validated_token(access_token),
+                }
+        except Exception as e:
+            messages.error(request, 'An error occurred')
+            context = {
+                'u_form': u_form,
+                'p_form': p_form,
+                'cp_form': cp_form,
+                'username': user.username,
+                'profilepic': user.profile.image.url
+            }
     else:
         u_form = UserUpdateForm(instance=user)
         p_form = ProfileUpdateForm(instance=user.profile)
-        cp_form = ChangePasswordForm()
+        cp_form = PasswordChangeForm(user)
 
     context = {
         'u_form': u_form,
         'p_form': p_form,
+        'cp_form': cp_form,
         'username': user.username,
         'profilepic': user.profile.image.url
     }
@@ -216,12 +243,13 @@ def create_42user(username, email, forty_two_id, image_url):
     return user, created
 
 def redirect_view(request):
+    'TODO: check headers for origin'
     code = request.GET.get('code')
     state = request.GET.get('state')
     session_state = request.session.get('oauth_state')
 
     if state != session_state:
-        logger.warn(f"Invalid state parameter: {state} != {session_state}")
+        logger.warning(f"Invalid state parameter: {state} != {session_state}")
         return HttpResponse('Invalid state parameter', status=400)
 
     redirect_uri = settings.REDIRECT_URI

@@ -6,9 +6,9 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <div class="card-header bg-dark text-success d-flex justify-content-between align-items-center">
                     <button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
-                    <h5 class="mb-0">Profile</h5>
+                    <h5 class="mb-0 glitch" data-text="Profile">Profile</h5>
                 </div>
                 <div class="card-body text-center">
                     <img src="{{ profile.image }}" class="account-img rounded border border-3 border-info mb-3" alt="Profile Picture" style="width: 210px; height: auto;">
@@ -51,8 +51,8 @@
                                         <p><span class="{% if match.winner %}text-success{% else %}text-danger{% endif %}"><b>Scored:</b> {{ match.score }}</span></p>
                                         <p><b>Opponent:</b>
                                             {% if match.get_opponent %}
-                                            <button class="btn btn-outline-primary border-info rounded-pill" onclick="location.href='#/profiles/{{ match.get_opponent.user.username }}'">
-                                            <img src="{{ match.get_opponent.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> | {{ match.get_opponent.alias }}
+                                            <button class="btn btn-outline-primary border-info rounded-pill" onclick="location.href='#/profiles/{{ match.get_opponent.player.user.username }}'">
+                                            <img src="{{ match.get_opponent.player.image.url }}" class="rounded-circle" height="22" width="22" loading="lazy" /> | {{ match.get_opponent.player.alias }}
                                             </button></p>
                                             {% else %}
                                             <p>Opponent not found</p>

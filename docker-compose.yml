@@ -5,15 +5,12 @@ networks:
     driver: bridge
 
 services:
-  # blockchain:
-  #   image: trufflesuite/ganache
-  #   environment:
-  #     - INFURA_TESTNET
-  #   networks:
-  #     - transcendeNet
-  #   ports:
-  #     - "8545:8545"
-  #   restart: unless-stopped
+  blockchain:
+    build:
+      context: "${PWD}/pong/blockchain"
+    networks:
+      - transcendeNet
+    restart: unless-stopped
   db:
     image: postgres:16.3-alpine3.20
     environment:
@@ -50,6 +47,7 @@ services:
       - DJANGO_SECRET_KEY
       - CLIENT_ID
       - CLIENT_SECRET
+      - HARDHAT_PRIVATE_KEY
       - REDIRECT_URI
     ports:
       - "4222:8000"
@@ -62,29 +60,29 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  selenium:
-    image: selenium/standalone-chrome:latest
-    volumes:
-      - /dev/shm:/dev/shm
-    networks:
-      - transcendeNet
-    ports:
-      - "4444:4444"
-      - "5900:5900"  # VNC port
-    restart: unless-stopped
-    profiles:
-      - debug
+  # selenium:
+  #   image: selenium/standalone-chrome:latest
+  #   volumes:
+  #     - /dev/shm:/dev/shm
+  #   networks:
+  #     - transcendeNet
+  #   ports:
+  #     - "4444:4444"
+  #     - "5900:5900"  # VNC port
+  #   restart: unless-stopped
+  #   profiles:
+  #     - debug
 
-  novnc:
-    image: javanile/novnc
-    environment:
-      - REMOTE_HOST=localhost
-      - REMOTE_PORT=5901
-    ports:
-      - 8081:8081
-    links:
-      - selenium
-    profiles:
-      - debug
-    networks:
-      - transcendeNet
+  # novnc:
+  #   image: javanile/novnc
+  #   environment:
+  #     - REMOTE_HOST=localhost
+  #     - REMOTE_PORT=5901
+  #   ports:
+  #     - 8081:8081
+  #   links:
+  #     - selenium
+  #   profiles:
+  #     - debug
+  #   networks:
+  #     - transcendeNet

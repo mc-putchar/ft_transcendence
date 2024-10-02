@@ -11,6 +11,7 @@ const ARENA_HEIGHT = 100;
 const GOAL_LINE = 20;
 const BALL_SIZE = 8;
 const BALL_START_SPEED = 2 / 12;
+// const BALL_START_SPEED = 12 / 12;
 const BALL_INCR_SPEED = 1 / 64;
 const PADDLE_SPEED = 5;
 const PADDLE_LEN = 42;
@@ -45,8 +46,6 @@ class Arena {
 		this.startY = 0.1 * this.height;
 		this.width = this.height * aspectRatio;
 		this.startX = (width - this.width) / 2;
-		console.log("Arena resized to:", this.width, this.height);
-		console.log("StartX:", this.startX, "StartY:", this.startY);
 	}
 	
 	draw (ctx) {
@@ -56,8 +55,8 @@ class Arena {
 		ctx.fillRect(this.startX, this.startY, this.width, this.height);
 		// ctx.fillRect(this.startX, this.startY + this.height, this.width, 1);
 		ctx.fillStyle = GOAL_COLOR;
-		ctx.fillRect(this.startX, this.startY, 1, this.height);
-		ctx.fillRect(this.startX + this.width, this.startY, 1, this.height);
+		ctx.fillRect(this.startX + 1, this.startY, 1, this.height);
+		ctx.fillRect(this.startX + this.width - 1, this.startY, 1, this.height);
 		ctx.fillStyle = NET_COLOR;
 		for (let i = 1; i < this.height; i += 16) {
 			ctx.fillRect(this.startX + this.width / 2, this.startY + i, 1, 8);
@@ -66,10 +65,10 @@ class Arena {
 };
 
 class Paddle {
-	constructor (side, arenaWidth, arenaHeight, startX, startY) {
+	constructor (side, arenaWidth, arenaHeight, startX, startY, color=PADDLE_COLOR, colorEffect=EFFECT_COLOR) {
 		this.side = side;
-		this.color = PADDLE_COLOR;
-		this.colorEffect = EFFECT_COLOR;
+		this.color = color;
+		this.colorEffect = colorEffect;
 		this.hit = false;
 		this.keys_active = 0;
 		this.direction = 0;
@@ -80,7 +79,7 @@ class Paddle {
 		this.speed = PADDLE_SPEED * ratio;
 		this.goalLine = GOAL_LINE * ratio;
 		this.goalLine += (side == "left") ? this.width / 2 : -this.width / 2;
-		this.x = (side == "left") 
+		this.x = (side == "left")
 			? startX + this.goalLine 
 			: startX + arenaWidth - this.goalLine;
 		this.y = startY + arenaHeight / 2;
@@ -176,6 +175,18 @@ class Ball {
 			ctx.fillRect(this.x - (this.radius), y, this.radius * 2, 1);
 		}
 	}
+	resize(arenaWidth, arenaHeight, startX, startY, prevHeight, prevStartX, prevStartY) {
+		const difference_ratio = arenaHeight / prevHeight;
+		this.speedx *= difference_ratio;
+		this.speedy *= difference_ratio;
+		this.x -= prevStartX;
+		this.x *= difference_ratio;
+		this.x += startX;
+		this.y -= prevStartY;
+		this.y *= difference_ratio;
+		this.y += startY;
+		this.radius = (BALL_SIZE / 2 * ((arenaWidth + arenaHeight) / 500));
+	}
 };
 
 class Score {
@@ -189,7 +200,7 @@ class Score {
 		setTimeout(() => {
 			this.hasScored.goal = false;
 			this.hasScored.scorer = "none";
-		}, 1000);
+		}, 10);
 	}
 
 	draw (ctx, height, width, startX, startY) {
@@ -284,7 +295,7 @@ class proAI {
 		this.roundsTillImpact = rounds;
 
 		let margin = this.randomMargin();
-		this.objective = simBall.posY + this.player.len / 4 + margin;
+		this.objective = simBall.posY + this.player.len / 7 + margin;
 	}
 	setWait(simBall) {
 		this.wait = 0;
@@ -354,7 +365,10 @@ class proAI {
 }
 
 class ClientClassic {
-	constructor (gameSetup, gameSocket=null, gameData=null, matchId=null) {
+	constructor (gameSetup, gameSocket=null, gameData=null, matchId=null, tour_result=null) {
+		console.debug(gameSetup);
+		this.gameSetup = gameSetup;
+		this.tour_result = tour_result;
 		this.parent = gameSetup.parentElement;
 		this.gameSocket = gameSocket;
 		this.isOnline = gameSocket !== null;
@@ -372,8 +386,6 @@ class ClientClassic {
 		this.parent.width = screen.availWidth - (window.outerWidth - window.innerWidth);
 
 		this.canvas = document.createElement("canvas");
-		// this.canvas.style.width = "80%";
-		// this.canvas.style.height = "100%";
 		this.canvas.width = this.parent.width - CANVAS_PADDING;
 		this.canvas.height = this.parent.height - CANVAS_PADDING;
 		this.parent.appendChild(this.canvas);
@@ -391,13 +403,39 @@ class ClientClassic {
 		this.audio = new AudioController();
 		this.audio.playAudioTrack();
 
-	}
+		this.touchScreenAdded = false;
 
+		if(!this.isOnline && gameSetup.mode === "single" && ('ontouchstart' in window || navigator.maxTouchPoints))
+			this.setUpTouchScreen();
+	}
+	setUpTouchScreen() {
+		this.touchScreenAdded = true;
+		const leftDiv = document.createElement("div");
+		leftDiv.style.width = "50%";
+		leftDiv.style.height = "100%";
+		leftDiv.style.position = "absolute"; // Changed from float to absolute
+		leftDiv.style.left = "0"; // Align to the left side
+	
+		const rightDiv = document.createElement("div");
+		rightDiv.style.width = "50%";
+		rightDiv.style.height = "100%";
+		rightDiv.style.position = "absolute"; // Changed from float to absolute
+		rightDiv.style.right = "0"; // Align to the right side
+
+		this.parent.appendChild(leftDiv);
+		this.parent.appendChild(rightDiv);
+
+		leftDiv.addEventListener('touchstart', (event) => this.handleTouchStart(event, 'ArrowUp'));
+		leftDiv.addEventListener('touchend', (event) => this.handleTouchEnd(event, 'ArrowUp'));
+
+		rightDiv.addEventListener('touchstart', (event) => this.handleTouchStart(event, 'ArrowDown'));
+		rightDiv.addEventListener('touchend', (event) => this.handleTouchEnd(event, 'ArrowDown'));
+	}
 	init () {
 		this.arena = new Arena(this.canvas.width, this.canvas.height);
 		this.ball = new Ball(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
-		this.player1 = new Paddle(this.player.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
-		this.player2 = new Paddle(this.opponent.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY);
+		this.player1 = new Paddle(this.player.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY, this.player.color);
+		this.player2 = new Paddle(this.opponent.side, this.arena.width, this.arena.height, this.arena.startX, this.arena.startY, this.opponent.color);
 		this.score = new Score();
 		if (this.hasAI) {
 			this.proAI = new proAI(this.player2, this.arena);
@@ -448,12 +486,40 @@ class ClientClassic {
 			this.canvas.width = this.parent.width - CANVAS_PADDING;
 			this.canvas.height = this.parent.height - CANVAS_PADDING;
 			const prevHeight = this.arena.height;
+			const prevStartX = this.arena.startX;
+			const prevStartY = this.arena.startY;
 			this.arena.resize(this.canvas.width, this.canvas.height);
 			this.player1.resize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
 			this.player2.resize(this.arena.width, this.arena.height, this.arena.startX, prevHeight);
+			this.ball.resize(this.arena.width, this.arena.height, this.arena.startX, this.arena.startY, prevHeight, prevStartX, prevStartY);
 		}, 200);
 	}
-
+	handleTouchStart(event, key) {
+		if (this.gameover)	return;
+		if (this.gameData.status == "paused")
+			setTimeout(() => this.sendReady(), 1000);
+		if(key == "ArrowUp") {
+			if(this.player1.direction != -1)
+				this.player1.keys_active++;
+			this.player1.direction = -1;
+		}
+		else if (key == "ArrowDown") {
+			if(this.player1.direction != 1)
+				this.player1.keys_active++;
+			this.player1.direction = 1;
+		}
+	}
+	
+	handleTouchEnd(event, key) {
+		if (this.gameover)	return;
+		if (key == "ArrowDown" || key == "ArrowUp") {
+			if(this.player1.keys_active > 0)
+				this.player1.keys_active--;
+			if(this.player1.keys_active == 0) {
+				this.player1.direction = 0;
+			}
+		}
+	}
 	keydown (key) {
 		if (this.gameover)	return;
 		if (this.gameData.status == "paused")
@@ -507,6 +573,8 @@ class ClientClassic {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		if (!this.gameover) {
 			this.isOnline ? this.syncData() : this.update();
+		} else {
+			this.gtfo = this.gtfo ?? setTimeout(() => history.back(), 30000);
 		}
 		this.draw();
 		this.animationID = window.requestAnimationFrame(this.loop.bind(this));
@@ -536,9 +604,14 @@ class ClientClassic {
 		return false;
 	}
 
+	audioVisualEffect (player, ballSpeed) {
+		player.onHit();
+		this.audio.playTone(ballSpeed);
+	}
+
 	paddleCollision () {
 		const left = this.player1.side == "left" ? this.player1 : this.player2;
-		const right = this.player1.side == "right" ? this.player1 : this.player2;
+		const right = this.player1.side == "left" ? this.player2 : this.player1;
 		if(this.ball.x - this.ball.radius <= left.x + left.width) {
 			if(this.ball.x < left.x - left.width)
 				return;
@@ -548,8 +621,7 @@ class ClientClassic {
 					this.ball.vx = 1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
-					left.onHit();
-					this.audio.playTone(this.ball.speedx);
+					this.audioVisualEffect(left, this.ball.speedx);
 			}
 		}
 		if(this.ball.x + this.ball.radius >= right.x - right.width / 2) {
@@ -561,9 +633,16 @@ class ClientClassic {
 					this.ball.vx = -1 * Math.cos(refAngle);
 					this.ball.vy = Math.sin(refAngle);
 					this.ball.speed_up();
-					right.onHit();
-					this.audio.playTone(this.ball.speedx);
+					this.audioVisualEffect(right, this.ball.speedx);
 			}
+		}
+	}
+
+	playGoalSound (iScored) {
+		if (iScored) {
+			this.audio.playFx("/static/assets/arcade-alert.wav");
+		} else {
+			this.audio.playFx("/static/assets/pop-alert.wav");
 		}
 	}
 
@@ -571,13 +650,13 @@ class ClientClassic {
 		if (this.ball.x < this.arena.startX - this.player1.goalLine) {
 			this.score.hasScored.goal = true;
 			this.score.hasScored.scorer = "right";
-			window.playFx("/static/assets/arcade-alert.wav");
+			this.playGoalSound(true);
 			return true;
 		}
 		if (this.ball.x > this.arena.startX + this.arena.width + this.player2.goalLine) {
 			this.score.hasScored.goal = true;
 			this.score.hasScored.scorer = "left";
-			window.playFx("/static/assets/pop-alert.wav");
+			this.playGoalSound(false);
 			return true;
 		}
 		return false;
@@ -589,6 +668,9 @@ class ClientClassic {
 			this.score.update(this.score.hasScored.scorer);
 			if (this.score.score.left >= this.gameData.score.limit 
 			|| this.score.score.right >= this.gameData.score.limit) {
+				let winner = this.score.score.left > this.score.score.right ? "p1" : "p2";
+				if(this.tour_result)
+					this.tour_result.update(this.score.score.left, this.score.score.right, winner);
 				this.gameover = true;
 				this.ball = null;
 			}
@@ -607,8 +689,10 @@ class ClientClassic {
 	}
 
 	transposePosition (x, y) {
-		const tx = (this.arena.width / ARENA_WIDTH * y) + this.arena.startX + (this.arena.width / 2);
-		const ty = (this.arena.height / ARENA_HEIGHT * x) + this.arena.startY + (this.arena.height / 2);
+		// const tx = (this.arena.width / ARENA_WIDTH * y) + this.arena.startX + (this.arena.width / 2);
+		// const ty = (this.arena.height / ARENA_HEIGHT * x) + this.arena.startY + (this.arena.height / 2);
+		const tx = y + this.arena.startX + (this.arena.width / 2);
+		const ty = x + this.arena.startY + (this.arena.height / 2);
 		return [tx, ty];
 	}
 
@@ -617,6 +701,7 @@ class ClientClassic {
 		|| this.score.score.right != this.gameData.score.p2) {
 			this.score.score.left = this.gameData.score.p1;
 			this.score.score.right = this.gameData.score.p2;
+			this.playGoalSound(this.isChallenger && this.score.hasScored.scorer == "left");
 			setTimeout(() => this.sendReady(), 1000);
 		}
 		if (this.gameData.status == "finished" || this.gameData.status == "forfeited") {
@@ -624,19 +709,54 @@ class ClientClassic {
 			this.ball = null;
 			return;
 		}
-		// this.player1.y = (this.gameData.player1.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
-		// this.player2.y = (this.gameData.player2.x * 2 / this.arena.height) + this.arena.startY + this.arena.height / 2;
-		[ , this.player1.y] = this.transposePosition(this.gameData.player1.x, 0);
-		[ , this.player2.y] = this.transposePosition(this.gameData.player2.x, 0);
-		this.ball.y = this.gameData.ball.x + this.arena.startY + this.arena.height / 2;
-		this.ball.x = this.gameData.ball.y + this.arena.startX + this.arena.width / 2;
-		// [this.ball.x, this.ball.y] = this.transposePosition(this.gameData.ball.x, this.gameData.ball.y);
+		const ratio = (this.arena.height + this.arena.width) / (ARENA_HEIGHT * 2 + ARENA_WIDTH * 2);
+		const left = this.isChallenger ? this.player1 : this.player2;
+		const right = this.isChallenger ? this.player2 : this.player1;
+		[ , left.y] = this.transposePosition(-this.gameData.player1.x * ratio, 0);
+		[ , right.y] = this.transposePosition(-this.gameData.player2.x * ratio, 0);
+		[this.ball.x, this.ball.y] = this.transposePosition(-this.gameData.ball.x * ratio, this.gameData.ball.y * ratio);
 		this.ball.vx = this.gameData.ball.dx;
 		this.ball.vy = this.gameData.ball.dy;
+		// detect paddle collision to hook audio visual effect
+		if (this.ball.x - this.ball.radius <= left.x + left.width) {
+			if (this.ball.y + this.ball.radius >= left.y - left.len / 2
+			&& this.ball.y - this.ball.radius <= left.y + left.len / 2) {
+				this.audioVisualEffect(left, this.ball.speedx);
+			}
+		} else if (this.ball.x + this.ball.radius >= right.x - right.width / 2) {
+			if (this.ball.y + this.ball.radius >= right.y - right.len / 2
+			&& this.ball.y - this.ball.radius <= right.y + right.len / 2) {
+				this.audioVisualEffect(right, this.ball.speedx);
+			}
+		}
+	}
+	drawNames(ctx, height, width) {
+		let padding_height = this.arena.startY / 1.5;
+		ctx.fillStyle = SCORE_COLOR;
+		ctx.font = `${padding_height / 1.5}px Orbitron`;
+	
+		let textY = padding_height / 2;
+	
+		let textSize = ctx.measureText(this.gameSetup.player2.name);
+		if(this.gameSetup.mode == "online") {
+			if(this.gameSetup.player1.side == "left") {
+				ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY / 2);
+				ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+			}
+			else {
+				ctx.fillText(this.gameSetup.player2.name, this.arena.startX, this.arena.startY / 2);
+				ctx.fillText(this.gameSetup.player1.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+			}
+		}
+		else {
+			ctx.fillText(this.gameSetup.player1.name, this.arena.startX, this.arena.startY / 2);
+			ctx.fillText(this.gameSetup.player2.name, this.arena.startX + this.arena.width - textSize.width, this.arena.startY / 2);
+		}
 	}
 
 	draw () {
 		this.arena.draw(this.context);
+		this.drawNames(this.context, this.canvas.height, this.canvas.width);
 		if (this.gameover) {
 			const [left, right] = this.isChallenger ? [this.player, this.opponent] : [this.opponent, this.player];
 			this.score.drawEndGame(this.context, this.arena.height, this.arena.width, this.arena.startX, this.arena.startY, left.alias, right.alias);
@@ -650,10 +770,6 @@ class ClientClassic {
 
 	start () {
 		console.log("Pong Classic - client started");
-		// Should be done like this according to the subject
-		// if (this.hasAI) {
-		// 	this.AIupdater = setInterval(() => this.proAI.update(this.ball), 1000);
-		// }
 		this.loop();
 	}
 
@@ -665,6 +781,15 @@ class ClientClassic {
 		if (this.hasAI) {
 			clearInterval(this.AIupdater);
 		}
+		if(this.touchScreenAdded == true) {
+			leftDiv.removeEventListener('touchstart', (event) => this.handleTouchStart(event));
+			leftDiv.removeEventListener('touchend', (event) => this.handleTouchEnd(event));
+			rightDiv.removeEventListener('touchstart', (event) => this.handleTouchStart(event));
+			rightDiv.removeEventListener('touchend', (event) => this.handleTouchEnd(event));
+			leftDiv.remove();
+			rightDiv.remove();
+		}
+
 		document.removeEventListener("keydown", ev => this.keydown(ev));
 		document.removeEventListener("keyup", ev => this.keyup(ev));
 		window.removeEventListener("resize", ev => this.onResize(ev));

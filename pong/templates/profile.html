@@ -6,7 +6,7 @@
             <div class="card shadow bg-secondary-subtle">
                 <div class="card-header bg-dark text-success d-flex justify-content-between align-items-center">
                     <button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
-                    <h5 class="mb-0">Edit Profile</h5>
+                    <h5 class="mb-0 glitch" data-text="Edit Profile">Edit Profile</h5>
                 </div>
                 <div class="card-body text-center">
                     <h1 class="mb-0"> {{ username }} </h1>
@@ -19,11 +19,22 @@
                     </div>
 
                     <div class="card-body text-center container-background">
+
                         <div class="tab-content" id="v-pills-tabContent">
                             <div class="tab-pane fade show active" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
                                 <img id="profile-image" src="{{ profilepic }}" class="rounded account-img" alt="Profile Picture" style="width: 210px; height: auto;">
                                 <form class="form" id="profile-form" method="POST" enctype="multipart/form-data">
+                                    {% if u_form.errors %}
+                                        <div class="text-danger">
+                                            {{ u_form.errors }}
+                                        </div>
+                                    {% endif %}
                                     {{ u_form.as_p }}
+                                    {% if p_form.errors %}
+                                        <div class="text-danger">
+                                            {{ p_form.errors }}
+                                        </div>
+                                    {% endif %}
                                     {{ p_form.as_p }}
                                     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                                     <button class="btn btn-primary my-2" type="submit">Update</button>
@@ -41,6 +52,19 @@
                                     {{ cp_form.as_p }}
                                     <button class="btn btn-primary" type="submit">Change Password</button>
                                 </form>
+                                {% if user.profile.forty_two_id %}
+                                {% else %}
+                                    <form class="form needs-validation" id="password-form" method="POST">
+                                        {% if cp_form.errors %}
+                                            <div class="text-danger">
+                                                {{ cp_form.errors }}
+                                            </div>
+                                        {% endif %}
+                                        {{ cp_form.as_p }}
+                                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                                        <button class="btn btn-primary" type="submit">Change Password</button>
+                                    </form>
+                                {% endif %}
                                 <button id="anonymize-data" class="btn btn-warning my-2">Anonymize Data</button>
                                 <button id="delete-account" class="btn btn-danger my-2">Delete Account</button>
                             </div>

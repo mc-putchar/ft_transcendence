@@ -1,12 +1,16 @@
 "use strict";
 
 import { showNotification } from './notification.js';
-import { getCookie, getHTML, getJSON, popupCenter, postJSON } from './utils.js';
+import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
+import { GameRouter4P } from './gameRouter4P.js';
 import { TournamentRouter } from './tournament-router.js';
 import { startPong4PGame, stopPong4PGame } from './multi_pong4.js';
 import { handle_wallet_button, disconnect_wallet } from './web3_wallet.js';
+import { LocalTournament } from './local-tournament.js';
+import { createModal } from './utils.js';
+
 const NOTIFICATION_SOUND = '/static/assets/pop-alert.wav';
 const CHALLENGE_SOUND = '/static/assets/game-alert.wav';
 
@@ -22,12 +26,14 @@ class Router {
 		this.chat = new ChatRouter(this.chatElement);
 		this.game = new GameRouter(this.appElement);
 		this.tournament = new TournamentRouter(this.appElement);
+		this.localTournament = new LocalTournament(this.appElement);
+		this.game4P = new GameRouter4P(this.appElement);
 		this.audioContext = null;
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));
 
 		// PERFORMANCE MONITOR
-		(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
+		// (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
 		this.init();
 	}
@@ -36,12 +42,36 @@ class Router {
 		this.oldHash = window.location.hash;
 
 		// Register listeners for custom events
-		this.chatElement.addEventListener('challenge', (event) => {
-			if (this.game.setupGameWebSocket(event.detail.gameID)) {
+		this.chatElement.addEventListener('challenger', (event) => {
+			if (!this.game.gameSocket && this.game.setupGameWebSocket(event.detail.gameID)) {
 				const sound = new Audio(CHALLENGE_SOUND);
 				sound.volume = 0.5;
 				sound.play();
 			}
+		});
+		this.chatElement.addEventListener('challenged', (event) => {
+			if (this.game.gameSocket)	return;
+			const modalData = { message: `Challenged by ${event.detail.username}` };
+			const fields = [{ key: "message", label: "Message" }];
+			const custom = `
+				<div class="row">
+					<button onclick="location.hash='/game/accept/${event.detail.username}'" class="btn btn-success" data-bs-dismiss="modal">Accept</button>
+					<button onclick="location.hash='/game/decline/'" class="btn btn-danger" data-bs-dismiss="modal">Decline</button>
+				</div>`;
+			const closeCallback = () => { location.hash = '/game/decline/' };
+			createModal(modalData, "modalDuel", "modalDuelLabel", fields, custom, closeCallback);
+		});
+		this.chatElement.addEventListener('challenger4P', (event) => {
+			console.log("challenger 4P");
+			console.log("challenger: ", event.detail.challenger);
+			console.log("username: ", event.detail.username);
+			this.game4P.initSocket(event.detail.challenger, event.detail.username);
+		});
+		this.chatElement.addEventListener('challenged4P', (event) => {
+			console.log("challenged 4P");
+			console.log("challenger: ", event.detail.challenger);
+			console.log("username: ", event.detail.username);
+			this.game4P.initSocket(event.detail.challenger, event.detail.username);
 		});
 		this.chatElement.addEventListener('notification', (event) => {
 			showNotification(
@@ -61,7 +91,7 @@ class Router {
 			// this.route();
 		});
 		this.appElement.addEventListener('game', (event) => {
-			this.game.startTournamentGame(event.detail);
+			setTimeout(() => this.game.startTournamentGame(event.detail), 1000);
 		});
 		this.appElement.addEventListener('announcement', (event) => {
 			this.chat.sendAnnouncement(event.detail);
@@ -92,20 +122,24 @@ class Router {
 	}
 
 	async route() {
+		document.body.style.overflow = 'auto';
 		this.oldHash = this.oldHash ?? window.location.hash;
 		this.game?.stopGame();
+		this.game4P?.stopGame();
+		this.localTournament?.stop();
 		const template = window.location.hash.substring(2) || 'home';
 		if (template.startsWith('profiles/')) {
 			this.loadProfileTemplate(template);
 		} else if (template.startsWith('tournaments/')) {
 			const next = await this.tournament.route(template);
-			setTimeout(() => window.location.hash = next ?? this.oldHash, 100);
+			if (next)
+				setTimeout(() => window.location.hash = next, 10);
 		} else if (template.startsWith('chat')) {
 			const roomName = template.substring(5) || 'lobby';
 			this.loadChat(roomName);
 			setTimeout(() => window.location.hash = this.oldHash, 100);
 		} else if (template.startsWith('game/')) {
-			history.back();
+			// history.back();
 			if (template.startsWith('game/accept/')) {
 				const gameID = template.substring(12);
 				this.game.acceptChallenge(gameID);
@@ -122,24 +156,71 @@ class Router {
 		} else if (template.startsWith('pong-')) {
 			if (template === 'pong-classic') {
 				const p1Name = document.getElementById('player1-name')?.value;
-				// await this.loadTemplate(template);
 				if (!p1Name) {
 					this.notifyError("Player 1 name is required");
 					history.back();
 					return;
 				}
-				const p1 = this.game.makePlayer('right', p1Name);
 				const p2Name = document.getElementById('player2-name')?.value;
+				const p1 = this.game.makePlayer('left', p1Name, p2Name);
+				p1.color = document.getElementById('p1-color')?.value || 'green';
 				if (p2Name) {
-					const p2 = this.game.makePlayer('left', p2Name);
+					const p2 = this.game.makePlayer('right', p2Name, p2Name);
+					p2.color = document.getElementById('p2-color')?.value || 'green';
 					this.game.startClassicGame(p1, p2);
-				} else {
-					this.game.startClassicGame(p1);
 				}
+				else this.game.startClassicGame(p1);
+			} else if (template === 'pong-3d') {
+				const p1Name = document.getElementById('player1-3d-name')?.value;
+				if (!p1Name) {
+					this.notifyError("Player 1 name is required");
+					history.back();
+					return;
+				}
+				const p2Name = document.getElementById('player2-3d-name')?.value;
+				const p1 = this.game.makePlayer('left', p1Name, p2Name, p1Name, '/static/assets/42Berlin.svg');
+				if (p2Name) {
+					const p2 = this.game.makePlayer('right', p2Name, p2Name, p2Name, '/static/assets/42Berlin.svg');
+					this.game.start3DGame(p1, p2);
+				}
+				else this.game.start3DGame(p1);
 			} else
-				this.loadTemplate(template);
-		} else {
-			this.loadTemplate(template);
+				await this.loadTemplate(template);
+		}
+		else if (template.startsWith('local-tour')) {
+			let numPlayers = document.getElementById('numPlayers')?.value;
+			let usernames = [];
+			usernames.push(document.getElementById('user1')?.value);
+			usernames.push(document.getElementById('user2')?.value);
+			usernames.push(document.getElementById('user3')?.value);
+			usernames.push(document.getElementById('user4')?.value);
+			usernames.push(document.getElementById('user5')?.value);
+			usernames.push(document.getElementById('user6')?.value);
+			usernames.push(document.getElementById('user7')?.value);
+			usernames.push(document.getElementById('user8')?.value);
+			for (let i = usernames.length - 1; i >= 0; i--) {
+				if (!usernames[i] || usernames[i].trim() == "") {
+					usernames.splice(i, 1);
+				} else {
+					usernames[i] = usernames[i].trim();
+				}
+			}
+			if(usernames.length != numPlayers) {
+				this.notifyError("You requested " + numPlayers + " players but inserted " + usernames.length + " usernames");
+				history.back();
+				usernames = [];
+				return;
+			}
+			let setSize = new Set(usernames).size;
+			if(setSize !== usernames.length) {
+				this.notifyError("Duplicates are not allowed");
+				history.back();
+				return;
+			};
+			this.localTournament.start(usernames);
+		}
+		else {
+			await this.loadTemplate(template);
 		}
 		this.oldHash = window.location.hash;
 	}
@@ -172,8 +253,7 @@ class Router {
 			var navbarCollapse = document.querySelector('#navbarNav');
    			 if (navbarCollapse) {
    			     var collapse = new bootstrap.Collapse(navbarCollapse);
-  
-			     collapse.hide();
+						 collapse.hide();
 
    			     // Hide the navbar when a link inside it is clicked
    			     var navbarLinks = document.querySelectorAll('.navbar-collapse a');
@@ -193,34 +273,35 @@ class Router {
    			         }
    			     });
    			 } else {
-				this.notifyError("Navbar collapse element not found.");
+						this.notifyError("Navbar collapse element not found.");
    			 }
 
 			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
 				const audioMuteBtn = document.getElementById('audioMuteBtn');
 
-				if (audioMuteBtn.innerText === '🔊') {
-					audioMuteBtn.innerText = '🔇';
+				if (audioMuteBtn.innerText === '🔊 Music') {
+					audioMuteBtn.innerText = '🔇 Music';
 					if(window.mainOUT) {
 						window.mainOUT.gain.value = 0;
 					}
-				} else if (audioMuteBtn.innerText === '🔇'){
-					audioMuteBtn.innerText = '🔊';
+				} else if (audioMuteBtn.innerText === '🔇 Music'){
+					audioMuteBtn.innerText = '🔊 Music';
 					if (window.mainOUT) {
 						window.mainOUT.gain.value = 1;
 					}
 				}
 			});
+
 			document.getElementById('fxMuteBtn').addEventListener('click', (e) => {
 				const fxMuteBtn = document.getElementById('fxMuteBtn');
 
-				if (fxMuteBtn.innerText === '🔊') {
-					fxMuteBtn.innerText = '🔇';
+				if (fxMuteBtn.innerText === '🔊 FX') {
+					fxMuteBtn.innerText = '🔇 FX';
 					if(window.fxGainNode) {
 						window.fxGainNode.gain.value = 0;
 					}
-				} else if(fxMuteBtn.innerText === '🔇'){
-					fxMuteBtn.innerText = '🔊';
+				} else if(fxMuteBtn.innerText === '🔇 FX'){
+					fxMuteBtn.innerText = '🔊 FX';
 					if (window.fxGainNode) {
 						window.fxGainNode.gain.value = 1;
 					}
@@ -303,14 +384,14 @@ class Router {
 		try {
 			let response = await getJSON('/api/profiles/friends/', this.csrfToken);
 			if (response) {
-				console.log("Updated friends", response);
+				console.debug("Updated friends", response);
 				sessionStorage.setItem('friends', JSON.stringify(response));
 			} else {
 				throw new Error("Failed to update friends");
 			}
 			response = await getJSON('/api/profiles/blocked_users/', this.csrfToken);
 			if (response) {
-				console.log("Updated blocked", response);
+				console.debug("Updated blocked", response);
 				sessionStorage.setItem('blocked', JSON.stringify(response));
 			} else {
 				throw new Error("Failed to update blocked");
@@ -386,9 +467,6 @@ class Router {
 			case 'profile':
 				this.handleProfilePage();
 				break;
-			case 'game':
-				// this.game.setupGameWebSocket();
-				break;
 			case 'tournaments':
 				this.handleTournamentPage();
 				break;
@@ -397,17 +475,18 @@ class Router {
 			// 	const p2 = this.game.makePlayer('right', 'Player 2');
 			// 	this.game.startClassicGame(p1, p2);
 			// 	break;
-			case 'pong-3d':
-				// const pl1 = this.game.makePlayer('left', 'Player 1');
-				// const pl2 = this.game.makePlayer('right', 'Player 2');
-				// this.game.start3DGame(pl1, pl2);
-				const pl1 = this.game.makePlayer('left', 'Player 1', 'YOU', '/static/assets/42Berlin.svg');
-				this.game.start3DGame(pl1);
-				break;
+			// case 'pong-3d':
+			// 	// const pl1 = this.game.makePlayer('left', 'Player 1');
+			// 	// const pl2 = this.game.makePlayer('right', 'Player 2');
+			// 	// this.game.start3DGame(pl1, pl2);
+			// 	const pl1 = this.game.makePlayer('left', 'Player 1', 'single', 'YOU', '/static/assets/42Berlin.svg');
+			// 	this.game.start3DGame(pl1);
+			// 	break;
 			case 'pong-4p':
-				stopPong4PGame();
-				startPong4PGame();
+				this.game.start4PGame();
 				break;
+			case 'local-Tournament':
+				this.localTournament.start();
 			default:
 				break;
 		}
@@ -417,12 +496,13 @@ class Router {
 		const form = document.getElementById('registration-form');
 		if (!form) return;
 		form.addEventListener('submit', async (e) => {
-			e.preventDefault();
+            e.preventDefault();
 			const username = document.getElementById('username').value;
 			const email = document.getElementById('email').value;
 			const password = document.getElementById('password').value;
 			const password_confirmation = document.getElementById('password_confirmation').value;
-	
+			// TODO Add blockchain address field
+            // const evm_address = document.getElementById('evm_addr').value;
 			if (password !== password_confirmation) {
 				this.notifyError("Passwords do not match");
 				return;
@@ -524,28 +604,29 @@ class Router {
 				this.notifyError("Failed to opt-in to blockchain");
 			}
 		});
-
-		passwordForm.addEventListener('submit', async (e) => {
-			e.preventDefault();
-			const formData = new FormData(passwordForm);
-			try {
-				const response = await fetch('/api/change-password/', {
-					method: 'POST',
-					headers: {
-						'X-CSRFToken': this.csrfToken || getCookie('csrftoken'),
-						'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
-					},
-					body: formData
-				});
-				if (response.ok) {
-					alert("Password changed successfully");
-				} else {
-					throw new Error("Failed to change password");
+		if (passwordForm) {
+			passwordForm.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const formData = new FormData(passwordForm);
+				try {
+					const response = await fetch('/templates/profile', {
+						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}`
+						},
+						body: formData
+					});
+					if (response.ok) {
+						const html = await response.text();
+						this.animateContent(this.appElement, html, () => this.handlePostLoad("profile"));
+					} else {
+						throw new Error("Failed to change password");
+					}
+				} catch (error) {
+					this.notifyError(error.message);
 				}
-			} catch (error) {
-				this.displayError(error.message);
-			}
-		});
+			});
+		}
 		document.getElementById('anonymize-data').addEventListener('click', (e) => {
 			e.preventDefault();
 			if (confirm("Are you sure you want to anonymize your data? This action is irreversible.")) {
@@ -575,11 +656,13 @@ class Router {
 					const html = await response.text();
 					this.animateContent(this.appElement, html, () => this.handlePostLoad("profile"));
 					this.loadNav();
+                    const newUsername = formData.get('alias');
+                    console.log(newUsername);
 				} else {
 					throw new Error("Failed to update profile");
 				}
 			} catch (error) {
-				this.displayError(error.message);
+				this.notifyError(error.message);
 			}
 		});
 	}
@@ -663,11 +746,10 @@ class Router {
 	}
 };
 
-// document.addEventListener('DOMContentLoaded', () => {
-// });
-
-const navElement = document.getElementById('nav');
-const appElement = document.getElementById('app');
-const chatElement = document.getElementById('chat');
-
-new Router(navElement, appElement, chatElement);
+document.addEventListener('DOMContentLoaded', () => {
+	const navElement = document.getElementById('nav');
+	const appElement = document.getElementById('app');
+	const chatElement = document.getElementById('chat');
+	
+	new Router(navElement, appElement, chatElement);
+});

@@ -114,8 +114,9 @@ class ProfileUpdateForm(forms.ModelForm):
                 "Image file is too large ( > 2mb )")
         blockchain_address = cleaned_data.get("blockchain_address")
         if blockchain_address:
-            cleaned_data['blockchain_address'] = PongBlockchain().web3.to_checksum_address(blockchain_address)
-            if not PongBlockchain().web3.is_checksum_address(cleaned_data['blockchain_address']): # Custom validate blockchain address
+            blockchain_address = PongBlockchain().web3.to_checksum_address(blockchain_address)
+            cleaned_data['blockchain_address'] = blockchain_address
+            if not PongBlockchain().web3.is_checksum_address(blockchain_address): # Custom validate blockchain address
                 raise forms.ValidationError(
                     "Invalid blockchain address")
         return cleaned_data

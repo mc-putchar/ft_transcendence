@@ -27,8 +27,9 @@ class TournamentRouter {
 		this.username = document.getElementById("chat-username").innerText.trim();
 		console.log("Tournament Username:", this.username);
 
+		this.tournamentID = tournamentID;
 		this.tournamentSocket = new WebSocket(
-			`wss://${window.location.host}/ws/tournament/${tournamentID}/?token=${accessToken}`
+			`wss://${window.location.host}/ws/tournament/${this.tournamentID}/?token=${accessToken}`
 		);
 
 		this.tournamentSocket.addEventListener('open', () => console.log("Tournament socket opened"));
@@ -36,35 +37,31 @@ class TournamentRouter {
 		this.tournamentSocket.addEventListener('close', (e) => {
 			if (!e.wasClean) console.error("Tournament socket closed unexpectedly:", e);
 			else console.log("Tournament socket closed:", e);
+			this.tournamentSocket = null;
 		});
 		this.tournamentSocket.addEventListener('message', (event) => this.parseMessage(event));
 	}
 
 	async route(event) {
+		const tournamentID = event.split('/')[1];
 		if (event.endsWith('join/')) {
-			this.tournamentID = event.split('/')[1];
-			if (this.tournamentID && await this.joinTournament(this.tournamentID)) {
-				history.back();
-				return `/in-tournament/${this.tournamentID}`;
-			}
+			if (!await this.joinTournament(tournamentID))	return "/tournaments";
 		} else if (event.endsWith('leave/')) {
-			this.tournamentID = event.split('/')[1];
-			this.leaveTournament(this.tournamentID);
+			this.leaveTournament(tournamentID);
+			return "/tournaments";
 		} else if (event.endsWith('start_tournament/')) {
-			this.tournamentID = event.split('/')[1];
-			this.startTournament(this.tournamentID);
+			setTimeout(() => this.startTournament(tournamentID), 3000);
 		} else if (event.endsWith('delete_tournament/')) {
-			this.tournamentID = event.split('/')[1];
-			this.deleteTournament(this.tournamentID);
+			this.deleteTournament(tournamentID);
+			return "/tournaments";
 		} else if (event.endsWith('next_round/')) {
-			this.tournamentID = event.split('/')[1];
-			this.nextRound(this.tournamentID);
+			setTimeout(() => this.nextRound(tournamentID), 3000);
 		} else {
 			console.debug("Unknown tournament route:", event);
+			return "/tournaments";
 		}
-		this.tournamentID = null;
-		history.back();
-		return "/tournaments";
+		// history.back();
+		return `/in-tournament/${tournamentID}`;
 	}
 
 	parseMessage(event) {
@@ -102,6 +99,9 @@ class TournamentRouter {
 					break;
 				default:
 					console.log("Unknown action");
+					if (data.hasOwnProperty('message')) {
+						console.log("Message", data.message);
+					}
 					break;
 			}
 		} else if (data.type === 'connection') {
@@ -151,6 +151,7 @@ class TournamentRouter {
 			this.showError("Failed to leave tournament");
 		}
 		this.tournamentSocket?.close();
+		this.tournamentID = null;
 	}
 
 	async startTournament(tournamentID) {
@@ -172,6 +173,7 @@ class TournamentRouter {
 			this.showError("Failed to delete tournament");
 		}
 		this.tournamentSocket?.close();
+		this.tournamentID = null;
 	}
 
 	async nextRound(tournamentID) {
@@ -186,6 +188,7 @@ class TournamentRouter {
 
 	closeWebSocket() {
 		this.tournamentSocket?.close();
+		this.tournamentID = null;
 	}
 };
 

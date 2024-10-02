@@ -5,7 +5,7 @@
             <div class="card p-2 bg-secondary-subtle">
                 <div class="card-header bg-dark text-success d-flex align-items-center justify-content-between">
                     <button class="btn btn-light btn-sm" onclick="history.back()">Go Back</button>
-                    <h5 class="mb-0">Play</h5>
+                    <h5 class="mb-0 glitch" data-text="Play">Play</h5>
                 </div>
                 <div class="card-body text-center">
                     <div class="row justify-content-center mb-3">
@@ -23,6 +23,9 @@
                             </li>
                             <li class="nav-item" role="presentation">
                             <button class="nav-link m-1 btn btn-primary" id="pills-4ppong-tab" data-bs-toggle="pill" data-bs-target="#pills-4ppong" type="button" role="tab" aria-controls="pills-4ppong" aria-selected="false">4P</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                            <button class="nav-link m-1 btn btn-primary" id="pills-tour-tab" data-bs-toggle="pill" data-bs-target="#pills-tour" type="button" role="tab" aria-controls="pills-tour" aria-selected="false">tournament</button>
                             </li>
                         </ul>
                     </div>
@@ -97,13 +100,98 @@
                             </div>
 
                             <div class="tab-pane fade bg-dark-subtle" id="pills-3dpong" role="tabpanel" aria-labelledby="pills-3dpong-tab" tabindex="0">
-                                <a class="btn btn-outline-primary w-100 mb-3" href="#/pong-3d">Pong 3D</a>
+                                <div class="card-header bg-dark-subtle text-success d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Pong 3D</h5>
+                                </div>
+                                <div class="card-body text-center rounded-2 border border-success my-1">
+                                    <div class="row bg-dark justify-content-center mb-4">
+                                        <div class="col-auto text-center">
+                                            <button class="btn btn-outline-light active" data-bs-toggle="collapse" data-bs-target="#p1-3d-setup" aria-expanded="true" aria-controls="p1-3d-setup">
+                                                P 1
+                                                <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" height="42">
+                                            </button>
+                                        </div>
+                                        <div class="col-auto text-center">
+                                            <button id="p2-3d-toggle-btn" class="btn btn-outline-light" data-bs-toggle="collapse" data-bs-target="#p2-3d-setup" aria-expanded="false" aria-controls="p2-3d-setup">
+                                                <img src="{% static 'assets/user.svg' %}" alt="Logo" class="navbar-brand" height="42">
+                                                P 2
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="text-center">
+                                            <form id="game-form">
+                                                <div class="form-floating">
+                                                    <select name="arena" id="arena" class="form-select" aria-label="Select arena">
+                                                        <option value="1" selected>42 Under Construction</option>
+                                                    </select>
+                                                    <label for="arena">Select Arena</option>
+                                                </div>
+                                                <div class="input-group collapse show my-2" id="p1-3d-setup">
+                                                    <div class="form-floating mx-1">
+                                                        <input type="text" class="form-control" name="player1-3d-name" id="player1-3d-name" value="Player 1" autocomplete="off" maxlength="20" placeholder="Player 1" autofocus>
+                                                        <label for="player1-3d-name" class="form-label no-select">Player 1 Name</label>
+                                                    </div>
+                                                </div>
+                                                <div class="input-group collapse my-2" id="p2-3d-setup">
+                                                    <div class="form-floating mx-1">
+                                                        <input type="text" class="form-control" name="player2-3d-name" id="player2-3d-name" autocomplete="off" maxlength="20" placeholder="Player 2">
+                                                        <label for="player2-3d-name" class="form-label no-select">Player 2 Name</label>
+                                                    </div>
+                                                    <span class="input-group-text">
+                                                        <div class="form-floating mx-1">
+                                                            <div class="form-switch">
+                                                                <input type="checkbox" role="switch" class="btn-check" id="flexProAI3" autocomplete="off" checked aria-checked="true">
+                                                                <label class="btn btn-outline-success" for="flexProAI3">pro AI</label>
+                                                            </div>
+                                                        </div>
+                                                    </span>
+                                                </div>
+                                            </form>
+                                            <button id="start3DGame" class="btn btn-success m-1" onclick="location.hash='/pong-3d'">Start Game</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="tab-pane fade bg-dark-subtle" id="pills-4ppong" role="tabpanel" aria-labelledby="pills-4ppong-tab" tabindex="0">
                                 <a class="btn btn-outline-primary w-100 mb-3" href="#/pong-4p">Pong 4P</a>
                             </div>
-
+                            <div class="tab-pane fade bg-dark-subtle" id="pills-tour" role="tabpanel" aria-labelledby="pills-tour-tab" tabindex="0">
+                                <div class="mb-3">
+                                    <label for="numPlayers" class="form-label">Select number of players</label>
+                                    <select id="numPlayers" class="form-select">
+                                      <option value="2">2 Players</option>
+                                      <option value="4">4 Players</option>
+                                      <option value="8">8 Players</option>
+                                    </select>
+                                  </div>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user1" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user2" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user3" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user4" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user5" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user6" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user7" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                  <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="user8" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                                  </div>
+                                <a class="btn btn-outline-primary w-100 mb-3" href="#/local-tour">Local Tournament</a>
+                            </div>
                         </div>
                     </div>
                 </div>
