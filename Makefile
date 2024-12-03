@@ -107,7 +107,7 @@ swapmode: .env stop # Swap online/local mode (requires restart)
 	fi )
 	$(info Mode swapped.)
 
-maintenance:
+maintenance: # TODO
 	touch pong/static/maintenance.on
 	$(DC) -f $(SRC) stop blockchain
 	$(DC) -f $(SRC) stop django
@@ -121,11 +121,13 @@ debug: # DEBUG MODE
 cli CLI: # run CLI
 	@if [[ ! -d transcendCLI/.venv ]]; then \
 		{ echo -e "$(COLOUR_CYNB)Setting up virtual environment...$(COLOUR_END)"; \
-		python3 -m venv transcendCLI/.venv && \
+		virtualenv transcendCLI/.venv && \
+		source transcendCLI/.venv/bin/activate && \
 		pip install -r transcendCLI/requirements.txt && \
 		exit 0; } \
 	fi
-	cd transcendCLI && source .venv/bin/activate && python $(CLI) --url=$(DOMAIN)
+	source transcendCLI/.venv/bin/activate && python transcendCLI/$(CLI) --url=$(DOMAIN)
+
 
 testlogin: # Selenium tests
 	# docker exec ft_transcendence-django-1 python test_selenium.py
