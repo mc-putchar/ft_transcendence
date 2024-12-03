@@ -6,17 +6,15 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { BloomPass } from 'three/addons/postprocessing/BloomPass.js';
+// import { BloomPass } from 'three/addons/postprocessing/BloomPass.js';
 import { FilmPass } from 'three/addons/postprocessing/FilmPass.js';
 import { AfterimagePass } from 'three/addons/postprocessing/AfterimagePass.js';
-import { GlitchPass } from 'three/addons/postprocessing/GlitchPass.js';
+// import { GlitchPass } from 'three/addons/postprocessing/GlitchPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
-import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 import { AudioController } from './audio.js';
@@ -770,18 +768,18 @@ class Client3DGame {
 		unrealBloom.exposure = 1;
 		unrealBloom.enabled = true;
 		this.composer.addPass(unrealBloom);
-		const bloom = new BloomPass(1, 25, 4, 256);
-		bloom.enabled = false;
-		this.composer.addPass(bloom);
+		// const bloom = new BloomPass(1, 25, 4, 256);
+		// bloom.enabled = false;
+		// this.composer.addPass(bloom);
 		const film = new FilmPass(0.5, false);
 		this.composer.addPass(film);
 		const rgbShift = new ShaderPass(RGBShiftShader);
 		rgbShift.uniforms.amount.value = 0.0015;
 		rgbShift.enabled = false;
 		this.composer.addPass(rgbShift);
-		const glitch = new GlitchPass();
-		glitch.enabled = false;
-		this.composer.addPass(glitch);
+		// const glitch = new GlitchPass();
+		// glitch.enabled = false;
+		// this.composer.addPass(glitch);
 		// const dotScreen = new ShaderPass(DotScreenShader);
 		// dotScreen.uniforms.scale.value = 0.2;
 		// this.composer.addPass(dotScreen);
@@ -859,7 +857,7 @@ class Client3DGame {
 		}
 		{
 			const folder = this.gui.addFolder('Post Processing');
-			folder.add(bloom, 'enabled').name('Bloom');
+			// folder.add(bloom, 'enabled').name('Bloom');
 			folder.add(unrealBloom, 'enabled').name('Unreal Bloom');
 			folder.add(unrealBloom, 'strength').min(0).max(2).step(0.01).name('Unreal Bloom Strength');
 			folder.add(unrealBloom, 'radius').min(0).max(2).step(0.01).name('Unreal Bloom Radius');
@@ -870,7 +868,7 @@ class Client3DGame {
 			folder.add(rgbShift.uniforms.amount, 'value').min(0.001).max(0.01).step(0.0001).name('RGB Shift Amount');
 			folder.add(afterimage, 'enabled').name('Afterimage');
 			folder.add(afterimage.uniforms.damp, 'value').min(0.5).max(0.99).step(0.01).name('Afterimage Dampening');
-			folder.add(glitch, 'enabled').name('Glitch');
+			// folder.add(glitch, 'enabled').name('Glitch');
 		}
 
 		this.gui.domElement.style.position = 'absolute';

@@ -405,7 +405,7 @@ class ClientClassic {
 
 		this.touchScreenAdded = false;
 
-		if(!this.isOnline && gameSetup.mode === "single" && ('ontouchstart' in window || navigator.maxTouchPoints))
+		if(this.isOnline || gameSetup.mode === "single" && ('ontouchstart' in window || navigator.maxTouchPoints))
 			this.setUpTouchScreen();
 	}
 	setUpTouchScreen() {
