@@ -22,8 +22,8 @@ endif
 
 # detect debian system (cloud)
 ifeq ($(shell uname -a | grep -c Debian), 1)
-	DC := docker-compose
-	SRC := docker-compose.yml
+	DC := docker compose --profile $(PROFILE)
+	SRC := compose.yaml
 else
 	DC := docker compose --profile $(PROFILE)
 	SRC := compose.yaml
