@@ -7,7 +7,7 @@ networks:
 services:
   blockchain:
     build:
-      context: "${PWD}/pong/blockchain"
+      context: "./pong/blockchain"
     networks:
       - transcendeNet
     restart: unless-stopped
@@ -18,7 +18,7 @@ services:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
     volumes:
-      - "${PWD}/postgres_data:/var/lib/postgresql/data:rw"
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 10s
@@ -36,10 +36,10 @@ services:
 
   django:
     build:
-      context: "${PWD}/pong"
+      context: "./pong"
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - "${PWD}/pong:/code:rw"
+      - "./pong:/code:rw"
     environment:
       - POSTGRES_DB
       - POSTGRES_USER
@@ -59,6 +59,10 @@ services:
       redis:
         condition: service_started
     restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: postgres_data
 
   # selenium:
   #   image: selenium/standalone-chrome:latest
