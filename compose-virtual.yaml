@@ -8,24 +8,11 @@ networks:
 
 configs:
   caddyfile:
-    file: "${PWD}/server/Caddyfile${DEPLOY:+_deploy}"
+    file: "${PWD}/server/Caddyfile"
 
 services:
-  cloudflared:
-    image: cloudflare/cloudflared:2024.8.2
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-    networks:
-      - transcendeNet
-    volumes:
-      - ./cloudflared:/etc/cloudflared:ro
-    profiles:
-      - tunnel
-    restart: unless-stopped
-    
   server:
     image: caddy:2.8.4-alpine
-    # build:
-    #   context: "${PWD}/server"
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
@@ -35,7 +22,7 @@ services:
     networks:
       - transcendeNet
     ports:
-      - "0.0.0.0:4243:443"
+      - "0.0.0.0:4243:80"
     restart: unless-stopped
 
   blockchain:
