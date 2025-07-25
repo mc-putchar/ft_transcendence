@@ -21,9 +21,9 @@ else
 endif
 
 # detect debian system (cloud)
-ifeq ($(shell uname -a | grep -c Debian), 1)
-	DC := docker compose --profile $(PROFILE)
-	SRC := compose.yaml
+ifeq ($(shell uname -a | grep -c Debian && grep -c "VERSION_ID=11" /etc/os-release), 2)
+	DC := docker-compose
+	SRC := docker-compose.yml
 else
 	DC := docker compose --profile $(PROFILE)
 	SRC := compose.yaml
