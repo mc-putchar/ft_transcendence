@@ -35,7 +35,7 @@ services:
     networks:
       - transcendeNet
     ports:
-      - "0.0.0.0:4243:443"
+      - "0.0.0.0:4243:80"
     restart: unless-stopped
 
   blockchain:

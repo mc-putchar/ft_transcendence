@@ -1,4 +1,4 @@
-http://localhost:4243 {
+http://:80 {
 	encode zstd gzip
 	@maintenanceModeActive file /usr/share/caddy/static/maintenance.on
 	handle @maintenanceModeActive {
