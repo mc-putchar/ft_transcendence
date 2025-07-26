@@ -1,0 +1,12 @@
+#stay-connected-cont {
+	display: flex;
+	justify-content: space-evenly;
+	flex-direction: row;
+	align-items: center;
+	margin: 1rem 0rem;
+}
+
+#stay-connected-checkbox {
+	display: block;
+	transform: scale(1.5);
+}

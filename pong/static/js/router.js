@@ -48,7 +48,7 @@ class Router {
 			}
 		});
 		this.chatElement.addEventListener('challenged', (event) => {
-			if (this.game.gameSocket)	return;
+			if (this.game.gameSocket) return;
 			const modalData = { message: `Challenged by ${event.detail.username}` };
 			const fields = [{ key: "message", label: "Message" }];
 			const custom = `
@@ -203,14 +203,14 @@ class Router {
 					usernames[i] = usernames[i].trim();
 				}
 			}
-			if(usernames.length != numPlayers) {
+			if (usernames.length != numPlayers) {
 				this.notifyError("You requested " + numPlayers + " players but inserted " + usernames.length + " usernames");
 				history.back();
 				usernames = [];
 				return;
 			}
 			let setSize = new Set(usernames).size;
-			if(setSize !== usernames.length) {
+			if (setSize !== usernames.length) {
 				this.notifyError("Duplicates are not allowed");
 				history.back();
 				return;
@@ -223,7 +223,7 @@ class Router {
 		this.oldHash = window.location.hash;
 	}
 
-	animateContent(element, newContent, callback=null, fadeInDuration = 600, fadeOutDuration = 200) {
+	animateContent(element, newContent, callback = null, fadeInDuration = 600, fadeOutDuration = 200) {
 		try {
 			element.innerHTML = '<div class="spinner-border text-success"></div>';
 			element.classList.add("fade-exit");
@@ -249,40 +249,40 @@ class Router {
 			this.navElement.innerHTML = response;
 
 			var navbarCollapse = document.querySelector('#navbarNav');
-   			 if (navbarCollapse) {
-   			     var collapse = new bootstrap.Collapse(navbarCollapse);
-						 collapse.hide();
+			if (navbarCollapse) {
+				var collapse = new bootstrap.Collapse(navbarCollapse);
+				collapse.hide();
 
-   			     // Hide the navbar when a link inside it is clicked
-   			     var navbarLinks = document.querySelectorAll('.navbar-collapse a');
-   			     navbarLinks.forEach(function (link) {
-   			         link.addEventListener('click', function () {
-   			             collapse.hide();
-   			         });
-   			     });
-  
-   			     // Hide the navbar when clicking outside of it
-   			     document.addEventListener('click', function (event) {
-   			         var isClickInside = navbarCollapse.contains(event.target);
-   			         var isToggle = event.target.classList.contains('navbar-toggler');
-   			         
-   			         if (!isClickInside && !isToggle) {
-   			             collapse.hide();
-   			         }
-   			     });
-   			 } else {
-						this.notifyError("Navbar collapse element not found.");
-   			 }
+				// Hide the navbar when a link inside it is clicked
+				var navbarLinks = document.querySelectorAll('.navbar-collapse a');
+				navbarLinks.forEach(function(link) {
+					link.addEventListener('click', function() {
+						collapse.hide();
+					});
+				});
+
+				// Hide the navbar when clicking outside of it
+				document.addEventListener('click', function(event) {
+					var isClickInside = navbarCollapse.contains(event.target);
+					var isToggle = event.target.classList.contains('navbar-toggler');
+
+					if (!isClickInside && !isToggle) {
+						collapse.hide();
+					}
+				});
+			} else {
+				this.notifyError("Navbar collapse element not found.");
+			}
 
 			document.getElementById('audioMuteBtn').addEventListener('click', (e) => {
 				const audioMuteBtn = document.getElementById('audioMuteBtn');
 
 				if (audioMuteBtn.innerText === '🔊 Music') {
 					audioMuteBtn.innerText = '🔇 Music';
-					if(window.mainOUT) {
+					if (window.mainOUT) {
 						window.mainOUT.gain.value = 0;
 					}
-				} else if (audioMuteBtn.innerText === '🔇 Music'){
+				} else if (audioMuteBtn.innerText === '🔇 Music') {
 					audioMuteBtn.innerText = '🔊 Music';
 					if (window.mainOUT) {
 						window.mainOUT.gain.value = 1;
@@ -295,10 +295,10 @@ class Router {
 
 				if (fxMuteBtn.innerText === '🔊 FX') {
 					fxMuteBtn.innerText = '🔇 FX';
-					if(window.fxGainNode) {
+					if (window.fxGainNode) {
 						window.fxGainNode.gain.value = 0;
 					}
-				} else if(fxMuteBtn.innerText === '🔇 FX'){
+				} else if (fxMuteBtn.innerText === '🔇 FX') {
 					fxMuteBtn.innerText = '🔊 FX';
 					if (window.fxGainNode) {
 						window.fxGainNode.gain.value = 1;
@@ -366,7 +366,7 @@ class Router {
 		}
 		const endpoints = ['add_friend', 'remove_friend', 'block_user', 'unblock_user'];
 		const endpoint = endpoints[actions.indexOf(action)];
-		const body = JSON.stringify({user_id: id});
+		const body = JSON.stringify({ user_id: id });
 		if (await postJSON(`/api/profiles/${endpoint}/`, this.csrfToken, body)) {
 			console.debug("Frenemy action successful:", action, id);
 			this.updateFriendsAndBlocks();
@@ -399,7 +399,7 @@ class Router {
 		}
 	}
 
-	async loadChat(roomName='lobby') {
+	async loadChat(roomName = 'lobby') {
 		try {
 			const accessToken = sessionStorage.getItem('access_token') || '';
 			if (!accessToken) {
@@ -494,13 +494,13 @@ class Router {
 		const form = document.getElementById('registration-form');
 		if (!form) return;
 		form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+			e.preventDefault();
 			const username = document.getElementById('username').value;
 			const email = document.getElementById('email').value;
 			const password = document.getElementById('password').value;
 			const password_confirmation = document.getElementById('password_confirmation').value;
 			// TODO Add blockchain address field
-            // const evm_address = document.getElementById('evm_addr').value;
+			// const evm_address = document.getElementById('evm_addr').value;
 			if (password !== password_confirmation) {
 				this.notifyError("Passwords do not match");
 				return;
@@ -535,6 +535,7 @@ class Router {
 			e.preventDefault();
 			const username = document.getElementById('username').value;
 			const password = document.getElementById('password').value;
+			const stayConnected = document.getElementById('stay-connected-checkbox').value;
 			try {
 				const response = await fetch('/api/login/', {
 					method: 'POST',
@@ -650,8 +651,8 @@ class Router {
 					const html = await response.text();
 					this.animateContent(this.appElement, html, () => this.handlePostLoad("profile"));
 					this.loadNav();
-                    const newUsername = formData.get('alias');
-                    console.log(newUsername);
+					const newUsername = formData.get('alias');
+					console.log(newUsername);
 				} else {
 					throw new Error("Failed to update profile");
 				}
@@ -744,6 +745,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	const navElement = document.getElementById('nav');
 	const appElement = document.getElementById('app');
 	const chatElement = document.getElementById('chat');
-	
+
 	new Router(navElement, appElement, chatElement);
 });
