@@ -58,7 +58,7 @@ function createModal(data, modalId, modalLabelId, fields, customContent = "", cl
 	if (closeCallback) {
 		document.getElementById(`close${modalId}`).addEventListener("click", closeCallback);
 	}
-	modal.addEventListener('hidden.bs.modal', function (event) {
+	modal.addEventListener('hidden.bs.modal', function(event) {
 		modal.remove();
 	});
 }
@@ -68,10 +68,10 @@ async function getHTML(endpoint) {
 	const response = await fetch(endpoint, {
 		method: "GET",
 		headers: {
-		"Content-Type": "text/html",
-		"Accept": "text/html",
-		"X-Requested-With": "XMLHttpRequest",
-		"Authorization": `Bearer ${accessToken}`,
+			"Content-Type": "text/html",
+			"Accept": "text/html",
+			"X-Requested-With": "XMLHttpRequest",
+			"Authorization": `Bearer ${accessToken}`,
 		},
 		credentials: "include"
 	});
@@ -93,9 +93,9 @@ async function getJSON(endpoint) {
 	const response = await fetch(endpoint, {
 		method: "GET",
 		headers: {
-		"Accept": "application/json",
-		"X-Requested-With": "XMLHttpRequest",
-		"Authorization": `Bearer ${accessToken}`,
+			"Accept": "application/json",
+			"X-Requested-With": "XMLHttpRequest",
+			"Authorization": `Bearer ${accessToken}`,
 		},
 		credentials: "include"
 	});
@@ -117,11 +117,11 @@ async function postJSON(endpoint, csrftoken, json = "") {
 	const response = await fetch(endpoint, {
 		method: "POST",
 		headers: {
-		"Content-Type": "application/json",
-		"Accept": "application/json",
-		"X-Requested-With": "XMLHttpRequest",
-		"X-CSRFToken": csrftoken,
-		"Authorization": `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+			"Accept": "application/json",
+			"X-Requested-With": "XMLHttpRequest",
+			"X-CSRFToken": csrftoken,
+			"Authorization": `Bearer ${accessToken}`,
 		},
 		body: json,
 		credentials: "include",
@@ -153,11 +153,11 @@ async function deleteJSON(endpoint, csrftoken) {
 	const response = await fetch(endpoint, {
 		method: "DELETE",
 		headers: {
-		"Content-Type": "application/json",
-		"Accept": "application/json",
-		"X-Requested-With": "XMLHttpRequest",
-		"X-CSRFToken": csrftoken,
-		"Authorization": `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+			"Accept": "application/json",
+			"X-Requested-With": "XMLHttpRequest",
+			"X-CSRFToken": csrftoken,
+			"Authorization": `Bearer ${accessToken}`,
 		},
 		credentials: "include"
 	});
@@ -192,6 +192,15 @@ function getCookie(name) {
 	return cookieValue;
 }
 
+function setAccessCookie(value) {
+	document.cookie = `access_token=${value}; path=/;`
+}
+
+function setPersistentCookie() {
+	const tokenValue = crypto.randomUUID()
+	document.cookie = `persistent_token=${tokenValue}; max-age=${3600 * 24 * 365}; path=/;`
+}
+
 async function refreshToken() {
 	const refreshToken = sessionStorage.getItem('refresh_token');
 	if (!refreshToken) {
@@ -215,7 +224,8 @@ async function refreshToken() {
 }
 
 function popupCenter(url, title, w, h) {
-	const features = `toolbar=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${(window.innerHeight-h)/2}, left=${(window.innerWidth-w)/2}`;
+	console.log("DOMContentLoaded");
+	const features = `toolbar=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${(window.innerHeight - h) / 2}, left=${(window.innerWidth - w) / 2}`;
 	sessionStorage.setItem('is_popup', 'true');
 	const authWindow = window.open(url, title, features);
 
@@ -231,4 +241,4 @@ function popupCenter(url, title, w, h) {
 	return authWindow;
 }
 
-export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter };
+export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter, setPersistentCookie, setAccessCookie };

@@ -1,7 +1,7 @@
 "use strict";
 
 import { showNotification } from './notification.js';
-import { getCookie, getHTML, getJSON, postJSON } from './utils.js';
+import { getCookie, getHTML, getJSON, postJSON, setPersistentCookie, setAccessCookie } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { GameRouter4P } from './gameRouter4P.js';
@@ -29,6 +29,8 @@ class Router {
 		this.audioContext = null;
 		window.addEventListener('load', () => this.route());
 		window.addEventListener('hashchange', (e) => this.route(e));
+
+		this.loginCookies();
 
 		// PERFORMANCE MONITOR
 		// (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='https://mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
@@ -101,6 +103,20 @@ class Router {
 		this.loadChat('lobby');
 		if (this.oldHash)
 			this.route(this.oldHash);
+	}
+
+	loginCookies() {
+		const accessToken = getCookie("access_token");
+		const persistentToken = getCookie("persistent_token");
+		console.log("access_token: ", accessToken)
+		console.log("persistent_token: ", persistentToken)
+		if (accessToken)
+			sessionStorage.setItem("access_token", accessToken)
+		else if (persistentToken) {
+			// fetch user from backend
+			// setItem in sessionStorage
+		}
+		// sessionStorage.setItem()
 	}
 
 	displayError(message) {
@@ -550,6 +566,9 @@ class Router {
 					sessionStorage.setItem('access_token', data.access);
 					sessionStorage.setItem('refresh_token', data.refresh);
 					this.csrfToken = getCookie('csrftoken');
+					setAccessCookie(data.access);
+					if (stayConnected == "on")
+						setPersistentCookie();
 					this.loadNav();
 					this.loadChat('lobby');
 					window.location.hash = '/home';
