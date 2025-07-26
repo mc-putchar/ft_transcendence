@@ -1,0 +1,87 @@
+# version: '42'
+
+name: ft_transcendence
+
+networks:
+  transcendeNet:
+    driver: bridge
+
+configs:
+  caddyfile:
+    file: "${PWD}/server/Caddyfile"
+
+services:
+  server:
+    image: caddy:2.8.4-alpine
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+    volumes:
+    - "${PWD}/pong/static:/usr/share/caddy/static:ro"
+    - "${PWD}/pong/media:/usr/share/caddy/media:rw"
+    networks:
+      - transcendeNet
+    ports:
+      - "0.0.0.0:4243:80"
+    restart: unless-stopped
+
+  blockchain:
+    build:
+      context: "${PWD}/pong/blockchain"
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+  django:
+    build:
+      context: "${PWD}/pong"
+    command: sh -c "
+      python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - "${PWD}/pong:/code:rw"
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - DJANGO_SECRET_KEY
+      - DJANGO_ALLOWED_HOSTS
+      - DJANGO_TRUSTED_ORIGINS
+      - CLIENT_ID
+      - CLIENT_SECRET
+      - REDIRECT_URI
+      - HARDHAT_PRIVATE_KEY
+      - DEBUG
+    networks:
+      - transcendeNet
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: postgres:16.3-alpine3.20
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    volumes:
+      - "dbdata:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.0-alpine
+    networks:
+      - transcendeNet
+    restart: unless-stopped
+
+volumes:
+  dbdata:

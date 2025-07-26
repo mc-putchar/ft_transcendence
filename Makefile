@@ -1,3 +1,9 @@
+# Read .env
+ifneq (,$(wildcard ./.env))
+	include .env
+	export
+endif
+
 NAME := ft_transcendence
 
 TITLE := "42Berlin Spectacular Transcendence"
@@ -8,25 +14,28 @@ SHELL := /usr/bin/bash
 APPS := pong chat api game blockchain
 CLI := transcendCLI.py
 
-# Read .env
-ifneq (,$(wildcard ./.env))
-	include .env
-	export
-endif
+DEPLOY_STRIPPED = $(strip $(DEPLOY))
 
-ifneq (, ${DEPLOY})
-	PROFILE := tunnel
+ifeq ($(DEPLOY_STRIPPED),virtual)
+    PROFILE := virtual
+else ifneq (,$(DEPLOY_STRIPPED))
+    PROFILE := tunnel
 else
-	PROFILE := local
+    PROFILE := local
 endif
 
 # detect debian system (cloud)
-ifeq ($(shell uname -a | grep -c Debian), 1)
+ifeq ($(shell uname -a | grep -c Debian && grep -c "VERSION_ID=11" /etc/os-release), 2)
 	DC := docker-compose
 	SRC := docker-compose.yml
 else
-	DC := docker compose --profile $(PROFILE)
-	SRC := compose.yaml
+	ifeq ($(PROFILE), virtual)
+		DC := docker compose
+		SRC := compose-virtual.yaml
+	else
+		DC := docker compose --profile $(PROFILE)
+		SRC := compose.yaml
+	endif
 endif
 
 # Colors

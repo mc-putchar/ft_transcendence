@@ -1,5 +1,6 @@
 __pycache__
 *.env
+.swp
 .env_local
 .env_deploy
 .venv/
