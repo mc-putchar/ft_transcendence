@@ -192,6 +192,20 @@ function getCookie(name) {
 	return cookieValue;
 }
 
+function deleteCookie(name, path, domain) {
+	if (getCookie(name)) {
+		document.cookie = name + "=" +
+			((path) ? ";path=" + path : "") +
+			((domain) ? ";domain=" + domain : "") +
+			";expires=Thu, 01 Jan 1970 00:00:01 GMT";
+	}
+}
+
+function deleteAccountCookies() {
+	deleteCookie("access_token", "", "");
+	deleteCookie("persistent_token", "", "");
+}
+
 function setAccessCookie(value) {
 	document.cookie = `access_token=${value}; path=/;`
 }
@@ -241,4 +255,4 @@ function popupCenter(url, title, w, h) {
 	return authWindow;
 }
 
-export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter, setPersistentCookie, setAccessCookie };
+export { createModal, getHTML, getJSON, postJSON, deleteJSON, getCookie, refreshToken, popupCenter, setPersistentCookie, setAccessCookie, deleteAccountCookies };

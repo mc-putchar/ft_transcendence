@@ -1,7 +1,7 @@
 "use strict";
 
 import { showNotification } from './notification.js';
-import { getCookie, getHTML, getJSON, postJSON, setPersistentCookie, setAccessCookie } from './utils.js';
+import { getCookie, getHTML, getJSON, postJSON, setPersistentCookie, setAccessCookie, deleteAccountCookies } from './utils.js';
 import { ChatRouter } from './chat-router.js';
 import { GameRouter } from './game-router.js';
 import { GameRouter4P } from './gameRouter4P.js';
@@ -105,18 +105,24 @@ class Router {
 			this.route(this.oldHash);
 	}
 
+	fetchFromPersistentToken() {
+	}
+
 	loginCookies() {
 		const accessToken = getCookie("access_token");
 		const persistentToken = getCookie("persistent_token");
-		console.log("access_token: ", accessToken)
-		console.log("persistent_token: ", persistentToken)
-		if (accessToken)
-			sessionStorage.setItem("access_token", accessToken)
-		else if (persistentToken) {
-			// fetch user from backend
-			// setItem in sessionStorage
+		console.log("access_token: ", accessToken);
+		console.log("persistent_token: ", persistentToken);
+		if (accessToken) {
+			sessionStorage.setItem("access_token", accessToken);
+			sessionStorage.setItem("refresh_token", accessToken);
 		}
-		// sessionStorage.setItem()
+		else if (persistentToken) {
+			setAccessCookie(persistentToken);
+			sessionStorage.setItem("access_token", accessToken);
+			sessionStorage.setItem("refresh_token", accessToken);
+			window.location.reload();
+		}
 	}
 
 	displayError(message) {
@@ -544,6 +550,35 @@ class Router {
 		});
 	}
 
+	async makeLoginRequest(username, password, stayConnected) {
+		try {
+			const response = await fetch('/api/login/', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
+				},
+				body: JSON.stringify({ username, password })
+			});
+			const data = await response.json();
+			if (response.ok) {
+				sessionStorage.setItem('access_token', data.access);
+				sessionStorage.setItem('refresh_token', data.refresh);
+				this.csrfToken = getCookie('csrftoken');
+				setAccessCookie(data.access);
+				if (stayConnected)
+					setPersistentCookie();
+				this.loadNav();
+				this.loadChat('lobby');
+				window.location.hash = '/home';
+			} else {
+				throw new Error(data.error || 'Login failed');
+			}
+		} catch (error) {
+			this.notifyError(error.message);
+		}
+	}
+
 	handleLoginForm() {
 		const form = document.getElementById('login-form');
 		if (!form) return;
@@ -551,33 +586,8 @@ class Router {
 			e.preventDefault();
 			const username = document.getElementById('username').value;
 			const password = document.getElementById('password').value;
-			const stayConnected = document.getElementById('stay-connected-checkbox').value;
-			try {
-				const response = await fetch('/api/login/', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'X-CSRFToken': this.csrfToken || getCookie('csrftoken')
-					},
-					body: JSON.stringify({ username, password })
-				});
-				const data = await response.json();
-				if (response.ok) {
-					sessionStorage.setItem('access_token', data.access);
-					sessionStorage.setItem('refresh_token', data.refresh);
-					this.csrfToken = getCookie('csrftoken');
-					setAccessCookie(data.access);
-					if (stayConnected == "on")
-						setPersistentCookie();
-					this.loadNav();
-					this.loadChat('lobby');
-					window.location.hash = '/home';
-				} else {
-					throw new Error(data.error || 'Login failed');
-				}
-			} catch (error) {
-				this.notifyError(error.message);
-			}
+			const stayConnected = document.getElementById('stay-connected-checkbox').checked;
+			await this.makeLoginRequest(username, password, stayConnected);
 		});
 	}
 
@@ -601,6 +611,7 @@ class Router {
 		this.chat.chatSocket?.close();
 		this.game.gameSocket?.close();
 		this.tournament.tournamentSocket?.close();
+		deleteAccountCookies();
 		this.reload();
 	}
 
